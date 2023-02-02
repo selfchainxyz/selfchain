@@ -1,15 +1,17 @@
 package types
 
 import (
-	"testing"
-
+	commontest "frontier/testutil"
 	"frontier/testutil/sample"
+	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMsgMigrate_ValidateBasic(t *testing.T) {
+	commontest.InitSDKConfig()
+
 	tests := []struct {
 		name string
 		msg  MsgMigrate
@@ -20,6 +22,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			msg: MsgMigrate{
 				Creator: "invalid_address",
 				Amount: MIN_MIGRATION_AMOUNT,
+				DestAddress: sample.AccAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
@@ -27,6 +30,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			msg: MsgMigrate{
 				Creator: sample.AccAddress(),
 				Amount: MIN_MIGRATION_AMOUNT,
+				DestAddress: sample.AccAddress(),
 			},
 		},
 	}

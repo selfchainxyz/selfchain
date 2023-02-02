@@ -44,9 +44,11 @@ func (msg *MsgMigrate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator); if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	_, err2 := sdk.AccAddressFromBech32(msg.DestAddress); if err2 != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid destination address (%s)", err2)
+	}
 
 	// we don't want to get spammed people who migrate small amounts
-	// we will 
 	if msg.Amount < MIN_MIGRATION_AMOUNT {
 		return ErrInvalidMigrationAmount
 	}
