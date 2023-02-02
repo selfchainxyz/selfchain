@@ -1,5 +1,9 @@
 package types
 
-// This is 1 Token based on 18 decimal points
+import uint256 "github.com/holiman/uint256"
+
+// This is 1 Token based on 18 decimal points.
 // TODO: we might want to move that to the store so we can change that value???
-const MIN_MIGRATION_AMOUNT uint64 = 1000000000000000000
+func getMinMigrationAmount() *uint256.Int {
+	return uint256.NewInt(1000000000000000000)
+}

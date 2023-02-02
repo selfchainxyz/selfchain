@@ -10,5 +10,5 @@ import (
 
 // x/migration module sentinel errors
 var (
-	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %d", MIN_MIGRATION_AMOUNT))
+	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %s", getMinMigrationAmount().String()))
 )

@@ -3,10 +3,10 @@ package types
 import (
 	commontest "frontier/testutil"
 	"frontier/testutil/sample"
-	"strconv"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgMigrate{
 				Creator: "invalid_address",
-				Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
+				Amount: getMinMigrationAmount().Hex(),
 				DestAddress: sample.AccAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
@@ -30,7 +30,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgMigrate{
 				Creator: sample.AccAddress(),
-				Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
+				Amount: getMinMigrationAmount().Hex(),
 				DestAddress: sample.AccAddress(),
 			},
 		},
@@ -51,8 +51,8 @@ func  TestMsgMigrate_ValidateBasic_min_amount(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT - 1, 10),
-	}	
+		Amount: uint256.NewInt(0).Sub(getMinMigrationAmount(), uint256.NewInt(1)).Hex(),
+	}
 
 	err := msg.ValidateBasic()
   require.ErrorIs(t, err, ErrInvalidMigrationAmount)
@@ -63,7 +63,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
+		Amount: getMinMigrationAmount().Hex(),
 	}	
 
 	err := msg.ValidateBasic()
@@ -73,7 +73,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg2 := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
+		Amount: getMinMigrationAmount().Hex(),
 	}	
 
 	err2 := msg2.ValidateBasic()
@@ -83,7 +83,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg3 := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: sample.AccAddress(),
-		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
+		Amount: getMinMigrationAmount().Hex(),
 	}
 	err3 := msg3.ValidateBasic()
 	
