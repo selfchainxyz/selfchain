@@ -46,17 +46,45 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 	}
 }
 
-
 func  TestMsgMigrate_ValidateBasic_min_amount(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
-		TxHash: "eacffe9c44c1f4f77537766b772afd9da6d84ad215e43c52057909fb4d9c2488",
-		EthAddress: "0x37f1f67955ac36763409377bd2ce64da414c3972",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount: MIN_MIGRATION_AMOUNT - 1,
-		Token: 0,
 	}	
 
 	err := msg.ValidateBasic()
   require.ErrorIs(t, err, ErrInvalidMigrationAmount)
+}
+
+func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
+	// wrong prefix
+	msg := MsgMigrate{
+		Creator: sample.AccAddress(),
+		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		Amount: MIN_MIGRATION_AMOUNT,
+	}	
+
+	err := msg.ValidateBasic()
+  require.ErrorIs(t, err, sdkerrors.ErrInvalidAddress)
+
+	// correct prefix but invalid address
+	msg2 := MsgMigrate{
+		Creator: sample.AccAddress(),
+		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		Amount: MIN_MIGRATION_AMOUNT,
+	}	
+
+	err2 := msg2.ValidateBasic()
+	require.ErrorIs(t, err2, sdkerrors.ErrInvalidAddress)
+
+	// correct prefix but invalid address
+	msg3 := MsgMigrate{
+		Creator: sample.AccAddress(),
+		DestAddress: sample.AccAddress(),
+		Amount: MIN_MIGRATION_AMOUNT,
+	}
+	err3 := msg3.ValidateBasic()
+	
+	require.NoError(t, err3)
 }
