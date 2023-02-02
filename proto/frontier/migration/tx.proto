@@ -1,0 +1,7 @@
+syntax = "proto3";
+package frontier.migration;
+
+option go_package = "frontier/x/migration/types";
+
+// Msg defines the Msg service.
+service Msg {}
