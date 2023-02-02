@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"frontier/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -32,18 +33,6 @@ func (k Keeper) GetTokenMigration(
 
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
-}
-
-// RemoveTokenMigration removes a tokenMigration from the store
-func (k Keeper) RemoveTokenMigration(
-	ctx sdk.Context,
-	msgHash string,
-
-) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenMigrationKeyPrefix))
-	store.Delete(types.TokenMigrationKey(
-		msgHash,
-	))
 }
 
 // GetAllTokenMigration returns all tokenMigration
