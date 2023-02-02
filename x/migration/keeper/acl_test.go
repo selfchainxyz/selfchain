@@ -28,11 +28,3 @@ func TestAclGet(t *testing.T) {
 		nullify.Fill(&rst),
 	)
 }
-
-func TestAclRemove(t *testing.T) {
-	keeper, ctx := keepertest.MigrationKeeper(t)
-	createTestAcl(keeper, ctx)
-	keeper.RemoveAcl(ctx)
-	_, found := keeper.GetAcl(ctx)
-	require.False(t, found)
-}

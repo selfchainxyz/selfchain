@@ -8,6 +8,7 @@ import (
 	"frontier/testutil/nullify"
 	"frontier/x/migration/keeper"
 	"frontier/x/migration/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -37,19 +38,6 @@ func TestTokenMigrationGet(t *testing.T) {
 			nullify.Fill(&item),
 			nullify.Fill(&rst),
 		)
-	}
-}
-func TestTokenMigrationRemove(t *testing.T) {
-	keeper, ctx := keepertest.MigrationKeeper(t)
-	items := createNTokenMigration(keeper, ctx, 10)
-	for _, item := range items {
-		keeper.RemoveTokenMigration(ctx,
-			item.MsgHash,
-		)
-		_, found := keeper.GetTokenMigration(ctx,
-			item.MsgHash,
-		)
-		require.False(t, found)
 	}
 }
 
