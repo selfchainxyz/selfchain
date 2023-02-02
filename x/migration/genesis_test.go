@@ -22,6 +22,10 @@ func TestGenesis(t *testing.T) {
 				MsgHash: "1",
 			},
 		},
+		Acl: &types.Acl{
+			Admin:     "56",
+			Migrators: []string{"6"},
+		},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -34,5 +38,6 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(got)
 
 	require.ElementsMatch(t, genesisState.TokenMigrationList, got.TokenMigrationList)
+	require.Equal(t, genesisState.Acl, got.Acl)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

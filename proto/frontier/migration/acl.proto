@@ -1,0 +1,10 @@
+syntax = "proto3";
+package frontier.migration;
+
+option go_package = "frontier/x/migration/types";
+
+message Acl {
+  string admin = 1; 
+  repeated string migrators = 2; 
+  
+}

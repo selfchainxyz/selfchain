@@ -30,6 +30,10 @@ func TestGenesisState_Validate(t *testing.T) {
 						MsgHash: "1",
 					},
 				},
+				Acl: &types.Acl{
+					Admin:     "25",
+					Migrators: []string{"91"},
+				},
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
