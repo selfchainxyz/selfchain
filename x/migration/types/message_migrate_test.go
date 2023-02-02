@@ -24,6 +24,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 				Creator: "invalid_address",
 				Amount: getMinMigrationAmount().Hex(),
 				DestAddress: sample.AccAddress(),
+				Token: uint64(Front),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
@@ -32,6 +33,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 				Creator: sample.AccAddress(),
 				Amount: getMinMigrationAmount().Hex(),
 				DestAddress: sample.AccAddress(),
+				Token: uint64(Front),
 			},
 		},
 	}
@@ -47,11 +49,12 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 	}
 }
 
-func  TestMsgMigrate_ValidateBasic_min_amount(t *testing.T) {
+func  TestMsgMigrate_ValidateBasic_minAmount(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount: uint256.NewInt(0).Sub(getMinMigrationAmount(), uint256.NewInt(1)).Hex(),
+		Token: uint64(Hotcross),
 	}
 
 	err := msg.ValidateBasic()
@@ -64,6 +67,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator: sample.AccAddress(),
 		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount: getMinMigrationAmount().Hex(),
+		Token: uint64(Front),
 	}	
 
 	err := msg.ValidateBasic()
@@ -74,6 +78,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator: sample.AccAddress(),
 		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount: getMinMigrationAmount().Hex(),
+		Token: uint64(Front),
 	}	
 
 	err2 := msg2.ValidateBasic()
@@ -84,8 +89,21 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator: sample.AccAddress(),
 		DestAddress: sample.AccAddress(),
 		Amount: getMinMigrationAmount().Hex(),
+		Token: uint64(Front),
 	}
 	err3 := msg3.ValidateBasic()
 	
 	require.NoError(t, err3)
+}
+
+func  TestMsgMigrate_ValidateBasic_WrongToken(t *testing.T) {
+	msg := MsgMigrate{
+		Creator: sample.AccAddress(),
+		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		Amount: getMinMigrationAmount().Hex(),
+		Token: 2,
+	}
+
+	err := msg.ValidateBasic()
+  require.ErrorIs(t, err, ErrTokenNotSupported)
 }

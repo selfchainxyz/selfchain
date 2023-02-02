@@ -7,3 +7,10 @@ import uint256 "github.com/holiman/uint256"
 func getMinMigrationAmount() *uint256.Int {
 	return uint256.NewInt(1000000000000000000)
 }
+
+type Token int64
+// Token enum
+const (
+	Front Token    = 0
+	Hotcross Token = 1
+)

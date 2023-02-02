@@ -54,5 +54,10 @@ func (msg *MsgMigrate) ValidateBasic() error {
 		return ErrInvalidMigrationAmount
 	}
 
+	// check that token is supported
+	if msg.Token != uint64(Front) && msg.Token != uint64(Hotcross) {
+		return ErrTokenNotSupported
+	}
+
 	return nil
 }
