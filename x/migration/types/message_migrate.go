@@ -59,5 +59,9 @@ func (msg *MsgMigrate) ValidateBasic() error {
 		return ErrTokenNotSupported
 	}
 
+	if msg.TxHash == "" || msg.EthAddress == "" {
+		return ErrEmptyStringValue
+	}
+
 	return nil
 }

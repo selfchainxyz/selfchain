@@ -12,4 +12,5 @@ import (
 var (
 	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %s", getMinMigrationAmount().String()))
 	ErrTokenNotSupported = sdkerrors.Register(ModuleName, 1101, "Token should either Front or Hotcross")
+	ErrEmptyStringValue = sdkerrors.Register(ModuleName, 1102, "TxHash or EthAddress have empty string value")
 )
