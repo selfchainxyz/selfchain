@@ -3,10 +3,12 @@ package types
 // DONTCOVER
 
 import (
+	"fmt"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // x/migration module sentinel errors
 var (
-	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, "Migration amount must be be a positive integer")
+	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %d", MIN_MIGRATION_AMOUNT))
 )

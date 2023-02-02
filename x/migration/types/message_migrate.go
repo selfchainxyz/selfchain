@@ -45,7 +45,9 @@ func (msg *MsgMigrate) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
-	if msg.Amount <= 0 {
+	// we don't want to get spammed people who migrate small amounts
+	// we will 
+	if msg.Amount < MIN_MIGRATION_AMOUNT {
 		return ErrInvalidMigrationAmount
 	}
 

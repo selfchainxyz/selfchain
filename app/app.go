@@ -106,6 +106,7 @@ import (
 	migrationmodule "frontier/x/migration"
 	migrationmodulekeeper "frontier/x/migration/keeper"
 	migrationmoduletypes "frontier/x/migration/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "frontier/app/params"
@@ -113,7 +114,7 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "cosmos"
+	AccountAddressPrefix = "front"
 	Name                 = "frontier"
 )
 

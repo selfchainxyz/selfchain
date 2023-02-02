@@ -1,0 +1,3 @@
+package types
+
+const MIN_MIGRATION_AMOUNT uint64 = 1000000000000000000
