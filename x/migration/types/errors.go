@@ -8,5 +8,5 @@ import (
 
 // x/migration module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, "Migration amount must be be a positive integer")
 )

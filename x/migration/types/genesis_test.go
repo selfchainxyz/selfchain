@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"frontier/x/migration/types"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,9 +26,11 @@ func TestGenesisState_Validate(t *testing.T) {
 				TokenMigrationList: []types.TokenMigration{
 					{
 						MsgHash: "0",
+						Processed: false,
 					},
 					{
 						MsgHash: "1",
+						Processed: false,
 					},
 				},
 				Acl: &types.Acl{
@@ -44,9 +47,11 @@ func TestGenesisState_Validate(t *testing.T) {
 				TokenMigrationList: []types.TokenMigration{
 					{
 						MsgHash: "0",
+						Processed: false,
 					},
 					{
 						MsgHash: "0",
+						Processed: false,
 					},
 				},
 			},
