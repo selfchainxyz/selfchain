@@ -3,6 +3,7 @@ package types
 import (
 	commontest "frontier/testutil"
 	"frontier/testutil/sample"
+	"strconv"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,7 +22,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgMigrate{
 				Creator: "invalid_address",
-				Amount: MIN_MIGRATION_AMOUNT,
+				Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
 				DestAddress: sample.AccAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
@@ -29,7 +30,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgMigrate{
 				Creator: sample.AccAddress(),
-				Amount: MIN_MIGRATION_AMOUNT,
+				Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
 				DestAddress: sample.AccAddress(),
 			},
 		},
@@ -50,7 +51,7 @@ func  TestMsgMigrate_ValidateBasic_min_amount(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: MIN_MIGRATION_AMOUNT - 1,
+		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT - 1, 10),
 	}	
 
 	err := msg.ValidateBasic()
@@ -62,7 +63,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: MIN_MIGRATION_AMOUNT,
+		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
 	}	
 
 	err := msg.ValidateBasic()
@@ -72,7 +73,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg2 := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount: MIN_MIGRATION_AMOUNT,
+		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
 	}	
 
 	err2 := msg2.ValidateBasic()
@@ -82,7 +83,7 @@ func  TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	msg3 := MsgMigrate{
 		Creator: sample.AccAddress(),
 		DestAddress: sample.AccAddress(),
-		Amount: MIN_MIGRATION_AMOUNT,
+		Amount: strconv.FormatUint(MIN_MIGRATION_AMOUNT, 10),
 	}
 	err3 := msg3.ValidateBasic()
 	

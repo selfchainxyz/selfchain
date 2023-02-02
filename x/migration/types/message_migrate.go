@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -9,7 +11,7 @@ const TypeMsgMigrate = "migrate"
 
 var _ sdk.Msg = &MsgMigrate{}
 
-func NewMsgMigrate(creator string, ethAddress string, destAddress string, amount uint64, token uint64) *MsgMigrate {
+func NewMsgMigrate(creator string, ethAddress string, destAddress string, amount string, token uint64) *MsgMigrate {
 	return &MsgMigrate{
 		Creator:     creator,
 		EthAddress:  ethAddress,
@@ -49,7 +51,7 @@ func (msg *MsgMigrate) ValidateBasic() error {
 	}
 
 	// we don't want to get spammed people who migrate small amounts
-	if msg.Amount < MIN_MIGRATION_AMOUNT {
+	amount, err := strconv.ParseUint(msg.Amount, 10, 64); if amount < MIN_MIGRATION_AMOUNT && err != nil {
 		return ErrInvalidMigrationAmount
 	}
 

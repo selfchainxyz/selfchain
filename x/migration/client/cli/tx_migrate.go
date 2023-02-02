@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"frontier/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -21,10 +22,8 @@ func CmdMigrate() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argEthAddress := args[0]
 			argDestAddress := args[1]
-			argAmount, err := cast.ToUint64E(args[2])
-			if err != nil {
-				return err
-			}
+			argAmount := args[2]
+			
 			argToken, err := cast.ToUint64E(args[3])
 			if err != nil {
 				return err
