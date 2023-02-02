@@ -10,10 +10,11 @@ service Msg {
 }
 message MsgMigrate {
   string creator     = 1;
-  string ethAddress  = 2;
-  string destAddress = 3;
-  uint64 amount      = 4;
-  uint64 token       = 5;
+  string txHash      = 2;
+  string ethAddress  = 3;
+  string destAddress = 4;
+  uint64 amount      = 5;
+  uint64 token       = 6;
 }
 
 message MsgMigrateResponse {}
