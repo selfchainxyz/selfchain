@@ -8,6 +8,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "frontier/migration/params.proto";
 import "frontier/migration/token_migration.proto";
 import "frontier/migration/acl.proto";
+import "frontier/migration/migrator.proto";
 
 option go_package = "frontier/x/migration/types";
 
@@ -33,6 +34,16 @@ service Query {
   // Queries a Acl by index.
   rpc Acl (QueryGetAclRequest) returns (QueryGetAclResponse) {
     option (google.api.http).get = "/frontier/migration/acl";
+  
+  }
+  
+  // Queries a list of Migrator items.
+  rpc Migrator    (QueryGetMigratorRequest) returns (QueryGetMigratorResponse) {
+    option (google.api.http).get = "/frontier/migration/migrator/{migrator}";
+  
+  }
+  rpc MigratorAll (QueryAllMigratorRequest) returns (QueryAllMigratorResponse) {
+    option (google.api.http).get = "/frontier/migration/migrator";
   
   }
 }
@@ -67,5 +78,22 @@ message QueryGetAclRequest {}
 
 message QueryGetAclResponse {
   Acl Acl = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetMigratorRequest {
+  string migrator = 1;
+}
+
+message QueryGetMigratorResponse {
+  Migrator migrator = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllMigratorRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllMigratorResponse {
+  repeated Migrator                               migrator   = 1 [(gogoproto.nullable) = false];
+           cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 

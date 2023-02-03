@@ -10,15 +10,15 @@ import (
 
 func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	
-	acl, found := k.GetAcl(ctx); if !found {
+
+	acl, found := k.GetAcl(ctx)
+	if !found {
 		panic("Acl not found")
 	}
 
 	_ = acl
 
 	// 1. Make sure signer is in the list of migrators
-
 
 	// 2. Create a hash of the message
 

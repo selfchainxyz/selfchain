@@ -12,6 +12,7 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		TokenMigrationList: []TokenMigration{},
 		Acl:                nil,
+		MigratorList:       []Migrator{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 	}
@@ -29,6 +30,16 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("duplicated index for tokenMigration")
 		}
 		tokenMigrationIndexMap[index] = struct{}{}
+	}
+	// Check for duplicated index in migrator
+	migratorIndexMap := make(map[string]struct{})
+
+	for _, elem := range gs.MigratorList {
+		index := string(MigratorKey(elem.Migrator))
+		if _, ok := migratorIndexMap[index]; ok {
+			return fmt.Errorf("duplicated index for migrator")
+		}
+		migratorIndexMap[index] = struct{}{}
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 

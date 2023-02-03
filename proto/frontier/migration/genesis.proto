@@ -6,6 +6,7 @@ import "gogoproto/gogo.proto";
 import "frontier/migration/params.proto";
 import "frontier/migration/token_migration.proto";
 import "frontier/migration/acl.proto";
+import "frontier/migration/migrator.proto";
 
 option go_package = "frontier/x/migration/types";
 
@@ -14,5 +15,6 @@ message GenesisState {
            Params         params             = 1 [(gogoproto.nullable) = false];
   repeated TokenMigration tokenMigrationList = 2 [(gogoproto.nullable) = false];
            Acl            acl                = 3;
+  repeated Migrator       migratorList       = 4 [(gogoproto.nullable) = false];
 }
 

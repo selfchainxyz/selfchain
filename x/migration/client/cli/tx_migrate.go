@@ -23,7 +23,7 @@ func CmdMigrate() *cobra.Command {
 			argEthAddress := args[0]
 			argDestAddress := args[1]
 			argAmount := args[2]
-			
+
 			argToken, err := cast.ToUint64E(args[3])
 			if err != nil {
 				return err

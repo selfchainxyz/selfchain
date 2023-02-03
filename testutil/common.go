@@ -5,11 +5,11 @@ import (
 )
 
 func InitSDKConfig() {
-	accountPubKeyPrefix :="frontpub"
-	validatorAddressPrefix :="frontvaloper"
-	validatorPubKeyPrefix :="frontvaloperpub"
-	consNodeAddressPrefix :="frontvalcons"
-	consNodePubKeyPrefix :="frontvalconspub"
+	accountPubKeyPrefix := "frontpub"
+	validatorAddressPrefix := "frontvaloper"
+	validatorPubKeyPrefix := "frontvaloperpub"
+	consNodeAddressPrefix := "frontvalcons"
+	consNodePubKeyPrefix := "frontvalconspub"
 
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount("front", accountPubKeyPrefix)

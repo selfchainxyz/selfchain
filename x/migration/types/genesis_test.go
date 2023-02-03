@@ -25,16 +25,24 @@ func TestGenesisState_Validate(t *testing.T) {
 
 				TokenMigrationList: []types.TokenMigration{
 					{
-						MsgHash: "0",
+						MsgHash:   "0",
 						Processed: false,
 					},
 					{
-						MsgHash: "1",
+						MsgHash:   "1",
 						Processed: false,
 					},
 				},
 				Acl: &types.Acl{
-					Admin:     "25",
+					Admin: "25",
+				},
+				MigratorList: []types.Migrator{
+					{
+						Migrator: "0",
+					},
+					{
+						Migrator: "1",
+					},
 				},
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
@@ -45,12 +53,26 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				TokenMigrationList: []types.TokenMigration{
 					{
-						MsgHash: "0",
+						MsgHash:   "0",
 						Processed: false,
 					},
 					{
-						MsgHash: "0",
+						MsgHash:   "0",
 						Processed: false,
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "duplicated migrator",
+			genState: &types.GenesisState{
+				MigratorList: []types.Migrator{
+					{
+						Migrator: "0",
+					},
+					{
+						Migrator: "0",
 					},
 				},
 			},

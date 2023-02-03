@@ -9,8 +9,9 @@ func getMinMigrationAmount() *uint256.Int {
 }
 
 type Token int64
+
 // Token enum
 const (
-	Front Token    = 0
+	Front    Token = 0
 	Hotcross Token = 1
 )
