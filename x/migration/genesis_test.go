@@ -7,6 +7,7 @@ import (
 	"frontier/testutil/nullify"
 	"frontier/x/migration"
 	"frontier/x/migration/types"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +25,6 @@ func TestGenesis(t *testing.T) {
 		},
 		Acl: &types.Acl{
 			Admin:     "56",
-			Migrators: []string{"6"},
 		},
 		// this line is used by starport scaffolding # genesis/test/state
 	}

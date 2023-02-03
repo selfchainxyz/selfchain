@@ -33991,10 +33991,6 @@ paths:
                 properties:
                   admin:
                     type: string
-                  migrators:
-                    type: array
-                    items:
-                      type: string
         default:
           description: An unexpected error response.
           schema:
@@ -70543,10 +70539,6 @@ definitions:
     properties:
       admin:
         type: string
-      migrators:
-        type: array
-        items:
-          type: string
   frontier.migration.MsgMigrateResponse:
     type: object
   frontier.migration.Params:
@@ -70598,10 +70590,6 @@ definitions:
         properties:
           admin:
             type: string
-          migrators:
-            type: array
-            items:
-              type: string
   frontier.migration.QueryGetTokenMigrationResponse:
     type: object
     properties:
