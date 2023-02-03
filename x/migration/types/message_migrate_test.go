@@ -52,7 +52,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgMigrate_ValidateBasic_minAmount(t *testing.T) {
+func TestValidateBasicMinAmount(t *testing.T) {
 	msg := MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
@@ -66,7 +66,7 @@ func TestMsgMigrate_ValidateBasic_minAmount(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidMigrationAmount)
 }
 
-func TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
+func TestValidateBasicDestAddress(t *testing.T) {
 	// wrong prefix
 	msg := MsgMigrate{
 		Creator:     sample.AccAddress(),
@@ -107,7 +107,7 @@ func TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 	require.NoError(t, err3)
 }
 
-func TestMsgMigrate_ValidateBasic_WrongToken(t *testing.T) {
+func TestValidateBasicWrongToken(t *testing.T) {
 	msg := MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
@@ -121,7 +121,7 @@ func TestMsgMigrate_ValidateBasic_WrongToken(t *testing.T) {
 	require.ErrorIs(t, err, ErrTokenNotSupported)
 }
 
-func TestMsgMigrate_ValidateBasic_EmptyStringValues(t *testing.T) {
+func TestValidateBasicEmptyStringValues(t *testing.T) {
 	msg := MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "",
