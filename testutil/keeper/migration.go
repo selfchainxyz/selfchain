@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"frontier/x/migration/keeper"
+	test "frontier/x/migration/tests/mock"
 	"frontier/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -18,6 +20,10 @@ import (
 )
 
 func MigrationKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+	return MigrationKeeperWithMocks(t, nil)
+}
+
+func MigrationKeeperWithMocks(t testing.TB, bank *test.MockBankKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
