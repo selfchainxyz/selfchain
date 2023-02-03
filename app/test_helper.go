@@ -50,7 +50,6 @@ func (ao EmptyAppOptions) Get(o string) interface{} {
 	return nil
 }
 
-
 // DefaultConsensusParams defines the default Tendermint consensus params used in
 // App testing.
 var DefaultConsensusParams = &abci.ConsensusParams{

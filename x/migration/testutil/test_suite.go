@@ -4,6 +4,7 @@ import (
 	"frontier/app"
 	"frontier/x/migration/keeper"
 	"frontier/x/migration/types"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -14,6 +15,14 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
+var (
+	migrationModuleAddress string
+)
+
+func TestCheckersKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
+}
+
 type IntegrationTestSuite struct {
 	suite.Suite
 
@@ -22,10 +31,6 @@ type IntegrationTestSuite struct {
 	ctx         sdk.Context
 	queryClient types.QueryClient
 }
-
-var (
-	migrationModuleAddress string
-)
 
 func (suite *IntegrationTestSuite) SetupTest() {
 	app := app.Setup(false)
