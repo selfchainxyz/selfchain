@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	Alice = "front1wnr2vnx8tjxv8mkp20dagdvn8pylr7x7l0mt9s"
-	Bob   = "front1kphjpt7crfmlhjyzvf44ng3ye9rvfy7z3pyajj"
-	Carol = "front1skzx07z9nhnv5js3x5ucchey7yyc6enk2l3sqx"
-	Migrator_1 = "front16077t285ajgp5a9retp4fkhs7enusr2n3lp4jg"
-	Migrator_2 = "front1wnr2vnx8tjxv8mkp20dagdvn8pylr7x7l0mt9s"
+	Alice = "front1pvqswgpwjl8273gzqk98ntr8jgvdmvw5cy2asa"
+	Bob   = "front1dv35uwyu5h99x80etl6t0nd3q0425jk8ru5fsy"
+	Carol = "front1ruy8kz8tqn9teeg6zqj9fg3e2w6xckxrt6spx8"
+	Migrator_1 = "front18alpt2t8vw8sxuf5pe0lz3ktmtc4c2wn47r7nf"
+	Migrator_2 = "front1wty56897zvnva2lcz30sp368eg8zj4z506g50r"
 )
 
 func InitSDKConfig() {

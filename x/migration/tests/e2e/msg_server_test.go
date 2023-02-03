@@ -33,6 +33,7 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
+	// Alice who is not a migrator is trying to mint 1M tokens for free
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
 		Creator: test.Alice,
 		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -42,6 +43,6 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 		Token: 0,
 	})
 
-	suite.Require().ErrorIs(err, types.ErrIntOverflowAcl)
+	suite.Require().ErrorIs(err, types.ErrUnknownMigrator)
 }
 

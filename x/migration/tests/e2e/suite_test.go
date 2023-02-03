@@ -35,7 +35,8 @@ type IntegrationTestSuite struct {
 }
 
 func (suite *IntegrationTestSuite) SetupTest() {
-	app := app.Setup(false)
+	test.InitSDKConfig()
+	app := app.Setup(suite.T(), false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
@@ -92,7 +93,6 @@ func getBankGenesis() *banktypes.GenesisState {
 
 	return state
 }
-
 
 func (suite *IntegrationTestSuite) setupSuiteWithBalances() {
 	suite.app.BankKeeper.InitGenesis(suite.ctx, getBankGenesis())
