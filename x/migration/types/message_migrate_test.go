@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgMigrate{
 				Creator:     "invalid_address",
-				Amount:      getMinMigrationAmount().Hex(),
+				Amount:      getMinMigrationAmount().String(),
 				EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 				DestAddress: sample.AccAddress(),
 				Token:       uint64(Front),
@@ -33,7 +32,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgMigrate{
 				Creator:     sample.AccAddress(),
-				Amount:      getMinMigrationAmount().Hex(),
+				Amount:      getMinMigrationAmount().String(),
 				EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 				DestAddress: sample.AccAddress(),
 				Token:       uint64(Front),
@@ -58,7 +57,7 @@ func TestMsgMigrate_ValidateBasic_minAmount(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      uint256.NewInt(0).Sub(getMinMigrationAmount(), uint256.NewInt(1)).Hex(),
+		Amount:      getMinMigrationAmount().SubUint64(1).String(),
 		Token:       uint64(Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -73,7 +72,7 @@ func TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       uint64(Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -86,7 +85,7 @@ func TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       uint64(Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -99,7 +98,7 @@ func TestMsgMigrate_ValidateBasic_destAddress(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: sample.AccAddress(),
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       uint64(Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -113,7 +112,7 @@ func TestMsgMigrate_ValidateBasic_WrongToken(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       2,
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -127,7 +126,7 @@ func TestMsgMigrate_ValidateBasic_EmptyStringValues(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       uint64(Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
@@ -139,7 +138,7 @@ func TestMsgMigrate_ValidateBasic_EmptyStringValues(t *testing.T) {
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().Hex(),
+		Amount:      getMinMigrationAmount().String(),
 		Token:       uint64(Hotcross),
 		TxHash:      "",
 	}

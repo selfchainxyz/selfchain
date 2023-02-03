@@ -1,9 +1,9 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	uint256 "github.com/holiman/uint256"
 )
 
 const TypeMsgMigrate = "migrate"
@@ -52,8 +52,7 @@ func (msg *MsgMigrate) ValidateBasic() error {
 	}
 
 	// we don't want to get spammed people who migrate small amounts
-	amount, err := uint256.FromHex(msg.Amount)
-	if amount.Lt(getMinMigrationAmount()) || err != nil {
+	amount := sdkmath.NewUintFromString(msg.Amount); if amount.LT(getMinMigrationAmount()) {
 		return ErrInvalidMigrationAmount
 	}
 

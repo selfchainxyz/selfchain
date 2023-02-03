@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"frontier/x/migration/types"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
@@ -33,10 +35,33 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		return nil, types.ErrMigrationProcessed
 	}
 
-	// 4. Mint new tokens to the destAddress
+	// 4. Calculate the correct amount to mint
+	amount := sdkmath.NewUintFromString(msg.Amount)
 
-	// TODO: Handling the message
-	_ = ctx
+	var ratio uint64
+	switch msg.Token {
+	case uint64(types.Front):
+		ratio = types.FRONT_RATIO
+	case uint64(types.HOTCROSS_RATIO):
+		ratio = types.HOTCROSS_RATIO
+	}
 
+	mintedAmount := amount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
+	mintedCoins := sdk.NewCoins(sdk.NewCoin(
+		types.DefaultParams().String(),
+		sdkmath.NewIntFromBigInt(mintedAmount.BigInt()),
+	))
+	
+	// 5. Mint new coins
+	mintError := k.bankKeeper.MintCoins(ctx, types.ModuleName, mintedCoins); if mintError != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
+	}
+
+	// 6. transfer coins to destAddress
+
+	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
+	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
+	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, destAddr, mintedCoins)
+	
 	return &types.MsgMigrateResponse{}, nil
 }

@@ -1,11 +1,13 @@
 package types
 
-import uint256 "github.com/holiman/uint256"
+import (
+	sdkmath "cosmossdk.io/math"
+)
 
 // This is 1 Token based on 18 decimal points.
 // TODO: we might want to move that to the store so we can change that value???
-func getMinMigrationAmount() *uint256.Int {
-	return uint256.NewInt(1000000000000000000)
+func getMinMigrationAmount() sdkmath.Uint {
+	return sdkmath.NewUint(1000000000000000000)
 }
 
 type Token int64
@@ -14,4 +16,10 @@ type Token int64
 const (
 	Front    Token = 0
 	Hotcross Token = 1
+)
+
+// Ratios
+const (
+	FRONT_RATIO = 10 // 10% 
+	HOTCROSS_RATIO = 20
 )
