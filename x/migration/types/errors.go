@@ -10,7 +10,7 @@ import (
 
 // x/migration module sentinel errors
 var (
-	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %s", getMinMigrationAmount().String()))
+	ErrInvalidMigrationAmount = sdkerrors.Register(ModuleName, 1100, fmt.Sprintf("Migration amount should be at least %s", GetMinMigrationAmount().String()))
 	ErrTokenNotSupported      = sdkerrors.Register(ModuleName, 1101, "Token should either Front or Hotcross")
 	ErrEmptyStringValue       = sdkerrors.Register(ModuleName, 1102, "TxHash or EthAddress have empty string value")
 	ErrUnknownMigrator        = sdkerrors.Register(ModuleName, 1103, "Unknown migrator")

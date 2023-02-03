@@ -1,8 +1,9 @@
-package types
+package test
 
 import (
-	commontest "frontier/testutil"
 	"frontier/testutil/sample"
+	test "frontier/x/migration/tests"
+	"frontier/x/migration/types"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -10,32 +11,32 @@ import (
 )
 
 func TestMsgMigrate_ValidateBasic(t *testing.T) {
-	commontest.InitSDKConfig()
+	test.InitSDKConfig()
 
 	tests := []struct {
 		name string
-		msg  MsgMigrate
+		msg  types.MsgMigrate
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgMigrate{
+			msg: types.MsgMigrate{
 				Creator:     "invalid_address",
-				Amount:      getMinMigrationAmount().String(),
+				Amount:      types.GetMinMigrationAmount().String(),
 				EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 				DestAddress: sample.AccAddress(),
-				Token:       uint64(Front),
+				Token:       uint64(types.Front),
 				TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
-			msg: MsgMigrate{
+			msg: types.MsgMigrate{
 				Creator:     sample.AccAddress(),
-				Amount:      getMinMigrationAmount().String(),
+				Amount:      types.GetMinMigrationAmount().String(),
 				EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 				DestAddress: sample.AccAddress(),
-				Token:       uint64(Front),
+				Token:       uint64(types.Front),
 				TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 			},
 		},
@@ -53,27 +54,27 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 }
 
 func TestValidateBasicMinAmount(t *testing.T) {
-	msg := MsgMigrate{
+	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().SubUint64(1).String(),
-		Token:       uint64(Hotcross),
+		Amount:      types.GetMinMigrationAmount().SubUint64(1).String(),
+		Token:       uint64(types.Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 
 	err := msg.ValidateBasic()
-	require.ErrorIs(t, err, ErrInvalidMigrationAmount)
+	require.ErrorIs(t, err, types.ErrInvalidMigrationAmount)
 }
 
 func TestValidateBasicDestAddress(t *testing.T) {
 	// wrong prefix
-	msg := MsgMigrate{
+	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "cosmos1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().String(),
-		Token:       uint64(Front),
+		Amount:      types.GetMinMigrationAmount().String(),
+		Token:       uint64(types.Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 
@@ -81,12 +82,12 @@ func TestValidateBasicDestAddress(t *testing.T) {
 	require.ErrorIs(t, err, sdkerrors.ErrInvalidAddress)
 
 	// correct prefix but invalid address
-	msg2 := MsgMigrate{
+	msg2 := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().String(),
-		Token:       uint64(Front),
+		Amount:      types.GetMinMigrationAmount().String(),
+		Token:       uint64(types.Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 
@@ -94,12 +95,12 @@ func TestValidateBasicDestAddress(t *testing.T) {
 	require.ErrorIs(t, err2, sdkerrors.ErrInvalidAddress)
 
 	// correct prefix but invalid address
-	msg3 := MsgMigrate{
+	msg3 := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: sample.AccAddress(),
-		Amount:      getMinMigrationAmount().String(),
-		Token:       uint64(Front),
+		Amount:      types.GetMinMigrationAmount().String(),
+		Token:       uint64(types.Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 	err3 := msg3.ValidateBasic()
@@ -108,41 +109,41 @@ func TestValidateBasicDestAddress(t *testing.T) {
 }
 
 func TestValidateBasicWrongToken(t *testing.T) {
-	msg := MsgMigrate{
+	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().String(),
+		Amount:      types.GetMinMigrationAmount().String(),
 		Token:       2,
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 
 	err := msg.ValidateBasic()
-	require.ErrorIs(t, err, ErrTokenNotSupported)
+	require.ErrorIs(t, err, types.ErrTokenNotSupported)
 }
 
 func TestValidateBasicEmptyStringValues(t *testing.T) {
-	msg := MsgMigrate{
+	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().String(),
-		Token:       uint64(Hotcross),
+		Amount:      types.GetMinMigrationAmount().String(),
+		Token:       uint64(types.Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 	}
 
 	err := msg.ValidateBasic()
-	require.ErrorIs(t, err, ErrEmptyStringValue)
+	require.ErrorIs(t, err, types.ErrEmptyStringValue)
 
-	msg2 := MsgMigrate{
+	msg2 := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
-		Amount:      getMinMigrationAmount().String(),
-		Token:       uint64(Hotcross),
+		Amount:      types.GetMinMigrationAmount().String(),
+		Token:       uint64(types.Hotcross),
 		TxHash:      "",
 	}
 
 	err2 := msg2.ValidateBasic()
-	require.ErrorIs(t, err2, ErrEmptyStringValue)
+	require.ErrorIs(t, err2, types.ErrEmptyStringValue)
 }

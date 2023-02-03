@@ -1,4 +1,4 @@
-package commontest
+package test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,4 +25,3 @@ func InitSDKConfig() {
 	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
 	config.Seal()
 }
-

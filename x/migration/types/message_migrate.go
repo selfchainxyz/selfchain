@@ -52,7 +52,7 @@ func (msg *MsgMigrate) ValidateBasic() error {
 	}
 
 	// we don't want to get spammed people who migrate small amounts
-	amount := sdkmath.NewUintFromString(msg.Amount); if amount.LT(getMinMigrationAmount()) {
+	amount := sdkmath.NewUintFromString(msg.Amount); if amount.LT(GetMinMigrationAmount()) {
 		return ErrInvalidMigrationAmount
 	}
 

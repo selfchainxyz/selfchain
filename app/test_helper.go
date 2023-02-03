@@ -2,15 +2,15 @@ package app
 
 import (
 	"encoding/json"
+	"frontier/app/params"
 	"time"
 
-	"cosmossdk.io/api/tendermint/abci"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/go-kit/log"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -20,20 +20,21 @@ import (
 // This function should be used only internally (in the SDK).
 // App user should'nt create new codecs - use the app.AppCodec instead.
 // [DEPRECATED]
-func MakeTestEncodingConfigAmino() cosmoscmd.EncodingConfig {
-	cdc := codec.NewLegacyAmino()
+func MakeTestEncodingConfigAmino() params.EncodingConfig {
+	amino := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 
-	return cosmoscmd.EncodingConfig{
+	return params.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Marshaler:         marshaler,
-		TxConfig:          tx.NewTxConfig(marshaler, tx.DefaultSignModes),
-		Amino:             cdc,
+		TxConfig:          txCfg,
+		Amino:             amino,
 	}
 }
 
-func MakeTestEncodingConfig() cosmoscmd.EncodingConfig {
+func MakeTestEncodingConfig() params.EncodingConfig {
 	encodingConfig := MakeTestEncodingConfigAmino()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)

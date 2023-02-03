@@ -1,8 +1,10 @@
-package test_suite
+// This is used for integration tests
+package e2e
 
 import (
 	"frontier/app"
 	"frontier/x/migration/keeper"
+	test "frontier/x/migration/tests"
 	"frontier/x/migration/types"
 	"testing"
 	"time"
@@ -48,4 +50,50 @@ func (suite *IntegrationTestSuite) SetupTest() {
 	suite.msgServer = keeper.NewMsgServerImpl(app.MigrationKeeper)
 	suite.ctx = ctx
 	suite.queryClient = queryClient
+}
+
+func makeBalance(address string, balance int64, denom string) banktypes.Balance {
+	return banktypes.Balance{
+		Address: address,
+		Coins: sdk.Coins{
+			sdk.Coin{
+				Denom:  denom,
+				Amount: sdk.NewInt(balance),
+			},
+		},
+	}
+}
+
+func addAll(balances []banktypes.Balance) sdk.Coins {
+	total := sdk.NewCoins()
+	for _, balance := range balances {
+		total = total.Add(balance.Coins...)
+	}
+	return total
+}
+
+func getBankGenesis() *banktypes.GenesisState {
+	coins := []banktypes.Balance{
+		makeBalance(test.Alice, 1000000000, "ufront"),
+		makeBalance(test.Bob, 1000000000, "ufront"),
+		makeBalance(test.Carol, 1000000000, "ufront"),
+		makeBalance(test.Migrator_1, 1000000000, "ufront"),
+		makeBalance(test.Migrator_2, 1000000000, "ufront"),
+	}
+	supply := banktypes.Supply{
+		Total: addAll(coins),
+	}
+
+	state := banktypes.NewGenesisState(
+		banktypes.DefaultParams(),
+		coins,
+		supply.Total,
+		[]banktypes.Metadata{})
+
+	return state
+}
+
+
+func (suite *IntegrationTestSuite) setupSuiteWithBalances() {
+	suite.app.BankKeeper.InitGenesis(suite.ctx, getBankGenesis())
 }
