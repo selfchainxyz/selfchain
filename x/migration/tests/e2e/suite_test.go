@@ -1,5 +1,5 @@
 // This is used for integration tests
-package e2e
+package test
 
 import (
 	"frontier/app"
@@ -21,7 +21,7 @@ var (
 	migrationModuleAddress string
 )
 
-func TestCheckersKeeperTestSuite(t *testing.T) {
+func TestMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 

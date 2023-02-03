@@ -1,4 +1,4 @@
-package e2e
+package test
 
 import (
 	test "frontier/x/migration/tests"
@@ -42,6 +42,6 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 		Token: 0,
 	})
 
-	suite.Require().ErrorIs(err, types.ErrUnknownMigrator)
+	suite.Require().ErrorIs(err, types.ErrIntOverflowAcl)
 }
 
