@@ -7,28 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper) {
-// 	k, ctx := keepertest.MigrationKeeper(t)
-
-// 	// setup genesis params for this module
-// 	genesis := *types.DefaultGenesis()
-// 	genesis.MigratorList = []types.Migrator {
-// 		{
-// 			Migrator: Migrator_1,
-// 		},
-// 		{
-// 			Migrator: Migrator_2,
-// 		},
-// 	}
-
-// 	migration.InitGenesis(ctx, *k, genesis)
-
-// 	server := keeper.NewMsgServerImpl(*k)
-// 	context := sdk.WrapSDKContext(ctx)
-
-// 	return server, context, *k
-// }
-
 func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)

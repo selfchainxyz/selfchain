@@ -5,6 +5,6 @@ option go_package = "frontier/x/migration/types";
 
 message Migrator {
   string migrator = 1; 
-  
+  bool exists = 2;
 }
 

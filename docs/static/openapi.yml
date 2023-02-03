@@ -34027,6 +34027,8 @@ paths:
                   properties:
                     migrator:
                       type: string
+                    exists:
+                      type: boolean
               pagination:
                 type: object
                 properties:
@@ -34147,6 +34149,8 @@ paths:
                 properties:
                   migrator:
                     type: string
+                  exists:
+                    type: boolean
         default:
           description: An unexpected error response.
           schema:
@@ -70705,6 +70709,8 @@ definitions:
     properties:
       migrator:
         type: string
+      exists:
+        type: boolean
   frontier.migration.MsgMigrateResponse:
     type: object
   frontier.migration.Params:
@@ -70720,6 +70726,8 @@ definitions:
           properties:
             migrator:
               type: string
+            exists:
+              type: boolean
       pagination:
         type: object
         properties:
@@ -70800,6 +70808,8 @@ definitions:
         properties:
           migrator:
             type: string
+          exists:
+            type: boolean
   frontier.migration.QueryGetTokenMigrationResponse:
     type: object
     properties:

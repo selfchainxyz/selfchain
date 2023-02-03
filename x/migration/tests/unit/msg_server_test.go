@@ -26,9 +26,11 @@ func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomo
 	genesis.MigratorList = []types.Migrator {
 		{
 			Migrator: test.Migrator_1,
+			Exists: true,
 		},
 		{
 			Migrator: test.Migrator_2,
+			Exists: true,
 		},
 	}
 
@@ -58,12 +60,14 @@ func TestShouldFailIfInvalidMigrator(t *testing.T) {
 }
 
 func TestShouldMintAmount(t *testing.T) {
-	test.InitSDKConfig()
-
 	// create a couple of migrators
 	server, ctx, _, ctrl, mock := setup(t)
 	defer ctrl.Finish()
 	
+	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native ufront token
+	mock.ExpectMintToModule(ctx, 100000000000)
+	mock.ExpectReceiveCoins(ctx, test.Alice, 100000000000)
+
 	_, err := server.Migrate(ctx, &types.MsgMigrate{
 		Creator: test.Migrator_1,
 		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -74,6 +78,4 @@ func TestShouldMintAmount(t *testing.T) {
 	})
 
 	_ = err
-	
-	mock.ExpectMint(ctx, test.Alice, 1000000000000)
 }
