@@ -10,6 +10,8 @@ func getMinMigrationAmount() sdkmath.Uint {
 	return sdkmath.NewUint(1000000000000000000)
 }
 
+const DENOM = "ufront"
+
 type Token int64
 
 // Token enum

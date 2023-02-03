@@ -48,7 +48,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 
 	mintedAmount := amount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
 	mintedCoins := sdk.NewCoins(sdk.NewCoin(
-		types.DefaultParams().String(),
+		types.DENOM,
 		sdkmath.NewIntFromBigInt(mintedAmount.BigInt()),
 	))
 	
