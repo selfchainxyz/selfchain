@@ -15,6 +15,7 @@ message MsgMigrate {
   string destAddress = 4;
   string amount      = 5;
   uint64 token       = 6;
+  uint64 logIndex    = 7;
 }
 
 message MsgMigrateResponse {}
