@@ -66,5 +66,11 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, destAddr, mintedCoins)
 	
+	// 7. Store the token migration so it can't be processed again
+	k.SetTokenMigration(ctx, types.TokenMigration{
+		MsgHash: msgHash,
+		Processed: true,
+	})
+
 	return &types.MsgMigrateResponse{}, nil
 }

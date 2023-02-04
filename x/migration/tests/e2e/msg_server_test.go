@@ -45,3 +45,29 @@ func (suite *IntegrationTestSuite) TestShouldMintAmount() {
 
 	suite.Require().EqualValues(sdkmath.NewInt(100000000000), balAfter.Amount.Sub(balBefore.Amount))
 }
+
+func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {
+	suite.setupSuiteWithBalances()
+	ctx := sdk.WrapSDKContext(suite.ctx)
+	
+	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
+		Creator: test.Migrator_1,
+		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		DestAddress: test.Alice,
+		Amount: "1000000000000000000000000", // 1 Milion
+		Token: 0,
+	})
+	suite.Require().Nil(err)
+
+	_, err2 := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
+		Creator: test.Migrator_1,
+		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		DestAddress: test.Alice,
+		Amount: "1000000000000000000000000", // 1 Milion
+		Token: 0,
+	})
+
+	suite.Require().ErrorIs(err2, types.ErrMigrationProcessed)
+}
