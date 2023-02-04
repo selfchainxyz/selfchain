@@ -23,5 +23,5 @@ const (
 // Ratios
 const (
 	FRONT_RATIO = 10 // 10% 
-	HOTCROSS_RATIO = 20
+	HOTCROSS_RATIO = 5
 )

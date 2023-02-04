@@ -44,7 +44,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	switch msg.Token {
 	case uint64(types.Front):
 		ratio = types.FRONT_RATIO
-	case uint64(types.HOTCROSS_RATIO):
+	case uint64(types.Hotcross):
 		ratio = types.HOTCROSS_RATIO
 	}
 
