@@ -3,6 +3,7 @@ package test
 
 import (
 	"frontier/app"
+	"frontier/x/migration"
 	"frontier/x/migration/keeper"
 	test "frontier/x/migration/tests"
 	"frontier/x/migration/types"
@@ -22,6 +23,7 @@ var (
 )
 
 func TestMigrationTestSuite(t *testing.T) {
+	test.InitSDKConfig()
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
@@ -35,22 +37,39 @@ type IntegrationTestSuite struct {
 }
 
 func (suite *IntegrationTestSuite) SetupTest() {
-	test.InitSDKConfig()
 	app := app.Setup(suite.T(), false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 	app.BankKeeper.SetParams(ctx, banktypes.DefaultParams())
 	migrationModuleAddress = app.AccountKeeper.GetModuleAddress(types.ModuleName).String()
-
+	
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, app.MigrationKeeper)
 	queryClient := types.NewQueryClient(queryHelper)
-
+	
 	suite.app = app
 	suite.msgServer = keeper.NewMsgServerImpl(app.MigrationKeeper)
 	suite.ctx = ctx
 	suite.queryClient = queryClient
+	
+	migration.InitGenesis(ctx, app.MigrationKeeper, getModuleGenesis())
+}
+
+func getModuleGenesis() types.GenesisState {
+	genesis := *types.DefaultGenesis()
+	genesis.MigratorList = []types.Migrator {
+		{
+			Migrator: test.Migrator_1,
+			Exists: true,
+		},
+		{
+			Migrator: test.Migrator_2,
+			Exists: true,
+		},
+	}
+
+	return genesis
 }
 
 func makeBalance(address string, balance int64, denom string) banktypes.Balance {
