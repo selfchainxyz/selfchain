@@ -21,6 +21,7 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 
 	suite.Require().ErrorIs(err, types.ErrUnknownMigrator)
@@ -39,6 +40,7 @@ func (suite *IntegrationTestSuite) TestShouldMintAmount() {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 	_ = err
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
@@ -57,6 +59,7 @@ func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 	suite.Require().Nil(err)
 
@@ -67,6 +70,7 @@ func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 
 	suite.Require().ErrorIs(err2, types.ErrMigrationProcessed)

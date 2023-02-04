@@ -54,6 +54,7 @@ func TestShouldFailIfInvalidMigrator(t *testing.T) {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 
 	require.ErrorIs(t, err, types.ErrUnknownMigrator)
@@ -75,6 +76,7 @@ func TestShouldMintAmount(t *testing.T) {
 		DestAddress: test.Alice,
 		Amount: "1000000000000000000000000", // 1 Milion
 		Token: 0,
+		LogIndex: 0,
 	})
 
 	_ = err

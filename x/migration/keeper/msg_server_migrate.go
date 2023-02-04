@@ -22,12 +22,13 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 
 	// 2. Create a hash of the message
 	encodedMsg := fmt.Sprintf(
-		"%s|%s|%s|%d|%s",
+		"%s|%s|%s|%d|%s|%d",
 		msg.EthAddress,
 		msg.DestAddress,
 		msg.Amount,
 		msg.Token,
 		msg.TxHash,
+		msg.LogIndex,
 	)
 	msgHash := fmt.Sprintf("%x", sha256.Sum256([]byte(encodedMsg)))
 
