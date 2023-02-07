@@ -1,6 +1,6 @@
 {
-  "genesis_time": "2023-02-07T09:41:16.642690816Z",
-  "chain_id": "frontier",
+  "genesis_time": "2023-02-07T09:41:15.984788899Z",
+  "chain_id": "frontier-1",
   "initial_height": "1",
   "consensus_params": {
     "block": {
@@ -30,7 +30,22 @@
         "sig_verify_cost_ed25519": "590",
         "sig_verify_cost_secp256k1": "1000"
       },
-      "accounts": []
+      "accounts": [
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "front170wr8ueremjq4ayge9ru8j8hxm76pl8l2edxkr",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "front1tv8v9w7hechxlldq29sac0qywcyayfp8f3sjkh",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        }
+      ]
     },
     "authz": {
       "authorization": []
@@ -40,7 +55,26 @@
         "send_enabled": [],
         "default_send_enabled": true
       },
-      "balances": [],
+      "balances": [
+        {
+          "address": "front1tv8v9w7hechxlldq29sac0qywcyayfp8f3sjkh",
+          "coins": [
+            {
+              "denom": "ufront",
+              "amount": "50000000000000"
+            }
+          ]
+        },
+        {
+          "address": "front170wr8ueremjq4ayge9ru8j8hxm76pl8l2edxkr",
+          "coins": [
+            {
+              "denom": "ufront",
+              "amount": "150000000000000"
+            }
+          ]
+        }
+      ],
       "supply": [],
       "denom_metadata": []
     },
@@ -50,7 +84,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "stake",
+        "denom": "ufront",
         "amount": "1000"
       }
     },
@@ -90,7 +124,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "stake",
+            "denom": "ufront",
             "amount": "10000000"
           }
         ],
@@ -181,7 +215,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "stake",
+        "mint_denom": "ufront",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
         "inflation_min": "0.070000000000000000",
@@ -207,7 +241,7 @@
         "max_validators": 100,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "stake",
+        "bond_denom": "ufront",
         "min_commission_rate": "0.000000000000000000"
       },
       "last_total_power": "0",
