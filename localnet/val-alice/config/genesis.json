@@ -1,6 +1,6 @@
 {
   "genesis_time": "2023-02-07T09:41:15.984788899Z",
-  "chain_id": "frontier",
+  "chain_id": "frontier-1",
   "initial_height": "1",
   "consensus_params": {
     "block": {
@@ -30,7 +30,15 @@
         "sig_verify_cost_ed25519": "590",
         "sig_verify_cost_secp256k1": "1000"
       },
-      "accounts": []
+      "accounts": [
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "front170wr8ueremjq4ayge9ru8j8hxm76pl8l2edxkr",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        }
+      ]
     },
     "authz": {
       "authorization": []
@@ -40,7 +48,17 @@
         "send_enabled": [],
         "default_send_enabled": true
       },
-      "balances": [],
+      "balances": [
+        {
+          "address": "front170wr8ueremjq4ayge9ru8j8hxm76pl8l2edxkr",
+          "coins": [
+            {
+              "denom": "ufront",
+              "amount": "150000000000000"
+            }
+          ]
+        }
+      ],
       "supply": [],
       "denom_metadata": []
     },
