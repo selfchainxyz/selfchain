@@ -10,13 +10,23 @@ const TypeMsgMigrate = "migrate"
 
 var _ sdk.Msg = &MsgMigrate{}
 
-func NewMsgMigrate(creator string, ethAddress string, destAddress string, amount string, token uint64) *MsgMigrate {
+func NewMsgMigrate(
+	creator string,
+	txHash string,
+	ethAddress string,
+	destAddress string,
+	amount string,
+	token uint64,
+	logIndex uint64,
+) *MsgMigrate {
 	return &MsgMigrate{
 		Creator:     creator,
+		TxHash: txHash,
 		EthAddress:  ethAddress,
 		DestAddress: destAddress,
 		Amount:      amount,
 		Token:       token,
+		LogIndex: logIndex,
 	}
 }
 
