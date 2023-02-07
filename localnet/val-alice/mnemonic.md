@@ -1,10 +1,10 @@
-- address: front170wr8ueremjq4ayge9ru8j8hxm76pl8l2edxkr
+- address: front1rnqvu55fxndcqw920rvpgl06fjr0hjedcl5vjx
   name: alice
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Aq2AaTdYPQ+8uVFnfd+FN/30cxi5gXVCMgGwbrKJ2pEj"}'
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Ag7UIfgQAypuqweTuvtPIRIjF9Lq4rTJ5oMBHhOLd9ko"}'
   type: local
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-exit worth run student wheel voyage drastic cat twice deny width faculty cinnamon mirror large program ridge flame share omit inject afraid girl room
+message another leisure emotion flush path cigar tunnel august sport vocal mango unusual people grain assist filter private bridge wink sniff decrease endless wagon
