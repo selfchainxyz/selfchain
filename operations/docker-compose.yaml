@@ -12,7 +12,7 @@ services:
     container_name: kms-alice
     image: tmkms_i:v0.12.2
     volumes:
-      - ./docker/kms-alice:/root/tmkms
+      - ../localnet/kms-alice:/root/tmkms
     networks:
       - net-alice-kms
 
@@ -21,7 +21,7 @@ services:
     container_name: val-alice
     image: frontierd_i
     volumes:
-      - ./docker/val-alice:/root/.frontier
+      - ../localnet/val-alice:/root/.frontier
     networks:
       - net-alice-kms
       - net-alice
@@ -34,7 +34,7 @@ services:
     container_name: sentry-alice
     image: frontierd_i
     volumes:
-       - ./docker/sentry-alice:/root/.frontier
+       - ../localnet/sentry-alice:/root/.frontier
     networks:
       - net-alice
       - net-public
@@ -44,7 +44,7 @@ services:
     container_name: val-bob
     image: frontierd_i
     volumes:
-      - ./docker/val-bob:/root/.frontier
+      - ../localnet/val-bob:/root/.frontier
     networks:
       - net-bob
 
@@ -53,7 +53,7 @@ services:
     container_name: sentry-bob
     image: frontierd_i
     volumes:
-      - ./docker/sentry-bob:/root/.frontier
+      - ../localnet/sentry-bob:/root/.frontier
     networks:
       - net-bob
       - net-public
@@ -67,6 +67,6 @@ services:
       - 0.0.0.0:26657:26657
       - 0.0.0.0:1317:1317
     volumes:
-      - ./docker/node-carol:/root/.frontier
+      - ../localnet/node-carol:/root/.frontier
     networks:
       - net-public
