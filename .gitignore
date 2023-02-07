@@ -8,3 +8,4 @@ build
 localnet/**/state/*
 localnet/**/data/*
 addrbook.json
+write-file-atomic-*
