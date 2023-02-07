@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	test "frontier/x/migration/tests"
 	"frontier/x/migration/types"
 
@@ -66,8 +65,6 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 	})
 	_ = err
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
-
-	fmt.Printf(">>>>>>>> %s", balAfter.Amount.Sub(balBefore.Amount))
 
 	suite.Require().EqualValues(sdkmath.NewInt(50000000000), balAfter.Amount.Sub(balBefore.Amount))
 }
