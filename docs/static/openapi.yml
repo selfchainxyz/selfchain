@@ -70715,6 +70715,8 @@ definitions:
     type: object
   frontier.migration.MsgMigrateResponse:
     type: object
+  frontier.migration.MsgRemoveMigratorResponse:
+    type: object
   frontier.migration.Params:
     type: object
     description: Params defines the parameters for the module.
