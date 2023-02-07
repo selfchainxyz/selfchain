@@ -1,0 +1,20 @@
+FROM --platform=linux ubuntu:22.04
+ARG BUILDARCH
+
+ENV LOCAL=/usr/local
+
+COPY build/frontd-linux-${BUILDARCH} ${LOCAL}/bin/frontd
+
+ENTRYPOINT [ "frontd" ]
+
+# Create the image
+# $ docker build -f Dockerfile-ubuntu-prod . -t frontd_i:v1
+# To test only 1 command
+# $ docker run --rm -it frontd_i:v1
+# To build container
+# $ docker create --name frontd -i -v $(pwd)/docker/val-alice:/root/.checkers frontd_i:v1
+# $ docker start frontd
+# To run server on it
+# $ docker exec -it frontd start
+# In other shell, to query it
+# $ docker exec -it frontd version

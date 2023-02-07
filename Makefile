@@ -1,4 +1,13 @@
-mock-expected-keepers:
-	mockgen -source=x/migration/types/expected_keepers.go \
-			-package test \
-			-destination=x/migration/tests/mock/expected_keepers_mocks.go 
+build-all:
+	GOOS=linux GOARCH=amd64 go build -o ./build/frontierd-linux-amd64 ./cmd/frontierd/main.go
+	GOOS=linux GOARCH=arm64 go build -o ./build/frontierd-linux-arm64 ./cmd/frontierd/main.go
+	GOOS=darwin GOARCH=amd64 go build -o ./build/frontierd-darwin-amd64 ./cmd/frontierd/main.go
+	GOOS=darwin GOARCH=arm64 go build -o ./build/frontierd-darwin-arm64 ./cmd/frontierd/main.go
+
+do-checksum:
+	cd build && sha256sum \
+		frontierd-linux-amd64 frontierd-linux-arm64 \
+		frontierd-darwin-amd64 frontierd-darwin-arm64 \
+		> frontier_checksum
+
+build-with-checksum: build-all do-checksum
