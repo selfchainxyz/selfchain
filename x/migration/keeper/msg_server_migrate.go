@@ -16,8 +16,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. Make sure signer is in the list of migrators
-	_, migratorExist := k.GetMigrator(ctx, msg.Creator)
-	if !migratorExist {
+	_, migratorExist := k.GetMigrator(ctx, msg.Creator); if !migratorExist {
 		return nil, types.ErrUnknownMigrator
 	}
 
