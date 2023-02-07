@@ -58,6 +58,9 @@ func (suite *IntegrationTestSuite) SetupTest() {
 
 func getModuleGenesis() types.GenesisState {
 	genesis := *types.DefaultGenesis()
+	genesis.Acl = &types.Acl{
+		Admin: test.AclAdmin,
+	};
 	genesis.MigratorList = []types.Migrator{
 		{
 			Migrator: test.Migrator_1,
