@@ -19,9 +19,9 @@ services:
   val-alice:
     command: start
     container_name: val-alice
-    image: frontd_i
+    image: frontierd_i
     volumes:
-      - ./docker/val-alice:/root/.front
+      - ./docker/val-alice:/root/.frontier
     networks:
       - net-alice-kms
       - net-alice
@@ -32,9 +32,9 @@ services:
   sentry-alice:
     command: start
     container_name: sentry-alice
-    image: frontd_i
+    image: frontierd_i
     volumes:
-       - ./docker/sentry-alice:/root/.front
+       - ./docker/sentry-alice:/root/.frontier
     networks:
       - net-alice
       - net-public
@@ -42,18 +42,18 @@ services:
   val-bob:
     command: start
     container_name: val-bob
-    image: frontd_i
+    image: frontierd_i
     volumes:
-      - ./docker/val-bob:/root/.front
+      - ./docker/val-bob:/root/.frontier
     networks:
       - net-bob
 
   sentry-bob:
     command: start
     container_name: sentry-bob
-    image: frontd_i
+    image: frontierd_i
     volumes:
-      - ./docker/sentry-bob:/root/.front
+      - ./docker/sentry-bob:/root/.frontier
     networks:
       - net-bob
       - net-public
@@ -61,24 +61,12 @@ services:
   node-carol:
     command: start
     container_name: node-carol
-    image: frontd_i
+    image: frontierd_i
     # In order to make your host computer look like an open node, expose Carol's node on all addresses of your host
     ports:
       - 0.0.0.0:26657:26657
       - 0.0.0.0:1317:1317
     volumes:
-      - ./docker/node-carol:/root/.front
-    networks:
-      - net-public
-      
-  val-ppoliani:
-    command: start
-    container_name: val-ppoliani
-    image: frontd_i
-    ports:
-      - 0.0.0.0:26658:26657
-      - 0.0.0.0:1318:1317
-    volumes:
-      - ./docker/val-ppoliani:/root/.front
+      - ./docker/node-carol:/root/.frontier
     networks:
       - net-public
