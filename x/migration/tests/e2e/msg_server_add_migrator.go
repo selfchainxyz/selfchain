@@ -8,7 +8,6 @@ import (
 )
 
 func (suite *IntegrationTestSuite) TestShouldIfSignerIsNotAdmin() {
-	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
 	// Alice tries to add herself to the list of migrators
@@ -18,4 +17,19 @@ func (suite *IntegrationTestSuite) TestShouldIfSignerIsNotAdmin() {
 	})
 
 	suite.Require().ErrorIs(err, types.ErrOnlyAdmin)
+}
+
+func (suite *IntegrationTestSuite) TestShouldSetTheNewMigrator() {
+	ctx := sdk.WrapSDKContext(suite.ctx)
+
+	// Alice tries to add herself to the list of migrators
+	_, err := suite.msgServer.AddMigrator(ctx, &types.MsgAddMigrator{
+		Creator:  test.AclAdmin,
+		Migrator: test.Alice,
+	})
+
+	suite.Require().Nil(err)
+
+	_, exists := suite.app.MigrationKeeper.GetMigrator(suite.ctx, test.Alice);
+	suite.Require().True(exists);
 }

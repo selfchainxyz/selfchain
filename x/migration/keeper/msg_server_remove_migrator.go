@@ -11,8 +11,7 @@ import (
 func (k msgServer) RemoveMigrator(goCtx context.Context, msg *types.MsgRemoveMigrator) (*types.MsgRemoveMigratorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	acl, aclExists := k.GetAcl(ctx)
-	if !aclExists {
+	acl, aclExists := k.GetAcl(ctx); if !aclExists {
 		panic("ACL does not exist")
 	}
 
