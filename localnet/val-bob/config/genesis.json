@@ -341,7 +341,9 @@
     "migration": {
       "params": {},
       "tokenMigrationList": [],
-      "acl": null,
+      "acl": {
+        "admin": "front1dexv46w9kzqjjr73cpannt74rxq63gtxsrszd8"
+      },
       "migratorList": []
     },
     "mint": {
