@@ -1,21 +1,25 @@
 version: 1
 accounts:
 - name: alice
+  mnemonic: message another leisure emotion flush path cigar tunnel august sport vocal mango unusual people grain assist filter private bridge wink sniff decrease endless wagon
   coins:
-  - 20000token
-  - 200000000stake
+  - 200000000ufront
 - name: bob
+  mnemonic: van almost scheme above bleak rely response leisure process victory sustain bottom nation vocal include volcano tattoo negative help sudden repeat case betray naive
   coins:
-  - 10000token
-  - 100000000stake
+  - 100000000ufront
 client:
   openapi:
     path: docs/static/openapi.yml
 faucet:
   name: bob
   coins:
-  - 5token
-  - 100000stake
+  - 100000ufront
 validators:
 - name: alice
-  bonded: 100000000stake
+  bonded: 100000000ufront
+genesis:
+  app_state:
+    staking:
+      params:
+        bond_denom: "ufront"
