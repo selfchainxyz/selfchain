@@ -3,9 +3,9 @@ ARG BUILDARCH
 
 ENV LOCAL=/usr/local
 
-COPY build/frontd-linux-${BUILDARCH} ${LOCAL}/bin/frontd
+COPY build/frontierd-linux-${BUILDARCH} ${LOCAL}/bin/frontierd
 
-ENTRYPOINT [ "frontd" ]
+ENTRYPOINT [ "frontierd" ]
 
 # Create the image
 # $ docker build -f Dockerfile-ubuntu-prod . -t frontd_i:v1
