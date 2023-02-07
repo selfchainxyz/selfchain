@@ -8,7 +8,7 @@
 # The minimum gas prices a validator is willing to accept for processing a
 # transaction. A transaction's fees must meet the minimum of any denomination
 # specified in this config (e.g. 0.25token1;0.0001token2).
-minimum-gas-prices = "5000ufront"
+minimum-gas-prices = "0.005ufront"
 
 # default: the last 362880 states are kept, pruning at 10 block intervals
 # nothing: all historic states will be saved, nothing will be deleted (i.e. archiving node)
@@ -171,7 +171,7 @@ gas-to-suggest = 200000
 
 # DenomToSuggest defines the defult denom for fee suggestion.
 # Price must be in minimum-gas-prices.
-denom-to-suggest = "uatom"
+denom-to-suggest = "ufront"
 
 ###############################################################################
 ###                           gRPC Configuration                            ###
