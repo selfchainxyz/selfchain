@@ -15,13 +15,13 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 
 	// Alice who is not a migrator is trying to mint 1M tokens for free
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
-		Creator: test.Alice,
-		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
-		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		Creator:     test.Alice,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: test.Alice,
-		Amount: "1000000000000000000000000", // 1 Milion
-		Token: 0,
-		LogIndex: 0,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       0,
+		LogIndex:    0,
 	})
 
 	suite.Require().ErrorIs(err, types.ErrUnknownMigrator)
@@ -34,13 +34,13 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForFront() {
 
 	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
-		Creator: test.Migrator_1,
-		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
-		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		Creator:     test.Migrator_1,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: test.Alice,
-		Amount: "1000000000000000000000000", // 1 Milion
-		Token: 0,
-		LogIndex: 0,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       0,
+		LogIndex:    0,
 	})
 	_ = err
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
@@ -55,13 +55,13 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 
 	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
-		Creator: test.Migrator_2,
-		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
-		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		Creator:     test.Migrator_2,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: test.Bob,
-		Amount: "1000000000000000000000000", // 1 Milion
-		Token: 1,
-		LogIndex: 0,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       1,
+		LogIndex:    0,
 	})
 	_ = err
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
@@ -72,26 +72,26 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
-	
+
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
-		Creator: test.Migrator_1,
-		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
-		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		Creator:     test.Migrator_1,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: test.Alice,
-		Amount: "1000000000000000000000000", // 1 Milion
-		Token: 0,
-		LogIndex: 0,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       0,
+		LogIndex:    0,
 	})
 	suite.Require().Nil(err)
 
 	_, err2 := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
-		Creator: test.Migrator_1,
-		TxHash:  "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
-		EthAddress: "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		Creator:     test.Migrator_1,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
 		DestAddress: test.Alice,
-		Amount: "1000000000000000000000000", // 1 Milion
-		Token: 0,
-		LogIndex: 0,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       0,
+		LogIndex:    0,
 	})
 
 	suite.Require().ErrorIs(err2, types.ErrMigrationProcessed)

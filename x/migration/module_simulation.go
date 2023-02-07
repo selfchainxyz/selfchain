@@ -28,6 +28,10 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgMigrate int = 100
 
+	opWeightMsgAddMigrator = "op_weight_msg_add_migrator"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgAddMigrator int = 100
+
 	// this line is used by starport scaffolding # simapp/module/const
 )
 
@@ -71,6 +75,17 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	operations = append(operations, simulation.NewWeightedOperation(
 		weightMsgMigrate,
 		migrationsimulation.SimulateMsgMigrate(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
+	var weightMsgAddMigrator int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgAddMigrator, &weightMsgAddMigrator, nil,
+		func(_ *rand.Rand) {
+			weightMsgAddMigrator = defaultWeightMsgAddMigrator
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgAddMigrator,
+		migrationsimulation.SimulateMsgAddMigrator(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

@@ -70711,6 +70711,8 @@ definitions:
         type: string
       exists:
         type: boolean
+  frontier.migration.MsgAddMigratorResponse:
+    type: object
   frontier.migration.MsgMigrateResponse:
     type: object
   frontier.migration.Params:

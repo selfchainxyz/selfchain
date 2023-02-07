@@ -80,7 +80,6 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
-
 func setup(withGenesis bool, invCheckPeriod uint) (*App, GenesisState) {
 	db := dbm.NewMemDB()
 	encCdc := MakeTestEncodingConfig()
@@ -98,7 +97,7 @@ func Setup(t *testing.T, isCheckTx bool) *App {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	require.NoError(t, err)
-	
+
 	// create validator set with single validator
 	validator := tmtypes.NewValidator(pubKey, 1)
 	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
@@ -111,7 +110,6 @@ func Setup(t *testing.T, isCheckTx bool) *App {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
-
 
 	return SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
 }

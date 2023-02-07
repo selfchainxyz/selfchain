@@ -21,12 +21,12 @@ func NewMsgMigrate(
 ) *MsgMigrate {
 	return &MsgMigrate{
 		Creator:     creator,
-		TxHash: txHash,
+		TxHash:      txHash,
 		EthAddress:  ethAddress,
 		DestAddress: destAddress,
 		Amount:      amount,
 		Token:       token,
-		LogIndex: logIndex,
+		LogIndex:    logIndex,
 	}
 }
 
@@ -52,15 +52,18 @@ func (msg *MsgMigrate) GetSignBytes() []byte {
 }
 
 func (msg *MsgMigrate) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator); if err != nil {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	_, err = sdk.AccAddressFromBech32(msg.DestAddress); if err != nil {
+	_, err = sdk.AccAddressFromBech32(msg.DestAddress)
+	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid destination address (%s)", err)
 	}
 
 	// we don't want to get spammed people who migrate small amounts
-	amount := sdkmath.NewUintFromString(msg.Amount); if amount.LT(GetMinMigrationAmount()) {
+	amount := sdkmath.NewUintFromString(msg.Amount)
+	if amount.LT(GetMinMigrationAmount()) {
 		return ErrInvalidMigrationAmount
 	}
 

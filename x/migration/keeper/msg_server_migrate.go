@@ -16,7 +16,8 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. Make sure signer is in the list of migrators
-	_, migratorExist := k.GetMigrator(ctx, msg.Creator); if !migratorExist {
+	_, migratorExist := k.GetMigrator(ctx, msg.Creator)
+	if !migratorExist {
 		return nil, types.ErrUnknownMigrator
 	}
 
@@ -33,7 +34,8 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	msgHash := fmt.Sprintf("%x", sha256.Sum256([]byte(encodedMsg)))
 
 	// 3. Check if message i.e. migration request has been processed already
-	_, migrationExists := k.GetTokenMigration(ctx, msgHash); if migrationExists {
+	_, migrationExists := k.GetTokenMigration(ctx, msgHash)
+	if migrationExists {
 		return nil, types.ErrMigrationProcessed
 	}
 
@@ -55,9 +57,10 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		types.DENOM,
 		sdkmath.NewIntFromBigInt(mintedAmount.BigInt()),
 	))
-	
+
 	// 5. Mint new coins
-	mintError := k.bankKeeper.MintCoins(ctx, types.ModuleName, mintedCoins); if mintError != nil {
+	mintError := k.bankKeeper.MintCoins(ctx, types.ModuleName, mintedCoins)
+	if mintError != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
@@ -66,10 +69,10 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
 	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, destAddr, mintedCoins)
-	
+
 	// 7. Store the token migration so it can't be processed again
 	k.SetTokenMigration(ctx, types.TokenMigration{
-		MsgHash: msgHash,
+		MsgHash:   msgHash,
 		Processed: true,
 	})
 

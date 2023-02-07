@@ -43,29 +43,29 @@ func (suite *IntegrationTestSuite) SetupTest() {
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 	app.BankKeeper.SetParams(ctx, banktypes.DefaultParams())
 	migrationModuleAddress = app.AccountKeeper.GetModuleAddress(types.ModuleName).String()
-	
+
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, app.MigrationKeeper)
 	queryClient := types.NewQueryClient(queryHelper)
-	
+
 	suite.app = app
 	suite.msgServer = keeper.NewMsgServerImpl(app.MigrationKeeper)
 	suite.ctx = ctx
 	suite.queryClient = queryClient
-	
+
 	migration.InitGenesis(ctx, app.MigrationKeeper, getModuleGenesis())
 }
 
 func getModuleGenesis() types.GenesisState {
 	genesis := *types.DefaultGenesis()
-	genesis.MigratorList = []types.Migrator {
+	genesis.MigratorList = []types.Migrator{
 		{
 			Migrator: test.Migrator_1,
-			Exists: true,
+			Exists:   true,
 		},
 		{
 			Migrator: test.Migrator_2,
-			Exists: true,
+			Exists:   true,
 		},
 	}
 
