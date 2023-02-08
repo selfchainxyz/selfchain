@@ -4,6 +4,10 @@ build-all:
 	GOOS=darwin GOARCH=amd64 go build -o ./build/frontierd-darwin-amd64 ./cmd/frontierd/main.go
 	GOOS=darwin GOARCH=arm64 go build -o ./build/frontierd-darwin-arm64 ./cmd/frontierd/main.go
 
+build-cosmovisor:
+	go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest
+	mv /go/bin/cosmovisor ./build
+
 do-checksum:
 	cd build && sha256sum \
 		frontierd-linux-amd64 frontierd-linux-arm64 \
