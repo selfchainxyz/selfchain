@@ -6,7 +6,8 @@ build-all:
 
 build-cosmovisor:
 	go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest
-	mv /go/bin/cosmovisor ./build
+	mkdir -p ./build
+	mv /go/bin/cosmovisor ./build/cosmovisor
 
 do-checksum:
 	cd build && sha256sum \
@@ -14,4 +15,4 @@ do-checksum:
 		frontierd-darwin-amd64 frontierd-darwin-arm64 \
 		> frontier_checksum
 
-build-with-checksum: build-all do-checksum
+build-with-checksum: build-cosmovisor build-all do-checksum

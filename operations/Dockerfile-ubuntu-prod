@@ -3,9 +3,17 @@ ARG BUILDARCH
 
 ENV LOCAL=/usr/local
 
-COPY build/frontierd-linux-${BUILDARCH} ${LOCAL}/bin/frontierd
+COPY build/cosmovisor ${LOCAL}/bin/cosmovisor
 
-ENTRYPOINT [ "frontierd" ]
+ENV DAEMON_NAME frontierd
+ENV DAEMON_HOME /root/.frontier
+ENV DAEMON_RESTART_AFTER_UPGRADE false
+
+# Create the folder for the genesis binary and copy the frontierd binary:
+RUN mkdir -p ${DAEMON_HOME}/cosmovisor/genesis/bin
+COPY build/frontierd-linux-${BUILDARCH} ${DAEMON_HOME}/cosmovisor/genesis/bin
+
+ENTRYPOINT ["cosmovisor", "run", "start"]
 
 # Create the image
 # $ docker build -f Dockerfile-ubuntu-prod . -t frontd_i:v1
