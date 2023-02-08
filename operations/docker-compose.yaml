@@ -17,7 +17,7 @@ services:
       - net-alice-kms
 
   val-alice:
-    command: run init && run start
+    command: run start
     container_name: val-alice
     image: cosmovisor
     environment:
@@ -34,7 +34,7 @@ services:
       - kms-alice
 
   sentry-alice:
-    command: run init && run start
+    command: run start
     container_name: sentry-alice
     image: cosmovisor
     environment:
@@ -48,7 +48,7 @@ services:
       - net-public
 
   val-bob:
-    command: run init && run start
+    command: run start
     container_name: val-bob
     image: cosmovisor
     environment:
@@ -61,7 +61,7 @@ services:
       - net-bob
 
   sentry-bob:
-    command: run init && run start
+    command: run start
     container_name: sentry-bob
     image: cosmovisor
     environment:
@@ -75,7 +75,7 @@ services:
       - net-public
 
   node-carol:
-    command: run init && run start
+    command: run start
     container_name: node-carol
     image: cosmovisor
     environment:
