@@ -17,9 +17,13 @@ services:
       - net-alice-kms
 
   val-alice:
-    command: start
+    command: run init && run start
     container_name: val-alice
-    image: frontierd_i
+    image: cosmovisor
+    environment:
+      - DAEMON_NAME=frontierd
+      - DAEMON_HOME=/root/.frontier
+      - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
       - ../localnet/val-alice:/root/.frontier
     networks:
@@ -30,9 +34,13 @@ services:
       - kms-alice
 
   sentry-alice:
-    command: start
+    command: run init && run start
     container_name: sentry-alice
-    image: frontierd_i
+    image: cosmovisor
+    environment:
+      - DAEMON_NAME=frontierd
+      - DAEMON_HOME=/root/.frontier
+      - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
        - ../localnet/sentry-alice:/root/.frontier
     networks:
@@ -40,18 +48,26 @@ services:
       - net-public
 
   val-bob:
-    command: start
+    command: run init && run start
     container_name: val-bob
-    image: frontierd_i
+    image: cosmovisor
+    environment:
+      - DAEMON_NAME=frontierd
+      - DAEMON_HOME=/root/.frontier
+      - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
       - ../localnet/val-bob:/root/.frontier
     networks:
       - net-bob
 
   sentry-bob:
-    command: start
+    command: run init && run start
     container_name: sentry-bob
-    image: frontierd_i
+    image: cosmovisor
+    environment:
+      - DAEMON_NAME=frontierd
+      - DAEMON_HOME=/root/.frontier
+      - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
       - ../localnet/sentry-bob:/root/.frontier
     networks:
@@ -59,9 +75,13 @@ services:
       - net-public
 
   node-carol:
-    command: start
+    command: run init && run start
     container_name: node-carol
-    image: frontierd_i
+    image: cosmovisor
+    environment:
+      - DAEMON_NAME=frontierd
+      - DAEMON_HOME=/root/.frontier
+      - DAEMON_RESTART_AFTER_UPGRADE=false
     # In order to make your host computer look like an open node, expose Carol's node on all addresses of your host
     ports:
       - 0.0.0.0:26657:26657
