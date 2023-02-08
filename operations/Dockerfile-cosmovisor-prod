@@ -1,0 +1,9 @@
+FROM --platform=linux ubuntu:22.04
+ARG BUILDARCH
+
+ENV LOCAL=/usr/local
+
+COPY build/cosmovisor ${LOCAL}/bin/cosmovisor
+COPY build/frontierd-linux-${BUILDARCH} ${LOCAL}/bin/frontierd
+
+ENTRYPOINT ["cosmovisor"]
