@@ -10,7 +10,7 @@ build-cosmovisor:
 	mv /go/bin/cosmovisor ./build-v2/cosmovisor
 
 do-checksum:
-	cd build && sha256sum \
+	cd build-v2 && sha256sum \
 		frontierd-linux-amd64 frontierd-linux-arm64 \
 		frontierd-darwin-amd64 frontierd-darwin-arm64 \
 		> frontier_checksum
