@@ -11,3 +11,4 @@ localnet/**/data/*
 addrbook.json
 write-file-atomic-*
 localnet/**/cosmovisor
+data-backup-*
