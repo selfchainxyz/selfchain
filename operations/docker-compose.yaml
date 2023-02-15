@@ -86,6 +86,8 @@ services:
     ports:
       - 0.0.0.0:26657:26657
       - 0.0.0.0:1317:1317
+      - 0.0.0.0:9090:9090
+      - 0.0.0.0:9091:9091
     volumes:
       - ../localnet/node-carol:/root/.frontier
     networks:
