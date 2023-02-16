@@ -344,7 +344,10 @@
       "acl": {
         "admin": "front1dexv46w9kzqjjr73cpannt74rxq63gtxsrszd8"
       },
-      "migratorList": []
+      "migratorList": [{
+        "migrator": "front1l02tgr0287ftmeypyj7psed2nx2yykwgwmtqau",
+        "exists": true
+      }]
     },
     "mint": {
       "minter": {
