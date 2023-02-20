@@ -1,1 +1,1 @@
-# Frontier Blockchain
+# Self Blockchain

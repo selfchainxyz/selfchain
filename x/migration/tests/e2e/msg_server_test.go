@@ -1,8 +1,8 @@
 package test
 
 import (
-	test "frontier/x/migration/tests"
-	"frontier/x/migration/types"
+	test "selfchain/x/migration/tests"
+	"selfchain/x/migration/types"
 
 	sdkmath "cosmossdk.io/math"
 

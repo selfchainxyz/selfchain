@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "frontier/testutil/keeper"
-	"frontier/x/migration/types"
+	testkeeper "selfchain/testutil/keeper"
+	"selfchain/x/migration/types"
+
 	"github.com/stretchr/testify/require"
 )
 

@@ -2,11 +2,11 @@
 package test
 
 import (
-	"frontier/app"
-	"frontier/x/migration"
-	"frontier/x/migration/keeper"
-	test "frontier/x/migration/tests"
-	"frontier/x/migration/types"
+	"selfchain/app"
+	"selfchain/x/migration"
+	"selfchain/x/migration/keeper"
+	test "selfchain/x/migration/tests"
+	"selfchain/x/migration/types"
 	"testing"
 	"time"
 
@@ -97,11 +97,11 @@ func addAll(balances []banktypes.Balance) sdk.Coins {
 
 func getBankGenesis() *banktypes.GenesisState {
 	coins := []banktypes.Balance{
-		makeBalance(test.Alice, 1000000000, "ufront"),
-		makeBalance(test.Bob, 1000000000, "ufront"),
-		makeBalance(test.Carol, 1000000000, "ufront"),
-		makeBalance(test.Migrator_1, 1000000000, "ufront"),
-		makeBalance(test.Migrator_2, 1000000000, "ufront"),
+		makeBalance(test.Alice, 1000000000, "uself"),
+		makeBalance(test.Bob, 1000000000, "uself"),
+		makeBalance(test.Carol, 1000000000, "uself"),
+		makeBalance(test.Migrator_1, 1000000000, "uself"),
+		makeBalance(test.Migrator_2, 1000000000, "uself"),
 	}
 	supply := banktypes.Supply{
 		Total: addAll(coins),

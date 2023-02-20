@@ -1,4 +1,4 @@
-module frontier
+module selfchain
 
 go 1.19
 

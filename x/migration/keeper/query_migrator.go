@@ -3,7 +3,8 @@ package keeper
 import (
 	"context"
 
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"

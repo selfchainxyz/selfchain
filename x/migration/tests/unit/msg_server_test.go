@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	keepertest "frontier/testutil/keeper"
-	"frontier/x/migration"
-	"frontier/x/migration/keeper"
-	test "frontier/x/migration/tests"
-	mocktest "frontier/x/migration/tests/mock"
-	"frontier/x/migration/types"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/x/migration"
+	"selfchain/x/migration/keeper"
+	test "selfchain/x/migration/tests"
+	mocktest "selfchain/x/migration/tests/mock"
+	"selfchain/x/migration/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -65,7 +65,7 @@ func TestShouldMintAmount(t *testing.T) {
 	server, ctx, _, ctrl, mock := setup(t)
 	defer ctrl.Finish()
 
-	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native ufront token
+	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native uself token
 	mock.ExpectMintToModule(ctx, 100000000000)
 	mock.ExpectReceiveCoins(ctx, test.Alice, 100000000000)
 

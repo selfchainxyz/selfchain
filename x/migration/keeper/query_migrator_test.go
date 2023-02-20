@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "frontier/testutil/keeper"
-	"frontier/testutil/nullify"
-	"frontier/x/migration/types"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/testutil/nullify"
+	"selfchain/x/migration/types"
 )
 
 // Prevent strconv unused error

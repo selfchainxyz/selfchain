@@ -21,11 +21,11 @@ services:
     container_name: val-alice
     image: cosmovisor
     environment:
-      - DAEMON_NAME=frontierd
-      - DAEMON_HOME=/root/.frontier
+      - DAEMON_NAME=selfchaind
+      - DAEMON_HOME=/root/.selfchain
       - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
-      - ../localnet/val-alice:/root/.frontier
+      - ../localnet/val-alice:/root/.selfchain
     networks:
       - net-alice-kms
       - net-alice
@@ -38,11 +38,11 @@ services:
     container_name: sentry-alice
     image: cosmovisor
     environment:
-      - DAEMON_NAME=frontierd
-      - DAEMON_HOME=/root/.frontier
+      - DAEMON_NAME=selfchaind
+      - DAEMON_HOME=/root/.selfchain
       - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
-       - ../localnet/sentry-alice:/root/.frontier
+       - ../localnet/sentry-alice:/root/.selfchain
     networks:
       - net-alice
       - net-public
@@ -52,11 +52,11 @@ services:
     container_name: val-bob
     image: cosmovisor
     environment:
-      - DAEMON_NAME=frontierd
-      - DAEMON_HOME=/root/.frontier
+      - DAEMON_NAME=selfchaind
+      - DAEMON_HOME=/root/.selfchain
       - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
-      - ../localnet/val-bob:/root/.frontier
+      - ../localnet/val-bob:/root/.selfchain
     networks:
       - net-bob
 
@@ -65,11 +65,11 @@ services:
     container_name: sentry-bob
     image: cosmovisor
     environment:
-      - DAEMON_NAME=frontierd
-      - DAEMON_HOME=/root/.frontier
+      - DAEMON_NAME=selfchaind
+      - DAEMON_HOME=/root/.selfchain
       - DAEMON_RESTART_AFTER_UPGRADE=false
     volumes:
-      - ../localnet/sentry-bob:/root/.frontier
+      - ../localnet/sentry-bob:/root/.selfchain
     networks:
       - net-bob
       - net-public
@@ -79,8 +79,8 @@ services:
     container_name: node-carol
     image: cosmovisor
     environment:
-      - DAEMON_NAME=frontierd
-      - DAEMON_HOME=/root/.frontier
+      - DAEMON_NAME=selfchaind
+      - DAEMON_HOME=/root/.selfchain
       - DAEMON_RESTART_AFTER_UPGRADE=false
     # In order to make your host computer look like an open node, expose Carol's node on all addresses of your host
     ports:
@@ -89,6 +89,6 @@ services:
       - 0.0.0.0:9090:9090
       - 0.0.0.0:9091:9091
     volumes:
-      - ../localnet/node-carol:/root/.frontier
+      - ../localnet/node-carol:/root/.selfchain
     networks:
       - net-public

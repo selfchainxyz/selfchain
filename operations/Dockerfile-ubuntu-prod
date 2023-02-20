@@ -3,18 +3,18 @@ ARG BUILDARCH
 
 ENV LOCAL=/usr/local
 
-COPY build/frontierd-linux-${BUILDARCH} ${LOCAL}/bin/frontierd
+COPY build/selfchaind-linux-${BUILDARCH} ${LOCAL}/bin/selfchaind
 
-ENTRYPOINT [ "frontierd" ]
+ENTRYPOINT [ "selfchaind" ]
 
 # Create the image
-# $ docker build -f Dockerfile-ubuntu-prod . -t frontd_i:v1
+# $ docker build -f Dockerfile-ubuntu-prod . -t selfchain_i:v1
 # To test only 1 command
-# $ docker run --rm -it frontd_i:v1
+# $ docker run --rm -it selfchain_i:v1
 # To build container
-# $ docker create --name frontd -i -v $(pwd)/docker/val-alice:/root/.checkers frontd_i:v1
-# $ docker start frontd
+# $ docker create --name selfchain -i -v $(pwd)/docker/val-alice:/root/.checkers selfchain_i:v1
+# $ docker start selfchain
 # To run server on it
-# $ docker exec -it frontd start
+# $ docker exec -it selfchain start
 # In other shell, to query it
-# $ docker exec -it frontd version
+# $ docker exec -it selfchain version

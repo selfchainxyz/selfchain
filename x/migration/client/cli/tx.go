@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
 )
 
 var (

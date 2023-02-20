@@ -1,0 +1,10 @@
+syntax = "proto3";
+package selfchain.migration;
+
+option go_package = "selfchain/x/migration/types";
+
+message Migrator {
+  string migrator = 1; 
+  bool exists = 2;
+}
+

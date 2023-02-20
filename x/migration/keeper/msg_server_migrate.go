@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"frontier/x/migration/types"
 	"math"
+	"selfchain/x/migration/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +50,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		ratio = types.HOTCROSS_RATIO
 	}
 
-	// WEI has 18 decimals whereas our denomiation is ufront thus it has 10^6.
+	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6.
 	normalizedAmount := amount.QuoUint64(uint64(math.Pow(10, 12)))
 	mintedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
 	mintedCoins := sdk.NewCoins(sdk.NewCoin(

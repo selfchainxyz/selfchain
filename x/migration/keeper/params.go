@@ -1,7 +1,8 @@
 package keeper
 
 import (
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

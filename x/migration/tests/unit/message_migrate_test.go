@@ -1,9 +1,9 @@
 package test
 
 import (
-	"frontier/testutil/sample"
-	test "frontier/x/migration/tests"
-	"frontier/x/migration/types"
+	"selfchain/testutil/sample"
+	test "selfchain/x/migration/tests"
+	"selfchain/x/migration/types"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -57,7 +57,7 @@ func TestValidateBasicMinAmount(t *testing.T) {
 	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
-		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		DestAddress: "self1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount:      types.GetMinMigrationAmount().SubUint64(1).String(),
 		Token:       uint64(types.Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -85,7 +85,7 @@ func TestValidateBasicDestAddress(t *testing.T) {
 	msg2 := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
-		DestAddress: "front116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		DestAddress: "self116r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount:      types.GetMinMigrationAmount().String(),
 		Token:       uint64(types.Front),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -112,7 +112,7 @@ func TestValidateBasicWrongToken(t *testing.T) {
 	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
-		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		DestAddress: "self1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount:      types.GetMinMigrationAmount().String(),
 		Token:       2,
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -126,7 +126,7 @@ func TestValidateBasicEmptyStringValues(t *testing.T) {
 	msg := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "",
-		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		DestAddress: "self1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount:      types.GetMinMigrationAmount().String(),
 		Token:       uint64(types.Hotcross),
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -138,7 +138,7 @@ func TestValidateBasicEmptyStringValues(t *testing.T) {
 	msg2 := types.MsgMigrate{
 		Creator:     sample.AccAddress(),
 		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
-		DestAddress: "front1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
+		DestAddress: "self1k6r2mzwhkn3tr8hz947kqkl7ym9gnrgf0a0g6v",
 		Amount:      types.GetMinMigrationAmount().String(),
 		Token:       uint64(types.Hotcross),
 		TxHash:      "",

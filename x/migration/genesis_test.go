@@ -3,10 +3,10 @@ package migration_test
 import (
 	"testing"
 
-	keepertest "frontier/testutil/keeper"
-	"frontier/testutil/nullify"
-	"frontier/x/migration"
-	"frontier/x/migration/types"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/testutil/nullify"
+	"selfchain/x/migration"
+	"selfchain/x/migration/types"
 
 	"github.com/stretchr/testify/require"
 )

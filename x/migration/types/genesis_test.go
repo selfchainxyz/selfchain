@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
 
 	"github.com/stretchr/testify/require"
 )

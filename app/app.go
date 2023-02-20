@@ -103,19 +103,19 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	migrationmodule "frontier/x/migration"
-	migrationmodulekeeper "frontier/x/migration/keeper"
-	migrationmoduletypes "frontier/x/migration/types"
+	migrationmodule "selfchain/x/migration"
+	migrationmodulekeeper "selfchain/x/migration/keeper"
+	migrationmoduletypes "selfchain/x/migration/types"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
-	appparams "frontier/app/params"
-	"frontier/docs"
+	appparams "selfchain/app/params"
+	"selfchain/docs"
 )
 
 const (
-	AccountAddressPrefix = "front"
-	Name                 = "frontier"
+	AccountAddressPrefix = "self"
+	Name                 = "selfchain"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals

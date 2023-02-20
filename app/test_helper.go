@@ -2,8 +2,8 @@ package app
 
 import (
 	"encoding/json"
-	"frontier/app/params"
-	migrationtypes "frontier/x/migration/types"
+	"selfchain/app/params"
+	migrationtypes "selfchain/x/migration/types"
 	"testing"
 	"time"
 
@@ -172,8 +172,8 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	// checkers genesis
-	frontierGenesis := migrationtypes.DefaultGenesis()
-	genesisState[migrationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(frontierGenesis)
+	selfchainGenesis := migrationtypes.DefaultGenesis()
+	genesisState[migrationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(selfchainGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	require.NoError(t, err)

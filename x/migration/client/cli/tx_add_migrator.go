@@ -3,7 +3,8 @@ package cli
 import (
 	"strconv"
 
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
