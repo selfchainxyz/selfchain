@@ -1,0 +1,29 @@
+# Tendermint KMS configuration file
+
+## Chain Configuration
+
+### Cosmos Hub Network
+
+[[chain]]
+id = "self-1"
+key_format = { type = "bech32", account_key_prefix = "selfpub", consensus_key_prefix = "selfvalconspub" }
+state_file = "/root/tmkms/state/self-1-consensus.json"
+
+## Signing Provider Configuration
+
+### Software-based Signer Configuration
+
+[[providers.softsign]]
+chain_ids = ["self-1"]
+key_type = "consensus"
+path = "/root/tmkms/secrets/val-alice-consensus.key"
+
+## Validator Configuration
+
+[[validator]]
+chain_id = "self-1"
+addr = "tcp://val-alice:26659"
+secret_key = "/root/tmkms/secrets/kms-identity.key"
+protocol_version = "v0.34"
+reconnect = true
+
