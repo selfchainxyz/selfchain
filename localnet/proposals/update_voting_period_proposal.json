@@ -1,0 +1,12 @@
+{
+  "title": "Upgrade Voting Period to 5m",
+  "description": "We would like to upgrade the voting period to 5 minutes.",
+  "changes": [
+    {
+      "subspace": "gov",
+      "key": "votingparams",
+      "value": {"voting_period": "300000000000"}
+    }
+  ],
+  "deposit": "100000000uself"
+}

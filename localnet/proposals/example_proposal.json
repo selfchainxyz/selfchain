@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "from_address": "self1860m9r2ux5dpx5a6xa5vyrvkpdlnh92ekmxxet",
+      "to_address": "self1tlk0jqjk84cezrm3rnky9f3q8kucfe2wyw7y4n",
+      "amount":[{"denom": "uself","amount": "150000000"}]
+    }
+  ],
+  "metadata": "AQ==",
+  "deposit": "100000000uself",
+  "title": "Subsidize Migrator",
+  "summary": "We would want to Subsidize migrator to run it's operations"
+}
