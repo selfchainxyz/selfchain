@@ -5,12 +5,12 @@ import (
 )
 
 const (
-	Alice      = "self1pvqswgpwjl8273gzqk98ntr8jgvdmvw5cy2asa"
-	Bob        = "self1dv35uwyu5h99x80etl6t0nd3q0425jk8ru5fsy"
-	Carol      = "self1ruy8kz8tqn9teeg6zqj9fg3e2w6xckxrt6spx8"
-	AclAdmin   = "self1dexv46w9kzqjjr73cpannt74rxq63gtxsrszd8"
-	Migrator_1 = "self18alpt2t8vw8sxuf5pe0lz3ktmtc4c2wn47r7nf"
-	Migrator_2 = "self1wty56897zvnva2lcz30sp368eg8zj4z506g50r"
+	Alice      = "self16uhrfxdj8drxvlal8q6xhy99jh6nt9uqur6pl2"
+	Bob        = "self184l076mmmeumx2cw6eqdct7tchufux0v43cxcg"
+	Carol      = "self19qrygeag248redm708jtt4ks94sp8p34v7l66k"
+	AclAdmin   = "self1tlk0jqjk84cezrm3rnky9f3q8kucfe2wyw7y4n"
+	Migrator_1 = "self1860m9r2ux5dpx5a6xa5vyrvkpdlnh92ekmxxet"
+	Migrator_2 = "self1du78qjvn6z7wgsfx90z4fyu6prz06vlzfzzhs4"
 )
 
 func InitSDKConfig() {
