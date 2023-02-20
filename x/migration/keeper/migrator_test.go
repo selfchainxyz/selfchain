@@ -4,10 +4,11 @@ import (
 	"strconv"
 	"testing"
 
-	keepertest "frontier/testutil/keeper"
-	"frontier/testutil/nullify"
-	"frontier/x/migration/keeper"
-	"frontier/x/migration/types"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/testutil/nullify"
+	"selfchain/x/migration/keeper"
+	"selfchain/x/migration/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

@@ -2,7 +2,7 @@ package test
 
 import (
 	"context"
-	"frontier/x/migration/types"
+	"selfchain/x/migration/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"

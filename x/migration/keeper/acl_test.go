@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "frontier/testutil/keeper"
-	"frontier/testutil/nullify"
-	"frontier/x/migration/keeper"
-	"frontier/x/migration/types"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/testutil/nullify"
+	"selfchain/x/migration/keeper"
+	"selfchain/x/migration/types"
 )
 
 func createTestAcl(keeper *keeper.Keeper, ctx sdk.Context) types.Acl {

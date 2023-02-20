@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"frontier/app"
-	"frontier/cmd/frontierd/cmd"
+	"selfchain/app"
+	"selfchain/cmd/selfchaind/cmd"
 )
 
 func main() {

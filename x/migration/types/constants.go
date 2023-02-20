@@ -10,7 +10,7 @@ func GetMinMigrationAmount() sdkmath.Uint {
 	return sdkmath.NewUint(1000000000000000000)
 }
 
-const DENOM = "ufront"
+const DENOM = "uself"
 
 type Token int64
 

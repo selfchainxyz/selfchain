@@ -1,7 +1,7 @@
 syntax = "proto3";
-package frontier.migration;
+package selfchain.migration;
 
-option go_package = "frontier/x/migration/types";
+option go_package = "selfchain/x/migration/types";
 
 message Migrator {
   string migrator = 1; 

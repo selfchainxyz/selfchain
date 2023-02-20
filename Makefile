@@ -1,8 +1,8 @@
 build-all:
-	GOOS=linux GOARCH=amd64 go build -o ./build/frontierd-linux-amd64 ./cmd/frontierd/main.go
-	GOOS=linux GOARCH=arm64 go build -o ./build/frontierd-linux-arm64 ./cmd/frontierd/main.go
-	GOOS=darwin GOARCH=amd64 go build -o ./build/frontierd-darwin-amd64 ./cmd/frontierd/main.go
-	GOOS=darwin GOARCH=arm64 go build -o ./build/frontierd-darwin-arm64 ./cmd/frontierd/main.go
+	GOOS=linux GOARCH=amd64 go build -o ./build/selfchaind-linux-amd64 ./cmd/selfchaind/main.go
+	GOOS=linux GOARCH=arm64 go build -o ./build/selfchaind-linux-arm64 ./cmd/selfchaind/main.go
+	GOOS=darwin GOARCH=amd64 go build -o ./build/selfchaind-darwin-amd64 ./cmd/selfchaind/main.go
+	GOOS=darwin GOARCH=arm64 go build -o ./build/selfchaind-darwin-arm64 ./cmd/selfchaind/main.go
 
 build-cosmovisor:
 	go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest
@@ -11,8 +11,8 @@ build-cosmovisor:
 
 do-checksum:
 	cd build && sha256sum \
-		frontierd-linux-amd64 frontierd-linux-arm64 \
-		frontierd-darwin-amd64 frontierd-darwin-arm64 \
-		> frontier_checksum
+		selfchaind-linux-amd64 selfchaind-linux-arm64 \
+		selfchaind-darwin-amd64 selfchaind-darwin-arm64 \
+		> selfchain_checksum
 
 build-with-checksum: build-cosmovisor build-all do-checksum

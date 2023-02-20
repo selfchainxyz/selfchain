@@ -12,10 +12,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"frontier/testutil/network"
-	"frontier/testutil/nullify"
-	"frontier/x/migration/client/cli"
-	"frontier/x/migration/types"
+	"selfchain/testutil/network"
+	"selfchain/testutil/nullify"
+	"selfchain/x/migration/client/cli"
+	"selfchain/x/migration/types"
 )
 
 // Prevent strconv unused error

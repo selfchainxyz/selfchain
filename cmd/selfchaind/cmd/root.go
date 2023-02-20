@@ -33,10 +33,11 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
 	// this line is used by starport scaffolding # root/moduleImport
 
-	"frontier/app"
-	appparams "frontier/app/params"
+	"selfchain/app"
+	appparams "selfchain/app/params"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -54,7 +55,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 
 	rootCmd := &cobra.Command{
 		Use:   app.Name + "d",
-		Short: "Start frontier node",
+		Short: "Start selfchain node",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())

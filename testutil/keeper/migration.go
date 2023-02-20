@@ -3,9 +3,9 @@ package keeper
 import (
 	"testing"
 
-	"frontier/x/migration/keeper"
-	test "frontier/x/migration/tests/mock"
-	"frontier/x/migration/types"
+	"selfchain/x/migration/keeper"
+	test "selfchain/x/migration/tests/mock"
+	"selfchain/x/migration/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

@@ -3,8 +3,9 @@ package simulation
 import (
 	"math/rand"
 
-	"frontier/x/migration/keeper"
-	"frontier/x/migration/types"
+	"selfchain/x/migration/keeper"
+	"selfchain/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"

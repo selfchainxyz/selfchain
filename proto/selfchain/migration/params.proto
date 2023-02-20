@@ -1,9 +1,9 @@
 syntax = "proto3";
-package frontier.migration;
+package selfchain.migration;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "frontier/x/migration/types";
+option go_package = "selfchain/x/migration/types";
 
 // Params defines the parameters for the module.
 message Params {

@@ -3,9 +3,10 @@ package migration
 import (
 	"math/rand"
 
-	"frontier/testutil/sample"
-	migrationsimulation "frontier/x/migration/simulation"
-	"frontier/x/migration/types"
+	"selfchain/testutil/sample"
+	migrationsimulation "selfchain/x/migration/simulation"
+	"selfchain/x/migration/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"

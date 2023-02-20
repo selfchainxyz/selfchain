@@ -1,49 +1,49 @@
 syntax = "proto3";
 
-package frontier.migration;
+package selfchain.migration;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "frontier/migration/params.proto";
-import "frontier/migration/token_migration.proto";
-import "frontier/migration/acl.proto";
-import "frontier/migration/migrator.proto";
+import "selfchain/migration/params.proto";
+import "selfchain/migration/token_migration.proto";
+import "selfchain/migration/acl.proto";
+import "selfchain/migration/migrator.proto";
 
-option go_package = "frontier/x/migration/types";
+option go_package = "selfchain/x/migration/types";
 
 // Query defines the gRPC querier service.
 service Query {
   
   // Parameters queries the parameters of the module.
   rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/frontier/migration/params";
+    option (google.api.http).get = "/selfchain/migration/params";
   
   }
   
   // Queries a list of TokenMigration items.
   rpc TokenMigration    (QueryGetTokenMigrationRequest) returns (QueryGetTokenMigrationResponse) {
-    option (google.api.http).get = "/frontier/migration/token_migration/{msgHash}";
+    option (google.api.http).get = "/selfchain/migration/token_migration/{msgHash}";
   
   }
   rpc TokenMigrationAll (QueryAllTokenMigrationRequest) returns (QueryAllTokenMigrationResponse) {
-    option (google.api.http).get = "/frontier/migration/token_migration";
+    option (google.api.http).get = "/selfchain/migration/token_migration";
   
   }
   
   // Queries a Acl by index.
   rpc Acl (QueryGetAclRequest) returns (QueryGetAclResponse) {
-    option (google.api.http).get = "/frontier/migration/acl";
+    option (google.api.http).get = "/selfchain/migration/acl";
   
   }
   
   // Queries a list of Migrator items.
   rpc Migrator    (QueryGetMigratorRequest) returns (QueryGetMigratorResponse) {
-    option (google.api.http).get = "/frontier/migration/migrator/{migrator}";
+    option (google.api.http).get = "/selfchain/migration/migrator/{migrator}";
   
   }
   rpc MigratorAll (QueryAllMigratorRequest) returns (QueryAllMigratorResponse) {
-    option (google.api.http).get = "/frontier/migration/migrator";
+    option (google.api.http).get = "/selfchain/migration/migrator";
   
   }
 }

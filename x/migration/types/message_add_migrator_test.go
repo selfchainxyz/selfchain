@@ -3,7 +3,8 @@ package types
 import (
 	"testing"
 
-	"frontier/testutil/sample"
+	"selfchain/testutil/sample"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )

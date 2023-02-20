@@ -5,23 +5,23 @@ import (
 )
 
 const (
-	Alice      = "front1pvqswgpwjl8273gzqk98ntr8jgvdmvw5cy2asa"
-	Bob        = "front1dv35uwyu5h99x80etl6t0nd3q0425jk8ru5fsy"
-	Carol      = "front1ruy8kz8tqn9teeg6zqj9fg3e2w6xckxrt6spx8"
-	AclAdmin   = "front1dexv46w9kzqjjr73cpannt74rxq63gtxsrszd8"
-	Migrator_1 = "front18alpt2t8vw8sxuf5pe0lz3ktmtc4c2wn47r7nf"
-	Migrator_2 = "front1wty56897zvnva2lcz30sp368eg8zj4z506g50r"
+	Alice      = "self16uhrfxdj8drxvlal8q6xhy99jh6nt9uqur6pl2"
+	Bob        = "self184l076mmmeumx2cw6eqdct7tchufux0v43cxcg"
+	Carol      = "self19qrygeag248redm708jtt4ks94sp8p34v7l66k"
+	AclAdmin   = "self1tlk0jqjk84cezrm3rnky9f3q8kucfe2wyw7y4n"
+	Migrator_1 = "self1860m9r2ux5dpx5a6xa5vyrvkpdlnh92ekmxxet"
+	Migrator_2 = "self1du78qjvn6z7wgsfx90z4fyu6prz06vlzfzzhs4"
 )
 
 func InitSDKConfig() {
-	accountPubKeyPrefix := "frontpub"
-	validatorAddressPrefix := "frontvaloper"
-	validatorPubKeyPrefix := "frontvaloperpub"
-	consNodeAddressPrefix := "frontvalcons"
-	consNodePubKeyPrefix := "frontvalconspub"
+	accountPubKeyPrefix := "selfpub"
+	validatorAddressPrefix := "selfvaloper"
+	validatorPubKeyPrefix := "selfvaloperpub"
+	consNodeAddressPrefix := "selfvalcons"
+	consNodePubKeyPrefix := "selfvalconspub"
 
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("front", accountPubKeyPrefix)
+	config.SetBech32PrefixForAccount("self", accountPubKeyPrefix)
 	config.SetBech32PrefixForValidator(validatorAddressPrefix, validatorPubKeyPrefix)
 	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
 	config.Seal()
