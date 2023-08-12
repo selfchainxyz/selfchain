@@ -225,3 +225,16 @@ func TestShouldFailIfNoVestingPositionExistForAccount(t *testing.T) {
 
 	require.ErrorIs(t, releaseError, types.ErrNoVestingPositions)
 }
+
+func TestShouldFailIfPosIndexOutofBounds(t *testing.T) {
+	server, ctx, keeper, ctrl, _ := setup_release(t)
+	setup_positions(t, ctx, keeper)
+	defer ctrl.Finish()
+
+	_, releaseError := server.Release(ctx, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    2,
+	})
+
+	require.ErrorIs(t, releaseError, types.ErrPositionIndexOutOfBounds)
+}
