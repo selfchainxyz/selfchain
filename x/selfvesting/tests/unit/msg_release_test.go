@@ -212,3 +212,16 @@ func TestShouldReleaseLinearly(t *testing.T) {
 	require.Equal(t, vestingInfo_6.TotalClaimed, "500000000000")
 	require.Equal(t, vestingInfo_6.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
 }
+
+func TestShouldFailIfNoVestingPositionExistForAccount(t *testing.T) {
+	server, ctx, keeper, ctrl, _ := setup_release(t)
+	setup_positions(t, ctx, keeper)
+	defer ctrl.Finish()
+
+	_, releaseError := server.Release(ctx, &types.MsgRelease {
+		Creator: test.Carol,
+    PosIndex:    0,
+	})
+
+	require.ErrorIs(t, releaseError, types.ErrNoVestingPositions)
+}
