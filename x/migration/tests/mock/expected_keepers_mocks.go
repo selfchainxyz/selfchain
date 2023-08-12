@@ -130,7 +130,7 @@ func (m *MockSelfvestingKeeper) AddBeneficiary(
 	return nil, ret0
 }
 
-func (mr *MockSelfvestingKeeperMockRecorder) AddBeneficiary(ctx, req selfvestingTypes.AddBeneficiaryRequest) *gomock.Call {
+func (mr *MockSelfvestingKeeperMockRecorder) AddBeneficiary(ctx, req interface {}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBeneficiary", reflect.TypeOf((*MockSelfvestingKeeper)(nil).AddBeneficiary), ctx, req)
 }

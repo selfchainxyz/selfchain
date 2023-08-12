@@ -20,10 +20,10 @@ import (
 )
 
 func MigrationKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
-	return MigrationKeeperWithMocks(t, nil)
+	return MigrationKeeperWithMocks(t, nil, nil)
 }
 
-func MigrationKeeperWithMocks(t testing.TB, bankKeeper *test.MockBankKeeper) (*keeper.Keeper, sdk.Context) {
+func MigrationKeeperWithMocks(t testing.TB, selfvestingKeeper *test.MockSelfvestingKeeper, bankKeeper *test.MockBankKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -47,6 +47,7 @@ func MigrationKeeperWithMocks(t testing.TB, bankKeeper *test.MockBankKeeper) (*k
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
+		selfvestingKeeper,
 		bankKeeper,
 	)
 

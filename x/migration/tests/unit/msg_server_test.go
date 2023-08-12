@@ -10,16 +10,18 @@ import (
 	test "selfchain/x/migration/tests"
 	mocktest "selfchain/x/migration/tests/mock"
 	"selfchain/x/migration/types"
+	selfvestingTypes "selfchain/x/selfvesting/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
-func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomock.Controller, *mocktest.MockBankKeeper) {
+func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomock.Controller, *mocktest.MockSelfvestingKeeper, *mocktest.MockBankKeeper) {
 	ctrl := gomock.NewController(t)
 	bankMock := mocktest.NewMockBankKeeper(ctrl)
-	k, ctx := keepertest.MigrationKeeperWithMocks(t, bankMock)
+	selfVestingMock := mocktest.NewMockSelfvestingKeeper(ctrl)
+	k, ctx := keepertest.MigrationKeeperWithMocks(t, selfVestingMock, bankMock)
 
 	// setup genesis params for this module
 	genesis := *types.DefaultGenesis()
@@ -39,12 +41,12 @@ func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomo
 	server := keeper.NewMsgServerImpl(*k)
 	context := sdk.WrapSDKContext(ctx)
 
-	return server, context, *k, ctrl, bankMock
+	return server, context, *k, ctrl, selfVestingMock, bankMock
 }
 
 func TestShouldFailIfInvalidMigrator(t *testing.T) {
 	// create a couple of migrators
-	server, ctx, _, ctrl, _ := setup(t)
+	server, ctx, _, ctrl, _, _ := setup(t)
 	defer ctrl.Finish()
 
 	_, err := server.Migrate(ctx, &types.MsgMigrate{
@@ -60,14 +62,21 @@ func TestShouldFailIfInvalidMigrator(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrUnknownMigrator)
 }
 
-func TestShouldMintAmount(t *testing.T) {
+func TestShouldMintAmountToSelfvestingModule(t *testing.T) {
 	// create a couple of migrators
-	server, ctx, _, ctrl, mock := setup(t)
+	server, ctx, _, ctrl, selfVestingMock, bankMock := setup(t)
 	defer ctrl.Finish()
 
 	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native uself token
-	mock.ExpectMintToModule(ctx, 100000000000)
-	mock.ExpectReceiveCoins(ctx, test.Alice, 100000000000)
+	addBeneficiaryRequest := selfvestingTypes.AddBeneficiaryRequest{
+		Beneficiary: test.Alice,
+		Cliff:       types.VESTING_CLIFF,
+		Duration:    types.VESTING_DURATION,
+		Amount:      "100000000000",
+	}
+	
+	bankMock.ExpectMintToModule(ctx, 100000000000)
+	selfVestingMock.ExpectAddBeneficiary(ctx, addBeneficiaryRequest)
 
 	_, err := server.Migrate(ctx, &types.MsgMigrate{
 		Creator:     test.Migrator_1,
