@@ -15,4 +15,4 @@ do-checksum:
 		selfchaind-darwin-amd64 selfchaind-darwin-arm64 \
 		> selfchain_checksum
 
-build-with-checksum: build-cosmovisor build-all do-checksum
+build-with-checksum: build-all do-checksum
