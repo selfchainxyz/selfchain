@@ -72,10 +72,19 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 	}
 
 	if amountToVest.GT(sdkmath.NewUint(0)) {
+		
 		totalClaimed := sdkmath.NewUintFromString(vestingInfo.TotalClaimed)
 		vestingInfo.PeriodClaimed += periodToVest;
 		vestingInfo.TotalClaimed = totalClaimed.Add(amountToVest).String();
-
+		
+		// store state changes
+		vestingPositions, _ := k.GetVestingPositions(ctx, msg.Creator)
+		vestingPositions.VestingInfos[msg.PosIndex] = vestingInfo
+		k.SetVestingPositions(ctx, types.VestingPositions{
+			Beneficiary:  msg.Creator,
+			VestingInfos: vestingPositions.VestingInfos,
+		})
+	
 		// transfer amountToVest to the beneficiary
 		beneficiary, _ := sdk.AccAddressFromBech32(msg.Creator)
 		vestedCoins := sdk.NewCoins(sdk.NewCoin(

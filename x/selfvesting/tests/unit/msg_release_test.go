@@ -15,6 +15,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -88,4 +89,16 @@ func TestShouldReleaseLinearly(t *testing.T) {
 		Creator: test.Alice,
     PosIndex:    0,
 	})
+
+	vestingPositions_1, _ := keeper.GetVestingPositions(ctx_1, test.Alice)
+	vestingInfo_1 := vestingPositions_1.VestingInfos[0]
+
+	require.Equal(t, vestingPositions_1.Beneficiary, test.Alice)
+	require.Equal(t,len(vestingPositions_1.VestingInfos), 2)
+	require.Equal(t, vestingInfo_1.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_1.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_1.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_1.Amount, "100000000000")
+	require.Equal(t, vestingInfo_1.TotalClaimed, "50000000000")
+	require.Equal(t, vestingInfo_1.PeriodClaimed, uint64(moveTo.Unix()))
 }
