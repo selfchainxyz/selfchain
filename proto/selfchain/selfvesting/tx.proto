@@ -1,7 +1,19 @@
 syntax = "proto3";
+
 package selfchain.selfvesting;
 
 option go_package = "selfchain/x/selfvesting/types";
 
 // Msg defines the Msg service.
-service Msg {}
+service Msg {
+  rpc Release (MsgRelease) returns (MsgReleaseResponse);
+}
+message MsgRelease {
+  string creator  = 1;
+  string posIndex = 2;
+}
+
+message MsgReleaseResponse {
+  uint64 id = 1;
+}
+

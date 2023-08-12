@@ -72181,6 +72181,12 @@ definitions:
         type: string
       processed:
         type: boolean
+  selfchain.selfvesting.MsgReleaseResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
   selfchain.selfvesting.Params:
     type: object
     description: Params defines the parameters for the module.
