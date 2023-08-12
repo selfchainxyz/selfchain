@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"selfchain/x/selfvesting/types"
 	"selfchain/x/selfvesting/utils"
 
@@ -9,9 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func (k Keeper) AddBeneficiary(goCtx context.Context, req types.AddBeneficiaryRequest) (*types.VestingInfo, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
+func (k Keeper) AddBeneficiary(ctx sdk.Context, req types.AddBeneficiaryRequest) (*types.VestingInfo, error) {
 	// check the benficiary address is a valid bech32 address
 	_, err := sdk.AccAddressFromBech32(req.Beneficiary)
 	if err != nil {

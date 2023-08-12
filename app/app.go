@@ -110,6 +110,7 @@ import (
 	selfvestingmodule "selfchain/x/selfvesting"
 	selfvestingmodulekeeper "selfchain/x/selfvesting/keeper"
 	selfvestingmoduletypes "selfchain/x/selfvesting/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "selfchain/app/params"
@@ -505,16 +506,6 @@ func New(
 		govConfig,
 	)
 
-	app.MigrationKeeper = *migrationmodulekeeper.NewKeeper(
-		appCodec,
-		keys[migrationmoduletypes.StoreKey],
-		keys[migrationmoduletypes.MemStoreKey],
-		app.GetSubspace(migrationmoduletypes.ModuleName),
-
-		app.BankKeeper,
-	)
-	migrationModule := migrationmodule.NewAppModule(appCodec, app.MigrationKeeper, app.AccountKeeper, app.BankKeeper)
-
 	app.SelfvestingKeeper = *selfvestingmodulekeeper.NewKeeper(
 		appCodec,
 		keys[selfvestingmoduletypes.StoreKey],
@@ -524,6 +515,17 @@ func New(
 		app.BankKeeper,
 	)
 	selfvestingModule := selfvestingmodule.NewAppModule(appCodec, app.SelfvestingKeeper, app.AccountKeeper, app.BankKeeper)
+
+	app.MigrationKeeper = *migrationmodulekeeper.NewKeeper(
+		appCodec,
+		keys[migrationmoduletypes.StoreKey],
+		keys[migrationmoduletypes.MemStoreKey],
+		app.GetSubspace(migrationmoduletypes.ModuleName),
+		
+		app.SelfvestingKeeper,
+		app.BankKeeper,
+	)
+	migrationModule := migrationmodule.NewAppModule(appCodec, app.MigrationKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
