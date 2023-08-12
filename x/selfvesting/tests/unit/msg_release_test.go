@@ -101,4 +101,54 @@ func TestShouldReleaseLinearly(t *testing.T) {
 	require.Equal(t, vestingInfo_1.Amount, "100000000000")
 	require.Equal(t, vestingInfo_1.TotalClaimed, "50000000000")
 	require.Equal(t, vestingInfo_1.PeriodClaimed, uint64(moveTo.Unix()))
+
+	// move 31 days (i.e. past the 30 days vesting duration) into the future
+	moveTo_2 := time.Unix(0, int64(vestingInfo.StartTime) + (NANO_SECONDS_IN_SECONDS * migrationTypes.VESTING_DURATION))
+	ctx_2 := sdkContext.WithBlockTime(moveTo_2)
+
+	bankMock.ExpectReceiveCoins(ctx_2, test.Alice, 50000000000)
+	server.Release(ctx_2, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    0,
+	})
+
+	vestingPositions_2, _ := keeper.GetVestingPositions(ctx_2, test.Alice)
+	vestingInfo_2 := vestingPositions_2.VestingInfos[0]
+
+	require.Equal(t, vestingPositions_2.Beneficiary, test.Alice)
+	require.Equal(t,len(vestingPositions_2.VestingInfos), 2)
+	require.Equal(t, vestingInfo_2.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_2.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_2.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_2.Amount, "100000000000")
+	require.Equal(t, vestingInfo_2.TotalClaimed, "100000000000")
+	require.Equal(t, vestingInfo_2.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
+
+	// Additional calls will cause a failure since the full amount was released
+	_, releaseError := server.Release(ctx_2, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    0,
+	})
+
+	require.ErrorIs(t, releaseError, types.ErrPositionFullyClaimed)
+
+	// At this point Alice can release the seconds position as well (in full since 30 days are passed)
+	ctx_3 := sdkContext.WithBlockTime(moveTo_2)
+	bankMock.ExpectReceiveCoins(ctx_3, test.Alice, 200000000000)
+	server.Release(ctx_3, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    1,
+	})
+
+	vestingPositions_3, _ := keeper.GetVestingPositions(ctx_3, test.Alice)
+	vestingInfo_3 := vestingPositions_3.VestingInfos[1]
+
+	require.Equal(t, vestingPositions_3.Beneficiary, test.Alice)
+	require.Equal(t,len(vestingPositions_3.VestingInfos), 2)
+	require.Equal(t, vestingInfo_3.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_3.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_3.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_3.Amount, "200000000000")
+	require.Equal(t, vestingInfo_3.TotalClaimed, "200000000000")
+	require.Equal(t, vestingInfo_3.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
 }

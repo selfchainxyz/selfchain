@@ -23,7 +23,7 @@ func getTokenReleaseInfo(
 	}
 
 	// Check that position at the given index exist
-	if int(posIndex) > len(vestingPositions.VestingInfos) {
+	if int(posIndex) >= len(vestingPositions.VestingInfos) {
     return &types.VestingInfo{}, 0, sdkmath.Uint{}, types.ErrPositionIndexOutOfBounds
 	}
 
