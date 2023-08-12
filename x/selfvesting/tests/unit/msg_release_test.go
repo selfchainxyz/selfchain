@@ -67,7 +67,6 @@ func setup_positions(t testing.TB, ctx context.Context, keeper keeper.Keeper) {
 	})
 }
 
-
 func TestShouldReleaseLinearly(t *testing.T) {
 	// test.InitSDKConfig()
 
@@ -132,9 +131,10 @@ func TestShouldReleaseLinearly(t *testing.T) {
 
 	require.ErrorIs(t, releaseError, types.ErrPositionFullyClaimed)
 
-	// At this point Alice can release the seconds position as well (in full since 30 days are passed)
-	ctx_3 := sdkContext.WithBlockTime(moveTo_2)
-	bankMock.ExpectReceiveCoins(ctx_3, test.Alice, 200000000000)
+	// Alice should be able to release the second position in parallel. Here we move it to 1/4 of the total duration i.e 7.5 days
+	moveTo_3 := time.Unix(0, int64(vestingInfo.StartTime) + (NANO_SECONDS_IN_SECONDS * migrationTypes.SECONDS_IN_DAY * 7.5))
+	ctx_3 := sdkContext.WithBlockTime(moveTo_3)
+	bankMock.ExpectReceiveCoins(ctx_3, test.Alice, 50000000000)
 	server.Release(ctx_3, &types.MsgRelease {
 		Creator: test.Alice,
     PosIndex:    1,
@@ -149,6 +149,47 @@ func TestShouldReleaseLinearly(t *testing.T) {
 	require.Equal(t, vestingInfo_3.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
 	require.Equal(t, vestingInfo_3.Duration, uint64(migrationTypes.VESTING_DURATION))
 	require.Equal(t, vestingInfo_3.Amount, "200000000000")
-	require.Equal(t, vestingInfo_3.TotalClaimed, "200000000000")
-	require.Equal(t, vestingInfo_3.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_3.TotalClaimed, "50000000000")
+	require.Equal(t, vestingInfo_3.PeriodClaimed, uint64(moveTo_3.Unix()))
+
+	// Alice can release the entire amount after the end of the vesting period
+	ctx_4 := sdkContext.WithBlockTime(moveTo_2)
+	bankMock.ExpectReceiveCoins(ctx_4, test.Alice, 150000000000)
+	server.Release(ctx_4, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    1,
+	})
+
+	vestingPositions_4, _ := keeper.GetVestingPositions(ctx_4, test.Alice)
+	vestingInfo_4 := vestingPositions_4.VestingInfos[1]
+
+	require.Equal(t, vestingPositions_4.Beneficiary, test.Alice)
+	require.Equal(t,len(vestingPositions_4.VestingInfos), 2)
+	require.Equal(t, vestingInfo_4.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_4.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_4.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_4.Amount, "200000000000")
+	require.Equal(t, vestingInfo_4.TotalClaimed, "200000000000")
+	require.Equal(t, vestingInfo_4.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
+
+	// Bob should also be able to release in parallel with Alice. Here he starts at 1/4 of the total vesting duration
+	ctx_5 := sdkContext.WithBlockTime(moveTo_3)
+	bankMock.ExpectReceiveCoins(ctx_5, test.Bob, 125000000000)
+	server.Release(ctx_5, &types.MsgRelease {
+		Creator: test.Bob,
+    PosIndex:    0,
+	})
+
+	vestingPositions_5, _ := keeper.GetVestingPositions(ctx_5, test.Bob)
+	vestingInfo_5 := vestingPositions_5.VestingInfos[0]
+
+	require.Equal(t, vestingPositions_5.Beneficiary, test.Bob)
+	require.Equal(t,len(vestingPositions_5.VestingInfos), 1)
+	require.Equal(t, vestingInfo_5.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_5.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_5.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_5.Amount, "500000000000")
+	require.Equal(t, vestingInfo_5.TotalClaimed, "125000000000")
+	require.Equal(t, vestingInfo_5.PeriodClaimed, uint64(moveTo_3.Unix()))
+
 }
