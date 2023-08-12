@@ -3,10 +3,10 @@ package test
 
 import (
 	"selfchain/app"
-	"selfchain/x/migration"
-	"selfchain/x/migration/keeper"
-	test "selfchain/x/migration/tests"
-	"selfchain/x/migration/types"
+	"selfchain/x/selfvesting"
+	"selfchain/x/selfvesting/keeper"
+	test "selfchain/x/selfvesting/tests"
+	"selfchain/x/selfvesting/types"
 	"testing"
 	"time"
 
@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	migrationModuleAddress string
+	selfvestingModuleAddress string
 )
 
-func TestMigrationTestSuite(t *testing.T) {
+func TestSelfvestingTestSuite(t *testing.T) {
 	test.InitSDKConfig()
 	suite.Run(t, new(IntegrationTestSuite))
 }
@@ -42,35 +42,24 @@ func (suite *IntegrationTestSuite) SetupTest() {
 
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 	app.BankKeeper.SetParams(ctx, banktypes.DefaultParams())
-	migrationModuleAddress = app.AccountKeeper.GetModuleAddress(types.ModuleName).String()
+	selfvestingModuleAddress = app.AccountKeeper.GetModuleAddress(types.ModuleName).String()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, app.MigrationKeeper)
+	types.RegisterQueryServer(queryHelper, app.SelfvestingKeeper)
 	queryClient := types.NewQueryClient(queryHelper)
 
 	suite.app = app
-	suite.msgServer = keeper.NewMsgServerImpl(app.MigrationKeeper)
+	suite.msgServer = keeper.NewMsgServerImpl(app.SelfvestingKeeper)
 	suite.ctx = ctx
 	suite.queryClient = queryClient
 
-	migration.InitGenesis(ctx, app.MigrationKeeper, getModuleGenesis())
+	selfvesting.InitGenesis(ctx, app.SelfvestingKeeper, getModuleGenesis())
 }
 
 func getModuleGenesis() types.GenesisState {
 	genesis := *types.DefaultGenesis()
-	genesis.Acl = &types.Acl{
-		Admin: test.AclAdmin,
-	}
-	genesis.MigratorList = []types.Migrator{
-		{
-			Migrator: test.Migrator_1,
-			Exists:   true,
-		},
-		{
-			Migrator: test.Migrator_2,
-			Exists:   true,
-		},
-	}
+
+	genesis.VestingPositionsList = []types.VestingPositions{}
 
 	return genesis
 }
@@ -100,8 +89,6 @@ func getBankGenesis() *banktypes.GenesisState {
 		makeBalance(test.Alice, 1000000000, "uself"),
 		makeBalance(test.Bob, 1000000000, "uself"),
 		makeBalance(test.Carol, 1000000000, "uself"),
-		makeBalance(test.Migrator_1, 1000000000, "uself"),
-		makeBalance(test.Migrator_2, 1000000000, "uself"),
 	}
 	supply := banktypes.Supply{
 		Total: addAll(coins),

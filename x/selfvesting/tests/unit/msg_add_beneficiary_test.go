@@ -5,10 +5,13 @@ import (
 	"testing"
 
 	keepertest "selfchain/testutil/keeper"
+	migrationTypes "selfchain/x/migration/types"
 	"selfchain/x/selfvesting"
 	"selfchain/x/selfvesting/keeper"
+	test "selfchain/x/selfvesting/tests"
 	mocktest "selfchain/x/selfvesting/tests/mock"
 	"selfchain/x/selfvesting/types"
+	"selfchain/x/selfvesting/utils"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -35,6 +38,8 @@ func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomo
 }
 
 func TestShouldFailIfInvalidBeneficiaryAddr(t *testing.T) {
+	test.InitSDKConfig()
+
 	_, ctx, keeper, ctrl, _ := setup(t)
 	defer ctrl.Finish()
 
@@ -46,4 +51,35 @@ func TestShouldFailIfInvalidBeneficiaryAddr(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, sdkerrors.ErrInvalidAddress)
+}
+
+func TestShouldCreateNewVestingPosition(t *testing.T) {
+	_, ctx, keeper, ctrl, _ := setup(t)
+	defer ctrl.Finish()
+
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+	startTime := utils.BlockTime(sdkContext)
+
+	addBeneficiaryRequest := types.AddBeneficiaryRequest{
+		Beneficiary: test.Alice,
+		Cliff:       migrationTypes.VESTING_CLIFF,
+		Duration:    migrationTypes.VESTING_DURATION,
+		Amount:      "100000000000",
+	}
+
+	_, err := keeper.AddBeneficiary(sdkContext, addBeneficiaryRequest)
+
+	vestingPositions, _ := keeper.GetVestingPositions(sdkContext, test.Alice)
+	vestingInfo := vestingPositions.VestingInfos[0]
+
+	require.Equal(t, vestingPositions.Beneficiary, test.Alice)
+	require.Equal(t,len(vestingPositions.VestingInfos), 1)
+	require.Equal(t, vestingInfo.StartTime, startTime)
+	require.Equal(t, vestingInfo.Cliff, startTime + migrationTypes.VESTING_CLIFF)
+	require.Equal(t, vestingInfo.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo.Amount, "100000000000")
+	require.Equal(t, vestingInfo.TotalClaimed, "0")
+	require.Equal(t, vestingInfo.PeriodClaimed, uint64(0))
+
+	_ = err
 }

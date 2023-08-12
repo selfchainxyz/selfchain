@@ -16,12 +16,16 @@ func (k Keeper) AddBeneficiary(ctx sdk.Context, req types.AddBeneficiaryRequest)
 	}
 
 	// create and add a new vesting position under the beneficiary key
-	vestingInfos := []*types.VestingInfo{}
-	vestingPositions, positionsExist := k.GetVestingPositions(ctx, req.Beneficiary)
+	_, positionsExist := k.GetVestingPositions(ctx, req.Beneficiary)
 
-	if positionsExist {
-		vestingInfos = vestingPositions.VestingInfos
+	// if this is the first vesting position then create a default entry
+	if !positionsExist {
+		k.SetVestingPositions(ctx, types.VestingPositions{
+			Beneficiary:  req.Beneficiary,
+		})
 	}
+
+	vestingPositions, _ := k.GetVestingPositions(ctx, req.Beneficiary)
 
 	// startTime := uint64(ctx.BlockHeader().Time.Unix())
 	startTime := utils.BlockTime(ctx)
@@ -34,7 +38,10 @@ func (k Keeper) AddBeneficiary(ctx sdk.Context, req types.AddBeneficiaryRequest)
 		PeriodClaimed: 0,
 	}
 
-	vestingPositions.VestingInfos = append(vestingInfos, newPosition)
+	k.SetVestingPositions(ctx, types.VestingPositions{
+		Beneficiary:  req.Beneficiary,
+		VestingInfos: append(vestingPositions.VestingInfos, newPosition),
+	})
 
 	return newPosition, nil
 }
