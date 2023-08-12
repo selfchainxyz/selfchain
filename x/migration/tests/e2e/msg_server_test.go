@@ -3,6 +3,7 @@ package test
 import (
 	test "selfchain/x/migration/tests"
 	"selfchain/x/migration/types"
+	selfvestingTypes "selfchain/x/selfvesting/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -27,12 +28,13 @@ func (suite *IntegrationTestSuite) TestShouldFailIfInvalidMigrator() {
 	suite.Require().ErrorIs(err, types.ErrUnknownMigrator)
 }
 
-func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForFront() {
+func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForFront() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
-	aliceAddr, _ := sdk.AccAddressFromBech32(test.Alice)
+	selfVestingAddr := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, selfvestingTypes.ModuleName).GetAddress()
 
-	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
+	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
+
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
 		Creator:     test.Migrator_1,
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -43,7 +45,7 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForFront() {
 		LogIndex:    0,
 	})
 	_ = err
-	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
+	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 
 	suite.Require().EqualValues(sdkmath.NewInt(100000000000), balAfter.Amount.Sub(balBefore.Amount))
 }
@@ -51,9 +53,9 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForFront() {
 func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
-	bobAddr, _ := sdk.AccAddressFromBech32(test.Bob)
+	selfVestingAddr := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, selfvestingTypes.ModuleName).GetAddress()
 
-	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
+	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
 		Creator:     test.Migrator_2,
 		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
@@ -64,7 +66,7 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 		LogIndex:    0,
 	})
 	_ = err
-	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
+	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 
 	suite.Require().EqualValues(sdkmath.NewInt(50000000000), balAfter.Amount.Sub(balBefore.Amount))
 }
