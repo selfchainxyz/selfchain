@@ -62,7 +62,7 @@ func TestShouldFailIfInvalidMigrator(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrUnknownMigrator)
 }
 
-func TestShouldMintAmountToSelfvestingModule(t *testing.T) {
+func TestShouldMintAmountAndAddBeneficiary(t *testing.T) {
 	// create a couple of migrators
 	server, ctx, _, ctrl, selfVestingMock, bankMock := setup(t)
 	defer ctrl.Finish()
