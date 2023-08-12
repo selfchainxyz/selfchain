@@ -10,7 +10,7 @@ service Msg {
 }
 message MsgRelease {
   string creator  = 1;
-  string posIndex = 2;
+  uint64 posIndex = 2;
 }
 
 message MsgReleaseResponse {

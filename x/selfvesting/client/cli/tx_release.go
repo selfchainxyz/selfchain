@@ -3,11 +3,13 @@ package cli
 import (
 	"strconv"
 
+	"selfchain/x/selfvesting/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	"selfchain/x/selfvesting/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -18,7 +20,11 @@ func CmdRelease() *cobra.Command {
 		Short: "Broadcast message release",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argPosIndex := args[0]
+			argPosIndex, err := cast.ToUint64E(args[0])
+			if err != nil {
+				return err
+			}
+
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

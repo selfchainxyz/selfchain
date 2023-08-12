@@ -52,10 +52,14 @@ func getTokenReleaseInfo(
 }
 
 func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types.MsgReleaseResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+	// ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: Handling the message
-	_ = ctx
+	// periodToVest, amountToVest, hasError = getTokenReleaseInfo(
+	// 	k,
+	// 	ctx,
+  //   msg.Creator,
+  //   msg.PosIndex,
+	// )
 
 	return &types.MsgReleaseResponse{}, nil
 }

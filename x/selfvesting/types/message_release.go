@@ -9,7 +9,7 @@ const TypeMsgRelease = "release"
 
 var _ sdk.Msg = &MsgRelease{}
 
-func NewMsgRelease(creator string, posIndex string) *MsgRelease {
+func NewMsgRelease(creator string, posIndex uint64) *MsgRelease {
 	return &MsgRelease{
 		Creator:  creator,
 		PosIndex: posIndex,
