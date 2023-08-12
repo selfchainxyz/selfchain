@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"selfchain/x/selfvesting/types"
+	"selfchain/x/selfvesting/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,11 +22,12 @@ func (k Keeper) AddBeneficiary(goCtx context.Context, req types.AddBeneficiaryRe
 	vestingInfos := []*types.VestingInfo{}
 	vestingPositions, positionsExist := k.GetVestingPositions(ctx, req.Beneficiary)
 
-	if !positionsExist {
+	if positionsExist {
 		vestingInfos = vestingPositions.VestingInfos
 	}
 
-	startTime := uint64(ctx.BlockHeader().Time.Unix())
+	// startTime := uint64(ctx.BlockHeader().Time.Unix())
+	startTime := utils.BlockTime(ctx)
 	newPosition := &types.VestingInfo{
 		StartTime:     startTime,
 		Duration:      req.Duration,
