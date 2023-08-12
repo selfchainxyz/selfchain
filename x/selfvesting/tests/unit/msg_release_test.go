@@ -192,4 +192,23 @@ func TestShouldReleaseLinearly(t *testing.T) {
 	require.Equal(t, vestingInfo_5.TotalClaimed, "125000000000")
 	require.Equal(t, vestingInfo_5.PeriodClaimed, uint64(moveTo_3.Unix()))
 
+	// Finally Bob can claim the full amount after the end of the vesting period
+	ctx_6 := sdkContext.WithBlockTime(moveTo_2)
+	bankMock.ExpectReceiveCoins(ctx_6, test.Bob, 375000000000)
+	server.Release(ctx_6, &types.MsgRelease {
+		Creator: test.Bob,
+    PosIndex:    0,
+	})
+
+	vestingPositions_6, _ := keeper.GetVestingPositions(ctx_6, test.Bob)
+	vestingInfo_6 := vestingPositions_6.VestingInfos[0]
+
+	require.Equal(t, vestingPositions_6.Beneficiary, test.Bob)
+	require.Equal(t,len(vestingPositions_6.VestingInfos), 1)
+	require.Equal(t, vestingInfo_6.StartTime, uint64(0))
+	require.Equal(t, vestingInfo_6.Cliff, uint64(0 + migrationTypes.VESTING_CLIFF))
+	require.Equal(t, vestingInfo_6.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_6.Amount, "500000000000")
+	require.Equal(t, vestingInfo_6.TotalClaimed, "500000000000")
+	require.Equal(t, vestingInfo_6.PeriodClaimed, uint64(migrationTypes.VESTING_DURATION))
 }
