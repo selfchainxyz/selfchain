@@ -68,8 +68,6 @@ func setup_positions(t testing.TB, ctx context.Context, keeper keeper.Keeper) {
 }
 
 func TestShouldReleaseLinearly(t *testing.T) {
-	// test.InitSDKConfig()
-
 	server, ctx, keeper, ctrl, bankMock := setup_release(t)
 	setup_positions(t, ctx, keeper)
 	defer ctrl.Finish()
@@ -237,4 +235,21 @@ func TestShouldFailIfPosIndexOutofBounds(t *testing.T) {
 	})
 
 	require.ErrorIs(t, releaseError, types.ErrPositionIndexOutOfBounds)
+}
+
+func TestShouldFailIfCliffNotReached(t *testing.T) {
+	server, ctx, keeper, ctrl, _ := setup_release(t)
+	setup_positions(t, ctx, keeper)
+
+	ctx_1 := sdk.UnwrapSDKContext(ctx)
+	sdkContext := ctx_1.WithBlockTime(time.Unix(migrationTypes.VESTING_CLIFF - 1, 0))
+
+	defer ctrl.Finish()
+
+	_, releaseError := server.Release(sdkContext, &types.MsgRelease {
+		Creator: test.Alice,
+    PosIndex:    1,
+	})
+
+	require.ErrorIs(t, releaseError, types.ErrCliffViolation)
 }

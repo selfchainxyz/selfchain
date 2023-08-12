@@ -41,7 +41,7 @@ func getTokenReleaseInfo(
 	now := utils.BlockTime(ctx)
 	// For vesting created with a future start date, that hasn't been reached, return 0, 0
 	if now < vestingInfo.Cliff {
-		return vestingInfo, 0, sdkmath.Uint{}, nil
+		return vestingInfo, 0, sdkmath.Uint{}, types.ErrCliffViolation
 	}
 
 	elapsedPeriod := now - vestingInfo.StartTime
