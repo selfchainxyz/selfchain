@@ -48,7 +48,7 @@ func SelfvestingKeeperWithMocks(t testing.TB, bankKeeper *test.MockBankKeeper) (
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		nil,
+		bankKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
