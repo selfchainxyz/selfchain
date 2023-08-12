@@ -33,7 +33,7 @@ func (k Keeper) AddBeneficiary(goCtx context.Context, req types.AddBeneficiaryRe
 		Duration:      req.Duration,
 		Cliff:         startTime + req.Cliff,
 		Amount:        req.Amount,
-		TotalClaimed:  0,
+		TotalClaimed:  "0",
 		PeriodClaimed: 0,
 	}
 

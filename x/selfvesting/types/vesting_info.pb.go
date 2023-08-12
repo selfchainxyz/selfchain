@@ -26,8 +26,8 @@ type VestingInfo struct {
 	StartTime     uint64 `protobuf:"varint,1,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	Duration      uint64 `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
 	Cliff         uint64 `protobuf:"varint,3,opt,name=cliff,proto3" json:"cliff,omitempty"`
-	Amount        uint64 `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	TotalClaimed  uint64 `protobuf:"varint,5,opt,name=totalClaimed,proto3" json:"totalClaimed,omitempty"`
+	Amount        string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	TotalClaimed  string `protobuf:"bytes,5,opt,name=totalClaimed,proto3" json:"totalClaimed,omitempty"`
 	PeriodClaimed uint64 `protobuf:"varint,6,opt,name=periodClaimed,proto3" json:"periodClaimed,omitempty"`
 }
 
@@ -85,18 +85,18 @@ func (m *VestingInfo) GetCliff() uint64 {
 	return 0
 }
 
-func (m *VestingInfo) GetAmount() uint64 {
+func (m *VestingInfo) GetAmount() string {
 	if m != nil {
 		return m.Amount
 	}
-	return 0
+	return ""
 }
 
-func (m *VestingInfo) GetTotalClaimed() uint64 {
+func (m *VestingInfo) GetTotalClaimed() string {
 	if m != nil {
 		return m.TotalClaimed
 	}
-	return 0
+	return ""
 }
 
 func (m *VestingInfo) GetPeriodClaimed() uint64 {
@@ -115,7 +115,7 @@ func init() {
 }
 
 var fileDescriptor_db524d9bebced67f = []byte{
-	// 232 bytes of a gzipped FileDescriptorProto
+	// 235 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x28, 0x4e, 0xcd, 0x49,
 	0x4b, 0xce, 0x48, 0xcc, 0xcc, 0xd3, 0x07, 0xb1, 0xca, 0x52, 0x8b, 0x4b, 0x32, 0xf3, 0xd2, 0xf5,
 	0xa1, 0x74, 0x7c, 0x66, 0x5e, 0x5a, 0xbe, 0x5e, 0x41, 0x51, 0x7e, 0x49, 0xbe, 0x90, 0x28, 0x5c,
@@ -124,13 +124,13 @@ var fileDescriptor_db524d9bebced67f = []byte{
 	0xa3, 0x06, 0x4b, 0x10, 0x42, 0x40, 0x48, 0x8a, 0x8b, 0x23, 0xa5, 0xb4, 0x28, 0xb1, 0x24, 0x33,
 	0x3f, 0x4f, 0x82, 0x09, 0x2c, 0x09, 0xe7, 0x0b, 0x89, 0x70, 0xb1, 0x26, 0xe7, 0x64, 0xa6, 0xa5,
 	0x49, 0x30, 0x83, 0x25, 0x20, 0x1c, 0x21, 0x31, 0x2e, 0xb6, 0xc4, 0xdc, 0xfc, 0xd2, 0xbc, 0x12,
-	0x09, 0x16, 0xb0, 0x30, 0x94, 0x27, 0xa4, 0xc4, 0xc5, 0x53, 0x92, 0x5f, 0x92, 0x98, 0xe3, 0x9c,
-	0x93, 0x98, 0x99, 0x9b, 0x9a, 0x22, 0xc1, 0x0a, 0x96, 0x45, 0x11, 0x13, 0x52, 0xe1, 0xe2, 0x2d,
-	0x48, 0x2d, 0xca, 0xcc, 0x4f, 0x81, 0x29, 0x62, 0x03, 0x2b, 0x42, 0x15, 0x74, 0x32, 0x3f, 0xf1,
-	0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8,
-	0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0x59, 0x44, 0xe0, 0x54, 0xa0, 0x04, 0x4f,
-	0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0x38, 0x60, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff,
-	0x10, 0xfc, 0x0e, 0x0f, 0x44, 0x01, 0x00, 0x00,
+	0x09, 0x16, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x28, 0x4f, 0x48, 0x89, 0x8b, 0xa7, 0x24, 0xbf, 0x24,
+	0x31, 0xc7, 0x39, 0x27, 0x31, 0x33, 0x37, 0x35, 0x45, 0x82, 0x15, 0x2c, 0x8b, 0x22, 0x26, 0xa4,
+	0xc2, 0xc5, 0x5b, 0x90, 0x5a, 0x94, 0x99, 0x9f, 0x02, 0x53, 0xc4, 0x06, 0x36, 0x19, 0x55, 0xd0,
+	0xc9, 0xfc, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0,
+	0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x64, 0x11, 0x81, 0x53,
+	0x81, 0x12, 0x3c, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0xe0, 0x80, 0x31, 0x06, 0x04, 0x00,
+	0x00, 0xff, 0xff, 0x6d, 0x8e, 0xfd, 0xfe, 0x44, 0x01, 0x00, 0x00,
 }
 
 func (m *VestingInfo) Marshal() (dAtA []byte, err error) {
@@ -158,15 +158,19 @@ func (m *VestingInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x30
 	}
-	if m.TotalClaimed != 0 {
-		i = encodeVarintVestingInfo(dAtA, i, uint64(m.TotalClaimed))
+	if len(m.TotalClaimed) > 0 {
+		i -= len(m.TotalClaimed)
+		copy(dAtA[i:], m.TotalClaimed)
+		i = encodeVarintVestingInfo(dAtA, i, uint64(len(m.TotalClaimed)))
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x2a
 	}
-	if m.Amount != 0 {
-		i = encodeVarintVestingInfo(dAtA, i, uint64(m.Amount))
+	if len(m.Amount) > 0 {
+		i -= len(m.Amount)
+		copy(dAtA[i:], m.Amount)
+		i = encodeVarintVestingInfo(dAtA, i, uint64(len(m.Amount)))
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x22
 	}
 	if m.Cliff != 0 {
 		i = encodeVarintVestingInfo(dAtA, i, uint64(m.Cliff))
@@ -212,11 +216,13 @@ func (m *VestingInfo) Size() (n int) {
 	if m.Cliff != 0 {
 		n += 1 + sovVestingInfo(uint64(m.Cliff))
 	}
-	if m.Amount != 0 {
-		n += 1 + sovVestingInfo(uint64(m.Amount))
+	l = len(m.Amount)
+	if l > 0 {
+		n += 1 + l + sovVestingInfo(uint64(l))
 	}
-	if m.TotalClaimed != 0 {
-		n += 1 + sovVestingInfo(uint64(m.TotalClaimed))
+	l = len(m.TotalClaimed)
+	if l > 0 {
+		n += 1 + l + sovVestingInfo(uint64(l))
 	}
 	if m.PeriodClaimed != 0 {
 		n += 1 + sovVestingInfo(uint64(m.PeriodClaimed))
@@ -317,10 +323,10 @@ func (m *VestingInfo) Unmarshal(dAtA []byte) error {
 				}
 			}
 		case 4:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
 			}
-			m.Amount = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowVestingInfo
@@ -330,16 +336,29 @@ func (m *VestingInfo) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Amount |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthVestingInfo
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthVestingInfo
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amount = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 5:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TotalClaimed", wireType)
 			}
-			m.TotalClaimed = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowVestingInfo
@@ -349,11 +368,24 @@ func (m *VestingInfo) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.TotalClaimed |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthVestingInfo
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthVestingInfo
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TotalClaimed = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PeriodClaimed", wireType)

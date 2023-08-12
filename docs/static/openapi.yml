@@ -44333,10 +44333,8 @@ paths:
                             format: uint64
                           amount:
                             type: string
-                            format: uint64
                           totalClaimed:
                             type: string
-                            format: uint64
                           periodClaimed:
                             type: string
                             format: uint64
@@ -44476,10 +44474,8 @@ paths:
                           format: uint64
                         amount:
                           type: string
-                          format: uint64
                         totalClaimed:
                           type: string
-                          format: uint64
                         periodClaimed:
                           type: string
                           format: uint64
@@ -72184,9 +72180,11 @@ definitions:
   selfchain.selfvesting.MsgReleaseResponse:
     type: object
     properties:
-      id:
+      periodToVest:
         type: string
         format: uint64
+      amountToVest:
+        type: string
   selfchain.selfvesting.Params:
     type: object
     description: Params defines the parameters for the module.
@@ -72216,10 +72214,8 @@ definitions:
                     format: uint64
                   amount:
                     type: string
-                    format: uint64
                   totalClaimed:
                     type: string
-                    format: uint64
                   periodClaimed:
                     type: string
                     format: uint64
@@ -72273,10 +72269,8 @@ definitions:
                   format: uint64
                 amount:
                   type: string
-                  format: uint64
                 totalClaimed:
                   type: string
-                  format: uint64
                 periodClaimed:
                   type: string
                   format: uint64
@@ -72301,10 +72295,8 @@ definitions:
         format: uint64
       amount:
         type: string
-        format: uint64
       totalClaimed:
         type: string
-        format: uint64
       periodClaimed:
         type: string
         format: uint64
@@ -72329,10 +72321,8 @@ definitions:
               format: uint64
             amount:
               type: string
-              format: uint64
             totalClaimed:
               type: string
-              format: uint64
             periodClaimed:
               type: string
               format: uint64
