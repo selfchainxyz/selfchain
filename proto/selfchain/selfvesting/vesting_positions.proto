@@ -1,0 +1,11 @@
+syntax = "proto3";
+package selfchain.selfvesting;
+
+option go_package = "selfchain/x/selfvesting/types";
+import "selfchain/selfvesting/vesting_info.proto"; 
+
+message VestingPositions {
+  string beneficiary = 1; 
+  repeated VestingInfo vestingInfos = 2;
+}
+

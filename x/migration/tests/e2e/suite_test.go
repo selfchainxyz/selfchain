@@ -16,7 +16,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-);
+)
 
 var (
 	migrationModuleAddress string
@@ -60,7 +60,7 @@ func getModuleGenesis() types.GenesisState {
 	genesis := *types.DefaultGenesis()
 	genesis.Acl = &types.Acl{
 		Admin: test.AclAdmin,
-	};
+	}
 	genesis.MigratorList = []types.Migrator{
 		{
 			Migrator: test.Migrator_1,

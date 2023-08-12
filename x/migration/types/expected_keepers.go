@@ -1,6 +1,8 @@
 package types
 
 import (
+	selfvestingTypes "selfchain/x/selfvesting/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -15,4 +17,9 @@ type AccountKeeper interface {
 type BankKeeper interface {
 	MintCoins(ctx sdk.Context, moduleName string, amounts sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+}
+
+// SelfvestingKeeper defines the expected interface needed to interact with the selfvesting module
+type SelfvestingKeeper interface {
+	AddBeneficiary(ctx sdk.Context, req selfvestingTypes.AddBeneficiaryRequest) (*selfvestingTypes.VestingInfo, error)
 }

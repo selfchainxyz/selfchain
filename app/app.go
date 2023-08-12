@@ -107,6 +107,10 @@ import (
 	migrationmodulekeeper "selfchain/x/migration/keeper"
 	migrationmoduletypes "selfchain/x/migration/types"
 
+	selfvestingmodule "selfchain/x/selfvesting"
+	selfvestingmodulekeeper "selfchain/x/selfvesting/keeper"
+	selfvestingmoduletypes "selfchain/x/selfvesting/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "selfchain/app/params"
@@ -166,20 +170,22 @@ var (
 		ica.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		migrationmodule.AppModuleBasic{},
+		selfvestingmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:      nil,
-		distrtypes.ModuleName:           nil,
-		icatypes.ModuleName:             nil,
-		minttypes.ModuleName:            {authtypes.Minter},
-		stakingtypes.BondedPoolName:     {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:  {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:             {authtypes.Burner},
-		ibctransfertypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-		migrationmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		authtypes.FeeCollectorName:        nil,
+		distrtypes.ModuleName:             nil,
+		icatypes.ModuleName:               nil,
+		minttypes.ModuleName:              {authtypes.Minter},
+		stakingtypes.BondedPoolName:       {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:               {authtypes.Burner},
+		ibctransfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		migrationmoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		selfvestingmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -241,6 +247,8 @@ type App struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 
 	MigrationKeeper migrationmodulekeeper.Keeper
+
+	SelfvestingKeeper selfvestingmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -286,6 +294,7 @@ func New(
 		ibctransfertypes.StoreKey, icahosttypes.StoreKey, capabilitytypes.StoreKey, group.StoreKey,
 		icacontrollertypes.StoreKey,
 		migrationmoduletypes.StoreKey,
+		selfvestingmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -497,12 +506,23 @@ func New(
 		govConfig,
 	)
 
+	app.SelfvestingKeeper = *selfvestingmodulekeeper.NewKeeper(
+		appCodec,
+		keys[selfvestingmoduletypes.StoreKey],
+		keys[selfvestingmoduletypes.MemStoreKey],
+		app.GetSubspace(selfvestingmoduletypes.ModuleName),
+
+		app.BankKeeper,
+	)
+	selfvestingModule := selfvestingmodule.NewAppModule(appCodec, app.SelfvestingKeeper, app.AccountKeeper, app.BankKeeper)
+
 	app.MigrationKeeper = *migrationmodulekeeper.NewKeeper(
 		appCodec,
 		keys[migrationmoduletypes.StoreKey],
 		keys[migrationmoduletypes.MemStoreKey],
 		app.GetSubspace(migrationmoduletypes.ModuleName),
-
+		
+		app.SelfvestingKeeper,
 		app.BankKeeper,
 	)
 	migrationModule := migrationmodule.NewAppModule(appCodec, app.MigrationKeeper, app.AccountKeeper, app.BankKeeper)
@@ -573,6 +593,7 @@ func New(
 		transferModule,
 		icaModule,
 		migrationModule,
+		selfvestingModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -603,6 +624,7 @@ func New(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
+		selfvestingmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -628,6 +650,7 @@ func New(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
+		selfvestingmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -658,6 +681,7 @@ func New(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
+		selfvestingmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -688,6 +712,7 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 		migrationModule,
+		selfvestingModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -893,6 +918,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(migrationmoduletypes.ModuleName)
+	paramsKeeper.Subspace(selfvestingmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

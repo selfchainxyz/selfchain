@@ -7,6 +7,7 @@ package test
 import (
 	reflect "reflect"
 
+	selfvestingTypes "selfchain/x/selfvesting/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"
@@ -98,4 +99,38 @@ func (m *MockBankKeeper) SendCoinsFromModuleToAccount(ctx types.Context, senderM
 func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, amt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToAccount", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToAccount), ctx, senderModule, recipientAddr, amt)
+}
+
+type MockSelfvestingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockSelfvestingKeeperMockRecorder
+}
+
+type MockSelfvestingKeeperMockRecorder struct {
+	mock *MockSelfvestingKeeper
+}
+
+func NewMockSelfvestingKeeper(ctrl *gomock.Controller) *MockSelfvestingKeeper {
+	mock := &MockSelfvestingKeeper{ctrl: ctrl}
+	mock.recorder = &MockSelfvestingKeeperMockRecorder{mock}
+	return mock
+}
+
+func (m *MockSelfvestingKeeper) EXPECT() *MockSelfvestingKeeperMockRecorder {
+	return m.recorder
+}
+
+func (m *MockSelfvestingKeeper) AddBeneficiary(
+	ctx types.Context,
+	req selfvestingTypes.AddBeneficiaryRequest,
+) (*selfvestingTypes.VestingInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBeneficiary", ctx, req)
+	ret0, _ := ret[0].(error)
+	return nil, ret0
+}
+
+func (mr *MockSelfvestingKeeperMockRecorder) AddBeneficiary(ctx, req interface {}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBeneficiary", reflect.TypeOf((*MockSelfvestingKeeper)(nil).AddBeneficiary), ctx, req)
 }

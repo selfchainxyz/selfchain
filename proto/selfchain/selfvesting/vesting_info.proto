@@ -1,0 +1,14 @@
+syntax = "proto3";
+package selfchain.selfvesting;
+
+option go_package = "selfchain/x/selfvesting/types";
+
+message VestingInfo {
+  
+  uint64 startTime = 1; 
+  uint64 duration = 2; 
+  uint64 cliff = 3; 
+  string amount = 4; 
+  string totalClaimed = 5; 
+  uint64 periodClaimed = 6; 
+}

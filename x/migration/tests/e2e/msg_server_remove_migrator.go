@@ -27,7 +27,6 @@ func (suite *IntegrationTestSuite) TestShouldRemoveMigrator() {
 		Migrator: test.Alice,
 	})
 
-
 	_, exists := suite.app.MigrationKeeper.GetMigrator(suite.ctx, test.Alice)
 	suite.Require().True(exists)
 
@@ -39,6 +38,6 @@ func (suite *IntegrationTestSuite) TestShouldRemoveMigrator() {
 
 	suite.Require().Nil(err)
 
-	_, exists = suite.app.MigrationKeeper.GetMigrator(suite.ctx, test.Alice);
+	_, exists = suite.app.MigrationKeeper.GetMigrator(suite.ctx, test.Alice)
 	suite.Require().False(exists)
 }

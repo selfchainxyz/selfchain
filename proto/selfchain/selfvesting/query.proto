@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package selfchain.selfvesting;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "selfchain/selfvesting/params.proto";
+import "selfchain/selfvesting/vesting_positions.proto";
+import "selfchain/selfvesting/vesting_info.proto";
+
+option go_package = "selfchain/x/selfvesting/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  
+  // Parameters queries the parameters of the module.
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/selfchain/selfvesting/params";
+  
+  }
+  
+  // Queries a list of VestingPositions items.
+  rpc VestingPositions    (QueryGetVestingPositionsRequest) returns (QueryGetVestingPositionsResponse) {
+    option (google.api.http).get = "/selfchain/selfvesting/vesting_positions/{beneficiary}";
+  
+  }
+  rpc VestingPositionsAll (QueryAllVestingPositionsRequest) returns (QueryAllVestingPositionsResponse) {
+    option (google.api.http).get = "/selfchain/selfvesting/vesting_positions";
+  
+  }
+}
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetVestingPositionsRequest {
+  string beneficiary = 1;
+}
+
+message QueryGetVestingPositionsResponse {
+  VestingPositions vestingPositions = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllVestingPositionsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllVestingPositionsResponse {
+  repeated VestingPositions                       vestingPositions = 1 [(gogoproto.nullable) = false];
+           cosmos.base.query.v1beta1.PageResponse pagination       = 2;
+}
+
