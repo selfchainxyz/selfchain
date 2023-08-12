@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"selfchain/x/migration/types"
+	selfvestingTypes "selfchain/x/selfvesting/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,17 +59,19 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		sdkmath.NewIntFromBigInt(mintedAmount.BigInt()),
 	))
 
-	// 5. Mint new coins
-	mintError := k.bankKeeper.MintCoins(ctx, types.ModuleName, mintedCoins)
+	// 5. Mint new coins to the selfvesting module
+	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, mintedCoins)
 	if mintError != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
-	// 6. transfer coins to destAddress
-
-	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
-	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
-	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, destAddr, mintedCoins)
+	// 6. Add a new beneficiary
+	k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
+		Beneficiary: msg.DestAddress,
+		Cliff:       types.VESTING_CLIFF,
+		Duration:    types.VESTING_DURATION,
+		Amount:      mintedAmount.String(),
+	})
 
 	// 7. Store the token migration so it can't be processed again
 	k.SetTokenMigration(ctx, types.TokenMigration{
