@@ -27,8 +27,8 @@ const (
 
 // Ratios
 const (
-	FRONT_RATIO    = 10 // 10%
-	HOTCROSS_RATIO = 5
+	FRONT_RATIO    = 100 // 100%
+	HOTCROSS_RATIO = 50 // 50%
 )
 
 // Vesting info 
