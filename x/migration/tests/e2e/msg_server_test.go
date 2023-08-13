@@ -32,8 +32,10 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForFront() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
 	selfVestingAddr := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, selfvestingTypes.ModuleName).GetAddress()
+	aliceAddr, _ := sdk.AccAddressFromBech32(test.Alice)
 
 	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
+	balBeneficiaryBefore := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
 
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
 		Creator:     test.Migrator_1,
@@ -46,14 +48,19 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForFront() {
 	})
 	_ = err
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
+	balBeneficiaryAfter := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
 
-	suite.Require().EqualValues(sdkmath.NewInt(100000000000), balAfter.Amount.Sub(balBefore.Amount))
+	suite.Require().EqualValues(sdkmath.NewInt(99999000000), balAfter.Amount.Sub(balBefore.Amount))
+	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
 }
 
 func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 	suite.setupSuiteWithBalances()
 	ctx := sdk.WrapSDKContext(suite.ctx)
 	selfVestingAddr := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, selfvestingTypes.ModuleName).GetAddress()
+	bobAddr, _ := sdk.AccAddressFromBech32(test.Bob)
+
+	balBeneficiaryBefore := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
 
 	balBefore := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
@@ -66,9 +73,12 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 		LogIndex:    0,
 	})
 	_ = err
-	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 
-	suite.Require().EqualValues(sdkmath.NewInt(50000000000), balAfter.Amount.Sub(balBefore.Amount))
+	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
+	balBeneficiaryAfter := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
+
+	suite.Require().EqualValues(sdkmath.NewInt(49999000000), balAfter.Amount.Sub(balBefore.Amount))
+	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
 }
 
 func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {

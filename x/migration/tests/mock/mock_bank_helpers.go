@@ -19,13 +19,13 @@ func coinsOf(amount uint64) sdk.Coins {
 	}
 }
 
-func (escrow *MockBankKeeper) ExpectReceiveCoins(context context.Context, who string, amount uint64) *gomock.Call {
+func (escrow *MockBankKeeper) ExpectReceiveCoins(context context.Context, module string, who string, amount uint64) *gomock.Call {
 	whoAddr, err := sdk.AccAddressFromBech32(who)
 	if err != nil {
 		panic(err)
 	}
 
-	return escrow.EXPECT().SendCoinsFromModuleToAccount(sdk.UnwrapSDKContext(context), types.ModuleName, whoAddr, coinsOf(amount))
+	return escrow.EXPECT().SendCoinsFromModuleToAccount(sdk.UnwrapSDKContext(context), module, whoAddr, coinsOf(amount))
 }
 
 func (escrow *MockBankKeeper) ExpectMintToModule(context context.Context, amount uint64) *gomock.Call {

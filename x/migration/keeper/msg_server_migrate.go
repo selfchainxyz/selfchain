@@ -53,27 +53,40 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 
 	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6.
 	normalizedAmount := amount.QuoUint64(uint64(math.Pow(10, 12)))
-	mintedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
-	mintedCoins := sdk.NewCoins(sdk.NewCoin(
+	lockedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
+	
+	lockedCoins := sdk.NewCoins(sdk.NewCoin(
 		types.DENOM,
-		sdkmath.NewIntFromBigInt(mintedAmount.BigInt()),
+		sdkmath.NewIntFromBigInt(lockedAmount.BigInt()),
+	))
+
+	instantlyReleasedCoins := sdk.NewCoins(sdk.NewCoin(
+		types.DENOM,
+		sdkmath.NewIntFromBigInt(types.GetInstantlyReleasedAmount().BigInt()),
 	))
 
 	// 5. Mint new coins to the selfvesting module
-	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, mintedCoins)
+	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, lockedCoins)
 	if mintError != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
-	// 6. Add a new beneficiary
+	// 6. Transfer a fixed amount to the beneficiary so it can pay gas when releasing tokens from the vesting position
+
+	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
+	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
+	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+
+
+	// 7. Add a new beneficiary
 	k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
 		Beneficiary: msg.DestAddress,
 		Cliff:       types.VESTING_CLIFF,
 		Duration:    types.VESTING_DURATION,
-		Amount:      mintedAmount.String(),
+		Amount:      lockedAmount.Sub(types.GetInstantlyReleasedAmount()).String(),
 	})
 
-	// 7. Store the token migration so it can't be processed again
+	// 8. Store the token migration so it can't be processed again
 	k.SetTokenMigration(ctx, types.TokenMigration{
 		MsgHash:   msgHash,
 		Processed: true,
