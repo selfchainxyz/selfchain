@@ -50,7 +50,7 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForFront() {
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 	balBeneficiaryAfter := suite.app.BankKeeper.GetBalance(suite.ctx, aliceAddr, types.DENOM)
 
-	suite.Require().EqualValues(sdkmath.NewInt(99999000000), balAfter.Amount.Sub(balBefore.Amount))
+	suite.Require().EqualValues(sdkmath.NewInt(999999000000), balAfter.Amount.Sub(balBefore.Amount))
 	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
 }
 
@@ -77,7 +77,7 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 	balAfter := suite.app.BankKeeper.GetBalance(suite.ctx, selfVestingAddr, types.DENOM)
 	balBeneficiaryAfter := suite.app.BankKeeper.GetBalance(suite.ctx, bobAddr, types.DENOM)
 
-	suite.Require().EqualValues(sdkmath.NewInt(49999000000), balAfter.Amount.Sub(balBefore.Amount))
+	suite.Require().EqualValues(sdkmath.NewInt(499999000000), balAfter.Amount.Sub(balBefore.Amount))
 	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
 }
 

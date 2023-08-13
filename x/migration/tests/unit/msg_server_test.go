@@ -72,10 +72,10 @@ func TestShouldMintAmountAndAddBeneficiary(t *testing.T) {
 		Beneficiary: test.Alice,
 		Cliff:       types.VESTING_CLIFF,
 		Duration:    types.VESTING_DURATION,
-		Amount:      "99999000000",
+		Amount:      "999999000000",
 	}
 	
-	bankMock.ExpectMintToModule(ctx, 100000000000)
+	bankMock.ExpectMintToModule(ctx, 1000000000000)
 	bankMock.ExpectReceiveCoins(ctx, selfvestingTypes.ModuleName, test.Alice, 1000000)
 	selfVestingMock.ExpectAddBeneficiary(ctx, addBeneficiaryRequest)
 
