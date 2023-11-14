@@ -28,12 +28,12 @@ const (
 // Ratios
 const (
 	FRONT_RATIO    = 100 // 100%
-	HOTCROSS_RATIO = 50 // 50%
+	HOTCROSS_RATIO = 50  // 50%
 )
 
-// Vesting info 
+// Vesting info
 const (
-	SECONDS_IN_DAY = 60 * 60 * 24
+	SECONDS_IN_DAY   = 60 * 60 * 24
 	VESTING_DURATION = SECONDS_IN_DAY * 30
-	VESTING_CLIFF = SECONDS_IN_DAY * 7
+	VESTING_CLIFF    = SECONDS_IN_DAY * 7
 )

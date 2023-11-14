@@ -54,7 +54,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6.
 	normalizedAmount := amount.QuoUint64(uint64(math.Pow(10, 12)))
 	lockedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
-	
+
 	lockedCoins := sdk.NewCoins(sdk.NewCoin(
 		types.DENOM,
 		sdkmath.NewIntFromBigInt(lockedAmount.BigInt()),
@@ -76,7 +76,6 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
 	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
-
 
 	// 7. Add a new beneficiary
 	k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{

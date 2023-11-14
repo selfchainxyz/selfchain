@@ -43899,6 +43899,48 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  /selfchain/migration/config:
+    get:
+      summary: Queries a Config by index.
+      operationId: SelfchainMigrationConfig
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              Config:
+                type: object
+                properties:
+                  vestingDuration:
+                    type: string
+                    format: uint64
+                  vestingCliff:
+                    type: string
+                    format: uint64
+                  minMigrationAmount:
+                    type: string
+                    format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /selfchain/migration/migrator:
     get:
       operationId: SelfchainMigrationMigratorAll
@@ -72043,6 +72085,18 @@ definitions:
     properties:
       admin:
         type: string
+  selfchain.migration.Config:
+    type: object
+    properties:
+      vestingDuration:
+        type: string
+        format: uint64
+      vestingCliff:
+        type: string
+        format: uint64
+      minMigrationAmount:
+        type: string
+        format: uint64
   selfchain.migration.Migrator:
     type: object
     properties:
@@ -72143,6 +72197,21 @@ definitions:
         properties:
           admin:
             type: string
+  selfchain.migration.QueryGetConfigResponse:
+    type: object
+    properties:
+      Config:
+        type: object
+        properties:
+          vestingDuration:
+            type: string
+            format: uint64
+          vestingCliff:
+            type: string
+            format: uint64
+          minMigrationAmount:
+            type: string
+            format: uint64
   selfchain.migration.QueryGetMigratorResponse:
     type: object
     properties:

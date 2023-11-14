@@ -13,6 +13,7 @@ func DefaultGenesis() *GenesisState {
 		TokenMigrationList: []TokenMigration{},
 		Acl:                nil,
 		MigratorList:       []Migrator{},
+		Config:             nil,
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 	}

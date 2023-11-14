@@ -44,6 +44,11 @@ func TestGenesisState_Validate(t *testing.T) {
 						Migrator: "1",
 					},
 				},
+				Config: &types.Config{
+					VestingDuration:    87,
+					VestingCliff:       91,
+					MinMigrationAmount: 80,
+				},
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
