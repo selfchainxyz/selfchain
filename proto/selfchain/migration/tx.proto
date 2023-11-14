@@ -9,6 +9,7 @@ service Msg {
   rpc Migrate        (MsgMigrate       ) returns (MsgMigrateResponse       );
   rpc AddMigrator    (MsgAddMigrator   ) returns (MsgAddMigratorResponse   );
   rpc RemoveMigrator (MsgRemoveMigrator) returns (MsgRemoveMigratorResponse);
+  rpc UpdateConfig   (MsgUpdateConfig  ) returns (MsgUpdateConfigResponse  );
 }
 message MsgMigrate {
   string creator     = 1;
@@ -35,4 +36,13 @@ message MsgRemoveMigrator {
 }
 
 message MsgRemoveMigratorResponse {}
+
+message MsgUpdateConfig {
+  string creator            = 1;
+  uint64 vestingDuration    = 2;
+  uint64 vestingCliff       = 3;
+  uint64 minMigrationAmount = 4;
+}
+
+message MsgUpdateConfigResponse {}
 

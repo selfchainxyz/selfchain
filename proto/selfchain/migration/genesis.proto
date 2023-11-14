@@ -7,6 +7,7 @@ import "selfchain/migration/params.proto";
 import "selfchain/migration/token_migration.proto";
 import "selfchain/migration/acl.proto";
 import "selfchain/migration/migrator.proto";
+import "selfchain/migration/config.proto";
 
 option go_package = "selfchain/x/migration/types";
 
@@ -16,5 +17,6 @@ message GenesisState {
   repeated TokenMigration tokenMigrationList = 2 [(gogoproto.nullable) = false];
            Acl            acl                = 3;
   repeated Migrator       migratorList       = 4 [(gogoproto.nullable) = false];
+           Config         config             = 5;
 }
 

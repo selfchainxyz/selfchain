@@ -3,24 +3,31 @@ package cli
 import (
 	"strconv"
 
-	"selfchain/x/selfvesting/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+	"selfchain/x/migration/types"
 )
 
 var _ = strconv.Itoa(0)
 
-func CmdRelease() *cobra.Command {
+func CmdUpdateConfig() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "release [pos-index]",
-		Short: "Broadcast message release",
-		Args:  cobra.ExactArgs(1),
+		Use:   "update-config [vesting-duration] [vesting-cliff] [min-migration-amount]",
+		Short: "Broadcast message update-config",
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argPosIndex, err := cast.ToUint64E(args[0])
+			argVestingDuration, err := cast.ToUint64E(args[0])
+			if err != nil {
+				return err
+			}
+			argVestingCliff, err := cast.ToUint64E(args[1])
+			if err != nil {
+				return err
+			}
+			argMinMigrationAmount, err := cast.ToUint64E(args[2])
 			if err != nil {
 				return err
 			}
@@ -30,9 +37,11 @@ func CmdRelease() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgRelease(
+			msg := types.NewMsgUpdateConfig(
 				clientCtx.GetFromAddress().String(),
-				argPosIndex,
+				argVestingDuration,
+				argVestingCliff,
+				argMinMigrationAmount,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -9,6 +9,7 @@ import "selfchain/migration/params.proto";
 import "selfchain/migration/token_migration.proto";
 import "selfchain/migration/acl.proto";
 import "selfchain/migration/migrator.proto";
+import "selfchain/migration/config.proto";
 
 option go_package = "selfchain/x/migration/types";
 
@@ -44,6 +45,12 @@ service Query {
   }
   rpc MigratorAll (QueryAllMigratorRequest) returns (QueryAllMigratorResponse) {
     option (google.api.http).get = "/selfchain/migration/migrator";
+  
+  }
+  
+  // Queries a Config by index.
+  rpc Config (QueryGetConfigRequest) returns (QueryGetConfigResponse) {
+    option (google.api.http).get = "/selfchain/migration/config";
   
   }
 }
@@ -95,5 +102,11 @@ message QueryAllMigratorRequest {
 message QueryAllMigratorResponse {
   repeated Migrator                               migrator   = 1 [(gogoproto.nullable) = false];
            cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryGetConfigRequest {}
+
+message QueryGetConfigResponse {
+  Config Config = 1 [(gogoproto.nullable) = false];
 }
 

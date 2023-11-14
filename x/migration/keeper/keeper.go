@@ -20,7 +20,7 @@ type (
 		paramstore paramtypes.Subspace
 
 		selfvestingKeeper types.SelfvestingKeeper
-		bankKeeper types.BankKeeper
+		bankKeeper        types.BankKeeper
 	}
 )
 
@@ -45,7 +45,7 @@ func NewKeeper(
 		paramstore: ps,
 
 		selfvestingKeeper: selfvestingKeeper,
-		bankKeeper: bankKeeper,
+		bankKeeper:        bankKeeper,
 	}
 }
 

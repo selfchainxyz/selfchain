@@ -24,7 +24,7 @@ func getTokenReleaseInfo(
 
 	// Check that position at the given index exist
 	if int(posIndex) >= len(vestingPositions.VestingInfos) {
-    return &types.VestingInfo{}, 0, sdkmath.Uint{}, types.ErrPositionIndexOutOfBounds
+		return &types.VestingInfo{}, 0, sdkmath.Uint{}, types.ErrPositionIndexOutOfBounds
 	}
 
 	vestingInfo := vestingPositions.VestingInfos[posIndex]
@@ -47,7 +47,6 @@ func getTokenReleaseInfo(
 	elapsedPeriod := now - vestingInfo.StartTime
 	periodToVest := elapsedPeriod - vestingInfo.PeriodClaimed
 
-
 	if elapsedPeriod >= vestingInfo.Duration {
 		amountToVest := amount.Sub(totalClaimed)
 		return vestingInfo, periodToVest, amountToVest, nil
@@ -63,8 +62,8 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 	vestingInfo, periodToVest, amountToVest, calcError := getTokenReleaseInfo(
 		k,
 		ctx,
-    msg.Creator,
-    msg.PosIndex,
+		msg.Creator,
+		msg.PosIndex,
 	)
 
 	if calcError != nil {
@@ -72,11 +71,11 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 	}
 
 	if amountToVest.GT(sdkmath.NewUint(0)) {
-		
+
 		totalClaimed := sdkmath.NewUintFromString(vestingInfo.TotalClaimed)
-		vestingInfo.PeriodClaimed += periodToVest;
-		vestingInfo.TotalClaimed = totalClaimed.Add(amountToVest).String();
-		
+		vestingInfo.PeriodClaimed += periodToVest
+		vestingInfo.TotalClaimed = totalClaimed.Add(amountToVest).String()
+
 		// store state changes
 		vestingPositions, _ := k.GetVestingPositions(ctx, msg.Creator)
 		vestingPositions.VestingInfos[msg.PosIndex] = vestingInfo
@@ -84,7 +83,7 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 			Beneficiary:  msg.Creator,
 			VestingInfos: vestingPositions.VestingInfos,
 		})
-	
+
 		// transfer amountToVest to the beneficiary
 		beneficiary, _ := sdk.AccAddressFromBech32(msg.Creator)
 		vestedCoins := sdk.NewCoins(sdk.NewCoin(
@@ -94,11 +93,11 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 
 		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, beneficiary, vestedCoins)
 
-    return &types.MsgReleaseResponse{
+		return &types.MsgReleaseResponse{
 			PeriodToVest: periodToVest,
 			AmountToVest: amountToVest.String(),
 		}, nil
-  }
+	}
 
 	return &types.MsgReleaseResponse{
 		PeriodToVest: 0,

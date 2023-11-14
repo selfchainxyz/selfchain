@@ -21,7 +21,7 @@ func (k Keeper) AddBeneficiary(ctx sdk.Context, req types.AddBeneficiaryRequest)
 	// if this is the first vesting position then create a default entry
 	if !positionsExist {
 		k.SetVestingPositions(ctx, types.VestingPositions{
-			Beneficiary:  req.Beneficiary,
+			Beneficiary: req.Beneficiary,
 		})
 	}
 

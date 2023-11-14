@@ -7,10 +7,10 @@ package test
 import (
 	reflect "reflect"
 
-	selfvestingTypes "selfchain/x/selfvesting/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"
+	selfvestingTypes "selfchain/x/selfvesting/types"
 )
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
@@ -130,7 +130,7 @@ func (m *MockSelfvestingKeeper) AddBeneficiary(
 	return nil, ret0
 }
 
-func (mr *MockSelfvestingKeeperMockRecorder) AddBeneficiary(ctx, req interface {}) *gomock.Call {
+func (mr *MockSelfvestingKeeperMockRecorder) AddBeneficiary(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBeneficiary", reflect.TypeOf((*MockSelfvestingKeeper)(nil).AddBeneficiary), ctx, req)
 }

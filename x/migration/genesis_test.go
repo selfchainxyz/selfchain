@@ -34,6 +34,11 @@ func TestGenesis(t *testing.T) {
 				Migrator: "1",
 			},
 		},
+		Config: &types.Config{
+			VestingDuration:    52,
+			VestingCliff:       79,
+			MinMigrationAmount: 70,
+		},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -48,5 +53,6 @@ func TestGenesis(t *testing.T) {
 	require.ElementsMatch(t, genesisState.TokenMigrationList, got.TokenMigrationList)
 	require.Equal(t, genesisState.Acl, got.Acl)
 	require.ElementsMatch(t, genesisState.MigratorList, got.MigratorList)
+	require.Equal(t, genesisState.Config, got.Config)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

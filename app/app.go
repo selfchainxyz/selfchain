@@ -521,7 +521,7 @@ func New(
 		keys[migrationmoduletypes.StoreKey],
 		keys[migrationmoduletypes.MemStoreKey],
 		app.GetSubspace(migrationmoduletypes.ModuleName),
-		
+
 		app.SelfvestingKeeper,
 		app.BankKeeper,
 	)

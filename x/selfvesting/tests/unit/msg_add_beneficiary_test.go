@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	keepertest "selfchain/testutil/keeper"
-	migrationTypes "selfchain/x/migration/types"
 	"selfchain/x/selfvesting"
 	"selfchain/x/selfvesting/keeper"
 	test "selfchain/x/selfvesting/tests"
@@ -62,8 +61,8 @@ func TestShouldCreateNewVestingPosition(t *testing.T) {
 
 	addBeneficiaryRequest := types.AddBeneficiaryRequest{
 		Beneficiary: test.Alice,
-		Cliff:       migrationTypes.VESTING_CLIFF,
-		Duration:    migrationTypes.VESTING_DURATION,
+		Cliff:       604800,
+		Duration:    2592000,
 		Amount:      "100000000000",
 	}
 
@@ -73,10 +72,10 @@ func TestShouldCreateNewVestingPosition(t *testing.T) {
 	vestingInfo := vestingPositions.VestingInfos[0]
 
 	require.Equal(t, vestingPositions.Beneficiary, test.Alice)
-	require.Equal(t,len(vestingPositions.VestingInfos), 1)
+	require.Equal(t, len(vestingPositions.VestingInfos), 1)
 	require.Equal(t, vestingInfo.StartTime, startTime)
-	require.Equal(t, vestingInfo.Cliff, startTime + migrationTypes.VESTING_CLIFF)
-	require.Equal(t, vestingInfo.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo.Cliff, startTime+604800)
+	require.Equal(t, vestingInfo.Duration, uint64(2592000))
 	require.Equal(t, vestingInfo.Amount, "100000000000")
 	require.Equal(t, vestingInfo.TotalClaimed, "0")
 	require.Equal(t, vestingInfo.PeriodClaimed, uint64(0))
@@ -86,8 +85,8 @@ func TestShouldCreateNewVestingPosition(t *testing.T) {
 	// Add one more position
 	addBeneficiaryRequest2 := types.AddBeneficiaryRequest{
 		Beneficiary: test.Alice,
-		Cliff:       migrationTypes.VESTING_CLIFF,
-		Duration:    migrationTypes.VESTING_DURATION,
+		Cliff:       604800,
+		Duration:    2592000,
 		Amount:      "200000000000",
 	}
 
@@ -98,10 +97,10 @@ func TestShouldCreateNewVestingPosition(t *testing.T) {
 
 	// The first position remains intact
 	require.Equal(t, vestingPositions_1.Beneficiary, test.Alice)
-	require.Equal(t,len(vestingPositions_1.VestingInfos), 2)
+	require.Equal(t, len(vestingPositions_1.VestingInfos), 2)
 	require.Equal(t, vestingInfo_1.StartTime, startTime)
-	require.Equal(t, vestingInfo_1.Cliff, startTime + migrationTypes.VESTING_CLIFF)
-	require.Equal(t, vestingInfo_1.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_1.Cliff, startTime+604800)
+	require.Equal(t, vestingInfo_1.Duration, uint64(2592000))
 	require.Equal(t, vestingInfo_1.Amount, "100000000000")
 	require.Equal(t, vestingInfo_1.TotalClaimed, "0")
 	require.Equal(t, vestingInfo_1.PeriodClaimed, uint64(0))
@@ -111,10 +110,10 @@ func TestShouldCreateNewVestingPosition(t *testing.T) {
 	vestingInfo_2 := vestingPositions_2.VestingInfos[1]
 
 	require.Equal(t, vestingPositions_2.Beneficiary, test.Alice)
-	require.Equal(t,len(vestingPositions_2.VestingInfos), 2)
+	require.Equal(t, len(vestingPositions_2.VestingInfos), 2)
 	require.Equal(t, vestingInfo_2.StartTime, startTime)
-	require.Equal(t, vestingInfo_2.Cliff, startTime + migrationTypes.VESTING_CLIFF)
-	require.Equal(t, vestingInfo_2.Duration, uint64(migrationTypes.VESTING_DURATION))
+	require.Equal(t, vestingInfo_2.Cliff, startTime+604800)
+	require.Equal(t, vestingInfo_2.Duration, uint64(2592000))
 	require.Equal(t, vestingInfo_2.Amount, "200000000000")
 	require.Equal(t, vestingInfo_2.TotalClaimed, "0")
 	require.Equal(t, vestingInfo_2.PeriodClaimed, uint64(0))

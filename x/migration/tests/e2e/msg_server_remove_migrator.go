@@ -30,7 +30,6 @@ func (suite *IntegrationTestSuite) TestShouldRemoveMigrator() {
 	_, exists := suite.app.MigrationKeeper.GetMigrator(suite.ctx, test.Alice)
 	suite.Require().True(exists)
 
-	// Alice tries to add herself to the list of migrators
 	_, err = suite.msgServer.RemoveMigrator(ctx, &types.MsgRemoveMigrator{
 		Creator:  test.AclAdmin,
 		Migrator: test.Alice,

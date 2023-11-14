@@ -331,6 +331,110 @@ func (m *MsgRemoveMigratorResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRemoveMigratorResponse proto.InternalMessageInfo
 
+type MsgUpdateConfig struct {
+	Creator            string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	VestingDuration    uint64 `protobuf:"varint,2,opt,name=vestingDuration,proto3" json:"vestingDuration,omitempty"`
+	VestingCliff       uint64 `protobuf:"varint,3,opt,name=vestingCliff,proto3" json:"vestingCliff,omitempty"`
+	MinMigrationAmount uint64 `protobuf:"varint,4,opt,name=minMigrationAmount,proto3" json:"minMigrationAmount,omitempty"`
+}
+
+func (m *MsgUpdateConfig) Reset()         { *m = MsgUpdateConfig{} }
+func (m *MsgUpdateConfig) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateConfig) ProtoMessage()    {}
+func (*MsgUpdateConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_956be144f468c705, []int{6}
+}
+func (m *MsgUpdateConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateConfig.Merge(m, src)
+}
+func (m *MsgUpdateConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateConfig proto.InternalMessageInfo
+
+func (m *MsgUpdateConfig) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgUpdateConfig) GetVestingDuration() uint64 {
+	if m != nil {
+		return m.VestingDuration
+	}
+	return 0
+}
+
+func (m *MsgUpdateConfig) GetVestingCliff() uint64 {
+	if m != nil {
+		return m.VestingCliff
+	}
+	return 0
+}
+
+func (m *MsgUpdateConfig) GetMinMigrationAmount() uint64 {
+	if m != nil {
+		return m.MinMigrationAmount
+	}
+	return 0
+}
+
+type MsgUpdateConfigResponse struct {
+}
+
+func (m *MsgUpdateConfigResponse) Reset()         { *m = MsgUpdateConfigResponse{} }
+func (m *MsgUpdateConfigResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateConfigResponse) ProtoMessage()    {}
+func (*MsgUpdateConfigResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_956be144f468c705, []int{7}
+}
+func (m *MsgUpdateConfigResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateConfigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateConfigResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateConfigResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateConfigResponse.Merge(m, src)
+}
+func (m *MsgUpdateConfigResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateConfigResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateConfigResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateConfigResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgMigrate)(nil), "selfchain.migration.MsgMigrate")
 	proto.RegisterType((*MsgMigrateResponse)(nil), "selfchain.migration.MsgMigrateResponse")
@@ -338,35 +442,43 @@ func init() {
 	proto.RegisterType((*MsgAddMigratorResponse)(nil), "selfchain.migration.MsgAddMigratorResponse")
 	proto.RegisterType((*MsgRemoveMigrator)(nil), "selfchain.migration.MsgRemoveMigrator")
 	proto.RegisterType((*MsgRemoveMigratorResponse)(nil), "selfchain.migration.MsgRemoveMigratorResponse")
+	proto.RegisterType((*MsgUpdateConfig)(nil), "selfchain.migration.MsgUpdateConfig")
+	proto.RegisterType((*MsgUpdateConfigResponse)(nil), "selfchain.migration.MsgUpdateConfigResponse")
 }
 
 func init() { proto.RegisterFile("selfchain/migration/tx.proto", fileDescriptor_956be144f468c705) }
 
 var fileDescriptor_956be144f468c705 = []byte{
-	// 367 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x53, 0xcd, 0x4a, 0xeb, 0x50,
-	0x10, 0xee, 0xe9, 0xff, 0x9d, 0x42, 0xe1, 0x9e, 0x5b, 0xca, 0xb9, 0xe9, 0xe5, 0xdc, 0x12, 0x41,
-	0x0b, 0x42, 0x0a, 0x8a, 0x0f, 0x50, 0x17, 0x62, 0x17, 0xd9, 0xc4, 0x9d, 0x1b, 0x89, 0xcd, 0x98,
-	0x14, 0x9b, 0x9c, 0x92, 0x73, 0x94, 0xf8, 0x16, 0xbe, 0x84, 0xef, 0x22, 0xae, 0xba, 0x74, 0x29,
-	0xed, 0x8b, 0x88, 0x49, 0x93, 0xa6, 0x6a, 0xb5, 0xe0, 0xf2, 0x9b, 0xef, 0x9b, 0xef, 0x63, 0x66,
-	0x18, 0xf8, 0x27, 0x71, 0x72, 0x35, 0xf2, 0xec, 0x71, 0xd0, 0xf7, 0xc7, 0x6e, 0x68, 0xab, 0xb1,
-	0x08, 0xfa, 0x2a, 0x32, 0xa6, 0xa1, 0x50, 0x82, 0xfe, 0xc9, 0x58, 0x23, 0x63, 0xf5, 0x27, 0x02,
-	0x60, 0x4a, 0xd7, 0x8c, 0x0b, 0x48, 0x19, 0xd4, 0x46, 0x21, 0xda, 0x4a, 0x84, 0x8c, 0x74, 0x49,
-	0xef, 0x97, 0x95, 0x42, 0xda, 0x86, 0xaa, 0x8a, 0x4e, 0x6d, 0xe9, 0xb1, 0x62, 0x4c, 0x2c, 0x11,
-	0xe5, 0x00, 0xa8, 0xbc, 0x81, 0xe3, 0x84, 0x28, 0x25, 0x2b, 0xc5, 0x5c, 0xae, 0x42, 0xbb, 0xd0,
-	0x70, 0x50, 0xaa, 0x54, 0x50, 0x8e, 0x05, 0xf9, 0xd2, 0x9b, 0xb3, 0xed, 0x8b, 0x9b, 0x40, 0xb1,
-	0x4a, 0xe2, 0x9c, 0x20, 0xda, 0x82, 0x8a, 0x12, 0xd7, 0x18, 0xb0, 0x6a, 0x97, 0xf4, 0xca, 0x56,
-	0x02, 0xa8, 0x06, 0xf5, 0x89, 0x70, 0x87, 0x81, 0x83, 0x11, 0xab, 0xc5, 0x44, 0x86, 0xf5, 0x16,
-	0xd0, 0xd5, 0x2c, 0x16, 0xca, 0xa9, 0x08, 0x24, 0xea, 0x27, 0xd0, 0x34, 0xa5, 0x3b, 0x70, 0x9c,
-	0x84, 0x10, 0xe1, 0x17, 0x53, 0x6a, 0x50, 0xf7, 0x97, 0xaa, 0xe5, 0x9c, 0x19, 0xd6, 0x19, 0xb4,
-	0xd7, 0x7d, 0xb2, 0x84, 0x21, 0xfc, 0x36, 0xa5, 0x6b, 0xa1, 0x2f, 0x6e, 0xf1, 0x87, 0x21, 0x1d,
-	0xf8, 0xfb, 0xc1, 0x2a, 0xcd, 0x39, 0x78, 0x28, 0x42, 0xc9, 0x94, 0x2e, 0x3d, 0x83, 0x5a, 0x7a,
-	0xb0, 0xff, 0xc6, 0x27, 0x57, 0x35, 0x56, 0x5b, 0xd0, 0xf6, 0xbe, 0x11, 0xa4, 0xe6, 0xf4, 0x02,
-	0x1a, 0xf9, 0x1d, 0xed, 0x6c, 0xea, 0xcb, 0x89, 0xb4, 0xfd, 0x2d, 0x44, 0x59, 0x80, 0x07, 0xcd,
-	0x77, 0x2b, 0xda, 0xdd, 0xd4, 0xbe, 0xae, 0xd3, 0x8c, 0xed, 0x74, 0x69, 0xd2, 0xf1, 0xd1, 0xe3,
-	0x9c, 0x93, 0xd9, 0x9c, 0x93, 0x97, 0x39, 0x27, 0xf7, 0x0b, 0x5e, 0x98, 0x2d, 0x78, 0xe1, 0x79,
-	0xc1, 0x0b, 0xe7, 0x9d, 0xd5, 0x87, 0x44, 0xf9, 0x1f, 0xb9, 0x9b, 0xa2, 0xbc, 0xac, 0xc6, 0x7f,
-	0x72, 0xf8, 0x1a, 0x00, 0x00, 0xff, 0xff, 0x55, 0x55, 0x3b, 0x2e, 0x47, 0x03, 0x00, 0x00,
+	// 460 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xcf, 0x6e, 0xd3, 0x30,
+	0x18, 0xaf, 0x69, 0xd6, 0x8e, 0x6f, 0xd3, 0x26, 0xcc, 0x34, 0xbc, 0x0c, 0x85, 0x2a, 0x20, 0xa8,
+	0x04, 0xca, 0x24, 0x10, 0x0f, 0x50, 0x86, 0x10, 0x3b, 0xe4, 0x12, 0xc4, 0x85, 0x0b, 0xca, 0x16,
+	0xc7, 0x89, 0x68, 0xec, 0x28, 0xf6, 0xa6, 0xf0, 0x08, 0xdc, 0x78, 0x0d, 0xde, 0x04, 0x71, 0xda,
+	0x91, 0x23, 0x6a, 0x5f, 0x04, 0xe1, 0x24, 0x6e, 0x52, 0xd6, 0x52, 0x89, 0xe3, 0xef, 0x8f, 0xbf,
+	0x9f, 0x3f, 0xfd, 0x2c, 0xc3, 0x7d, 0x49, 0xa7, 0xf1, 0x45, 0x12, 0xa6, 0xfc, 0x24, 0x4b, 0x59,
+	0x11, 0xaa, 0x54, 0xf0, 0x13, 0x55, 0x7a, 0x79, 0x21, 0x94, 0xc0, 0x77, 0x8d, 0xea, 0x19, 0xd5,
+	0xfd, 0x81, 0x00, 0x7c, 0xc9, 0x7c, 0x4d, 0x50, 0x4c, 0x60, 0x78, 0x51, 0xd0, 0x50, 0x89, 0x82,
+	0xa0, 0x11, 0x1a, 0xdf, 0x0e, 0x1a, 0x88, 0x0f, 0x61, 0xa0, 0xca, 0xb7, 0xa1, 0x4c, 0xc8, 0x2d,
+	0x2d, 0xd4, 0x08, 0x3b, 0x00, 0x54, 0x25, 0x93, 0x28, 0x2a, 0xa8, 0x94, 0xa4, 0xaf, 0xb5, 0x16,
+	0x83, 0x47, 0xb0, 0x13, 0x51, 0xa9, 0x1a, 0x83, 0xa5, 0x0d, 0x6d, 0xea, 0xcf, 0xe4, 0x30, 0x13,
+	0x97, 0x5c, 0x91, 0xad, 0x6a, 0x72, 0x85, 0xf0, 0x01, 0x6c, 0x29, 0xf1, 0x89, 0x72, 0x32, 0x18,
+	0xa1, 0xb1, 0x15, 0x54, 0x00, 0xdb, 0xb0, 0x3d, 0x15, 0xec, 0x8c, 0x47, 0xb4, 0x24, 0x43, 0x2d,
+	0x18, 0xec, 0x1e, 0x00, 0x5e, 0xec, 0x12, 0x50, 0x99, 0x0b, 0x2e, 0xa9, 0xfb, 0x06, 0xf6, 0x7c,
+	0xc9, 0x26, 0x51, 0x54, 0x09, 0xa2, 0x58, 0xb3, 0xa5, 0x0d, 0xdb, 0x59, 0xed, 0xaa, 0xf7, 0x34,
+	0xd8, 0x25, 0x70, 0xd8, 0x9d, 0x63, 0x12, 0xce, 0xe0, 0x8e, 0x2f, 0x59, 0x40, 0x33, 0x71, 0x45,
+	0xff, 0x33, 0xe4, 0x18, 0x8e, 0xfe, 0x1a, 0x65, 0x72, 0xbe, 0x21, 0xd8, 0xf7, 0x25, 0x7b, 0x9f,
+	0x47, 0xa1, 0xa2, 0xa7, 0x82, 0xc7, 0x29, 0x5b, 0x13, 0x33, 0x86, 0xfd, 0x2b, 0x2a, 0x55, 0xca,
+	0xd9, 0xeb, 0xcb, 0xaa, 0x6d, 0x9d, 0x66, 0x05, 0xcb, 0x34, 0x76, 0x61, 0xb7, 0xa6, 0x4e, 0xa7,
+	0x69, 0x1c, 0xeb, 0x16, 0xad, 0xa0, 0xc3, 0x61, 0x0f, 0x70, 0x96, 0x72, 0xbf, 0x79, 0x38, 0x93,
+	0xaa, 0x31, 0x4b, 0x3b, 0x6f, 0x50, 0xdc, 0x23, 0xb8, 0xb7, 0x74, 0xd5, 0x66, 0x8d, 0xe7, 0x5f,
+	0xfa, 0xd0, 0xf7, 0x25, 0xc3, 0xef, 0x60, 0xd8, 0xbc, 0xbb, 0x07, 0xde, 0x0d, 0x8f, 0xd3, 0x5b,
+	0x94, 0x69, 0x3f, 0xf9, 0x87, 0xa1, 0x19, 0x8e, 0x3f, 0xc2, 0x4e, 0xbb, 0xea, 0x87, 0xab, 0xce,
+	0xb5, 0x4c, 0xf6, 0xd3, 0x0d, 0x4c, 0x26, 0x20, 0x81, 0xbd, 0xa5, 0xa6, 0x1f, 0xaf, 0x3a, 0xde,
+	0xf5, 0xd9, 0xde, 0x66, 0x3e, 0x93, 0x74, 0x0e, 0xbb, 0x9d, 0xaa, 0x1f, 0xad, 0x3a, 0xdf, 0x76,
+	0xd9, 0xcf, 0x36, 0x71, 0x35, 0x19, 0xaf, 0x5e, 0x7e, 0x9f, 0x39, 0xe8, 0x7a, 0xe6, 0xa0, 0x5f,
+	0x33, 0x07, 0x7d, 0x9d, 0x3b, 0xbd, 0xeb, 0xb9, 0xd3, 0xfb, 0x39, 0x77, 0x7a, 0x1f, 0x8e, 0x17,
+	0x9f, 0x49, 0xd9, 0xfe, 0x4e, 0x3e, 0xe7, 0x54, 0x9e, 0x0f, 0xf4, 0x97, 0xf2, 0xe2, 0x77, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0x14, 0x38, 0x9a, 0x8b, 0x72, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -384,6 +496,7 @@ type MsgClient interface {
 	Migrate(ctx context.Context, in *MsgMigrate, opts ...grpc.CallOption) (*MsgMigrateResponse, error)
 	AddMigrator(ctx context.Context, in *MsgAddMigrator, opts ...grpc.CallOption) (*MsgAddMigratorResponse, error)
 	RemoveMigrator(ctx context.Context, in *MsgRemoveMigrator, opts ...grpc.CallOption) (*MsgRemoveMigratorResponse, error)
+	UpdateConfig(ctx context.Context, in *MsgUpdateConfig, opts ...grpc.CallOption) (*MsgUpdateConfigResponse, error)
 }
 
 type msgClient struct {
@@ -421,11 +534,21 @@ func (c *msgClient) RemoveMigrator(ctx context.Context, in *MsgRemoveMigrator, o
 	return out, nil
 }
 
+func (c *msgClient) UpdateConfig(ctx context.Context, in *MsgUpdateConfig, opts ...grpc.CallOption) (*MsgUpdateConfigResponse, error) {
+	out := new(MsgUpdateConfigResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.migration.Msg/UpdateConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	Migrate(context.Context, *MsgMigrate) (*MsgMigrateResponse, error)
 	AddMigrator(context.Context, *MsgAddMigrator) (*MsgAddMigratorResponse, error)
 	RemoveMigrator(context.Context, *MsgRemoveMigrator) (*MsgRemoveMigratorResponse, error)
+	UpdateConfig(context.Context, *MsgUpdateConfig) (*MsgUpdateConfigResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -440,6 +563,9 @@ func (*UnimplementedMsgServer) AddMigrator(ctx context.Context, req *MsgAddMigra
 }
 func (*UnimplementedMsgServer) RemoveMigrator(ctx context.Context, req *MsgRemoveMigrator) (*MsgRemoveMigratorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMigrator not implemented")
+}
+func (*UnimplementedMsgServer) UpdateConfig(ctx context.Context, req *MsgUpdateConfig) (*MsgUpdateConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateConfig not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -500,6 +626,24 @@ func _Msg_RemoveMigrator_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpdateConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateConfig)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/selfchain.migration.Msg/UpdateConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateConfig(ctx, req.(*MsgUpdateConfig))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "selfchain.migration.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -515,6 +659,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMigrator",
 			Handler:    _Msg_RemoveMigrator_Handler,
+		},
+		{
+			MethodName: "UpdateConfig",
+			Handler:    _Msg_UpdateConfig_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -732,6 +880,74 @@ func (m *MsgRemoveMigratorResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUpdateConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateConfig) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.MinMigrationAmount != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.MinMigrationAmount))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.VestingCliff != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.VestingCliff))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.VestingDuration != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.VestingDuration))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateConfigResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateConfigResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateConfigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -831,6 +1047,37 @@ func (m *MsgRemoveMigrator) Size() (n int) {
 }
 
 func (m *MsgRemoveMigratorResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.VestingDuration != 0 {
+		n += 1 + sovTx(uint64(m.VestingDuration))
+	}
+	if m.VestingCliff != 0 {
+		n += 1 + sovTx(uint64(m.VestingCliff))
+	}
+	if m.MinMigrationAmount != 0 {
+		n += 1 + sovTx(uint64(m.MinMigrationAmount))
+	}
+	return n
+}
+
+func (m *MsgUpdateConfigResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1448,6 +1695,195 @@ func (m *MsgRemoveMigratorResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgRemoveMigratorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VestingDuration", wireType)
+			}
+			m.VestingDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VestingDuration |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VestingCliff", wireType)
+			}
+			m.VestingCliff = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VestingCliff |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinMigrationAmount", wireType)
+			}
+			m.MinMigrationAmount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinMigrationAmount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateConfigResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateConfigResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateConfigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

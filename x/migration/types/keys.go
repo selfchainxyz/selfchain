@@ -21,3 +21,7 @@ func KeyPrefix(p string) []byte {
 const (
 	AclKey = "Acl/value/"
 )
+
+const (
+	ConfigKey = "Config/value/"
+)

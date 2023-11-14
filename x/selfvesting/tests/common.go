@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	Alice      = "self16uhrfxdj8drxvlal8q6xhy99jh6nt9uqur6pl2"
-	Bob        = "self184l076mmmeumx2cw6eqdct7tchufux0v43cxcg"
-	Carol      = "self19qrygeag248redm708jtt4ks94sp8p34v7l66k"
+	Alice = "self16uhrfxdj8drxvlal8q6xhy99jh6nt9uqur6pl2"
+	Bob   = "self184l076mmmeumx2cw6eqdct7tchufux0v43cxcg"
+	Carol = "self19qrygeag248redm708jtt4ks94sp8p34v7l66k"
 )
 
 func InitSDKConfig() {

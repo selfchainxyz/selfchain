@@ -21,6 +21,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, elem := range genState.MigratorList {
 		k.SetMigrator(ctx, elem)
 	}
+	// Set if defined
+	if genState.Config != nil {
+		k.SetConfig(ctx, *genState.Config)
+	}
 	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)
 }
@@ -37,6 +41,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		genesis.Acl = &acl
 	}
 	genesis.MigratorList = k.GetAllMigrator(ctx)
+	// Get all config
+	config, found := k.GetConfig(ctx)
+	if found {
+		genesis.Config = &config
+	}
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

@@ -36,6 +36,12 @@ func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomo
 		},
 	}
 
+	genesis.Config = &types.Config{
+		VestingDuration:    2592000, // 1 month in seconds
+		VestingCliff:       604800, // // 1 week in seconds
+		MinMigrationAmount: 2000000000000000000,
+	}
+
 	migration.InitGenesis(ctx, *k, genesis)
 
 	server := keeper.NewMsgServerImpl(*k)
@@ -70,11 +76,11 @@ func TestShouldMintAmountAndAddBeneficiary(t *testing.T) {
 	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native uself token
 	addBeneficiaryRequest := selfvestingTypes.AddBeneficiaryRequest{
 		Beneficiary: test.Alice,
-		Cliff:       types.VESTING_CLIFF,
-		Duration:    types.VESTING_DURATION,
+		Cliff:       604800,
+		Duration:    2592000,
 		Amount:      "999999000000",
 	}
-	
+
 	bankMock.ExpectMintToModule(ctx, 1000000000000)
 	bankMock.ExpectReceiveCoins(ctx, selfvestingTypes.ModuleName, test.Alice, 1000000)
 	selfVestingMock.ExpectAddBeneficiary(ctx, addBeneficiaryRequest)
