@@ -1,7 +1,6 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -59,12 +58,6 @@ func (msg *MsgMigrate) ValidateBasic() error {
 	_, err = sdk.AccAddressFromBech32(msg.DestAddress)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid destination address (%s)", err)
-	}
-
-	// we don't want to get spammed people who migrate small amounts
-	amount := sdkmath.NewUintFromString(msg.Amount)
-	if amount.LT(GetMinMigrationAmount()) {
-		return ErrInvalidMigrationAmount
 	}
 
 	// check that token is supported

@@ -16,13 +16,23 @@ import (
 func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// 1. Make sure signer is in the list of migrators
+	config, configExists := k.GetConfig(ctx); if !configExists {
+		panic("Config does not exist")
+	}
+
+	// 1. we don't want to get spammed people who migrate small amounts
+	amount := sdkmath.NewUintFromString(msg.Amount)
+	if amount.LT(sdkmath.NewUint(config.MinMigrationAmount)) {
+		return nil, types.ErrInvalidMigrationAmount
+	}
+
+	// 2. Make sure signer is in the list of migrators
 	_, migratorExist := k.GetMigrator(ctx, msg.Creator)
 	if !migratorExist {
 		return nil, types.ErrUnknownMigrator
 	}
 
-	// 2. Create a hash of the message
+	// 3. Create a hash of the message
 	encodedMsg := fmt.Sprintf(
 		"%s|%s|%s|%d|%s|%d",
 		msg.EthAddress,
@@ -34,15 +44,13 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	)
 	msgHash := fmt.Sprintf("%x", sha256.Sum256([]byte(encodedMsg)))
 
-	// 3. Check if message i.e. migration request has been processed already
+	// 4. Check if message i.e. migration request has been processed already
 	_, migrationExists := k.GetTokenMigration(ctx, msgHash)
 	if migrationExists {
 		return nil, types.ErrMigrationProcessed
 	}
 
-	// 4. Calculate the correct amount to mint
-	amount := sdkmath.NewUintFromString(msg.Amount)
-
+	// 5. Calculate the correct amount to mint
 	var ratio uint64
 	switch msg.Token {
 	case uint64(types.Front):
@@ -80,8 +88,8 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	// 7. Add a new beneficiary
 	k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
 		Beneficiary: msg.DestAddress,
-		Cliff:       types.VESTING_CLIFF,
-		Duration:    types.VESTING_DURATION,
+		Cliff:       config.VestingCliff,
+		Duration:    config.VestingDuration,
 		Amount:      lockedAmount.Sub(types.GetInstantlyReleasedAmount()).String(),
 	})
 
