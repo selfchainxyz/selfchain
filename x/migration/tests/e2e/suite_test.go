@@ -72,6 +72,12 @@ func getModuleGenesis() types.GenesisState {
 		},
 	}
 
+	genesis.Config = &types.Config{
+		VestingDuration:    2592000, // 1 month in seconds
+		VestingCliff:       604800, // // 1 week in seconds
+		MinMigrationAmount: 2000000000000000000,
+	}
+
 	return genesis
 }
 
