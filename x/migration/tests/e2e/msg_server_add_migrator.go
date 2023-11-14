@@ -22,7 +22,6 @@ func (suite *IntegrationTestSuite) TestShouldFailIfAddWhenSignerIsNotAdmin() {
 func (suite *IntegrationTestSuite) TestShouldSetTheNewMigrator() {
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
-	// Alice tries to add herself to the list of migrators
 	_, err := suite.msgServer.AddMigrator(ctx, &types.MsgAddMigrator{
 		Creator:  test.AclAdmin,
 		Migrator: test.Alice,
