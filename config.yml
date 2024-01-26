@@ -25,7 +25,7 @@ genesis:
         bond_denom: "uself"
     gov:
       votingParams:
-        voting_period: "5m"
+        voting_period: "1m"
       deposit_params:
         min_deposit:
         - amount: "10000000"

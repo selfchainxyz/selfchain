@@ -4,8 +4,8 @@
   "changes": [
     {
       "subspace": "migration",
-      "key": "migrationparams",
-      "value": {"hotcross_ratio": 101}
+      "key": "hotcross_ratio",
+      "value": 101
     }
   ],
   "metadata": "ipfs://QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB",
