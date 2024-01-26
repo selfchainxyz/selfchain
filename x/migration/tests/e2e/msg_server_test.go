@@ -54,9 +54,16 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForFront() {
 	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
 }
 
-func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
+func (suite *IntegrationTestSuite) TestShouldMintCorrectRatioForHotcross() {
 	suite.setupSuiteWithBalances()
+
+	// update params
+	suite.app.MigrationKeeper.SetParams(suite.ctx, types.Params{
+		HotcrossRatio: 50,
+	})
+
 	ctx := sdk.WrapSDKContext(suite.ctx)
+
 	selfVestingAddr := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, selfvestingTypes.ModuleName).GetAddress()
 	bobAddr, _ := sdk.AccAddressFromBech32(test.Bob)
 
@@ -79,6 +86,23 @@ func (suite *IntegrationTestSuite) TestShouldMintCorrectRationForHotcross() {
 
 	suite.Require().EqualValues(sdkmath.NewInt(499999000000), balAfter.Amount.Sub(balBefore.Amount))
 	suite.Require().EqualValues(sdkmath.NewInt(1000000), balBeneficiaryAfter.Amount.Sub(balBeneficiaryBefore.Amount))
+}
+
+func (suite *IntegrationTestSuite) TestShouldFailWhenHotcrossRationIsZero() {
+	suite.setupSuiteWithBalances()
+	ctx := sdk.WrapSDKContext(suite.ctx)
+
+	_, err := suite.msgServer.Migrate(ctx, &types.MsgMigrate{
+		Creator:     test.Migrator_2,
+		TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
+		EthAddress:  "baf6dc2e647aeb6f510f9e318856a1bcd66c5e19",
+		DestAddress: test.Bob,
+		Amount:      "1000000000000000000000000", // 1 Milion
+		Token:       1,
+		LogIndex:    0,
+	})
+
+	suite.Require().ErrorIs(err, types.ErrHotcrossRatioZero)
 }
 
 func (suite *IntegrationTestSuite) TestShouldFailIfMigrationProcessed() {

@@ -78,6 +78,10 @@ func getModuleGenesis() types.GenesisState {
 		MinMigrationAmount: 2000000000000000000,
 	}
 
+	genesis.Params = types.Params{
+		HotcrossRatio: 0,
+	}
+
 	return genesis
 }
 

@@ -57,6 +57,10 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		ratio = types.FRONT_RATIO
 	case uint64(types.Hotcross):
 		ratio = k.HotcrossRatio(ctx)
+
+		if ratio == 0 {
+			return nil, types.ErrHotcrossRatioZero
+		}
 	}
 
 	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6 (6 decimals).
