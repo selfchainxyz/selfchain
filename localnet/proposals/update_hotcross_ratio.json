@@ -1,0 +1,13 @@
+{
+  "title": "Hotcross migration ratio update",
+  "description": "We would like to update the migration ratio of HOTCROSS to SELF",
+  "changes": [
+    {
+      "subspace": "migration",
+      "key": "migrationparams",
+      "value": {"hotcross_ratio": 101}
+    }
+  ],
+  "metadata": "ipfs://QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB",
+  "deposit": "100000000uself"
+}
