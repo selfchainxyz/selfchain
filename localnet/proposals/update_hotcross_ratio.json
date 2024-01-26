@@ -5,7 +5,7 @@
     {
       "subspace": "migration",
       "key": "HotcrossRatio",
-      "value": "50"
+      "value": "75"
     }
   ],
   "deposit": "100000000uself"

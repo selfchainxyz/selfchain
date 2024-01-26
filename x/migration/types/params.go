@@ -47,7 +47,6 @@ func validateHotcrossRatio(i interface {}) error {
 		return fmt.Errorf("invalid ratio value")
 	}
 
-
 	return nil
 }
 
