@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -29,6 +30,10 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if p.HotcrossRatio > 100 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid ratio")
+	}
+	
 	return nil
 }
 

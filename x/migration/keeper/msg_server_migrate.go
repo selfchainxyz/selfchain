@@ -59,7 +59,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		ratio = types.HOTCROSS_RATIO
 	}
 
-	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6.
+	// WEI has 18 decimals whereas our denomiation is uself thus it has 10^6 (6 decimals).
 	normalizedAmount := amount.QuoUint64(uint64(math.Pow(10, 12)))
 	lockedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
 
