@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	HotcrossRatio = []byte("hotcross_ratio")
+	HotcrossRatio = []byte("HotcrossRatio")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
