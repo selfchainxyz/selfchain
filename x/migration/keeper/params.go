@@ -13,7 +13,9 @@ func (k Keeper) HotcrossRatio(ctx sdk.Context) (res uint64) {
 
 // GetParams get all parameters as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	return types.NewParams()
+	return types.NewParams(
+		k.HotcrossRatio(ctx),
+	)
 }
 
 // SetParams set the params

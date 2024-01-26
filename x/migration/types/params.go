@@ -7,6 +7,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	DefaultHotcrossRatio uint64 = 0
+)
+
 var (
 	HotcrossRatio = []byte("HotcrossRatio")
 )
@@ -19,13 +23,17 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams() Params {
-	return Params{}
+func NewParams(hotcrossRatio uint64) Params {
+	return Params{
+		HotcrossRatio: hotcrossRatio,
+	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return NewParams()
+	return NewParams(
+		DefaultHotcrossRatio,
+	)
 }
 
 func validateHotcrossRatio(i interface {}) error {
@@ -38,6 +46,7 @@ func validateHotcrossRatio(i interface {}) error {
 	if v > 100 {
 		return fmt.Errorf("invalid ratio value")
 	}
+
 
 	return nil
 }
