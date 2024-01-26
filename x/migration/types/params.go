@@ -29,7 +29,7 @@ func DefaultParams() Params {
 }
 
 func validateHotcrossRatio(i interface {}) error {
-	v, ok := i.(int)
+	v, ok := i.(uint64)
 
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
