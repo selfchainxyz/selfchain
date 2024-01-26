@@ -9,5 +9,5 @@ option go_package = "selfchain/x/migration/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   
-  uint64 hotcrossRatio = 1;
+  uint64 hotcross_ratio = 1;
 }
