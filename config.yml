@@ -32,7 +32,7 @@ genesis:
           denom: uself
     migration:
       params:
-        hotcross_ratio: 50
+        hotcross_ratio: 0
       migratorList:
         - migrator: self1rnqvu55fxndcqw920rvpgl06fjr0hjedcl5vjx
           exists: true
