@@ -6,6 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) HotcrossRatio(ctx sdk.Context) (res int) {
+	k.paramstore.Get(ctx, types.KeyUnbondingTime, &res)
+	return
+}
+
 // GetParams get all parameters as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams()

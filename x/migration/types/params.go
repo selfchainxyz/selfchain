@@ -1,9 +1,14 @@
 package types
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	fmt "fmt"
+
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
+)
+
+var (
+	HotcrossRatio = []byte("HotcrossRatio")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -23,17 +28,33 @@ func DefaultParams() Params {
 	return NewParams()
 }
 
+func validateHotcrossRatio(i interface {}) error {
+	v, ok := i.(int)
+
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v > 100 {
+		return fmt.Errorf("invalid ratio value")
+	}
+
+	return nil
+}
+
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	return paramtypes.ParamSetPairs{}
+	return paramtypes.ParamSetPairs{
+		paramtypes.NewParamSetPair(HotcrossRatio, &p.HotcrossRatio, validateHotcrossRatio),
+	}
 }
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if p.HotcrossRatio > 100 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid ratio")
+	if err := validateHotcrossRatio(p.HotcrossRatio); err != nil {
+		return err
 	}
-	
+
 	return nil
 }
 

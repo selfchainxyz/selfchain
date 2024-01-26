@@ -4,7 +4,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 )
 
-
 // 1 Self will be credited to user account so future transaction to release from vesting position are possible
 func GetInstantlyReleasedAmount() sdkmath.Uint {
 	return sdkmath.NewUint(1000000)
@@ -23,7 +22,6 @@ const (
 // Ratios
 const (
 	FRONT_RATIO    = 100 // 100%
-	HOTCROSS_RATIO = 50  // 50%
 )
 
 // // Vesting info
