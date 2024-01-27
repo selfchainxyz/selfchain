@@ -1,0 +1,12 @@
+{
+  "title": "Hotcross migration ratio update",
+  "description": "We would like to update the migration ratio of HOTCROSS to SELF",
+  "changes": [
+    {
+      "subspace": "migration",
+      "key": "HotcrossRatio",
+      "value": "75"
+    }
+  ],
+  "deposit": "100000000uself"
+}

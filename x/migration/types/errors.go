@@ -16,4 +16,5 @@ var (
 	ErrUnknownMigrator        = sdkerrors.Register(ModuleName, 1103, "Unknown migrator")
 	ErrMigrationProcessed     = sdkerrors.Register(ModuleName, 1104, "The given migration message has been previously processed")
 	ErrOnlyAdmin              = sdkerrors.Register(ModuleName, 1105, "Only admin can update migrators")
+	ErrHotcrossRatioZero      = sdkerrors.Register(ModuleName, 1106, "The Hotcross ratio has not been set yet")
 )
