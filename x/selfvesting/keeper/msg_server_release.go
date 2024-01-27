@@ -71,7 +71,6 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 	}
 
 	if amountToVest.GT(sdkmath.NewUint(0)) {
-
 		totalClaimed := sdkmath.NewUintFromString(vestingInfo.TotalClaimed)
 		vestingInfo.PeriodClaimed += periodToVest
 		vestingInfo.TotalClaimed = totalClaimed.Add(amountToVest).String()

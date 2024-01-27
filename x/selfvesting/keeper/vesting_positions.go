@@ -1,9 +1,10 @@
 package keeper
 
 import (
+	"selfchain/x/selfvesting/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"selfchain/x/selfvesting/types"
 )
 
 // SetVestingPositions set a specific vestingPositions in the store from its index
@@ -19,7 +20,6 @@ func (k Keeper) SetVestingPositions(ctx sdk.Context, vestingPositions types.Vest
 func (k Keeper) GetVestingPositions(
 	ctx sdk.Context,
 	beneficiary string,
-
 ) (val types.VestingPositions, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.VestingPositionsKeyPrefix))
 
