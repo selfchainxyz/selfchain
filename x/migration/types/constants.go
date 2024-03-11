@@ -9,7 +9,7 @@ func GetInstantlyReleasedAmount() sdkmath.Uint {
 	return sdkmath.NewUint(1000000)
 }
 
-const DENOM = "uself"
+const DENOM = "uslf"
 
 type Token int64
 

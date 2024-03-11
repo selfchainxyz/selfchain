@@ -60,7 +60,7 @@
           "address": "self1z029mxyt4h4h9wykshzqam2spht7kx9gnrhde3",
           "coins": [
             {
-              "denom": "uself",
+              "denom": "uslf",
               "amount": "75000000000000"
             }
           ]
@@ -69,7 +69,7 @@
           "address": "self1vhx73hmds47yw8sztu00zvdkvm945kxrh7yhqr",
           "coins": [
             {
-              "denom": "uself",
+              "denom": "uslf",
               "amount": "125000000000000"
             }
           ]
@@ -84,7 +84,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "uself",
+        "denom": "uslf",
         "amount": "1000"
       }
     },
@@ -140,7 +140,7 @@
                   "key": "jBXDBP2fuk0cNhut5oGdBYQSeD54alpX27OFg56gcNE="
                 },
                 "value": {
-                  "denom": "uself",
+                  "denom": "uslf",
                   "amount": "60000000000000"
                 }
               }
@@ -168,7 +168,7 @@
             "fee": {
               "amount": [
                 {
-                  "denom": "uself",
+                  "denom": "uslf",
                   "amount": "100000"
                 }
               ],
@@ -207,7 +207,7 @@
                   "key": "Be8fwwpaiDLoJlt95w+Ilx3MziT154YcRjoqkiJE5iM="
                 },
                 "value": {
-                  "denom": "uself",
+                  "denom": "uslf",
                   "amount": "45000000000000"
                 }
               }
@@ -235,7 +235,7 @@
             "fee": {
               "amount": [
                 {
-                  "denom": "uself",
+                  "denom": "uslf",
                   "amount": "100000"
                 }
               ],
@@ -259,7 +259,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "uself",
+            "denom": "uslf",
             "amount": "10000000"
           }
         ],
@@ -355,7 +355,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "uself",
+        "mint_denom": "uslf",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.100000000000000000",
         "inflation_min": "0.070000000000000000",
@@ -381,7 +381,7 @@
         "max_validators": 100,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "uself",
+        "bond_denom": "uslf",
         "min_commission_rate": "0.000000000000000000"
       },
       "last_total_power": "0",

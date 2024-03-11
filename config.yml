@@ -3,33 +3,33 @@ accounts:
 - name: alice
   mnemonic: message another leisure emotion flush path cigar tunnel august sport vocal mango unusual people grain assist filter private bridge wink sniff decrease endless wagon
   coins:
-  - 200000000000000000uself
+  - 200000000000000000uslf
 - name: bob
   mnemonic: van almost scheme above bleak rely response leisure process victory sustain bottom nation vocal include volcano tattoo negative help sudden repeat case betray naive
   coins:
-  - 10000000000000000uself
+  - 10000000000000000uslf
 client:
   openapi:
     path: docs/static/openapi.yml
 faucet:
   name: bob
   coins:
-  - 1000000000uself
+  - 1000000000uslf
 validators:
 - name: alice
-  bonded: 1000000000uself
+  bonded: 1000000000uslf
 genesis:
   app_state:
     staking:
       params:
-        bond_denom: "uself"
+        bond_denom: "uslf"
     gov:
       votingParams:
         voting_period: "1m"
       deposit_params:
         min_deposit:
         - amount: "10000000"
-          denom: uself
+          denom: uslf
     migration:
       params:
         hotcross_ratio: 0
