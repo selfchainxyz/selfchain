@@ -73,7 +73,7 @@ func TestShouldMintAmountAndAddBeneficiary(t *testing.T) {
 	server, ctx, _, ctrl, selfVestingMock, bankMock := setup(t)
 	defer ctrl.Finish()
 
-	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native uself token
+	// 1 Mil Front at a ration of 1/10 will give us 100,000 of the native uslf token
 	addBeneficiaryRequest := selfvestingTypes.AddBeneficiaryRequest{
 		Beneficiary: test.Alice,
 		Cliff:       604800,

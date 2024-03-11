@@ -107,11 +107,11 @@ func addAll(balances []banktypes.Balance) sdk.Coins {
 
 func getBankGenesis() *banktypes.GenesisState {
 	coins := []banktypes.Balance{
-		makeBalance(test.Alice, 1000000000, "uself"),
-		makeBalance(test.Bob, 1000000000, "uself"),
-		makeBalance(test.Carol, 1000000000, "uself"),
-		makeBalance(test.Migrator_1, 1000000000, "uself"),
-		makeBalance(test.Migrator_2, 1000000000, "uself"),
+		makeBalance(test.Alice, 1000000000, "uslf"),
+		makeBalance(test.Bob, 1000000000, "uslf"),
+		makeBalance(test.Carol, 1000000000, "uslf"),
+		makeBalance(test.Migrator_1, 1000000000, "uslf"),
+		makeBalance(test.Migrator_2, 1000000000, "uslf"),
 	}
 	supply := banktypes.Supply{
 		Total: addAll(coins),

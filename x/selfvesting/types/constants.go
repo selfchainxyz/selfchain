@@ -1,3 +1,3 @@
 package types
 
-const DENOM = "uself"
+const DENOM = "uslf"
