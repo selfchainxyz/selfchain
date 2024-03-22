@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -17,63 +16,49 @@ import (
 // avoid unused import issue
 var (
 	_ = sample.AccAddress
-	_ = selfvestingsimulation.FindAccount
-	_ = simappparams.StakePerAccount
+	_ = hellosimulation.FindAccount
 	_ = simulation.MsgEntryKind
 	_ = baseapp.Paramspace
+	_ = rand.Rand{}
 )
 
 const (
-	opWeightMsgRelease = "op_weight_msg_release"
-	// TODO: Determine the simulation weight value
-	defaultWeightMsgRelease int = 100
-
-	// this line is used by starport scaffolding # simapp/module/const
+// this line is used by starport scaffolding # simapp/module/const
 )
 
-// GenerateGenesisState creates a randomized GenState of the module
+// GenerateGenesisState creates a randomized GenState of the module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	accs := make([]string, len(simState.Accounts))
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	selfvestingGenesis := types.GenesisState{
+	helloGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&selfvestingGenesis)
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&helloGenesis)
 }
 
-// ProposalContents doesn't return any content functions for governance proposals
+// RegisterStoreDecoder registers a decoder.
+func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
+
+// ProposalContents doesn't return any content functions for governance proposals.
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
 	return nil
 }
-
-// RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-
-	return []simtypes.ParamChange{}
-}
-
-// RegisterStoreDecoder registers a decoder
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgRelease int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRelease, &weightMsgRelease, nil,
-		func(_ *rand.Rand) {
-			weightMsgRelease = defaultWeightMsgRelease
-		},
-	)
-	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgRelease,
-		selfvestingsimulation.SimulateMsgRelease(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
-
 	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations
+}
+
+// ProposalMsgs returns msgs used for governance proposals for simulations.
+func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+	return []simtypes.WeightedProposalMsg{
+		// this line is used by starport scaffolding # simapp/module/OpMsg
+	}
 }
