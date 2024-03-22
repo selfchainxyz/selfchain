@@ -1,6 +1,6 @@
 module selfchain
 
-go 1.19
+go 1.22
 
 require (
 	cosmossdk.io/api v0.3.1
@@ -19,7 +19,6 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
-	github.com/tendermint/tendermint v0.34.24
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0
 	google.golang.org/grpc v1.60.1
 	gopkg.in/yaml.v2 v2.4.0
