@@ -3,20 +3,21 @@ package selfvesting
 import (
 	"math/rand"
 
+	"selfchain/testutil/sample"
+	selfvestingsimulation "selfchain/x/selfvesting/simulation"
+	"selfchain/x/selfvesting/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"selfchain/testutil/sample"
-	selfvestingsimulation "selfchain/x/selfvesting/simulation"
-	"selfchain/x/selfvesting/types"
 )
 
 // avoid unused import issue
 var (
 	_ = sample.AccAddress
-	_ = hellosimulation.FindAccount
+	_ = selfvestingsimulation.FindAccount
 	_ = simulation.MsgEntryKind
 	_ = baseapp.Paramspace
 	_ = rand.Rand{}
@@ -32,11 +33,11 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	helloGenesis := types.GenesisState{
+	selfvestingGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&helloGenesis)
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&selfvestingGenesis)
 }
 
 // RegisterStoreDecoder registers a decoder.
