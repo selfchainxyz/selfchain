@@ -71,7 +71,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		types.DENOM,
 		sdkmath.NewIntFromBigInt(migrationAmount.BigInt()),
 	))
-
+	
 	// Mint new coins to the selfvesting module
 	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, migrationCoins)
 	if mintError != nil {
