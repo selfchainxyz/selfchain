@@ -20,19 +20,19 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		panic("Config does not exist")
 	}
 
-	// 1. we don't want to get spammed people who migrate small amounts
+	// We don't want to get spammed people who migrate small amounts
 	amount := sdkmath.NewUintFromString(msg.Amount)
 	if amount.LT(sdkmath.NewUint(config.MinMigrationAmount)) {
 		return nil, types.ErrInvalidMigrationAmount
 	}
 
-	// 2. Make sure signer is in the list of migrators
+	// Make sure signer is in the list of migrators
 	_, migratorExist := k.GetMigrator(ctx, msg.Creator)
 	if !migratorExist {
 		return nil, types.ErrUnknownMigrator
 	}
 
-	// 3. Create a hash of the message
+	// Create a hash of the message
 	encodedMsg := fmt.Sprintf(
 		"%s|%s|%s|%d|%s|%d",
 		msg.EthAddress,
@@ -44,13 +44,13 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	)
 	msgHash := fmt.Sprintf("%x", sha256.Sum256([]byte(encodedMsg)))
 
-	// 4. Check if message i.e. migration request has been processed already
+	// Check if message i.e. migration request has been processed already
 	_, migrationExists := k.GetTokenMigration(ctx, msgHash)
 	if migrationExists {
 		return nil, types.ErrMigrationProcessed
 	}
 
-	// 5. Calculate the correct amount to mint
+	// Calculate the correct amount to mint
 	var ratio uint64
 	switch msg.Token {
 	case uint64(types.Front):
@@ -65,44 +65,55 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 
 	// WEI has 18 decimals whereas our denomiation is uslf thus it has 10^6 (6 decimals).
 	normalizedAmount := amount.QuoUint64(uint64(math.Pow(10, 12)))
-	lockedAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
-
-	lockedCoins := sdk.NewCoins(sdk.NewCoin(
+	migrationAmount := normalizedAmount.MulUint64(ratio).Quo(sdkmath.NewUint(100))
+	instantlyReleased := types.GetInstantlyReleasedAmount()
+	migrationCoins := sdk.NewCoins(sdk.NewCoin(
 		types.DENOM,
-		sdkmath.NewIntFromBigInt(lockedAmount.BigInt()),
+		sdkmath.NewIntFromBigInt(migrationAmount.BigInt()),
 	))
 
-	instantlyReleasedCoins := sdk.NewCoins(sdk.NewCoin(
-		types.DENOM,
-		sdkmath.NewIntFromBigInt(types.GetInstantlyReleasedAmount().BigInt()),
-	))
-
-	// 5. Mint new coins to the selfvesting module
-	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, lockedCoins)
+	// Mint new coins to the selfvesting module
+	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, migrationCoins)
 	if mintError != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
-	// 6. Transfer a fixed amount to the beneficiary so it can pay gas when releasing tokens from the vesting position
-
 	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
 	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
-	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
 
+	// If the migration amount is LTE then instantlyReleased which is a constant 1 SLF then we don't need to
+	// do any vesting. This can happen in two cases:
+	// 1. we migrate 1 FRONT so we get 1 SLF which is instantly released
+	// 2. we migrate X HOTCROSS and since hotcross migration ration will be < 100% then for small amount it will
+	// create less than 1 SLF (which is the instantlyReleased). For example, if we migrate 1 HOTCROSS and the ratio
+	// is 25% then we will get 0.25 SLF. In this case we don't need to create any vesting and we simply mint 0.25 SLF
+	// and transfer to the user.
+	if migrationAmount.LTE(instantlyReleased) {
+		instantlyReleasedCoins := sdk.NewCoins(sdk.NewCoin(
+			types.DENOM,
+			sdkmath.NewIntFromBigInt(migrationAmount.BigInt()),
+		))
 
+		// send the full migration amount to the user
+		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+	} else {
+		// Transfer a fixed amount to the beneficiary so it can pay gas when releasing tokens from the vesting position
+		instantlyReleasedCoins := sdk.NewCoins(sdk.NewCoin(
+			types.DENOM,
+			sdkmath.NewIntFromBigInt(instantlyReleased.BigInt()),
+		))
+		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
 
-	// 7. Add a new beneficiary if needed e.g. if the migration amount is 1 FRONT then it will instatly be released
-	// so we don't have to create a vesting position
-	if lockedAmount.GT(types.GetInstantlyReleasedAmount()) {
+		// Add a new beneficiary
 		k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
 			Beneficiary: msg.DestAddress,
 			Cliff:       config.VestingCliff,
 			Duration:    config.VestingDuration,
-			Amount:      lockedAmount.Sub(types.GetInstantlyReleasedAmount()).String(),
+			Amount:      migrationAmount.Sub(instantlyReleased).String(),
 		})
 	}
 
-	// 8. Store the token migration so it can't be processed again
+	// Store the token migration so it can't be processed again
 	k.SetTokenMigration(ctx, types.TokenMigration{
 		MsgHash:   msgHash,
 		Processed: true,
