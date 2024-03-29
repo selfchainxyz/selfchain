@@ -89,13 +89,18 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	destAddr, _ := sdk.AccAddressFromBech32(msg.DestAddress)
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
 
-	// 7. Add a new beneficiary
-	k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
-		Beneficiary: msg.DestAddress,
-		Cliff:       config.VestingCliff,
-		Duration:    config.VestingDuration,
-		Amount:      lockedAmount.Sub(types.GetInstantlyReleasedAmount()).String(),
-	})
+
+
+	// 7. Add a new beneficiary if needed e.g. if the migration amount is 1 FRONT then it will instatly be released
+	// so we don't have to create a vesting position
+	if lockedAmount.GT(types.GetInstantlyReleasedAmount()) {
+		k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
+			Beneficiary: msg.DestAddress,
+			Cliff:       config.VestingCliff,
+			Duration:    config.VestingDuration,
+			Amount:      lockedAmount.Sub(types.GetInstantlyReleasedAmount()).String(),
+		})
+	}
 
 	// 8. Store the token migration so it can't be processed again
 	k.SetTokenMigration(ctx, types.TokenMigration{
