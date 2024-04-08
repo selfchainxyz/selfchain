@@ -34,18 +34,6 @@ func (k Keeper) GetVestingPositions(
 	return val, true
 }
 
-// RemoveVestingPositions removes a vestingPositions from the store
-func (k Keeper) RemoveVestingPositions(
-	ctx sdk.Context,
-	beneficiary string,
-
-) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.VestingPositionsKeyPrefix))
-	store.Delete(types.VestingPositionsKey(
-		beneficiary,
-	))
-}
-
 // GetAllVestingPositions returns all vestingPositions
 func (k Keeper) GetAllVestingPositions(ctx sdk.Context) (list []types.VestingPositions) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.VestingPositionsKeyPrefix))

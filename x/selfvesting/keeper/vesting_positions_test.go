@@ -4,12 +4,13 @@ import (
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	keepertest "selfchain/testutil/keeper"
 	"selfchain/testutil/nullify"
 	"selfchain/x/selfvesting/keeper"
 	"selfchain/x/selfvesting/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 // Prevent strconv unused error
@@ -37,19 +38,6 @@ func TestVestingPositionsGet(t *testing.T) {
 			nullify.Fill(&item),
 			nullify.Fill(&rst),
 		)
-	}
-}
-func TestVestingPositionsRemove(t *testing.T) {
-	keeper, ctx := keepertest.SelfvestingKeeper(t)
-	items := createNVestingPositions(keeper, ctx, 10)
-	for _, item := range items {
-		keeper.RemoveVestingPositions(ctx,
-			item.Beneficiary,
-		)
-		_, found := keeper.GetVestingPositions(ctx,
-			item.Beneficiary,
-		)
-		require.False(t, found)
 	}
 }
 
