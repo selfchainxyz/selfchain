@@ -14,6 +14,7 @@ func CmdListMigrator() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-migrator",
 		Short: "list all migrator",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
