@@ -38,7 +38,7 @@
     }
   ],
   "rest": "https://api.selfchain.io",
-  "rpc": "https://rpc.selfchain.io",
+  "rpc": "https://rpc.selfchain.io:26657",
   "stakeCurrency": {
     "coinDecimals": 6,
     "coinDenom": "SLF",
