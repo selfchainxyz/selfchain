@@ -12,7 +12,7 @@
   },
   "chainId": "self-1",
   "chainName": "Selfchain",
-  "chainSymbolImageUrl": "",
+  "chainSymbolImageUrl": "https://raw.githubusercontent.com/hotcrosscom/self-chain-brand-assets/main/token/slf_logo.png",
   "currencies": [
     {
       "coinDecimals": 6,
