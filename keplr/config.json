@@ -19,7 +19,7 @@
       "coinDenom": "SLF",
       "coinGeckoId": "slf",
       "coinMinimalDenom": "uslf",
-      "coinImageUrl": ""
+      "coinImageUrl": "https://raw.githubusercontent.com/hotcrosscom/self-chain-brand-assets/main/token/slf_logo.png"
     }
   ],
   "features": [],
@@ -29,7 +29,7 @@
       "coinDenom": "SLF",
       "coinGeckoId": "slf",
       "coinMinimalDenom": "uslf",
-      "coinImageUrl": "",
+      "coinImageUrl": "https://raw.githubusercontent.com/hotcrosscom/self-chain-brand-assets/main/token/slf_logo.png",
       "gasPriceStep": {
         "average": 0.025,
         "high": 0.03,
@@ -44,7 +44,7 @@
     "coinDenom": "SLF",
     "coinGeckoId": "slf",
     "coinMinimalDenom": "uslf",
-    "coinImageUrl": ""
+    "coinImageUrl": "https://raw.githubusercontent.com/hotcrosscom/self-chain-brand-assets/main/token/slf_logo.png"
   },
   "walletUrlForStaking": "https://staking.selfchain.xyz"
 }
