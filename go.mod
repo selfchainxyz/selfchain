@@ -3,6 +3,7 @@ module selfchain
 go 1.22
 
 require (
+  github.com/CosmWasm/wasmd v0.46.0
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/math v1.3.0
 	github.com/cometbft/cometbft v0.37.4
