@@ -474,7 +474,8 @@ func New(
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibcexported.StoreKey],
+		appCodec,
+		keys[ibcexported.StoreKey],
 		app.GetSubspace(ibcexported.ModuleName),
 		app.StakingKeeper,
 		app.UpgradeKeeper,
@@ -483,8 +484,9 @@ func New(
 
   // IBC Fee Module keeper
 	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey],
-		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		appCodec,
+		keys[ibcfeetypes.StoreKey],
+		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
 	)
@@ -502,8 +504,6 @@ func New(
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey],
@@ -644,10 +644,10 @@ func New(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
-    AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
+    AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
-    AddRoute(icahosttypes.SubModuleName, icaHostStack).
-    AddRoute(icacontrollertypes.SubModuleName, icaControllerStack)
+    AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
+    AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -699,7 +699,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
     ibcfee.NewAppModule(app.IBCFeeKeeper),
     ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
-		transferModule,
+		transfer.NewAppModule(app.TransferKeeper),
 		migrationModule,
 		selfvestingModule,
 
@@ -790,6 +790,7 @@ func New(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
+		// wasm after ibc transfer
 		wasmtypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
