@@ -866,7 +866,6 @@ func New(
 	)
 
 	if loadLatest {
-
 		if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 			if upgradeInfo.Name == "v2" {
 				storeUpgrades := storetypes.StoreUpgrades{
@@ -891,7 +890,7 @@ func New(
 		}
 
 		// After loading, run module migrations for new modules
-	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
 		// Get the module version map
 		mv := app.UpgradeKeeper.GetModuleVersionMap(ctx)
@@ -899,13 +898,14 @@ func New(
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+		}
 
 		// Check if the Wasm module version is 0 (uninitialized)
 		if mv[wasmtypes.ModuleName] == 0 {
 			// Run migrations to initialize the Wasm module
 			mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
 			if err != nil {
-				panic(fmt.Sprintf("Failed to run migrations: %v", err))
+				panic(fmt.Sprintf("Failed to run migrations. Error: %v, Module Versions: %v", err, mv))
 			}
 		}
 	}
