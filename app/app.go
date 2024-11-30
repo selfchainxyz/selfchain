@@ -891,10 +891,14 @@ func New(
 		}
 
 		// After loading, run module migrations for new modules
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
 		// Get the module version map
 		mv := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 
 		// Check if the Wasm module version is 0 (uninitialized)
 		if mv[wasmtypes.ModuleName] == 0 {
