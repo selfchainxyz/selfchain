@@ -899,6 +899,7 @@ func New(
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+		}
 
 		// Check if the Wasm module version is 0 (uninitialized)
 		if mv[wasmtypes.ModuleName] == 0 {
