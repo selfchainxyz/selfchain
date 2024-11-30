@@ -903,9 +903,9 @@ func New(
 		// Check if the Wasm module version is 0 (uninitialized)
 		if mv[wasmtypes.ModuleName] == 0 {
 			// Run migrations to initialize the Wasm module
-			_, err = app.mm.RunMigrations(ctx, app.configurator, mv)
+			mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
 			if err != nil {
-				panic(fmt.Sprintf("Failed to run migrations: %v", err))
+				panic(fmt.Sprintf("Failed to run migrations. Error: %v, Module Versions: %v", err, mv))
 			}
 		}
 	}
