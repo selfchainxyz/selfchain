@@ -853,16 +853,56 @@ func New(
 		}
 	}
 
+	//// Move this block before LoadLatestVersion()
+	app.UpgradeKeeper.SetUpgradeHandler(
+		"v2", // Must match the name in proposal
+		func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+			// Remove this line:
+			// app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(plan.Height, &storeUpgrades))
+
+			// Run the module migrations
+			return app.mm.RunMigrations(ctx, app.configurator, vm)
+		},
+	)
+
 	if loadLatest {
+
+		if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+			if upgradeInfo.Name == "v2" {
+				storeUpgrades := storetypes.StoreUpgrades{
+					Added: []string{
+						wasmtypes.ModuleName,
+						ibcfeetypes.ModuleName,
+					},
+				}
+
+				app.SetStoreLoader(
+					upgradetypes.UpgradeStoreLoader(
+						upgradeInfo.Height,
+						&storeUpgrades,
+					),
+				)
+			}
+		}
+
+		// Load the latest version of the app state
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
 		}
 
-    ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		// After loading, run module migrations for new modules
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
-		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+		// Get the module version map
+		mv := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+
+		// Check if the Wasm module version is 0 (uninitialized)
+		if mv[wasmtypes.ModuleName] == 0 {
+			// Run migrations to initialize the Wasm module
+			mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
+			if err != nil {
+				panic(fmt.Sprintf("Failed to run migrations: %v", err))
+			}
 		}
 	}
 
