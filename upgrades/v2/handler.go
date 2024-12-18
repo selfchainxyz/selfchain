@@ -1,0 +1,236 @@
+package v2
+
+import (
+	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+)
+
+const (
+	UpgradeName = "v2"
+)
+
+var addressReplacements = map[string]string{
+	"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh": "self1s7m8pytctmpejfpe4t06d05s29dmwgfaujrgnf",
+	"self12ugrzmzmk7zj56cjrt7dwjrwgatajyqvnepwzx": "self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8",
+	// Add more address mappings as needed
+}
+
+var vestingAddresses = []string{
+	"self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d",
+	"self10cp5243eghvhpngm8yh5j5l7w2jeras670hazk",
+	"self132vnr88qpa4gkmtdv3ly0kpehr7e8zxmanflx2",
+	"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh",
+}
+
+func CreateUpgradeHandler(
+	mm *module.Manager,
+	configurator module.Configurator,
+	accountKeeper authkeeper.AccountKeeper,
+) upgradetypes.UpgradeHandler {
+	fmt.Println("Called upgrade handler")
+	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		ctx.Logger().Info("Starting upgrade v2")
+
+		if err := updateVestingSchedules(ctx, accountKeeper); err != nil {
+			ctx.Logger().Error("Failed to execute v2 upgrade", "error", err)
+			return nil, err
+		}
+
+		ctx.Logger().Info("Completed upgrade v2 successfully")
+		return mm.RunMigrations(ctx, configurator, fromVM)
+	}
+}
+
+func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
+	monthsToAdd := int64(3)
+	for _, addr := range vestingAddresses {
+		if err := updateVestingAccount(ctx, k, addr, monthsToAdd); err != nil {
+			return fmt.Errorf("failed to update vesting for %s: %w", addr, err)
+		}
+	}
+
+	// Then handle address replacements separately
+	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
+	for oldAddr, newAddr := range addressReplacements {
+		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr); err != nil {
+			return fmt.Errorf("failed to replace address for %s: %w", oldAddr, err)
+		}
+	}
+
+	return nil
+}
+
+func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddress, newAddress string) error {
+	// Validate new address doesn't exist
+	newAddr, err := sdk.AccAddressFromBech32(newAddress)
+	if err != nil {
+		return fmt.Errorf("invalid new address %s: %w", newAddress, err)
+	}
+	if k.GetAccount(ctx, newAddr) != nil {
+		return fmt.Errorf("new address %s already exists", newAddress)
+	}
+
+	// Get the old account
+	oldAcc, err := getPeriodicVestingAccount(ctx, k, oldAddress)
+	if err != nil {
+		return err
+	}
+
+	currentTime := ctx.BlockTime().Unix()
+
+	// Calculate unvested periods and coins
+	var unvestedPeriods []vestingtypes.Period
+	var vestedPeriods []vestingtypes.Period
+	var unvestedCoins sdk.Coins
+	cumulativeTime := oldAcc.StartTime
+
+	// Find unvested periods
+	for i, period := range oldAcc.VestingPeriods {
+		if cumulativeTime+period.Length > currentTime {
+			// This and all subsequent periods are unvested
+			unvestedPeriods = append(unvestedPeriods, oldAcc.VestingPeriods[i:]...)
+			for _, p := range oldAcc.VestingPeriods[i:] {
+				unvestedCoins = unvestedCoins.Add(p.Amount...)
+			}
+			break
+		}
+		vestedPeriods = append(vestedPeriods, period)
+		cumulativeTime += period.Length
+	}
+
+	// If no unvested periods, nothing to migrate
+	if len(unvestedPeriods) == 0 {
+		ctx.Logger().Info("No unvested periods to migrate", "address", oldAddress)
+		return nil
+	}
+
+	// Create new base account with proper account number
+	baseAcc := authtypes.NewBaseAccountWithAddress(newAddr)
+
+	// Create new account with only unvested amounts
+	newAcc := &vestingtypes.PeriodicVestingAccount{
+		BaseVestingAccount: &vestingtypes.BaseVestingAccount{
+			BaseAccount:      baseAcc,
+			OriginalVesting:  unvestedCoins,
+			DelegatedFree:    sdk.NewCoins(),
+			DelegatedVesting: sdk.NewCoins(),
+			EndTime:          oldAcc.EndTime,
+		},
+		StartTime:      currentTime,
+		VestingPeriods: unvestedPeriods,
+	}
+
+	// Update old account to only contain vested periods
+	oldAcc.VestingPeriods = vestedPeriods
+	oldAcc.OriginalVesting = oldAcc.OriginalVesting.Sub(unvestedCoins...)
+	oldAcc.EndTime = currentTime
+
+	// Save both accounts
+	k.SetAccount(ctx, oldAcc)
+	k.SetAccount(ctx, newAcc)
+
+	ctx.Logger().Info("Successfully split vesting account",
+		"old_address", oldAddress,
+		"new_address", newAddress,
+		"vested_periods", len(vestedPeriods),
+		"unvested_periods", len(unvestedPeriods),
+		"unvested_coins", unvestedCoins)
+
+	return nil
+}
+
+func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string, monthsToAdd int64) error {
+	acc, err := getPeriodicVestingAccount(ctx, k, address)
+	if err != nil {
+		return err
+	}
+
+	currentTime := ctx.BlockTime().Unix()
+	secondsToAdd := monthsToAdd * 2628000 // ~30.44 days per month
+
+	ctx.Logger().Info("Account details",
+		"address", address,
+		"current_start_time", acc.StartTime,
+		"current_end_time", acc.EndTime,
+		"periods", len(acc.VestingPeriods),
+		"current_block_time", currentTime)
+
+	// Find the first unvested period
+	cumulativeTime := acc.StartTime
+	firstUnvestedIdx := 0
+	for i, period := range acc.VestingPeriods {
+		cumulativeTime += period.Length
+		if cumulativeTime > currentTime {
+			firstUnvestedIdx = i
+			break
+		}
+	}
+
+	ctx.Logger().Info("Vesting analysis",
+		"address", address,
+		"first_unvested_period", firstUnvestedIdx,
+		"total_periods", len(acc.VestingPeriods),
+		"cumulative_time", cumulativeTime)
+
+	if firstUnvestedIdx < len(acc.VestingPeriods) {
+		// Only modify unvested periods
+		newVestingPeriods := make([]vestingtypes.Period, len(acc.VestingPeriods))
+		newEndTime := acc.StartTime
+
+		// Copy all periods
+		for i := 0; i < len(acc.VestingPeriods); i++ {
+			newVestingPeriods[i] = acc.VestingPeriods[i]
+
+			if i == firstUnvestedIdx {
+				// Add the delay to the first unvested period
+				newVestingPeriods[i].Length += secondsToAdd
+			}
+			newEndTime += newVestingPeriods[i].Length
+		}
+
+		acc.VestingPeriods = newVestingPeriods
+		acc.BaseVestingAccount.EndTime = newEndTime
+
+		ctx.Logger().Info("Updating vesting schedule",
+			"address", address,
+			"old_start_time", acc.StartTime,
+			"new_end_time", acc.EndTime,
+			"seconds_added", secondsToAdd)
+
+		k.SetAccount(ctx, acc)
+		ctx.Logger().Info("Successfully updated account", "address", address)
+	} else {
+		ctx.Logger().Info("No unvested periods found - skipping", "address", address)
+	}
+
+	return nil
+}
+
+func getPeriodicVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string) (*vestingtypes.PeriodicVestingAccount, error) {
+	addr, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		ctx.Logger().Error("Invalid address format", "address", address, "error", err)
+		return nil, fmt.Errorf("invalid address %s: %w", address, err)
+	}
+
+	acc := k.GetAccount(ctx, addr)
+	if acc == nil {
+		ctx.Logger().Error("Account not found", "address", address)
+		return nil, fmt.Errorf("account not found: %s", address)
+	}
+
+	periodicAcc, ok := acc.(*vestingtypes.PeriodicVestingAccount)
+	if !ok {
+		ctx.Logger().Error("Account is not a periodic vesting account",
+			"address", address,
+			"actual_type", fmt.Sprintf("%T", acc))
+		return nil, fmt.Errorf("account %s is not a periodic vesting account", address)
+	}
+
+	return periodicAcc, nil
+}
