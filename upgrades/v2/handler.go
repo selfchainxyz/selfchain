@@ -50,6 +50,12 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
 	monthsToAdd := int64(3)
 	for _, addr := range vestingAddresses {
 		if err := updateVestingAccount(ctx, k, addr, monthsToAdd); err != nil {
+			if err.Error() == fmt.Sprintf("account not found: %s", addr) {
+				ctx.Logger().Info("Skipping non-existent account for vesting update",
+					"address", addr)
+				continue
+			}
+
 			return fmt.Errorf("failed to update vesting for %s: %w", addr, err)
 		}
 	}
@@ -58,6 +64,12 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
 	for oldAddr, newAddr := range addressReplacements {
 		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr); err != nil {
+			if err.Error() == fmt.Sprintf("account not found: %s", oldAddr) {
+				ctx.Logger().Info("Skipping non-existent account for address replacement",
+					"old_address", oldAddr,
+					"new_address", newAddr)
+				continue
+			}
 			return fmt.Errorf("failed to replace address for %s: %w", oldAddr, err)
 		}
 	}
