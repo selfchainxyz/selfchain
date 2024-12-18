@@ -119,6 +119,7 @@ import (
 	solomachine "github.com/cosmos/ibc-go/v7/modules/light-clients/06-solomachine"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
+	v2 "selfchain/upgrades/v2"
 
 	migrationmodule "selfchain/x/migration"
 	migrationmodulekeeper "selfchain/x/migration/keeper"
@@ -853,19 +854,23 @@ func New(
 		}
 	}
 
-	//// Move this block before LoadLatestVersion()
 	app.UpgradeKeeper.SetUpgradeHandler(
-		"v2", // Must match the name in proposal
+		"v2",
 		func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-			// Remove this line:
-			// app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(plan.Height, &storeUpgrades))
-
-			// Run the module migrations
 			return app.mm.RunMigrations(ctx, app.configurator, vm)
 		},
 	)
 
 	if loadLatest {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			v2.UpgradeName,
+			v2.CreateUpgradeHandler(
+				app.mm,
+				app.configurator,
+				app.AccountKeeper,
+			),
+		)
+
 		if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 			if upgradeInfo.Name == "v2" {
 				storeUpgrades := storetypes.StoreUpgrades{
