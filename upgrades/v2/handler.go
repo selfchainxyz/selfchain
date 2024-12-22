@@ -14,17 +14,21 @@ const (
 	UpgradeName = "v2"
 )
 
+// Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
 var addressReplacements = map[string]string{
-	"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh": "self1s7m8pytctmpejfpe4t06d05s29dmwgfaujrgnf",
-	"self12ugrzmzmk7zj56cjrt7dwjrwgatajyqvnepwzx": "self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8",
+	//"self12ugrzmzmk7zj56cjrt7dwjrwgatajyqvnepwzx": "self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8",
+	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
 	// Add more address mappings as needed
 }
 
+// Enter the list of address for which the vesting schedule needs to be postponed by 3 months.
 var vestingAddresses = []string{
-	"self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d",
-	"self10cp5243eghvhpngm8yh5j5l7w2jeras670hazk",
-	"self132vnr88qpa4gkmtdv3ly0kpehr7e8zxmanflx2",
-	"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh",
+	//"self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d",
+	//"self10cp5243eghvhpngm8yh5j5l7w2jeras670hazk",
+	//"self132vnr88qpa4gkmtdv3ly0kpehr7e8zxmanflx2",
+	//"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh",
+	//"self1fxezqx5w9aw7rfteswm6uzdej56sp3sleup43l",
+	//"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf",
 }
 
 func CreateUpgradeHandler(
