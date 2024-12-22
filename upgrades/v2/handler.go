@@ -36,7 +36,6 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	accountKeeper authkeeper.AccountKeeper,
 ) upgradetypes.UpgradeHandler {
-	fmt.Println("Called upgrade handler")
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v2")
 
