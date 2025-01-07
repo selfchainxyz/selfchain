@@ -23,12 +23,32 @@ var addressReplacements = map[string]string{
 
 // Enter the list of address for which the vesting schedule needs to be postponed by 3 months.
 var vestingAddresses = []string{
-	//"self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d",
-	//"self10cp5243eghvhpngm8yh5j5l7w2jeras670hazk",
-	//"self132vnr88qpa4gkmtdv3ly0kpehr7e8zxmanflx2",
-	//"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh",
-	//"self1fxezqx5w9aw7rfteswm6uzdej56sp3sleup43l",
-	//"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf",
+	"self1fcahhgtw2llk06am4rala6khxjtj24zhhxn449",
+	"self1uuemdshpnzsvh9fmnn3gnltvgqullc23kvr0ha",
+	"self15mqsmcgnfgzsscxm5unv896cdxaq49sxqpmkfh",
+	"self10cp5243eghvhpngm8yh5j5l7w2jeras670hazk",
+	"self1kdwx0egjyhukrh57wycsj695c9my3q52w0j3vx",
+	"self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
+	"self1v5hrqlv8dqgzvy0pwzqzg0gxy899rm4kwugwdu",
+	"self1s7m8pytctmpejfpe4t06d05s29dmwgfaujrgnf",
+	"self1gf2r58wmnt0wxa0lels39c2q2eeddcaqal403v",
+	"self1wv2h4syek04xs5ya70nte64hzyg87r682he7rf",
+	"self12ugrzmzmk7zj56cjrt7dwjrwgatajyqvnepwzx",
+	"self1zh3dye5m5u78utp3kyvephg63h3zkgw333l9sv",
+	"self1t50hj98rmnusr2yywvp7aaq4jwr98tfnercplu",
+	"self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d",
+	"self1st6dracnvq7g203rpvzqtw0cyy86nj03w3uwza",
+	"self132vnr88qpa4gkmtdv3ly0kpehr7e8zxmanflx2",
+	"self1q3a9nggfp94wv6yntjt3xq9wc6gfnnkrhlr6uf",
+	"self17cfx0jp7dur420aavhf23xxgxydk2c34nc3n33",
+	"self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8",
+	"self1cyf2hyjtpwkeh7y466t4ravyfcv0ze4yyk3a3r",
+	"self1qvsus5qg8yhre7k2c78xkkw4nvqqgev7qu2n9f",
+	"self1fxezqx5w9aw7rfteswm6uzdej56sp3sleup43l",
+	"self1jezc4atme56v75x5njqe4zuaccc4secug25wd3",
+	"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf",
+	"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah",
+	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
 func CreateUpgradeHandler(
