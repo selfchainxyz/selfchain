@@ -6,27 +6,22 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
-	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
-var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -73,7 +68,6 @@ var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 type QueryParamsResponse struct {
-	// params holds all the parameters of this module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 }
 
@@ -119,7 +113,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 
 // QueryDIDDocumentRequest is request type for the Query/DIDDocument method.
 type QueryDIDDocumentRequest struct {
-	Did string `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *QueryDIDDocumentRequest) Reset()         { *m = QueryDIDDocumentRequest{} }
@@ -155,9 +149,9 @@ func (m *QueryDIDDocumentRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryDIDDocumentRequest proto.InternalMessageInfo
 
-func (m *QueryDIDDocumentRequest) GetDid() string {
+func (m *QueryDIDDocumentRequest) GetId() string {
 	if m != nil {
-		return m.Did
+		return m.Id
 	}
 	return ""
 }
@@ -297,24 +291,23 @@ func (m *QueryCredentialResponse) GetCredential() Credential {
 	return Credential{}
 }
 
-// QueryCredentialsBySubjectRequest is request type for the Query/CredentialsBySubject method.
-type QueryCredentialsBySubjectRequest struct {
-	SubjectDid string             `protobuf:"bytes,1,opt,name=subject_did,json=subjectDid,proto3" json:"subject_did,omitempty"`
-	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+// QueryVerifyCredentialRequest is request type for the Query/VerifyCredential method.
+type QueryVerifyCredentialRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (m *QueryCredentialsBySubjectRequest) Reset()         { *m = QueryCredentialsBySubjectRequest{} }
-func (m *QueryCredentialsBySubjectRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryCredentialsBySubjectRequest) ProtoMessage()    {}
-func (*QueryCredentialsBySubjectRequest) Descriptor() ([]byte, []int) {
+func (m *QueryVerifyCredentialRequest) Reset()         { *m = QueryVerifyCredentialRequest{} }
+func (m *QueryVerifyCredentialRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryVerifyCredentialRequest) ProtoMessage()    {}
+func (*QueryVerifyCredentialRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7023bccf898bb2a2, []int{6}
 }
-func (m *QueryCredentialsBySubjectRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryVerifyCredentialRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryCredentialsBySubjectRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryVerifyCredentialRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryCredentialsBySubjectRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryVerifyCredentialRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -324,147 +317,42 @@ func (m *QueryCredentialsBySubjectRequest) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *QueryCredentialsBySubjectRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryCredentialsBySubjectRequest.Merge(m, src)
+func (m *QueryVerifyCredentialRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryVerifyCredentialRequest.Merge(m, src)
 }
-func (m *QueryCredentialsBySubjectRequest) XXX_Size() int {
+func (m *QueryVerifyCredentialRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryCredentialsBySubjectRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryCredentialsBySubjectRequest.DiscardUnknown(m)
+func (m *QueryVerifyCredentialRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryVerifyCredentialRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryCredentialsBySubjectRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryVerifyCredentialRequest proto.InternalMessageInfo
 
-func (m *QueryCredentialsBySubjectRequest) GetSubjectDid() string {
+func (m *QueryVerifyCredentialRequest) GetId() string {
 	if m != nil {
-		return m.SubjectDid
+		return m.Id
 	}
 	return ""
 }
 
-func (m *QueryCredentialsBySubjectRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryCredentialsBySubjectResponse is response type for the Query/CredentialsBySubject method.
-type QueryCredentialsBySubjectResponse struct {
-	Credentials []Credential        `protobuf:"bytes,1,rep,name=credentials,proto3" json:"credentials"`
-	Pagination  *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryCredentialsBySubjectResponse) Reset()         { *m = QueryCredentialsBySubjectResponse{} }
-func (m *QueryCredentialsBySubjectResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryCredentialsBySubjectResponse) ProtoMessage()    {}
-func (*QueryCredentialsBySubjectResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7023bccf898bb2a2, []int{7}
-}
-func (m *QueryCredentialsBySubjectResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryCredentialsBySubjectResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryCredentialsBySubjectResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryCredentialsBySubjectResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryCredentialsBySubjectResponse.Merge(m, src)
-}
-func (m *QueryCredentialsBySubjectResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryCredentialsBySubjectResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryCredentialsBySubjectResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryCredentialsBySubjectResponse proto.InternalMessageInfo
-
-func (m *QueryCredentialsBySubjectResponse) GetCredentials() []Credential {
-	if m != nil {
-		return m.Credentials
-	}
-	return nil
-}
-
-func (m *QueryCredentialsBySubjectResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryVerificationStatusRequest is request type for the Query/VerificationStatus method.
-type QueryVerificationStatusRequest struct {
-	Did string `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
-}
-
-func (m *QueryVerificationStatusRequest) Reset()         { *m = QueryVerificationStatusRequest{} }
-func (m *QueryVerificationStatusRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryVerificationStatusRequest) ProtoMessage()    {}
-func (*QueryVerificationStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7023bccf898bb2a2, []int{8}
-}
-func (m *QueryVerificationStatusRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryVerificationStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryVerificationStatusRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryVerificationStatusRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryVerificationStatusRequest.Merge(m, src)
-}
-func (m *QueryVerificationStatusRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryVerificationStatusRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryVerificationStatusRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryVerificationStatusRequest proto.InternalMessageInfo
-
-func (m *QueryVerificationStatusRequest) GetDid() string {
-	if m != nil {
-		return m.Did
-	}
-	return ""
-}
-
-// QueryVerificationStatusResponse is response type for the Query/VerificationStatus method.
-type QueryVerificationStatusResponse struct {
+// QueryVerifyCredentialResponse is response type for the Query/VerifyCredential method.
+type QueryVerifyCredentialResponse struct {
 	Status VerificationStatus `protobuf:"bytes,1,opt,name=status,proto3" json:"status"`
 }
 
-func (m *QueryVerificationStatusResponse) Reset()         { *m = QueryVerificationStatusResponse{} }
-func (m *QueryVerificationStatusResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryVerificationStatusResponse) ProtoMessage()    {}
-func (*QueryVerificationStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7023bccf898bb2a2, []int{9}
+func (m *QueryVerifyCredentialResponse) Reset()         { *m = QueryVerifyCredentialResponse{} }
+func (m *QueryVerifyCredentialResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryVerifyCredentialResponse) ProtoMessage()    {}
+func (*QueryVerifyCredentialResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7023bccf898bb2a2, []int{7}
 }
-func (m *QueryVerificationStatusResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryVerifyCredentialResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryVerificationStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryVerifyCredentialResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryVerificationStatusResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryVerifyCredentialResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -474,39 +362,36 @@ func (m *QueryVerificationStatusResponse) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-func (m *QueryVerificationStatusResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryVerificationStatusResponse.Merge(m, src)
+func (m *QueryVerifyCredentialResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryVerifyCredentialResponse.Merge(m, src)
 }
-func (m *QueryVerificationStatusResponse) XXX_Size() int {
+func (m *QueryVerifyCredentialResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryVerificationStatusResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryVerificationStatusResponse.DiscardUnknown(m)
+func (m *QueryVerifyCredentialResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryVerifyCredentialResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryVerificationStatusResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryVerifyCredentialResponse proto.InternalMessageInfo
 
-func (m *QueryVerificationStatusResponse) GetStatus() VerificationStatus {
+func (m *QueryVerifyCredentialResponse) GetStatus() VerificationStatus {
 	if m != nil {
 		return m.Status
 	}
 	return VerificationStatus{}
 }
 
-// VerificationStatus represents the status of identity verification
+// VerificationStatus represents the verification status of a credential.
 type VerificationStatus struct {
-	Did        string     `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
-	Provider   string     `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
-	Verified   bool       `protobuf:"varint,3,opt,name=verified,proto3" json:"verified,omitempty"`
-	VerifiedAt time.Time  `protobuf:"bytes,4,opt,name=verified_at,json=verifiedAt,proto3,stdtime" json:"verified_at"`
-	ExpiresAt  *time.Time `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3,stdtime" json:"expires_at,omitempty"`
+	Valid        bool   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
+	ErrorMessage string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 }
 
 func (m *VerificationStatus) Reset()         { *m = VerificationStatus{} }
 func (m *VerificationStatus) String() string { return proto.CompactTextString(m) }
 func (*VerificationStatus) ProtoMessage()    {}
 func (*VerificationStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7023bccf898bb2a2, []int{10}
+	return fileDescriptor_7023bccf898bb2a2, []int{8}
 }
 func (m *VerificationStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -535,39 +420,18 @@ func (m *VerificationStatus) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_VerificationStatus proto.InternalMessageInfo
 
-func (m *VerificationStatus) GetDid() string {
+func (m *VerificationStatus) GetValid() bool {
 	if m != nil {
-		return m.Did
-	}
-	return ""
-}
-
-func (m *VerificationStatus) GetProvider() string {
-	if m != nil {
-		return m.Provider
-	}
-	return ""
-}
-
-func (m *VerificationStatus) GetVerified() bool {
-	if m != nil {
-		return m.Verified
+		return m.Valid
 	}
 	return false
 }
 
-func (m *VerificationStatus) GetVerifiedAt() time.Time {
+func (m *VerificationStatus) GetErrorMessage() string {
 	if m != nil {
-		return m.VerifiedAt
+		return m.ErrorMessage
 	}
-	return time.Time{}
-}
-
-func (m *VerificationStatus) GetExpiresAt() *time.Time {
-	if m != nil {
-		return m.ExpiresAt
-	}
-	return nil
+	return ""
 }
 
 func init() {
@@ -577,67 +441,56 @@ func init() {
 	proto.RegisterType((*QueryDIDDocumentResponse)(nil), "selfchain.identity.QueryDIDDocumentResponse")
 	proto.RegisterType((*QueryCredentialRequest)(nil), "selfchain.identity.QueryCredentialRequest")
 	proto.RegisterType((*QueryCredentialResponse)(nil), "selfchain.identity.QueryCredentialResponse")
-	proto.RegisterType((*QueryCredentialsBySubjectRequest)(nil), "selfchain.identity.QueryCredentialsBySubjectRequest")
-	proto.RegisterType((*QueryCredentialsBySubjectResponse)(nil), "selfchain.identity.QueryCredentialsBySubjectResponse")
-	proto.RegisterType((*QueryVerificationStatusRequest)(nil), "selfchain.identity.QueryVerificationStatusRequest")
-	proto.RegisterType((*QueryVerificationStatusResponse)(nil), "selfchain.identity.QueryVerificationStatusResponse")
+	proto.RegisterType((*QueryVerifyCredentialRequest)(nil), "selfchain.identity.QueryVerifyCredentialRequest")
+	proto.RegisterType((*QueryVerifyCredentialResponse)(nil), "selfchain.identity.QueryVerifyCredentialResponse")
 	proto.RegisterType((*VerificationStatus)(nil), "selfchain.identity.VerificationStatus")
 }
 
 func init() { proto.RegisterFile("selfchain/identity/query.proto", fileDescriptor_7023bccf898bb2a2) }
 
 var fileDescriptor_7023bccf898bb2a2 = []byte{
-	// 785 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x95, 0xcf, 0x6e, 0xd3, 0x4a,
-	0x14, 0xc6, 0xe3, 0xb4, 0x8d, 0xd2, 0x13, 0xe9, 0xea, 0x6a, 0x6e, 0x75, 0x6f, 0x64, 0xf5, 0x3a,
-	0xc5, 0x55, 0xdb, 0xa8, 0x01, 0x8f, 0x9a, 0xb6, 0x12, 0x3b, 0xd4, 0x10, 0x8a, 0x58, 0x51, 0x52,
-	0xc4, 0x02, 0x09, 0x45, 0x4e, 0x3c, 0x0d, 0x83, 0x1a, 0xdb, 0xf5, 0x4c, 0xa2, 0x46, 0x55, 0x37,
-	0x6c, 0x59, 0x50, 0xc1, 0x8e, 0x77, 0x60, 0xc7, 0x8a, 0x27, 0xe8, 0xb2, 0x12, 0x1b, 0x56, 0x80,
-	0x5a, 0xc4, 0x73, 0x20, 0x8f, 0xc7, 0x7f, 0x8a, 0x9d, 0x36, 0xdd, 0x4d, 0x66, 0xbe, 0xef, 0xcc,
-	0x6f, 0x8e, 0xcf, 0x39, 0x01, 0x8d, 0x91, 0xfd, 0xbd, 0xee, 0x4b, 0x93, 0xda, 0x98, 0x5a, 0xc4,
-	0xe6, 0x94, 0x8f, 0xf0, 0xc1, 0x80, 0x78, 0x23, 0xc3, 0xf5, 0x1c, 0xee, 0x20, 0x14, 0x9d, 0x1b,
-	0xe1, 0xb9, 0x3a, 0xd7, 0x73, 0x7a, 0x8e, 0x38, 0xc6, 0xfe, 0x2a, 0x50, 0xaa, 0xf3, 0x3d, 0xc7,
-	0xe9, 0xed, 0x13, 0x6c, 0xba, 0x14, 0x9b, 0xb6, 0xed, 0x70, 0x93, 0x53, 0xc7, 0x66, 0xf2, 0x74,
-	0xb5, 0xeb, 0xb0, 0xbe, 0xc3, 0x70, 0xc7, 0x64, 0x24, 0xb8, 0x00, 0x0f, 0xd7, 0x3a, 0x84, 0x9b,
-	0x6b, 0xd8, 0x35, 0x7b, 0xd4, 0x16, 0x62, 0xa9, 0xad, 0x64, 0x30, 0xb9, 0xa6, 0x67, 0xf6, 0xc3,
-	0x60, 0x4b, 0x19, 0x02, 0x8b, 0x5a, 0x6d, 0xcb, 0xe9, 0x0e, 0xfa, 0xc4, 0xe6, 0x52, 0xb6, 0x98,
-	0x21, 0xeb, 0x7a, 0x44, 0x2c, 0xcd, 0xfd, 0xf0, 0x32, 0x89, 0x2d, 0x7e, 0x75, 0x06, 0x7b, 0x98,
-	0xd3, 0x3e, 0x61, 0xdc, 0xec, 0xbb, 0x81, 0x40, 0x9f, 0x03, 0xf4, 0xc4, 0xe7, 0xdd, 0x11, 0x04,
-	0x2d, 0x72, 0x30, 0x20, 0x8c, 0xeb, 0x8f, 0xe1, 0x9f, 0x4b, 0xbb, 0xcc, 0x75, 0x6c, 0x46, 0xd0,
-	0x5d, 0x28, 0x04, 0xa4, 0x65, 0x65, 0x41, 0xa9, 0x96, 0xea, 0xaa, 0x91, 0xce, 0x9f, 0x11, 0x78,
-	0x1a, 0xd3, 0xa7, 0xdf, 0x2a, 0xb9, 0x96, 0xd4, 0xeb, 0x35, 0xf8, 0x4f, 0x04, 0x6c, 0x3e, 0x6a,
-	0x36, 0xe5, 0x33, 0xe4, 0x5d, 0xe8, 0x6f, 0x98, 0xb2, 0xa8, 0x25, 0x22, 0xce, 0xb6, 0xfc, 0xa5,
-	0xfe, 0x02, 0xca, 0x69, 0xb1, 0x44, 0xd8, 0x82, 0x62, 0x98, 0x07, 0x09, 0x51, 0xc9, 0x82, 0x48,
-	0x58, 0x25, 0x49, 0x64, 0xd3, 0xab, 0xf0, 0xaf, 0x08, 0x7f, 0x3f, 0x4a, 0x56, 0x88, 0xf2, 0x17,
-	0xe4, 0x23, 0x92, 0x3c, 0xb5, 0xf4, 0xb6, 0xa4, 0x4e, 0x2a, 0x25, 0x47, 0x13, 0x20, 0x4e, 0xb6,
-	0x24, 0xd1, 0xb2, 0x48, 0x62, 0xaf, 0x04, 0x49, 0xf8, 0xf4, 0x37, 0x0a, 0x2c, 0xfc, 0x71, 0x03,
-	0x6b, 0x8c, 0x76, 0x07, 0x9d, 0x57, 0xa4, 0x1b, 0x25, 0xa8, 0x02, 0x25, 0x16, 0xec, 0xb4, 0xe3,
-	0x44, 0x81, 0xdc, 0x6a, 0x52, 0x0b, 0x6d, 0x03, 0xc4, 0x55, 0x56, 0xce, 0x0b, 0x96, 0x65, 0x23,
-	0x28, 0x49, 0xc3, 0x2f, 0x49, 0x23, 0xa8, 0x79, 0x59, 0x92, 0xc6, 0x8e, 0xd9, 0x23, 0x32, 0x78,
-	0x2b, 0xe1, 0xd4, 0x3f, 0x29, 0x70, 0xeb, 0x0a, 0x1a, 0xf9, 0xf2, 0x6d, 0x28, 0xc5, 0x2f, 0xf0,
-	0x2b, 0x61, 0x6a, 0xe2, 0xa7, 0x27, 0x8d, 0xe8, 0x61, 0x06, 0xf5, 0xca, 0xb5, 0xd4, 0x01, 0xc4,
-	0x25, 0xec, 0x3a, 0x68, 0x82, 0xfa, 0x19, 0xf1, 0xe8, 0x1e, 0xed, 0x8a, 0xcd, 0x5d, 0x6e, 0xf2,
-	0x01, 0x1b, 0x5f, 0x62, 0x3d, 0xa8, 0x8c, 0xf5, 0x44, 0x5f, 0xb8, 0xc0, 0xc4, 0x8e, 0xfc, 0xba,
-	0xcb, 0x59, 0x4f, 0x4c, 0xfb, 0xc3, 0xc2, 0x0f, 0xbc, 0xfa, 0x2f, 0x05, 0x50, 0x5a, 0x94, 0x26,
-	0x42, 0x2a, 0x14, 0x5d, 0xcf, 0x19, 0x52, 0x8b, 0x78, 0x22, 0x19, 0xb3, 0xad, 0xe8, 0xb7, 0x7f,
-	0x36, 0x14, 0x31, 0x88, 0x55, 0x9e, 0x5a, 0x50, 0xaa, 0xc5, 0x56, 0xf4, 0x1b, 0x3d, 0x80, 0x52,
-	0xb8, 0x6e, 0x9b, 0xbc, 0x3c, 0x2d, 0x1b, 0x33, 0xe8, 0x7b, 0x23, 0xec, 0x7b, 0xe3, 0x69, 0xd8,
-	0xf7, 0x8d, 0xa2, 0xcf, 0x77, 0xf2, 0xbd, 0xa2, 0xb4, 0x20, 0x34, 0x6e, 0x71, 0x74, 0x0f, 0x80,
-	0x1c, 0xba, 0xd4, 0x23, 0xcc, 0x8f, 0x32, 0x73, 0x6d, 0x94, 0x69, 0x11, 0x61, 0x56, 0x7a, 0xb6,
-	0x78, 0xfd, 0x43, 0x01, 0x66, 0x44, 0x4a, 0xd1, 0x31, 0x14, 0x82, 0x19, 0x80, 0x32, 0x53, 0x96,
-	0x1e, 0x37, 0xea, 0xca, 0xb5, 0xba, 0xe0, 0x9b, 0xe8, 0xfa, 0xeb, 0x2f, 0x3f, 0xdf, 0xe7, 0xe7,
-	0x91, 0x8a, 0xc7, 0x0e, 0x51, 0xf4, 0x56, 0x81, 0x52, 0xa2, 0xfd, 0x51, 0x6d, 0x6c, 0xf0, 0xf4,
-	0x30, 0x52, 0x6f, 0x4f, 0x26, 0x96, 0x38, 0x4b, 0x02, 0xa7, 0x82, 0xfe, 0xc7, 0xd9, 0x23, 0x1b,
-	0x1f, 0x59, 0xd4, 0x3a, 0x46, 0xef, 0x14, 0x80, 0xb8, 0x17, 0xd0, 0xea, 0xd8, 0x3b, 0x52, 0x13,
-	0x49, 0xad, 0x4d, 0xa4, 0x95, 0x38, 0x35, 0x81, 0xb3, 0x84, 0x16, 0xf1, 0x95, 0x7f, 0x0d, 0xf8,
-	0xc8, 0x87, 0xfa, 0xac, 0xc0, 0x5c, 0x56, 0x9f, 0xa3, 0x8d, 0x09, 0xae, 0x4c, 0x0d, 0x29, 0x75,
-	0xf3, 0x86, 0x2e, 0x89, 0xbc, 0x29, 0x90, 0x31, 0xba, 0x73, 0x35, 0x32, 0xc3, 0x47, 0x89, 0x11,
-	0x78, 0x8c, 0x3e, 0x66, 0x77, 0x55, 0x7d, 0x2c, 0xc4, 0xd8, 0xd9, 0xa0, 0xae, 0xdf, 0xc8, 0x23,
-	0xb1, 0x0d, 0x81, 0x5d, 0x45, 0xcb, 0x59, 0xd8, 0xc3, 0x84, 0x2f, 0xa8, 0x80, 0xc6, 0xc6, 0xe9,
-	0xb9, 0xa6, 0x9c, 0x9d, 0x6b, 0xca, 0x8f, 0x73, 0x4d, 0x39, 0xb9, 0xd0, 0x72, 0x67, 0x17, 0x5a,
-	0xee, 0xeb, 0x85, 0x96, 0x7b, 0xae, 0xc6, 0x01, 0x0e, 0xe3, 0x10, 0x7c, 0xe4, 0x12, 0xd6, 0x29,
-	0x88, 0xbe, 0x5b, 0xff, 0x1d, 0x00, 0x00, 0xff, 0xff, 0x16, 0x4e, 0xa3, 0x83, 0xc6, 0x08, 0x00,
-	0x00,
+	// 652 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x95, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x40, 0xe3, 0x88, 0x86, 0x76, 0x0a, 0x15, 0x1a, 0x2a, 0xa8, 0xac, 0xe0, 0x22, 0x97, 0x42,
+	0xdb, 0x14, 0x2f, 0xb4, 0x1c, 0x2a, 0x4e, 0x50, 0x7c, 0xa9, 0x04, 0x2a, 0xa4, 0x12, 0x07, 0x24,
+	0x14, 0x2d, 0xf1, 0x36, 0x5d, 0xe1, 0x7a, 0x5d, 0xdb, 0x89, 0x88, 0xa2, 0x5c, 0xf8, 0x00, 0x84,
+	0xe0, 0x17, 0x10, 0x07, 0xf8, 0x91, 0x1e, 0x2b, 0x71, 0xe1, 0x84, 0x50, 0xc2, 0x87, 0xa0, 0xac,
+	0xd7, 0x49, 0x8a, 0xed, 0x36, 0xdc, 0x1c, 0xcf, 0x9b, 0x99, 0xb7, 0xbb, 0xb3, 0x0e, 0x18, 0x21,
+	0x73, 0xf7, 0xeb, 0x07, 0x94, 0x7b, 0x84, 0x3b, 0xcc, 0x8b, 0x78, 0xd4, 0x26, 0x47, 0x4d, 0x16,
+	0xb4, 0x2d, 0x3f, 0x10, 0x91, 0x40, 0x1c, 0xc6, 0xad, 0x24, 0xae, 0xcf, 0x37, 0x44, 0x43, 0xc8,
+	0x30, 0x19, 0x3c, 0xc5, 0xa4, 0x5e, 0x6e, 0x08, 0xd1, 0x70, 0x19, 0xa1, 0x3e, 0x27, 0xd4, 0xf3,
+	0x44, 0x44, 0x23, 0x2e, 0xbc, 0x50, 0x45, 0x17, 0x33, 0xfa, 0xf8, 0x34, 0xa0, 0x87, 0x09, 0xb0,
+	0x9c, 0x01, 0x38, 0xdc, 0xa9, 0x39, 0xa2, 0xde, 0x3c, 0x64, 0x5e, 0xa4, 0xb0, 0xa5, 0x0c, 0xac,
+	0x1e, 0x30, 0xf9, 0x48, 0x5d, 0x05, 0x65, 0x2d, 0x4a, 0xd0, 0x66, 0x74, 0x10, 0xc7, 0xcd, 0x79,
+	0xc0, 0x17, 0x83, 0x35, 0x3e, 0x97, 0x02, 0x55, 0x76, 0xd4, 0x64, 0x61, 0x64, 0xee, 0xc2, 0xd5,
+	0x53, 0x6f, 0x43, 0x5f, 0x78, 0x21, 0xc3, 0x2d, 0x28, 0xc5, 0xa2, 0x0b, 0xda, 0x4d, 0x6d, 0x65,
+	0x76, 0x43, 0xb7, 0xd2, 0x5b, 0x62, 0xc5, 0x39, 0xdb, 0x17, 0x8e, 0x7f, 0x2d, 0x16, 0xaa, 0x8a,
+	0x37, 0x57, 0xe1, 0xba, 0x2c, 0x68, 0xef, 0xd8, 0xb6, 0x5a, 0x85, 0xea, 0x85, 0x73, 0x50, 0xe4,
+	0x8e, 0x2c, 0x38, 0x53, 0x2d, 0x72, 0xc7, 0x7c, 0x0d, 0x0b, 0x69, 0x54, 0x09, 0x3c, 0x86, 0xe9,
+	0x64, 0x13, 0x94, 0xc2, 0x62, 0x96, 0xc2, 0x58, 0xaa, 0xf2, 0x18, 0xa6, 0x99, 0x2b, 0x70, 0x4d,
+	0x96, 0x7f, 0x32, 0xdc, 0xa9, 0x3c, 0x91, 0x9a, 0x72, 0x1e, 0x27, 0x95, 0x87, 0x0d, 0x30, 0xda,
+	0x69, 0x65, 0x62, 0x64, 0x99, 0x8c, 0x72, 0x95, 0xc8, 0x58, 0x9e, 0x69, 0x41, 0x59, 0x36, 0x78,
+	0xc9, 0x02, 0xbe, 0x3f, 0x81, 0x10, 0x83, 0x1b, 0x39, 0xfc, 0x50, 0xab, 0x14, 0x46, 0x34, 0x6a,
+	0x26, 0xe7, 0x73, 0x3b, 0x4b, 0x49, 0x66, 0xf3, 0xba, 0x1c, 0xc9, 0x3d, 0x49, 0x27, 0x67, 0x15,
+	0xe7, 0x9a, 0xbb, 0x80, 0x69, 0x06, 0xe7, 0x61, 0xaa, 0x45, 0x5d, 0xe5, 0x33, 0x5d, 0x8d, 0x7f,
+	0xe0, 0x12, 0x5c, 0x66, 0x41, 0x20, 0x82, 0xda, 0x21, 0x0b, 0x43, 0xda, 0x60, 0x0b, 0x45, 0x69,
+	0x7b, 0x49, 0xbe, 0x7c, 0x16, 0xbf, 0xdb, 0xf8, 0x76, 0x11, 0xa6, 0xa4, 0x38, 0x76, 0xa1, 0x14,
+	0x8f, 0x07, 0x66, 0xaa, 0xa5, 0x27, 0x51, 0xbf, 0x73, 0x2e, 0x17, 0xaf, 0xdd, 0x34, 0xdf, 0xff,
+	0xf8, 0xf3, 0xb9, 0x58, 0x46, 0x9d, 0xe4, 0x5e, 0x2f, 0xfc, 0xa0, 0xc1, 0xec, 0xd8, 0x6c, 0x60,
+	0x25, 0xb7, 0x78, 0x7a, 0x4e, 0xf5, 0xf5, 0xc9, 0x60, 0xa5, 0x73, 0x4b, 0xea, 0x18, 0x58, 0x26,
+	0xd9, 0x97, 0x99, 0x74, 0xb8, 0xd3, 0xc5, 0x4f, 0x1a, 0xc0, 0xe8, 0x1c, 0x71, 0x2d, 0xb7, 0x45,
+	0x6a, 0x38, 0xf4, 0xca, 0x44, 0xac, 0xb2, 0xa9, 0x48, 0x9b, 0x65, 0x5c, 0x22, 0x67, 0x7e, 0x33,
+	0x62, 0xa9, 0xaf, 0x1a, 0xcc, 0xed, 0x89, 0x3a, 0xa7, 0xee, 0x8e, 0x42, 0xd0, 0xca, 0x6d, 0x76,
+	0x1a, 0x4c, 0xe4, 0xc8, 0xc4, 0xbc, 0x12, 0xdc, 0x94, 0x82, 0x77, 0xb1, 0x92, 0x25, 0x18, 0xca,
+	0x1c, 0xd2, 0x71, 0xb8, 0xd3, 0x25, 0x1d, 0x3f, 0x10, 0x2d, 0xee, 0xb0, 0xa0, 0x8b, 0x5f, 0x34,
+	0x98, 0x79, 0xca, 0xbd, 0xb7, 0xcc, 0xb1, 0x77, 0x6c, 0x5c, 0xcd, 0xed, 0x39, 0x64, 0x12, 0xbd,
+	0xb5, 0x49, 0x50, 0x65, 0xf6, 0x48, 0x9a, 0x3d, 0xc4, 0xad, 0x33, 0xcc, 0x5c, 0x99, 0x35, 0xa6,
+	0x46, 0x3a, 0x71, 0xa4, 0x36, 0xd8, 0xcf, 0xef, 0x1a, 0x5c, 0xf9, 0xf7, 0xca, 0xe2, 0xbd, 0x5c,
+	0x85, 0x9c, 0xaf, 0x81, 0x7e, 0xff, 0x3f, 0x32, 0x94, 0xfb, 0x86, 0x74, 0x5f, 0xc7, 0xb5, 0x73,
+	0x8e, 0xbd, 0x25, 0x0b, 0xc8, 0xd3, 0xdf, 0x7e, 0x70, 0xdc, 0x33, 0xb4, 0x93, 0x9e, 0xa1, 0xfd,
+	0xee, 0x19, 0xda, 0xc7, 0xbe, 0x51, 0x38, 0xe9, 0x1b, 0x85, 0x9f, 0x7d, 0xa3, 0xf0, 0x4a, 0x1f,
+	0x15, 0x79, 0x37, 0x2a, 0x13, 0xb5, 0x7d, 0x16, 0xbe, 0x29, 0xc9, 0x7f, 0x93, 0xcd, 0xbf, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x39, 0x88, 0x3f, 0x2c, 0x44, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -658,10 +511,12 @@ type QueryClient interface {
 	DIDDocument(ctx context.Context, in *QueryDIDDocumentRequest, opts ...grpc.CallOption) (*QueryDIDDocumentResponse, error)
 	// Credential queries a credential by ID.
 	Credential(ctx context.Context, in *QueryCredentialRequest, opts ...grpc.CallOption) (*QueryCredentialResponse, error)
-	// CredentialsBySubject queries all credentials for a subject DID.
-	CredentialsBySubject(ctx context.Context, in *QueryCredentialsBySubjectRequest, opts ...grpc.CallOption) (*QueryCredentialsBySubjectResponse, error)
-	// VerificationStatus queries the verification status for a DID.
-	VerificationStatus(ctx context.Context, in *QueryVerificationStatusRequest, opts ...grpc.CallOption) (*QueryVerificationStatusResponse, error)
+	// SocialIdentity queries a social identity by DID and provider.
+	SocialIdentity(ctx context.Context, in *QuerySocialIdentityRequest, opts ...grpc.CallOption) (*QuerySocialIdentityResponse, error)
+	// LinkedDID queries the DID linked to a social identity.
+	LinkedDID(ctx context.Context, in *QueryLinkedDIDRequest, opts ...grpc.CallOption) (*QueryLinkedDIDResponse, error)
+	// VerifyCredential verifies a credential.
+	VerifyCredential(ctx context.Context, in *QueryVerifyCredentialRequest, opts ...grpc.CallOption) (*QueryVerifyCredentialResponse, error)
 }
 
 type queryClient struct {
@@ -699,18 +554,27 @@ func (c *queryClient) Credential(ctx context.Context, in *QueryCredentialRequest
 	return out, nil
 }
 
-func (c *queryClient) CredentialsBySubject(ctx context.Context, in *QueryCredentialsBySubjectRequest, opts ...grpc.CallOption) (*QueryCredentialsBySubjectResponse, error) {
-	out := new(QueryCredentialsBySubjectResponse)
-	err := c.cc.Invoke(ctx, "/selfchain.identity.Query/CredentialsBySubject", in, out, opts...)
+func (c *queryClient) SocialIdentity(ctx context.Context, in *QuerySocialIdentityRequest, opts ...grpc.CallOption) (*QuerySocialIdentityResponse, error) {
+	out := new(QuerySocialIdentityResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.identity.Query/SocialIdentity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) VerificationStatus(ctx context.Context, in *QueryVerificationStatusRequest, opts ...grpc.CallOption) (*QueryVerificationStatusResponse, error) {
-	out := new(QueryVerificationStatusResponse)
-	err := c.cc.Invoke(ctx, "/selfchain.identity.Query/VerificationStatus", in, out, opts...)
+func (c *queryClient) LinkedDID(ctx context.Context, in *QueryLinkedDIDRequest, opts ...grpc.CallOption) (*QueryLinkedDIDResponse, error) {
+	out := new(QueryLinkedDIDResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.identity.Query/LinkedDID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) VerifyCredential(ctx context.Context, in *QueryVerifyCredentialRequest, opts ...grpc.CallOption) (*QueryVerifyCredentialResponse, error) {
+	out := new(QueryVerifyCredentialResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.identity.Query/VerifyCredential", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -725,10 +589,12 @@ type QueryServer interface {
 	DIDDocument(context.Context, *QueryDIDDocumentRequest) (*QueryDIDDocumentResponse, error)
 	// Credential queries a credential by ID.
 	Credential(context.Context, *QueryCredentialRequest) (*QueryCredentialResponse, error)
-	// CredentialsBySubject queries all credentials for a subject DID.
-	CredentialsBySubject(context.Context, *QueryCredentialsBySubjectRequest) (*QueryCredentialsBySubjectResponse, error)
-	// VerificationStatus queries the verification status for a DID.
-	VerificationStatus(context.Context, *QueryVerificationStatusRequest) (*QueryVerificationStatusResponse, error)
+	// SocialIdentity queries a social identity by DID and provider.
+	SocialIdentity(context.Context, *QuerySocialIdentityRequest) (*QuerySocialIdentityResponse, error)
+	// LinkedDID queries the DID linked to a social identity.
+	LinkedDID(context.Context, *QueryLinkedDIDRequest) (*QueryLinkedDIDResponse, error)
+	// VerifyCredential verifies a credential.
+	VerifyCredential(context.Context, *QueryVerifyCredentialRequest) (*QueryVerifyCredentialResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -744,11 +610,14 @@ func (*UnimplementedQueryServer) DIDDocument(ctx context.Context, req *QueryDIDD
 func (*UnimplementedQueryServer) Credential(ctx context.Context, req *QueryCredentialRequest) (*QueryCredentialResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Credential not implemented")
 }
-func (*UnimplementedQueryServer) CredentialsBySubject(ctx context.Context, req *QueryCredentialsBySubjectRequest) (*QueryCredentialsBySubjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CredentialsBySubject not implemented")
+func (*UnimplementedQueryServer) SocialIdentity(ctx context.Context, req *QuerySocialIdentityRequest) (*QuerySocialIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SocialIdentity not implemented")
 }
-func (*UnimplementedQueryServer) VerificationStatus(ctx context.Context, req *QueryVerificationStatusRequest) (*QueryVerificationStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method VerificationStatus not implemented")
+func (*UnimplementedQueryServer) LinkedDID(ctx context.Context, req *QueryLinkedDIDRequest) (*QueryLinkedDIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkedDID not implemented")
+}
+func (*UnimplementedQueryServer) VerifyCredential(ctx context.Context, req *QueryVerifyCredentialRequest) (*QueryVerifyCredentialResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyCredential not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -809,38 +678,56 @@ func _Query_Credential_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_CredentialsBySubject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryCredentialsBySubjectRequest)
+func _Query_SocialIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySocialIdentityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).CredentialsBySubject(ctx, in)
+		return srv.(QueryServer).SocialIdentity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/selfchain.identity.Query/CredentialsBySubject",
+		FullMethod: "/selfchain.identity.Query/SocialIdentity",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).CredentialsBySubject(ctx, req.(*QueryCredentialsBySubjectRequest))
+		return srv.(QueryServer).SocialIdentity(ctx, req.(*QuerySocialIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_VerificationStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryVerificationStatusRequest)
+func _Query_LinkedDID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLinkedDIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).VerificationStatus(ctx, in)
+		return srv.(QueryServer).LinkedDID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/selfchain.identity.Query/VerificationStatus",
+		FullMethod: "/selfchain.identity.Query/LinkedDID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).VerificationStatus(ctx, req.(*QueryVerificationStatusRequest))
+		return srv.(QueryServer).LinkedDID(ctx, req.(*QueryLinkedDIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_VerifyCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryVerifyCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).VerifyCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/selfchain.identity.Query/VerifyCredential",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).VerifyCredential(ctx, req.(*QueryVerifyCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -862,12 +749,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Credential_Handler,
 		},
 		{
-			MethodName: "CredentialsBySubject",
-			Handler:    _Query_CredentialsBySubject_Handler,
+			MethodName: "SocialIdentity",
+			Handler:    _Query_SocialIdentity_Handler,
 		},
 		{
-			MethodName: "VerificationStatus",
-			Handler:    _Query_VerificationStatus_Handler,
+			MethodName: "LinkedDID",
+			Handler:    _Query_LinkedDID_Handler,
+		},
+		{
+			MethodName: "VerifyCredential",
+			Handler:    _Query_VerifyCredential_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -950,10 +841,10 @@ func (m *QueryDIDDocumentRequest) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Did) > 0 {
-		i -= len(m.Did)
-		copy(dAtA[i:], m.Did)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Did)))
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Id)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1056,7 +947,7 @@ func (m *QueryCredentialResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryCredentialsBySubjectRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryVerifyCredentialRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1066,39 +957,27 @@ func (m *QueryCredentialsBySubjectRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryCredentialsBySubjectRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryVerifyCredentialRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryCredentialsBySubjectRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryVerifyCredentialRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.SubjectDid) > 0 {
-		i -= len(m.SubjectDid)
-		copy(dAtA[i:], m.SubjectDid)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.SubjectDid)))
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Id)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryCredentialsBySubjectResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryVerifyCredentialResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1108,91 +987,12 @@ func (m *QueryCredentialsBySubjectResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryCredentialsBySubjectResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryVerifyCredentialResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryCredentialsBySubjectResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Credentials) > 0 {
-		for iNdEx := len(m.Credentials) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Credentials[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryVerificationStatusRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryVerificationStatusRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryVerificationStatusRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Did) > 0 {
-		i -= len(m.Did)
-		copy(dAtA[i:], m.Did)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Did)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryVerificationStatusResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryVerificationStatusResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryVerificationStatusResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryVerifyCredentialResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1230,47 +1030,22 @@ func (m *VerificationStatus) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ExpiresAt != nil {
-		n7, err7 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
-		if err7 != nil {
-			return 0, err7
-		}
-		i -= n7
-		i = encodeVarintQuery(dAtA, i, uint64(n7))
+	if len(m.ErrorMessage) > 0 {
+		i -= len(m.ErrorMessage)
+		copy(dAtA[i:], m.ErrorMessage)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ErrorMessage)))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x12
 	}
-	n8, err8 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.VerifiedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.VerifiedAt):])
-	if err8 != nil {
-		return 0, err8
-	}
-	i -= n8
-	i = encodeVarintQuery(dAtA, i, uint64(n8))
-	i--
-	dAtA[i] = 0x22
-	if m.Verified {
+	if m.Valid {
 		i--
-		if m.Verified {
+		if m.Valid {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x18
-	}
-	if len(m.Provider) > 0 {
-		i -= len(m.Provider)
-		copy(dAtA[i:], m.Provider)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Provider)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Did) > 0 {
-		i -= len(m.Did)
-		copy(dAtA[i:], m.Did)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Did)))
-		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -1312,7 +1087,7 @@ func (m *QueryDIDDocumentRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Did)
+	l = len(m.Id)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -1354,56 +1129,20 @@ func (m *QueryCredentialResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryCredentialsBySubjectRequest) Size() (n int) {
+func (m *QueryVerifyCredentialRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.SubjectDid)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryCredentialsBySubjectResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Credentials) > 0 {
-		for _, e := range m.Credentials {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryVerificationStatusRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Did)
+	l = len(m.Id)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryVerificationStatusResponse) Size() (n int) {
+func (m *QueryVerifyCredentialResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1420,21 +1159,11 @@ func (m *VerificationStatus) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Did)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	l = len(m.Provider)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	if m.Verified {
+	if m.Valid {
 		n += 2
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.VerifiedAt)
-	n += 1 + l + sovQuery(uint64(l))
-	if m.ExpiresAt != nil {
-		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt)
+	l = len(m.ErrorMessage)
+	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -1610,7 +1339,7 @@ func (m *QueryDIDDocumentRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1638,7 +1367,7 @@ func (m *QueryDIDDocumentRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Did = string(dAtA[iNdEx:postIndex])
+			m.Id = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1909,7 +1638,7 @@ func (m *QueryCredentialResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryCredentialsBySubjectRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryVerifyCredentialRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1932,15 +1661,15 @@ func (m *QueryCredentialsBySubjectRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryCredentialsBySubjectRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryVerifyCredentialRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryCredentialsBySubjectRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryVerifyCredentialRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SubjectDid", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1968,43 +1697,7 @@ func (m *QueryCredentialsBySubjectRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SubjectDid = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Id = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2027,7 +1720,7 @@ func (m *QueryCredentialsBySubjectRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryCredentialsBySubjectResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryVerifyCredentialResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2050,212 +1743,10 @@ func (m *QueryCredentialsBySubjectResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryCredentialsBySubjectResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryVerifyCredentialResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryCredentialsBySubjectResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Credentials", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Credentials = append(m.Credentials, Credential{})
-			if err := m.Credentials[len(m.Credentials)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryVerificationStatusRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryVerificationStatusRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryVerificationStatusRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Did = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryVerificationStatusResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryVerificationStatusResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryVerificationStatusResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryVerifyCredentialResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2342,72 +1833,8 @@ func (m *VerificationStatus) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Did = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Provider", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Provider = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Verified", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Valid", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -2424,12 +1851,12 @@ func (m *VerificationStatus) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-			m.Verified = bool(v != 0)
-		case 4:
+			m.Valid = bool(v != 0)
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VerifiedAt", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -2439,60 +1866,23 @@ func (m *VerificationStatus) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthQuery
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthQuery
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.VerifiedAt, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExpiresAt", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ExpiresAt == nil {
-				m.ExpiresAt = new(time.Time)
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ExpiresAt, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.ErrorMessage = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

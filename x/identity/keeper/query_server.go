@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"selfchain/x/identity/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 type queryServer struct {
@@ -16,8 +16,8 @@ type queryServer struct {
 
 // NewQueryServerImpl returns an implementation of the QueryServer interface
 // for the provided Keeper.
-func NewQueryServerImpl(k Keeper) types.QueryServer {
-	return &queryServer{Keeper: k}
+func NewQueryServerImpl(keeper Keeper) types.QueryServer {
+	return &queryServer{Keeper: keeper}
 }
 
 // Params returns the module parameters
@@ -31,83 +31,141 @@ func (k queryServer) Params(goCtx context.Context, req *types.QueryParamsRequest
 }
 
 // DIDDocument returns a DID document by ID
-func (k Keeper) DIDDocument(c context.Context, req *types.QueryDIDDocumentRequest) (*types.QueryDIDDocumentResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+func (k queryServer) DIDDocument(goCtx context.Context, req *types.QueryDIDDocumentRequest) (*types.QueryDIDDocumentResponse, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "DID ID cannot be empty")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	document, found := k.GetDIDDocument(ctx, req.Did)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	doc, found := k.GetDIDDocument(ctx, req.Id)
 	if !found {
 		return nil, status.Error(codes.NotFound, "DID document not found")
 	}
 
-	return &types.QueryDIDDocumentResponse{Document: document}, nil
+	return &types.QueryDIDDocumentResponse{
+		Document: doc,
+	}, nil
 }
 
 // Credential returns a credential by ID
-func (k Keeper) Credential(c context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+func (k queryServer) Credential(goCtx context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "credential ID cannot be empty")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	credential, found := k.GetCredential(ctx, req.Id)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	cred, found := k.GetCredential(ctx, req.Id)
 	if !found {
 		return nil, status.Error(codes.NotFound, "credential not found")
 	}
 
-	return &types.QueryCredentialResponse{Credential: credential}, nil
-}
-
-// CredentialsBySubject returns all credentials for a subject DID
-func (k Keeper) CredentialsBySubject(c context.Context, req *types.QueryCredentialsBySubjectRequest) (*types.QueryCredentialsBySubjectResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	allCredentials := k.GetCredentialsBySubject(ctx, req.SubjectDid)
-
-	var credentials []types.Credential
-	pageRes := &query.PageResponse{}
-
-	if req.Pagination != nil {
-		start := int(req.Pagination.Offset)
-		end := int(req.Pagination.Offset + req.Pagination.Limit)
-
-		if start < len(allCredentials) {
-			if end > len(allCredentials) {
-				end = len(allCredentials)
-			}
-			credentials = allCredentials[start:end]
-		}
-
-		pageRes.Total = uint64(len(allCredentials))
-	} else {
-		credentials = allCredentials
-		pageRes.Total = uint64(len(credentials))
-	}
-
-	return &types.QueryCredentialsBySubjectResponse{
-		Credentials: credentials,
-		Pagination: pageRes,
+	return &types.QueryCredentialResponse{
+		Credential: cred,
 	}, nil
 }
 
-// VerificationStatus returns the verification status for a DID
-func (k Keeper) VerificationStatus(c context.Context, req *types.QueryVerificationStatusRequest) (*types.QueryVerificationStatusResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+// SocialIdentity returns a social identity by DID and provider
+func (k queryServer) SocialIdentity(goCtx context.Context, req *types.QuerySocialIdentityRequest) (*types.QuerySocialIdentityResponse, error) {
+	if req.Did == "" {
+		return nil, status.Error(codes.InvalidArgument, "DID cannot be empty")
+	}
+	if req.Provider == "" {
+		return nil, status.Error(codes.InvalidArgument, "provider cannot be empty")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	verificationStatus, found := k.GetVerificationStatus(ctx, req.Did)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	identity, found := k.GetSocialIdentityByDID(ctx, req.Did, req.Provider)
 	if !found {
-		return nil, status.Error(codes.NotFound, "verification status not found")
+		return nil, status.Error(codes.NotFound, "social identity not found")
 	}
 
-	return &types.QueryVerificationStatusResponse{Status: verificationStatus}, nil
+	return &types.QuerySocialIdentityResponse{
+		Identity: &identity,
+	}, nil
 }
 
-var _ types.QueryServer = Keeper{}
+// LinkedDID returns the DID linked to a social identity
+func (k queryServer) LinkedDID(goCtx context.Context, req *types.QueryLinkedDIDRequest) (*types.QueryLinkedDIDResponse, error) {
+	if req.Provider == "" {
+		return nil, status.Error(codes.InvalidArgument, "provider cannot be empty")
+	}
+	if req.SocialId == "" {
+		return nil, status.Error(codes.InvalidArgument, "social ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	identity, found := k.GetSocialIdentityBySocialID(ctx, req.Provider, req.SocialId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "social identity not found")
+	}
+
+	return &types.QueryLinkedDIDResponse{
+		Did: identity.Did,
+	}, nil
+}
+
+// VerifyCredential verifies a credential
+func (k queryServer) VerifyCredential(goCtx context.Context, req *types.QueryVerifyCredentialRequest) (*types.QueryVerifyCredentialResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	status := types.VerificationStatus{
+		Valid:        true,
+		ErrorMessage: "",
+	}
+
+	// Verify credential exists
+	cred, found := k.GetCredential(ctx, req.Id)
+	if !found {
+		status.Valid = false
+		status.ErrorMessage = "credential not found"
+		return &types.QueryVerifyCredentialResponse{
+			Status: status,
+		}, nil
+	}
+
+	// Verify credential is not revoked
+	if cred.Revoked {
+		status.Valid = false
+		status.ErrorMessage = "credential is revoked"
+		return &types.QueryVerifyCredentialResponse{
+			Status: status,
+		}, nil
+	}
+
+	// Verify issuer exists
+	if !k.HasDIDDocument(ctx, cred.Issuer) {
+		status.Valid = false
+		status.ErrorMessage = "issuer DID not found"
+		return &types.QueryVerifyCredentialResponse{
+			Status: status,
+		}, nil
+	}
+
+	// Verify subject exists
+	if !k.HasDIDDocument(ctx, cred.Subject) {
+		status.Valid = false
+		status.ErrorMessage = "subject DID not found"
+		return &types.QueryVerifyCredentialResponse{
+			Status: status,
+		}, nil
+	}
+
+	// Verify schema
+	if err := k.ValidateCredential(ctx, cred); err != nil {
+		status.Valid = false
+		status.ErrorMessage = fmt.Sprintf("schema validation failed: %v", err)
+		return &types.QueryVerifyCredentialResponse{
+			Status: status,
+		}, nil
+	}
+
+	return &types.QueryVerifyCredentialResponse{
+		Status: status,
+	}, nil
+}
+
+var _ types.QueryServer = queryServer{}

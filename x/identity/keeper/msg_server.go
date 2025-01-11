@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/identity/types"
@@ -18,113 +19,144 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-var _ types.MsgServer = msgServer{}
-
-// CreateDIDDocument creates a new DID document
-func (k msgServer) CreateDIDDocument(goCtx context.Context, msg *types.MsgCreateDIDDocument) (*types.MsgCreateDIDDocumentResponse, error) {
+// CreateDID creates a new DID document
+func (k msgServer) CreateDID(goCtx context.Context, msg *types.MsgCreateDID) (*types.MsgCreateDIDResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if the DID already exists
-	if k.HasDIDDocument(ctx, msg.Document.Id) {
-		return nil, fmt.Errorf("DID document already exists: %s", msg.Document.Id)
+	// Check if DID already exists
+	if k.HasDIDDocument(ctx, msg.Did) {
+		return nil, fmt.Errorf("DID already exists: %s", msg.Did)
 	}
 
-	// Store the DID document
-	id := k.StoreDIDDocument(ctx, msg.Document)
+	// Convert verification methods
+	verificationMethods := make([]types.VerificationMethod, len(msg.VerificationMethods))
+	for i, vm := range msg.VerificationMethods {
+		verificationMethods[i] = *vm
+	}
 
-	return &types.MsgCreateDIDDocumentResponse{
-		Id: id,
-	}, nil
+	now := time.Now().UTC()
+
+	// Create DID document
+	doc := types.DIDDocument{
+		Id:                  msg.Did,
+		VerificationMethods: verificationMethods,
+		Authentication:      msg.Authentication,
+		Created:            &now,
+		Updated:            &now,
+	}
+
+	// Store DID document
+	k.SetDIDDocument(ctx, msg.Did, doc)
+
+	return &types.MsgCreateDIDResponse{}, nil
 }
 
-// UpdateDIDDocument updates an existing DID document
-func (k msgServer) UpdateDIDDocument(goCtx context.Context, msg *types.MsgUpdateDIDDocument) (*types.MsgUpdateDIDDocumentResponse, error) {
+// UpdateDID updates an existing DID document
+func (k msgServer) UpdateDID(goCtx context.Context, msg *types.MsgUpdateDID) (*types.MsgUpdateDIDResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if the DID document exists
-	if !k.HasDIDDocument(ctx, msg.Document.Id) {
-		return nil, fmt.Errorf("DID document does not exist: %s", msg.Document.Id)
+	// Check if DID exists
+	doc, found := k.GetDIDDocument(ctx, msg.Did)
+	if !found {
+		return nil, fmt.Errorf("DID not found: %s", msg.Did)
 	}
 
-	// Update the DID document
-	k.StoreDIDDocument(ctx, msg.Document)
+	// Convert verification methods
+	verificationMethods := make([]types.VerificationMethod, len(msg.VerificationMethods))
+	for i, vm := range msg.VerificationMethods {
+		verificationMethods[i] = *vm
+	}
 
-	return &types.MsgUpdateDIDDocumentResponse{
-		Success: true,
-	}, nil
+	now := time.Now().UTC()
+
+	// Update DID document
+	doc.VerificationMethods = verificationMethods
+	doc.Authentication = msg.Authentication
+	doc.Updated = &now
+
+	// Store updated DID document
+	k.SetDIDDocument(ctx, msg.Did, doc)
+
+	return &types.MsgUpdateDIDResponse{}, nil
 }
 
-// IssueCredential issues a new verifiable credential
-func (k msgServer) IssueCredential(goCtx context.Context, msg *types.MsgIssueCredential) (*types.MsgIssueCredentialResponse, error) {
+// CreateCredential creates a new credential
+func (k msgServer) CreateCredential(goCtx context.Context, msg *types.MsgCreateCredential) (*types.MsgCreateCredentialResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if the credential already exists
-	if k.HasCredential(ctx, msg.Credential.Id) {
-		return nil, fmt.Errorf("credential already exists: %s", msg.Credential.Id)
+	// Check if credential already exists
+	if k.HasCredential(ctx, msg.Id) {
+		return nil, fmt.Errorf("credential already exists: %s", msg.Id)
 	}
 
-	// Store the credential
-	err := k.SetCredential(ctx, msg.Credential)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store credential: %w", err)
+	now := time.Now().UTC()
+
+	// Create credential
+	cred := types.Credential{
+		Id:        msg.Id,
+		Issuer:    msg.Issuer,
+		Subject:   msg.Subject,
+		Claims:    msg.Claims,
+		SchemaId:  msg.SchemaId,
+		Created:   &now,
+		Revoked:   false,
 	}
 
-	return &types.MsgIssueCredentialResponse{
-		Id: msg.Credential.Id,
-	}, nil
+	// Store credential
+	k.SetCredential(ctx, cred)
+
+	return &types.MsgCreateCredentialResponse{}, nil
 }
 
-// RevokeCredential revokes an existing credential
+// RevokeCredential revokes a credential
 func (k msgServer) RevokeCredential(goCtx context.Context, msg *types.MsgRevokeCredential) (*types.MsgRevokeCredentialResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if the credential exists
-	if !k.HasCredential(ctx, msg.CredentialId) {
-		return nil, fmt.Errorf("credential does not exist: %s", msg.CredentialId)
-	}
-
-	// Get the credential
-	cred, found := k.GetCredential(ctx, msg.CredentialId)
+	// Check if credential exists
+	cred, found := k.GetCredential(ctx, msg.Id)
 	if !found {
-		return nil, fmt.Errorf("credential not found: %s", msg.CredentialId)
+		return nil, fmt.Errorf("credential not found: %s", msg.Id)
 	}
 
-	// Update credential status
+	// Check if issuer matches
+	if cred.Issuer != msg.Issuer {
+		return nil, fmt.Errorf("unauthorized: only issuer can revoke credential")
+	}
+
+	// Revoke credential
 	cred.Revoked = true
-	cred.IssuedAt = ctx.BlockTime()
+	k.SetCredential(ctx, cred)
 
-	// Store updated credential
-	err := k.SetCredential(ctx, cred)
-	if err != nil {
-		return nil, fmt.Errorf("failed to revoke credential: %w", err)
-	}
-
-	return &types.MsgRevokeCredentialResponse{
-		Success: true,
-	}, nil
+	return &types.MsgRevokeCredentialResponse{}, nil
 }
 
 // LinkSocialIdentity links a social identity to a DID
 func (k msgServer) LinkSocialIdentity(goCtx context.Context, msg *types.MsgLinkSocialIdentity) (*types.MsgLinkSocialIdentityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Validate the OAuth token
-	socialID, err := k.VerifyOAuthToken(ctx, msg.Provider, msg.Token)
+	// Verify OAuth token
+	socialId, err := k.VerifyOAuthToken(ctx, msg.Provider, msg.Token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify OAuth token: %w", err)
 	}
 
-	// Create and store the social identity
+	now := time.Now().UTC()
+
+	// Create social identity
 	identity := types.SocialIdentity{
-		Id:         socialID,
-		Did:        msg.Did,
-		VerifiedAt: ctx.BlockTime().Unix(),
+		Did:      msg.Did,
+		Provider: msg.Provider,
+		Id:       socialId,
+		Verified: true,
+		Created:  &now,
 	}
 
-	// Store the social identity
-	k.StoreSocialIdentity(ctx, identity)
+	// Store social identity
+	if err := k.StoreSocialIdentity(ctx, identity); err != nil {
+		return nil, fmt.Errorf("failed to store social identity: %w", err)
+	}
 
-	return &types.MsgLinkSocialIdentityResponse{
-		Success: true,
-	}, nil
+	return &types.MsgLinkSocialIdentityResponse{}, nil
 }
+
+var _ types.MsgServer = msgServer{}

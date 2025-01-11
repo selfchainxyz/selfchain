@@ -1,15 +1,14 @@
 syntax = "proto3";
 package selfchain.identity;
 
+option go_package = "selfchain/x/identity/types";
+
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/identity/params.proto";
 import "selfchain/identity/did_document.proto";
 import "selfchain/identity/credential.proto";
-import "google/protobuf/timestamp.proto";
-
-option go_package = "selfchain/x/identity/types";
+import "selfchain/identity/oauth.proto";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -17,25 +16,30 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/selfchain/identity/params";
   }
-
+  
   // DIDDocument queries a DID document by ID.
   rpc DIDDocument(QueryDIDDocumentRequest) returns (QueryDIDDocumentResponse) {
-    option (google.api.http).get = "/selfchain/identity/did/{did}";
+    option (google.api.http).get = "/selfchain/identity/did/{id}";
   }
-
+  
   // Credential queries a credential by ID.
   rpc Credential(QueryCredentialRequest) returns (QueryCredentialResponse) {
     option (google.api.http).get = "/selfchain/identity/credential/{id}";
   }
-
-  // CredentialsBySubject queries all credentials for a subject DID.
-  rpc CredentialsBySubject(QueryCredentialsBySubjectRequest) returns (QueryCredentialsBySubjectResponse) {
-    option (google.api.http).get = "/selfchain/identity/credentials/{subject_did}";
+  
+  // SocialIdentity queries a social identity by DID and provider.
+  rpc SocialIdentity(QuerySocialIdentityRequest) returns (QuerySocialIdentityResponse) {
+    option (google.api.http).get = "/selfchain/identity/social/{did}/{provider}";
   }
-
-  // VerificationStatus queries the verification status for a DID.
-  rpc VerificationStatus(QueryVerificationStatusRequest) returns (QueryVerificationStatusResponse) {
-    option (google.api.http).get = "/selfchain/identity/verification/{did}";
+  
+  // LinkedDID queries the DID linked to a social identity.
+  rpc LinkedDID(QueryLinkedDIDRequest) returns (QueryLinkedDIDResponse) {
+    option (google.api.http).get = "/selfchain/identity/social/linked/{provider}/{social_id}";
+  }
+  
+  // VerifyCredential verifies a credential.
+  rpc VerifyCredential(QueryVerifyCredentialRequest) returns (QueryVerifyCredentialResponse) {
+    option (google.api.http).get = "/selfchain/identity/credential/verify/{id}";
   }
 }
 
@@ -44,13 +48,12 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-  // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryDIDDocumentRequest is request type for the Query/DIDDocument method.
 message QueryDIDDocumentRequest {
-  string did = 1;
+  string id = 1;
 }
 
 // QueryDIDDocumentResponse is response type for the Query/DIDDocument method.
@@ -65,36 +68,21 @@ message QueryCredentialRequest {
 
 // QueryCredentialResponse is response type for the Query/Credential method.
 message QueryCredentialResponse {
-  selfchain.identity.Credential credential = 1 [(gogoproto.nullable) = false];
+  Credential credential = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryCredentialsBySubjectRequest is request type for the Query/CredentialsBySubject method.
-message QueryCredentialsBySubjectRequest {
-  string subject_did = 1;
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+// QueryVerifyCredentialRequest is request type for the Query/VerifyCredential method.
+message QueryVerifyCredentialRequest {
+  string id = 1;
 }
 
-// QueryCredentialsBySubjectResponse is response type for the Query/CredentialsBySubject method.
-message QueryCredentialsBySubjectResponse {
-  repeated selfchain.identity.Credential credentials = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
-// QueryVerificationStatusRequest is request type for the Query/VerificationStatus method.
-message QueryVerificationStatusRequest {
-  string did = 1;
-}
-
-// QueryVerificationStatusResponse is response type for the Query/VerificationStatus method.
-message QueryVerificationStatusResponse {
+// QueryVerifyCredentialResponse is response type for the Query/VerifyCredential method.
+message QueryVerifyCredentialResponse {
   VerificationStatus status = 1 [(gogoproto.nullable) = false];
 }
 
-// VerificationStatus represents the status of identity verification
+// VerificationStatus represents the verification status of a credential.
 message VerificationStatus {
-  string did = 1;
-  string provider = 2;
-  bool verified = 3;
-  google.protobuf.Timestamp verified_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
+  bool valid = 1;
+  string error_message = 2;
 }

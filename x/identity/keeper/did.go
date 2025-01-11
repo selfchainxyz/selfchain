@@ -98,3 +98,47 @@ func (k Keeper) ValidateDIDDocument(document types.DIDDocument) error {
 
 	return nil
 }
+
+// HasDIDDocument checks if a DID document exists
+func (k Keeper) HasDIDDocument(ctx sdk.Context, did string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has([]byte(fmt.Sprintf("did:%s", did)))
+}
+
+// StoreDIDDocument stores a DID document
+func (k Keeper) StoreDIDDocument(ctx sdk.Context, doc types.DIDDocument) string {
+	store := ctx.KVStore(k.storeKey)
+	key := []byte(fmt.Sprintf("did:%s", doc.Id))
+	value := k.cdc.MustMarshal(&doc)
+	store.Set(key, value)
+	return doc.Id
+}
+
+// GetDIDDocument retrieves a DID document
+func (k Keeper) GetDIDDocumentFromStore(ctx sdk.Context, did string) (types.DIDDocument, bool) {
+	store := ctx.KVStore(k.storeKey)
+	key := []byte(fmt.Sprintf("did:%s", did))
+	value := store.Get(key)
+	if value == nil {
+		return types.DIDDocument{}, false
+	}
+
+	var doc types.DIDDocument
+	k.cdc.MustUnmarshal(value, &doc)
+	return doc, true
+}
+
+// GetAllDIDDocuments returns all DID documents
+func (k Keeper) GetAllDIDDocumentsFromStore(ctx sdk.Context) []types.DIDDocument {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, []byte("did:"))
+	defer iterator.Close()
+
+	var documents []types.DIDDocument
+	for ; iterator.Valid(); iterator.Next() {
+		var doc types.DIDDocument
+		k.cdc.MustUnmarshal(iterator.Value(), &doc)
+		documents = append(documents, doc)
+	}
+	return documents
+}

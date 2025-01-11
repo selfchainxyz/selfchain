@@ -35,11 +35,11 @@ message DIDDocument {
   // services contains service endpoints associated with the DID
   repeated Service services = 9 [(gogoproto.nullable) = false];
   
-  // created_at is the timestamp when the DID document was created
-  google.protobuf.Timestamp created_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  // created is the timestamp when the DID document was created
+  google.protobuf.Timestamp created = 10 [(gogoproto.stdtime) = true];
   
-  // updated_at is the timestamp when the DID document was last updated
-  google.protobuf.Timestamp updated_at = 11 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  // updated is the timestamp when the DID document was last updated
+  google.protobuf.Timestamp updated = 11 [(gogoproto.stdtime) = true];
 }
 
 // VerificationMethod represents a verification method in a DID document
