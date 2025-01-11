@@ -38,7 +38,7 @@ func setup(t testing.TB) (types.MsgServer, context.Context, keeper.Keeper, *gomo
 
 	genesis.Config = &types.Config{
 		VestingDuration:    2592000, // 1 month in seconds
-		VestingCliff:       604800, // // 1 week in seconds
+		VestingCliff:       604800,  // // 1 week in seconds
 		MinMigrationAmount: 1000000000000000000,
 	}
 
@@ -79,7 +79,7 @@ func TestShouldMintAmountAndAddBeneficiary(t *testing.T) {
 		Duration:    2592000,
 		Amount:      "999999000000",
 	}
-	
+
 	bankMock.ExpectMintToModule(ctx, 1000000000000)
 	// 1 SLF is instanly resealed
 	bankMock.ExpectReceiveCoins(ctx, selfvestingTypes.ModuleName, test.Alice, 1000000)

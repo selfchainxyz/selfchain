@@ -127,6 +127,9 @@ import (
 	selfvestingmodulekeeper "selfchain/x/selfvesting/keeper"
 	selfvestingmoduletypes "selfchain/x/selfvesting/types"
 
+	identitymodule "selfchain/x/identity"
+	identitymodulekeeper "selfchain/x/identity/keeper"
+	identitymoduletypes "selfchain/x/identity/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "selfchain/app/params"
@@ -191,6 +194,7 @@ var (
 		wasm.AppModuleBasic{},
 		migrationmodule.AppModuleBasic{},
 		selfvestingmodule.AppModuleBasic{},
+		identitymodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -279,6 +283,7 @@ type App struct {
 	MigrationKeeper   migrationmodulekeeper.Keeper
 	SelfvestingKeeper selfvestingmodulekeeper.Keeper
 
+	IdentityKeeper identitymodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -330,6 +335,7 @@ func New(
 		selfvestingmoduletypes.StoreKey,
 		wasmtypes.StoreKey,
 
+		identitymoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -609,6 +615,14 @@ func New(
 		wasmOpts...,
 	)
 
+	app.IdentityKeeper = *identitymodulekeeper.NewKeeper(
+		appCodec,
+		keys[identitymoduletypes.StoreKey],
+		keys[identitymoduletypes.MemStoreKey],
+		app.GetSubspace(identitymoduletypes.ModuleName),
+	)
+	identityModule := identitymodule.NewAppModule(appCodec, app.IdentityKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	/**** IBC Routing ****/
@@ -704,6 +718,7 @@ func New(
 		migrationModule,
 		selfvestingModule,
 
+		identityModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -740,6 +755,7 @@ func New(
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
 
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -770,6 +786,7 @@ func New(
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
 
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -806,6 +823,7 @@ func New(
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
 
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}
 
@@ -1098,6 +1116,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(migrationmoduletypes.ModuleName)
 	paramsKeeper.Subspace(selfvestingmoduletypes.ModuleName)
+	paramsKeeper.Subspace(identitymoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

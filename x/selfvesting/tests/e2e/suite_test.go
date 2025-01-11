@@ -99,7 +99,7 @@ func getBankGenesis() *banktypes.GenesisState {
 		coins,
 		supply.Total,
 		[]banktypes.Metadata{},
-   	[]banktypes.SendEnabled{})
+		[]banktypes.SendEnabled{})
 
 	return state
 }

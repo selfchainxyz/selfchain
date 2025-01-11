@@ -1,0 +1,23 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// Params defines the parameters for the identity module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+  // allowed_oauth_providers is a list of allowed OAuth providers
+  repeated string allowed_oauth_providers = 1 [(gogoproto.moretags) = "yaml:\"allowed_oauth_providers\""];
+  
+  // verification_timeout_hours is the number of hours before a verification record expires
+  uint32 verification_timeout_hours = 2 [(gogoproto.moretags) = "yaml:\"verification_timeout_hours\""];
+  
+  // max_credentials_per_did is the maximum number of credentials that can be issued to a single DID
+  uint32 max_credentials_per_did = 3 [(gogoproto.moretags) = "yaml:\"max_credentials_per_did\""];
+  
+  // allowed_credential_types is a list of allowed credential types
+  repeated string allowed_credential_types = 4 [(gogoproto.moretags) = "yaml:\"allowed_credential_types\""];
+}

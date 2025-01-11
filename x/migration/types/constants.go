@@ -21,5 +21,5 @@ const (
 
 // Ratios
 const (
-	FRONT_RATIO    = 100 // 100%
+	FRONT_RATIO = 100 // 100%
 )

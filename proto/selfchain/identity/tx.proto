@@ -1,0 +1,86 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "selfchain/identity/did_document.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // RegisterDID registers a new DID document
+  rpc RegisterDID(MsgRegisterDID) returns (MsgRegisterDIDResponse);
+  
+  // UpdateDID updates an existing DID document
+  rpc UpdateDID(MsgUpdateDID) returns (MsgUpdateDIDResponse);
+  
+  // VerifyIdentity initiates the identity verification process
+  rpc VerifyIdentity(MsgVerifyIdentity) returns (MsgVerifyIdentityResponse);
+  
+  // IssueCredential issues a new verifiable credential
+  rpc IssueCredential(MsgIssueCredential) returns (MsgIssueCredentialResponse);
+  
+  // RevokeCredential revokes an existing credential
+  rpc RevokeCredential(MsgRevokeCredential) returns (MsgRevokeCredentialResponse);
+}
+
+// MsgRegisterDID represents a message to register a new DID document
+message MsgRegisterDID {
+  string creator = 1;
+  DIDDocument document = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgRegisterDIDResponse defines the response for registering a DID
+message MsgRegisterDIDResponse {
+  string id = 1;
+}
+
+// MsgUpdateDID represents a message to update an existing DID document
+message MsgUpdateDID {
+  string creator = 1;
+  DIDDocument document = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateDIDResponse defines the response for updating a DID
+message MsgUpdateDIDResponse {
+  string id = 1;
+}
+
+// MsgVerifyIdentity represents a message to verify an identity
+message MsgVerifyIdentity {
+  string creator = 1;
+  string did = 2;
+  string provider = 3;
+  string oauth_token = 4;
+}
+
+// MsgVerifyIdentityResponse defines the response for identity verification
+message MsgVerifyIdentityResponse {
+  string verification_id = 1;
+}
+
+// MsgIssueCredential represents a message to issue a new credential
+message MsgIssueCredential {
+  string creator = 1;
+  string credential_type = 2;
+  string subject_did = 3;
+  bytes claims = 4;
+  google.protobuf.Timestamp expiry = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+}
+
+// MsgIssueCredentialResponse defines the response for issuing a credential
+message MsgIssueCredentialResponse {
+  string credential_id = 1;
+}
+
+// MsgRevokeCredential represents a message to revoke a credential
+message MsgRevokeCredential {
+  string creator = 1;
+  string credential_id = 2;
+}
+
+// MsgRevokeCredentialResponse defines the response for revoking a credential
+message MsgRevokeCredentialResponse {
+  bool success = 1;
+}
