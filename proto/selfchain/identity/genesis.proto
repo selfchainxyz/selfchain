@@ -1,0 +1,22 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "selfchain/identity/params.proto";
+import "selfchain/identity/did_document.proto";
+import "selfchain/identity/query.proto";
+import "selfchain/identity/credential.proto"; // Added import for Credential message
+
+option go_package = "selfchain/x/identity/types";
+
+// GenesisState defines the identity module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+  
+  // did_documents is a list of DID documents
+  repeated DIDDocument did_documents = 2 [(gogoproto.nullable) = false];
+  
+  // credentials is a list of verifiable credentials
+  repeated Credential credentials = 3 [(gogoproto.nullable) = false];
+}

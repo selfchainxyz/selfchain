@@ -35,15 +35,10 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"selfchain/app"
 )
-
-type storeKeysPrefixes struct {
-	A        storetypes.StoreKey
-	B        storetypes.StoreKey
-	Prefixes [][]byte
-}
 
 // Get flags every time the simulator is run
 func init() {
@@ -62,32 +57,21 @@ func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
 // Running as go benchmark test:
 // `go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./app -NumBlocks=200 -BlockSize 50 -Commit=true -Verbose=true -Enabled=true`
 func BenchmarkSimulation(b *testing.B) {
-	simcli.FlagSeedValue = time.Now().Unix()
-	simcli.FlagVerboseValue = true
-	simcli.FlagCommitValue = true
 	simcli.FlagEnabledValue = true
+	simcli.FlagCommitValue = true
 
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = "mars-simapp"
-	db, dir, logger, _, err := simtestutil.SetupSimulation(
-		config,
-		"leveldb-bApp-sim",
-		"Simulation",
-		simcli.FlagVerboseValue,
-		simcli.FlagEnabledValue,
-	)
-	require.NoError(b, err, "simulation setup failed")
 
-	b.Cleanup(func() {
-		require.NoError(b, db.Close())
-		require.NoError(b, os.RemoveAll(dir))
-	})
+	db := dbm.NewMemDB()
+	logger := log.NewNopLogger()
 
-	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
-	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+	wasmOpts := []keeper.Option{}
+	baseOpts := []func(*baseapp.BaseApp){
+		fauxMerkleModeOpt,
+	}
 
-	bApp := app.New(
+	app := app.New(
 		logger,
 		db,
 		nil,
@@ -96,32 +80,38 @@ func BenchmarkSimulation(b *testing.B) {
 		app.DefaultNodeHome,
 		0,
 		app.MakeEncodingConfig(),
-		appOptions,
-		baseapp.SetChainID(config.ChainID),
+		simtestutil.EmptyAppOptions{},
+		wasmOpts,
+		baseOpts...,
 	)
-	require.Equal(b, app.Name, bApp.Name())
 
-	// run randomized simulation
+	// Run randomized simulations
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		b,
 		os.Stdout,
-		bApp.BaseApp,
-		simtestutil.AppStateFn(
-			bApp.AppCodec(),
-			bApp.SimulationManager(),
-			app.NewDefaultGenesisState(bApp.AppCodec()),
-		),
+		app.BaseApp,
+		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simulationtypes.RandomAccounts,
-		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
-		bApp.ModuleAccountAddrs(),
+		simtestutil.SimulationOperations(app, app.AppCodec(), config),
+		app.ModuleAccountAddrs(),
 		config,
-		bApp.AppCodec(),
+		app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simtestutil.CheckExportSimulation(bApp, config, simParams)
-	require.NoError(b, err)
-	require.NoError(b, simErr)
+	if config.ExportStatePath != "" {
+		err := ExportStateToJSON(db, config.ExportStatePath, app.SimulationManager(), simParams)
+		require.NoError(b, err)
+	}
+
+	if config.ExportParamsPath != "" {
+		err := ExportParamsToJSON(simParams, config.ExportParamsPath)
+		require.NoError(b, err)
+	}
+
+	if simErr != nil {
+		b.Fatal(simErr)
+	}
 
 	if config.Commit {
 		simtestutil.PrintStats(db)
@@ -173,6 +163,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				simcli.FlagPeriodValue,
 				app.MakeEncodingConfig(),
 				appOptions,
+				[]keeper.Option{},
 				fauxMerkleModeOpt,
 				baseapp.SetChainID(chainID),
 			)
@@ -251,6 +242,7 @@ func TestAppImportExport(t *testing.T) {
 		0,
 		app.MakeEncodingConfig(),
 		appOptions,
+		[]keeper.Option{},
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -312,6 +304,7 @@ func TestAppImportExport(t *testing.T) {
 		0,
 		app.MakeEncodingConfig(),
 		appOptions,
+		[]keeper.Option{},
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -405,6 +398,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		0,
 		app.MakeEncodingConfig(),
 		appOptions,
+		[]keeper.Option{},
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
@@ -472,6 +466,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		0,
 		app.MakeEncodingConfig(),
 		appOptions,
+		[]keeper.Option{},
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
@@ -498,4 +493,24 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		bApp.AppCodec(),
 	)
 	require.NoError(t, err)
+}
+
+// ExportStateToJSON exports the state of the simulation to a JSON file
+func ExportStateToJSON(db dbm.DB, path string, sm *module.SimulationManager, simState simulation.SimulationParams) error {
+	stateBytes, err := json.MarshalIndent(simState, "", " ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, stateBytes, 0644)
+}
+
+// ExportParamsToJSON exports the parameters of the simulation to a JSON file
+func ExportParamsToJSON(simParams simulation.SimulationParams, path string) error {
+	paramsBz, err := json.MarshalIndent(simParams, "", " ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, paramsBz, 0644)
 }

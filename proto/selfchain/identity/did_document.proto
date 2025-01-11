@@ -1,0 +1,70 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// DIDDocument represents a W3C Decentralized Identifier Document
+message DIDDocument {
+  // id is the DID of the document
+  string id = 1;
+  
+  // controller is the DID of the controller
+  string controller = 2;
+  
+  // verification_methods contains the public keys and other verification methods
+  repeated VerificationMethod verification_methods = 3 [(gogoproto.nullable) = false];
+  
+  // authentication contains references to verification methods used for authentication
+  repeated string authentication = 4;
+  
+  // assertion_method contains references to verification methods used for assertions
+  repeated string assertion_method = 5;
+  
+  // capability_invocation contains references to verification methods used for capability invocation
+  repeated string capability_invocation = 6;
+  
+  // capability_delegation contains references to verification methods used for capability delegation
+  repeated string capability_delegation = 7;
+  
+  // key_agreement contains references to verification methods used for key agreement
+  repeated string key_agreement = 8;
+  
+  // services contains service endpoints associated with the DID
+  repeated Service services = 9 [(gogoproto.nullable) = false];
+  
+  // created_at is the timestamp when the DID document was created
+  google.protobuf.Timestamp created_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  
+  // updated_at is the timestamp when the DID document was last updated
+  google.protobuf.Timestamp updated_at = 11 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// VerificationMethod represents a verification method in a DID document
+message VerificationMethod {
+  // id is the ID of the verification method
+  string id = 1;
+  
+  // type is the type of the verification method
+  string type = 2;
+  
+  // controller is the DID of the controller of this verification method
+  string controller = 3;
+  
+  // public_key_base58 is the base58-encoded public key
+  string public_key_base58 = 4;
+}
+
+// Service represents a service endpoint in a DID document
+message Service {
+  // id is the ID of the service
+  string id = 1;
+  
+  // type is the type of the service
+  string type = 2;
+  
+  // service_endpoint is the URL of the service endpoint
+  string service_endpoint = 3;
+}
