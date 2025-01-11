@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/identity/types"
@@ -21,147 +20,111 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// RegisterDID implements types.MsgServer
-func (k msgServer) RegisterDID(goCtx context.Context, msg *types.MsgRegisterDID) (*types.MsgRegisterDIDResponse, error) {
+// CreateDIDDocument creates a new DID document
+func (k msgServer) CreateDIDDocument(goCtx context.Context, msg *types.MsgCreateDIDDocument) (*types.MsgCreateDIDDocumentResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.ValidateDIDDocument(msg.Document); err != nil {
-		return nil, err
+	// Check if the DID already exists
+	if k.HasDIDDocument(ctx, msg.Document.Id) {
+		return nil, fmt.Errorf("DID document already exists: %s", msg.Document.Id)
 	}
 
-	if err := k.SetDIDDocument(ctx, msg.Document.Id, msg.Document); err != nil {
-		return nil, err
-	}
+	// Store the DID document
+	id := k.StoreDIDDocument(ctx, msg.Document)
 
-	return &types.MsgRegisterDIDResponse{
-		Id: msg.Document.Id,
+	return &types.MsgCreateDIDDocumentResponse{
+		Id: id,
 	}, nil
 }
 
-// UpdateDID implements types.MsgServer
-func (k msgServer) UpdateDID(goCtx context.Context, msg *types.MsgUpdateDID) (*types.MsgUpdateDIDResponse, error) {
+// UpdateDIDDocument updates an existing DID document
+func (k msgServer) UpdateDIDDocument(goCtx context.Context, msg *types.MsgUpdateDIDDocument) (*types.MsgUpdateDIDDocumentResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if DID exists
-	if _, found := k.GetDIDDocument(ctx, msg.Document.Id); !found {
-		return nil, types.ErrDIDNotFound
+	// Check if the DID document exists
+	if !k.HasDIDDocument(ctx, msg.Document.Id) {
+		return nil, fmt.Errorf("DID document does not exist: %s", msg.Document.Id)
 	}
 
-	if err := k.ValidateDIDDocument(msg.Document); err != nil {
-		return nil, err
-	}
+	// Update the DID document
+	k.StoreDIDDocument(ctx, msg.Document)
 
-	if err := k.SetDIDDocument(ctx, msg.Document.Id, msg.Document); err != nil {
-		return nil, err
-	}
-
-	return &types.MsgUpdateDIDResponse{
-		Id: msg.Document.Id,
+	return &types.MsgUpdateDIDDocumentResponse{
+		Success: true,
 	}, nil
 }
 
-// VerifyIdentity implements types.MsgServer
-func (k msgServer) VerifyIdentity(goCtx context.Context, msg *types.MsgVerifyIdentity) (*types.MsgVerifyIdentityResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Check if the provider is allowed
-	if !k.IsOAuthProviderAllowed(ctx, msg.Provider) {
-		return nil, types.ErrUnauthorizedProvider
-	}
-
-	// TODO: Implement actual OAuth verification
-	// For now, just create a verification record
-	verificationID := fmt.Sprintf("verification_%s_%d", msg.Did, ctx.BlockTime().Unix())
-
-	now := ctx.BlockTime()
-	expiresAt := now.Add(time.Duration(k.GetVerificationTimeout(ctx)) * time.Hour)
-
-	// Create verification status
-	status := types.VerificationStatus{
-		Did:        msg.Did,
-		Provider:   msg.Provider,
-		Verified:   true,
-		VerifiedAt: now,
-		ExpiresAt:  &expiresAt,
-	}
-
-	// Store verification status
-	if err := k.SetVerificationStatus(ctx, msg.Did, status); err != nil {
-		return nil, err
-	}
-
-	return &types.MsgVerifyIdentityResponse{
-		VerificationId: verificationID,
-	}, nil
-}
-
-// IssueCredential implements types.MsgServer
+// IssueCredential issues a new verifiable credential
 func (k msgServer) IssueCredential(goCtx context.Context, msg *types.MsgIssueCredential) (*types.MsgIssueCredentialResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if credential type is allowed
-	if !k.IsCredentialTypeAllowed(ctx, msg.CredentialType) {
-		return nil, types.ErrUnauthorizedCredentialType
+	// Check if the credential already exists
+	if k.HasCredential(ctx, msg.Credential.Id) {
+		return nil, fmt.Errorf("credential already exists: %s", msg.Credential.Id)
 	}
 
-	// Check if subject DID exists
-	if _, found := k.GetDIDDocument(ctx, msg.SubjectDid); !found {
-		return nil, types.ErrDIDNotFound
-	}
-
-	// Check if max credentials per DID is reached
-	subjectCredentials := k.GetCredentialsBySubject(ctx, msg.SubjectDid)
-	if uint32(len(subjectCredentials)) >= k.GetMaxCredentialsPerDID(ctx) {
-		return nil, types.ErrMaxCredentialsReached
-	}
-
-	// Create credential
-	credentialID := fmt.Sprintf("credential_%s_%d", msg.SubjectDid, ctx.BlockTime().Unix())
-	now := ctx.BlockTime()
-
-	credential := types.Credential{
-		Id:         credentialID,
-		Type:       msg.CredentialType,
-		IssuerDid:  msg.Creator, // Using creator address as issuer DID
-		SubjectDid: msg.SubjectDid,
-		Claims:     msg.Claims,
-		IssuedAt:   now,
-		ExpiresAt:  msg.Expiry,
-		Revoked:    false,
-	}
-
-	// Store credential
-	if err := k.SetCredential(ctx, credential); err != nil {
-		return nil, err
+	// Store the credential
+	err := k.SetCredential(ctx, msg.Credential)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store credential: %w", err)
 	}
 
 	return &types.MsgIssueCredentialResponse{
-		CredentialId: credentialID,
+		Id: msg.Credential.Id,
 	}, nil
 }
 
-// RevokeCredential implements types.MsgServer
+// RevokeCredential revokes an existing credential
 func (k msgServer) RevokeCredential(goCtx context.Context, msg *types.MsgRevokeCredential) (*types.MsgRevokeCredentialResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if credential exists
-	credential, found := k.GetCredential(ctx, msg.CredentialId)
+	// Check if the credential exists
+	if !k.HasCredential(ctx, msg.CredentialId) {
+		return nil, fmt.Errorf("credential does not exist: %s", msg.CredentialId)
+	}
+
+	// Get the credential
+	cred, found := k.GetCredential(ctx, msg.CredentialId)
 	if !found {
-		return nil, types.ErrCredentialNotFound
+		return nil, fmt.Errorf("credential not found: %s", msg.CredentialId)
 	}
 
-	// Check if the sender is the issuer
-	if credential.IssuerDid != msg.Creator {
-		return nil, fmt.Errorf("only the issuer can revoke a credential")
-	}
+	// Update credential status
+	cred.Revoked = true
+	cred.IssuedAt = ctx.BlockTime()
 
-	// Revoke the credential
-	credential.Revoked = true
-	if err := k.SetCredential(ctx, credential); err != nil {
-		return nil, err
+	// Store updated credential
+	err := k.SetCredential(ctx, cred)
+	if err != nil {
+		return nil, fmt.Errorf("failed to revoke credential: %w", err)
 	}
 
 	return &types.MsgRevokeCredentialResponse{
+		Success: true,
+	}, nil
+}
+
+// LinkSocialIdentity links a social identity to a DID
+func (k msgServer) LinkSocialIdentity(goCtx context.Context, msg *types.MsgLinkSocialIdentity) (*types.MsgLinkSocialIdentityResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Validate the OAuth token
+	socialID, err := k.VerifyOAuthToken(ctx, msg.Provider, msg.Token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify OAuth token: %w", err)
+	}
+
+	// Create and store the social identity
+	identity := types.SocialIdentity{
+		Id:         socialID,
+		Did:        msg.Did,
+		VerifiedAt: ctx.BlockTime().Unix(),
+	}
+
+	// Store the social identity
+	k.StoreSocialIdentity(ctx, identity)
+
+	return &types.MsgLinkSocialIdentityResponse{
 		Success: true,
 	}, nil
 }
