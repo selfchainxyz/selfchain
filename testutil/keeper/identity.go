@@ -17,6 +17,21 @@ import (
 	"selfchain/x/identity/types"
 )
 
+// MockKeylessKeeper is a mock implementation of KeylessKeeper for testing
+type MockKeylessKeeper struct{}
+
+func (m MockKeylessKeeper) ReconstructWallet(ctx sdk.Context, didDoc types.DIDDocument) ([]byte, error) {
+	return []byte("mock_reconstructed_wallet"), nil
+}
+
+func (m MockKeylessKeeper) StoreKeyShare(ctx sdk.Context, did string, keyShare []byte) error {
+	return nil
+}
+
+func (m MockKeylessKeeper) GetKeyShare(ctx sdk.Context, did string) ([]byte, bool) {
+	return []byte("mock_key_share"), true
+}
+
 func IdentityKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
@@ -36,11 +51,15 @@ func IdentityKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"IdentityParams",
 	)
+
+	mockKeylessKeeper := MockKeylessKeeper{}
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
+		mockKeylessKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

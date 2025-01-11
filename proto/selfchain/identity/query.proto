@@ -9,6 +9,8 @@ import "selfchain/identity/params.proto";
 import "selfchain/identity/did_document.proto";
 import "selfchain/identity/credential.proto";
 import "selfchain/identity/oauth.proto";
+import "selfchain/identity/mfa.proto";
+import "selfchain/identity/recovery.proto";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -40,6 +42,21 @@ service Query {
   // VerifyCredential verifies a credential.
   rpc VerifyCredential(QueryVerifyCredentialRequest) returns (QueryVerifyCredentialResponse) {
     option (google.api.http).get = "/selfchain/identity/credential/verify/{id}";
+  }
+
+  // MFAConfig queries the MFA configuration for a DID.
+  rpc MFAConfig(QueryMFAConfigRequest) returns (QueryMFAConfigResponse) {
+    option (google.api.http).get = "/selfchain/identity/mfa/config/{did}";
+  }
+
+  // MFAChallenge queries an MFA challenge by ID.
+  rpc MFAChallenge(QueryMFAChallengeRequest) returns (QueryMFAChallengeResponse) {
+    option (google.api.http).get = "/selfchain/identity/mfa/challenge/{id}";
+  }
+
+  // RecoverySession queries a recovery session by ID.
+  rpc RecoverySession(QueryRecoverySessionRequest) returns (QueryRecoverySessionResponse) {
+    option (google.api.http).get = "/selfchain/identity/recovery/session/{id}";
   }
 }
 
@@ -84,5 +101,35 @@ message QueryVerifyCredentialResponse {
 // VerificationStatus represents the verification status of a credential.
 message VerificationStatus {
   bool valid = 1;
-  string error_message = 2;
+  string reason = 2;
+}
+
+// QueryMFAConfigRequest is request type for the Query/MFAConfig method.
+message QueryMFAConfigRequest {
+  string did = 1;
+}
+
+// QueryMFAConfigResponse is response type for the Query/MFAConfig method.
+message QueryMFAConfigResponse {
+  MFAConfig config = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryMFAChallengeRequest is request type for the Query/MFAChallenge method.
+message QueryMFAChallengeRequest {
+  string id = 1;
+}
+
+// QueryMFAChallengeResponse is response type for the Query/MFAChallenge method.
+message QueryMFAChallengeResponse {
+  MFAChallenge challenge = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryRecoverySessionRequest is request type for the Query/RecoverySession method.
+message QueryRecoverySessionRequest {
+  string id = 1;
+}
+
+// QueryRecoverySessionResponse is response type for the Query/RecoverySession method.
+message QueryRecoverySessionResponse {
+  RecoverySession session = 1 [(gogoproto.nullable) = false];
 }
