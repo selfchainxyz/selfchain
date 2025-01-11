@@ -1,0 +1,49 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// MFAConfig represents the MFA configuration for a DID
+message MFAConfig {
+  string did = 1;
+  bool enabled = 2;
+  repeated MFAMethod methods = 3;
+  google.protobuf.Timestamp updated_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// MFAMethod represents a specific MFA method
+message MFAMethod {
+  string type = 1; // "totp", "recovery_codes", "webauthn"
+  string identifier = 2; // email, device name, etc.
+  bytes secret = 3; // encrypted secret for TOTP, recovery codes, etc.
+  bool verified = 4;
+  google.protobuf.Timestamp created_at = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// MFAChallenge represents an active MFA challenge
+message MFAChallenge {
+  string id = 1;
+  string did = 2;
+  string method_type = 3;
+  bytes challenge_data = 4;
+  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  bool completed = 6;
+}
+
+// MsgEnableMFA represents the message to enable MFA
+message MsgEnableMFA {
+  string creator = 1;
+  string did = 2;
+  string method_type = 3;
+  string identifier = 4;
+}
+
+// MsgVerifyMFA represents the message to verify an MFA challenge
+message MsgVerifyMFA {
+  string creator = 1;
+  string challenge_id = 2;
+  string response = 3;
+}

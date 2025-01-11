@@ -27,7 +27,7 @@ message QuerySocialIdentityRequest {
 
 // QuerySocialIdentityResponse is the response type for the social identity query
 message QuerySocialIdentityResponse {
-  SocialIdentity identity = 1;
+  SocialIdentity identity = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryLinkedDIDRequest is the request type for querying a DID linked to a social identity

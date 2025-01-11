@@ -615,15 +615,20 @@ func New(
 		wasmOpts...,
 	)
 
-	app.IdentityKeeper = *identitymodulekeeper.NewKeeper(
+	mockKeylessKeeper := identitymodulekeeper.NewMockKeylessKeeper()
+	identityKeeper := identitymodulekeeper.NewKeeper(
 		appCodec,
 		keys[identitymoduletypes.StoreKey],
 		keys[identitymoduletypes.MemStoreKey],
-		app.GetSubspace(identitymoduletypes.ModuleName),
+		app.ParamsKeeper.Subspace(identitymoduletypes.ModuleName),
+		mockKeylessKeeper,
 	)
+	app.IdentityKeeper = *identityKeeper
 	identityModule := identitymodule.NewAppModule(
 		appCodec,
 		app.IdentityKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition

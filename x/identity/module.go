@@ -43,15 +43,21 @@ func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
+func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
+}
+
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	types.RegisterCodec(cdc)
 }
 
-func (AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
+// RegisterInterfaces registers the module's interface types
+func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns the identity module's default genesis state.
+// DefaultGenesis returns default genesis state as raw bytes for the identity
+// module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
@@ -88,16 +94,22 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -106,30 +118,28 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// RegisterServices registers a GRPC query service to respond to the
-// module-specific GRPC queries.
+// RegisterServices registers a gRPC query service to respond to the
+// module-specific gRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), &am.keeper)
 }
 
-// RegisterInvariants registers the identity module's invariants.
-func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
-// InitGenesis performs the identity module's genesis initialization It returns
+// InitGenesis performs the identity module's genesis initialization. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
+	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	am.keeper.InitGenesis(ctx, genState)
+	InitGenesis(ctx, am.keeper, &genState)
 
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the identity module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	genState := am.keeper.ExportGenesis(ctx)
+	genState := ExportGenesis(ctx, am.keeper)
 	return cdc.MustMarshalJSON(genState)
 }
 
@@ -137,13 +147,10 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the identity module.
-func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	// No begin block logic needed for now
-}
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock executes all ABCI EndBlock logic respective to the identity module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// No end block logic needed for now
 	return []abci.ValidatorUpdate{}
 }
