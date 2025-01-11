@@ -7,35 +7,52 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	// Set all the DID documents
-	for _, doc := range genState.DidDocuments {
-		k.StoreDIDDocument(ctx, doc)
+	// Set all the DIDs
+	for _, did := range genState.Dids {
+		k.SetDIDDocument(ctx, did.Id, did)
 	}
 
 	// Set all the credentials
 	for _, cred := range genState.Credentials {
-		if err := k.SetCredential(ctx, cred); err != nil {
-			panic(err)
-		}
+		k.SetCredential(ctx, cred)
 	}
 
 	// Set all the social identities
 	for _, identity := range genState.SocialIdentities {
-		k.StoreSocialIdentity(ctx, identity)
+		if err := k.StoreSocialIdentity(ctx, identity); err != nil {
+			panic(err)
+		}
 	}
 
-	// Set the module parameters
+	// Set all the credential schemas
+	for _, schema := range genState.CredentialSchemas {
+		k.SetCredentialSchema(ctx, schema)
+	}
+
+	// Set module parameters
 	k.SetParams(ctx, genState.Params)
 }
 
 // ExportGenesis returns the module's exported genesis.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	return &types.GenesisState{
-		DidDocuments:     k.GetAllDIDDocuments(ctx),
-		Credentials:      k.GetAllCredentials(ctx),
-		SocialIdentities: k.GetAllSocialIdentities(ctx),
-		Params:          k.GetParams(ctx),
-	}
+	genesis := types.DefaultGenesis()
+
+	// Get all DIDs
+	genesis.Dids = k.GetAllDIDDocuments(ctx)
+
+	// Get all credentials
+	genesis.Credentials = k.GetAllCredentials(ctx)
+
+	// Get all social identities
+	genesis.SocialIdentities = k.GetAllSocialIdentities(ctx)
+
+	// Get all credential schemas
+	genesis.CredentialSchemas = k.GetAllCredentialSchemas(ctx)
+
+	// Get module parameters
+	genesis.Params = k.GetParams(ctx)
+
+	return genesis
 }
 
 // GetParams returns the current module parameters

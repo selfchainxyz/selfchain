@@ -1,86 +1,59 @@
 syntax = "proto3";
 package selfchain.identity;
 
+option go_package = "selfchain/x/identity/types";
+
 import "gogoproto/gogo.proto";
 import "selfchain/identity/did_document.proto";
-import "google/protobuf/timestamp.proto";
-
-option go_package = "selfchain/x/identity/types";
+import "selfchain/identity/credential.proto";
+import "selfchain/identity/oauth.proto";
 
 // Msg defines the Msg service.
 service Msg {
-  // RegisterDID registers a new DID document
-  rpc RegisterDID(MsgRegisterDID) returns (MsgRegisterDIDResponse);
-  
-  // UpdateDID updates an existing DID document
+  rpc CreateDID(MsgCreateDID) returns (MsgCreateDIDResponse);
   rpc UpdateDID(MsgUpdateDID) returns (MsgUpdateDIDResponse);
-  
-  // VerifyIdentity initiates the identity verification process
-  rpc VerifyIdentity(MsgVerifyIdentity) returns (MsgVerifyIdentityResponse);
-  
-  // IssueCredential issues a new verifiable credential
-  rpc IssueCredential(MsgIssueCredential) returns (MsgIssueCredentialResponse);
-  
-  // RevokeCredential revokes an existing credential
+  rpc CreateCredential(MsgCreateCredential) returns (MsgCreateCredentialResponse);
   rpc RevokeCredential(MsgRevokeCredential) returns (MsgRevokeCredentialResponse);
+  rpc LinkSocialIdentity(MsgLinkSocialIdentity) returns (MsgLinkSocialIdentityResponse);
 }
 
-// MsgRegisterDID represents a message to register a new DID document
-message MsgRegisterDID {
-  string creator = 1;
-  DIDDocument document = 2 [(gogoproto.nullable) = false];
+message MsgCreateDID {
+  string did = 1;
+  repeated VerificationMethod verification_methods = 2;
+  repeated string authentication = 3;
 }
 
-// MsgRegisterDIDResponse defines the response for registering a DID
-message MsgRegisterDIDResponse {
-  string id = 1;
-}
+message MsgCreateDIDResponse {}
 
-// MsgUpdateDID represents a message to update an existing DID document
 message MsgUpdateDID {
-  string creator = 1;
-  DIDDocument document = 2 [(gogoproto.nullable) = false];
+  string did = 1;
+  repeated VerificationMethod verification_methods = 2;
+  repeated string authentication = 3;
 }
 
-// MsgUpdateDIDResponse defines the response for updating a DID
-message MsgUpdateDIDResponse {
+message MsgUpdateDIDResponse {}
+
+message MsgCreateCredential {
   string id = 1;
+  string issuer = 2;
+  string subject = 3;
+  map<string, string> claims = 4;
+  string schema_id = 5;
 }
 
-// MsgVerifyIdentity represents a message to verify an identity
-message MsgVerifyIdentity {
-  string creator = 1;
-  string did = 2;
-  string provider = 3;
-  string oauth_token = 4;
-}
+message MsgCreateCredentialResponse {}
 
-// MsgVerifyIdentityResponse defines the response for identity verification
-message MsgVerifyIdentityResponse {
-  string verification_id = 1;
-}
-
-// MsgIssueCredential represents a message to issue a new credential
-message MsgIssueCredential {
-  string creator = 1;
-  string credential_type = 2;
-  string subject_did = 3;
-  bytes claims = 4;
-  google.protobuf.Timestamp expiry = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
-}
-
-// MsgIssueCredentialResponse defines the response for issuing a credential
-message MsgIssueCredentialResponse {
-  string credential_id = 1;
-}
-
-// MsgRevokeCredential represents a message to revoke a credential
 message MsgRevokeCredential {
-  string creator = 1;
-  string credential_id = 2;
+  string id = 1;
+  string issuer = 2;
 }
 
-// MsgRevokeCredentialResponse defines the response for revoking a credential
-message MsgRevokeCredentialResponse {
-  bool success = 1;
+message MsgRevokeCredentialResponse {}
+
+message MsgLinkSocialIdentity {
+  string did = 1;
+  string provider = 2;
+  string token = 3;
 }
+
+message MsgLinkSocialIdentityResponse {}

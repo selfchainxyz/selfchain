@@ -1,8 +1,9 @@
 package keeper
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,144 +12,142 @@ import (
 
 const (
 	CredentialPrefix = "credential:"
+	SchemaPrefix    = "schema:"
 )
 
+// CredentialSchema represents a schema for validating credentials
+type CredentialSchema struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Properties  map[string]SchemaField `json:"properties"`
+	Required    bool                   `json:"required"`
+}
+
+// SchemaField represents a field in the credential schema
+type SchemaField struct {
+	Type        string   `json:"type"`
+	Description string   `json:"description"`
+	Enum        []string `json:"enum,omitempty"`
+}
+
+// SetCredential stores a credential
+func (k Keeper) SetCredential(ctx sdk.Context, credential types.Credential) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialKey))
+	b := k.cdc.MustMarshal(&credential)
+	store.Set([]byte(credential.Id), b)
+}
+
+// GetCredential returns a credential
+func (k Keeper) GetCredential(ctx sdk.Context, id string) (val types.Credential, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialKey))
+	b := store.Get([]byte(id))
+	if b == nil {
+		return val, false
+	}
+	k.cdc.MustUnmarshal(b, &val)
+	return val, true
+}
+
 // HasCredential checks if a credential exists
-func (k Keeper) HasCredential(ctx sdk.Context, credentialID string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	return store.Has([]byte(credentialID))
-}
-
-// SetCredential stores a verifiable credential
-func (k Keeper) SetCredential(ctx sdk.Context, credential types.Credential) error {
-	if err := k.ValidateCredential(credential); err != nil {
-		return err
-	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	credentialBytes := k.cdc.MustMarshal(&credential)
-	store.Set([]byte(credential.Id), credentialBytes)
-
-	// Also store by subject for efficient querying
-	subjectStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("credential_by_subject/"))
-	subjectKey := []byte(fmt.Sprintf("%s/%s", credential.SubjectDid, credential.Id))
-	subjectStore.Set(subjectKey, []byte{1}) // Just store a flag, actual data is in main store
-
-	return nil
-}
-
-// GetCredential returns a credential by ID
-func (k Keeper) GetCredential(ctx sdk.Context, id string) (types.Credential, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	credentialBytes := store.Get([]byte(id))
-	if credentialBytes == nil {
-		return types.Credential{}, false
-	}
-
-	var credential types.Credential
-	k.cdc.MustUnmarshal(credentialBytes, &credential)
-	return credential, true
-}
-
-// GetCredentialsBySubject returns all credentials for a subject DID
-func (k Keeper) GetCredentialsBySubject(ctx sdk.Context, subjectDid string) []types.Credential {
-	var credentials []types.Credential
-	subjectStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("credential_by_subject/"))
-	
-	prefix := []byte(fmt.Sprintf("%s/", subjectDid))
-	iterator := subjectStore.Iterator(prefix, nil)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		// Extract credential ID from the key
-		key := iterator.Key()
-		credentialID := string(key[len(prefix):])
-		
-		if credential, found := k.GetCredential(ctx, credentialID); found {
-			credentials = append(credentials, credential)
-		}
-	}
-
-	return credentials
-}
-
-// RevokeCredential revokes a credential
-func (k Keeper) RevokeCredential(ctx sdk.Context, id string, issuerDid string) error {
-	credential, found := k.GetCredential(ctx, id)
-	if !found {
-		return types.ErrCredentialNotFound
-	}
-
-	if credential.IssuerDid != issuerDid {
-		return types.ErrUnauthorizedCredentialType
-	}
-
-	credential.Revoked = true
-	credential.IssuedAt = ctx.BlockTime()
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	credentialBytes := k.cdc.MustMarshal(&credential)
-	store.Set([]byte(id), credentialBytes)
-
-	return nil
-}
-
-// ValidateCredential validates a credential
-func (k Keeper) ValidateCredential(credential types.Credential) error {
-	if credential.Id == "" {
-		return fmt.Errorf("credential ID cannot be empty")
-	}
-
-	if credential.IssuerDid == "" {
-		return fmt.Errorf("issuer DID cannot be empty")
-	}
-
-	if credential.SubjectDid == "" {
-		return fmt.Errorf("subject DID cannot be empty")
-	}
-
-	// Check if issuer exists
-	if _, found := k.GetDIDDocument(sdk.Context{}, credential.IssuerDid); !found {
-		return fmt.Errorf("issuer DID %s not found", credential.IssuerDid)
-	}
-
-	// Check if subject exists
-	if _, found := k.GetDIDDocument(sdk.Context{}, credential.SubjectDid); !found {
-		return fmt.Errorf("subject DID %s not found", credential.SubjectDid)
-	}
-
-	// Validate expiry
-	if credential.ExpiresAt != nil && credential.ExpiresAt.Before(time.Now()) {
-		return fmt.Errorf("credential has expired")
-	}
-
-	return nil
-}
-
-// DeleteCredential deletes a credential
-func (k Keeper) DeleteCredential(ctx sdk.Context, id string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	store.Delete([]byte(id))
-
-	// Also clean up the subject index
-	if credential, found := k.GetCredential(ctx, id); found {
-		subjectStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("credential_by_subject/"))
-		subjectKey := []byte(fmt.Sprintf("%s/%s", credential.SubjectDid, id))
-		subjectStore.Delete(subjectKey)
-	}
+func (k Keeper) HasCredential(ctx sdk.Context, id string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialKey))
+	return store.Has([]byte(id))
 }
 
 // GetAllCredentials returns all credentials
-func (k Keeper) GetAllCredentials(ctx sdk.Context) []types.Credential {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(CredentialPrefix))
-	iterator := store.Iterator(nil, nil)
+func (k Keeper) GetAllCredentials(ctx sdk.Context) (list []types.Credential) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 
-	var credentials []types.Credential
 	for ; iterator.Valid(); iterator.Next() {
-		var cred types.Credential
-		k.cdc.MustUnmarshal(iterator.Value(), &cred)
-		credentials = append(credentials, cred)
+		var val types.Credential
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		list = append(list, val)
 	}
-	return credentials
+
+	return
+}
+
+// ValidateCredential validates a credential against its schema
+func (k Keeper) ValidateCredential(ctx sdk.Context, credential types.Credential) error {
+	// Check if schema exists
+	schema, found := k.GetCredentialSchema(ctx, credential.SchemaId)
+	if !found {
+		return fmt.Errorf("schema not found: %s", credential.SchemaId)
+	}
+
+	// Check if issuer exists
+	if !k.HasDIDDocument(ctx, credential.Issuer) {
+		return fmt.Errorf("issuer DID not found: %s", credential.Issuer)
+	}
+
+	// Check if subject exists
+	if !k.HasDIDDocument(ctx, credential.Subject) {
+		return fmt.Errorf("subject DID not found: %s", credential.Subject)
+	}
+
+	// Validate claims against schema
+	for field := range credential.Claims {
+		if _, ok := schema.Properties[field]; !ok {
+			return fmt.Errorf("field not defined in schema: %s", field)
+		}
+	}
+
+	// Check for required fields
+	if schema.Required {
+		for field := range schema.Properties {
+			if _, ok := credential.Claims[field]; !ok {
+				return fmt.Errorf("required field missing: %s", field)
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetCredentialSchema returns a credential schema
+func (k Keeper) GetCredentialSchema(ctx sdk.Context, id string) (val types.CredentialSchema, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialSchemaKey))
+	b := store.Get([]byte(id))
+	if b == nil {
+		return val, false
+	}
+	k.cdc.MustUnmarshal(b, &val)
+	return val, true
+}
+
+// SetCredentialSchema stores a credential schema
+func (k Keeper) SetCredentialSchema(ctx sdk.Context, schema types.CredentialSchema) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialSchemaKey))
+	b := k.cdc.MustMarshal(&schema)
+	store.Set([]byte(schema.Id), b)
+}
+
+// GetAllCredentialSchemas returns all credential schemas
+func (k Keeper) GetAllCredentialSchemas(ctx sdk.Context) (list []types.CredentialSchema) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CredentialSchemaKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.CredentialSchema
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		list = append(list, val)
+	}
+
+	return
+}
+
+// GetClaimHash returns a hash of a claim value
+func (k Keeper) GetClaimHash(value string) string {
+	hash := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(hash[:])
+}
+
+// VerifyClaimHash verifies if a claim value matches its hash
+func (k Keeper) VerifyClaimHash(value string, hash string) bool {
+	computedHash := k.GetClaimHash(value)
+	return computedHash == hash
 }

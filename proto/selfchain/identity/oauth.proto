@@ -1,0 +1,42 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// SocialIdentity represents a user's identity from a social provider
+message SocialIdentity {
+  string id = 1;
+  string did = 2;
+  string provider = 3;
+  string email = 4;
+  string name = 5;
+  google.protobuf.Timestamp verified_at = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  map<string, string> metadata = 7;
+  bool verified = 8;
+  google.protobuf.Timestamp created = 9 [(gogoproto.stdtime) = true];
+}
+
+// QuerySocialIdentityRequest is the request type for querying a social identity
+message QuerySocialIdentityRequest {
+  string did = 1;
+  string provider = 2;
+}
+
+// QuerySocialIdentityResponse is the response type for the social identity query
+message QuerySocialIdentityResponse {
+  SocialIdentity identity = 1;
+}
+
+// QueryLinkedDIDRequest is the request type for querying a DID linked to a social identity
+message QueryLinkedDIDRequest {
+  string provider = 1;
+  string social_id = 2;
+}
+
+// QueryLinkedDIDResponse is the response type for the linked DID query
+message QueryLinkedDIDResponse {
+  string did = 1;
+}

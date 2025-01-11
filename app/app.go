@@ -621,7 +621,10 @@ func New(
 		keys[identitymoduletypes.MemStoreKey],
 		app.GetSubspace(identitymoduletypes.ModuleName),
 	)
-	identityModule := identitymodule.NewAppModule(appCodec, app.IdentityKeeper, app.AccountKeeper, app.BankKeeper)
+	identityModule := identitymodule.NewAppModule(
+		appCodec,
+		app.IdentityKeeper,
+	)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 

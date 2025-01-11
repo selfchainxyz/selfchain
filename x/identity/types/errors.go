@@ -29,4 +29,5 @@ var (
 	ErrMaxCredentialsReached   = sdkerrors.Register(ModuleName, 1118, "maximum credentials per DID reached")
 	ErrInvalidOAuthToken       = sdkerrors.Register(ModuleName, 1119, "invalid OAuth token")
 	ErrInvalidRecoveryAddress  = sdkerrors.Register(ModuleName, 1120, "invalid recovery address")
+	ErrInvalidCredentialSchema = sdkerrors.Register(ModuleName, 1121, "invalid credential schema")
 )

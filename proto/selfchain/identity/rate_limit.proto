@@ -1,0 +1,13 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+
+message RateLimitData {
+  int64 last_request_time = 1;
+  int32 requests_in_last_minute = 2;
+  int32 requests_in_last_hour = 3;
+  int32 requests_in_last_day = 4;
+}

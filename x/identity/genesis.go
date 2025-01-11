@@ -19,8 +19,10 @@ func DefaultGenesis() *types.GenesisState {
 				"MembershipCredential",
 			},
 		},
-		DidDocuments: []types.DIDDocument{},
+		Dids: []types.DIDDocument{},
 		Credentials: []types.Credential{},
+		SocialIdentities: []types.SocialIdentity{},
+		CredentialSchemas: []types.CredentialSchema{},
 	}
 }
 
@@ -43,7 +45,7 @@ func ValidateGenesis(data *types.GenesisState) error {
 	}
 
 	// Validate DID documents
-	for _, doc := range data.DidDocuments {
+	for _, doc := range data.Dids {
 		if doc.Id == "" {
 			return types.ErrInvalidDID
 		}
@@ -54,14 +56,27 @@ func ValidateGenesis(data *types.GenesisState) error {
 		if cred.Id == "" {
 			return types.ErrInvalidCredential
 		}
-		if cred.SubjectDid == "" || cred.IssuerDid == "" {
+		if cred.Subject == "" || cred.Issuer == "" {
 			return types.ErrInvalidDID
 		}
-		if cred.Type == "" {
+		if cred.SchemaId == "" {
 			return types.ErrInvalidCredential
 		}
-		if cred.IssuedAt.IsZero() {
+		if cred.Created.IsZero() {
 			return types.ErrInvalidCredential
+		}
+	}
+
+	// Validate credential schemas
+	for _, schema := range data.CredentialSchemas {
+		if schema.Id == "" {
+			return types.ErrInvalidCredentialSchema
+		}
+		if schema.Name == "" {
+			return types.ErrInvalidCredentialSchema
+		}
+		if len(schema.Properties) == 0 {
+			return types.ErrInvalidCredentialSchema
 		}
 	}
 
@@ -71,13 +86,23 @@ func ValidateGenesis(data *types.GenesisState) error {
 // InitGenesis initializes the module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState) {
 	// Set all the DID documents
-	for _, doc := range genState.DidDocuments {
+	for _, doc := range genState.Dids {
 		k.SetDIDDocument(ctx, doc.Id, doc)
 	}
 
 	// Set all the credentials
 	for _, cred := range genState.Credentials {
 		k.SetCredential(ctx, cred)
+	}
+
+	// Set all the credential schemas
+	for _, schema := range genState.CredentialSchemas {
+		k.SetCredentialSchema(ctx, schema)
+	}
+
+	// Set all the social identities
+	for _, identity := range genState.SocialIdentities {
+		k.StoreSocialIdentity(ctx, identity)
 	}
 
 	// Set module parameters
@@ -87,9 +112,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 // ExportGenesis returns the module's exported genesis
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.GenesisState{
-		Params:       k.GetParams(ctx),
-		DidDocuments: k.GetAllDIDDocuments(ctx),
-		Credentials:  k.GetAllCredentials(ctx),
+		Params:             k.GetParams(ctx),
+		Dids:              k.GetAllDIDDocuments(ctx),
+		Credentials:        k.GetAllCredentials(ctx),
+		SocialIdentities:   k.GetAllSocialIdentities(ctx),
+		CredentialSchemas: k.GetAllCredentialSchemas(ctx),
 	}
 
 	return &genesis
