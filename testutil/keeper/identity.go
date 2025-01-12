@@ -32,6 +32,10 @@ func (m MockKeylessKeeper) GetKeyShare(ctx sdk.Context, did string) ([]byte, boo
 	return []byte("mock_key_share"), true
 }
 
+func (m MockKeylessKeeper) InitiateRecovery(ctx sdk.Context, did string, recoveryToken string, recoveryAddress string) error {
+	return nil
+}
+
 func IdentityKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)

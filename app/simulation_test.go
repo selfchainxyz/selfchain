@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"selfchain/app"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -20,6 +23,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -35,10 +39,13 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
-	"selfchain/app"
 )
+
+type storeKeysPrefixes struct {
+	A        *storetypes.KVStoreKey
+	B        *storetypes.KVStoreKey
+	Prefixes [][]byte
+}
 
 // Get flags every time the simulator is run
 func init() {
@@ -331,27 +338,74 @@ func TestAppImportExport(t *testing.T) {
 
 	fmt.Printf("comparing stores...\n")
 
-	storeKeysPrefixes := []storeKeysPrefixes{
-		{bApp.GetKey(authtypes.StoreKey), newApp.GetKey(authtypes.StoreKey), [][]byte{}},
+	storeKeys := []storeKeysPrefixes{
 		{
-			bApp.GetKey(stakingtypes.StoreKey), newApp.GetKey(stakingtypes.StoreKey),
-			[][]byte{
-				stakingtypes.UnbondingQueueKey, stakingtypes.RedelegationQueueKey, stakingtypes.ValidatorQueueKey,
-				stakingtypes.HistoricalInfoKey, stakingtypes.UnbondingIDKey, stakingtypes.UnbondingIndexKey, stakingtypes.UnbondingTypeKey, stakingtypes.ValidatorUpdatesKey,
+			A:        bApp.GetKey(authtypes.StoreKey),
+			B:        newApp.GetKey(authtypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A: bApp.GetKey(stakingtypes.StoreKey),
+			B: newApp.GetKey(stakingtypes.StoreKey),
+			Prefixes: [][]byte{
+				stakingtypes.UnbondingQueueKey,
+				stakingtypes.RedelegationQueueKey,
+				stakingtypes.ValidatorQueueKey,
+				stakingtypes.HistoricalInfoKey,
+				stakingtypes.UnbondingIDKey,
+				stakingtypes.UnbondingIndexKey,
+				stakingtypes.UnbondingTypeKey,
+				stakingtypes.ValidatorUpdatesKey,
 			},
-		}, // ordering may change but it doesn't matter
-		{bApp.GetKey(slashingtypes.StoreKey), newApp.GetKey(slashingtypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(minttypes.StoreKey), newApp.GetKey(minttypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(distrtypes.StoreKey), newApp.GetKey(distrtypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(banktypes.StoreKey), newApp.GetKey(banktypes.StoreKey), [][]byte{banktypes.BalancesPrefix}},
-		{bApp.GetKey(paramstypes.StoreKey), newApp.GetKey(paramstypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(govtypes.StoreKey), newApp.GetKey(govtypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(evidencetypes.StoreKey), newApp.GetKey(evidencetypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(capabilitytypes.StoreKey), newApp.GetKey(capabilitytypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
+		},
+		{
+			A:        bApp.GetKey(slashingtypes.StoreKey),
+			B:        newApp.GetKey(slashingtypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(minttypes.StoreKey),
+			B:        newApp.GetKey(minttypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(distrtypes.StoreKey),
+			B:        newApp.GetKey(distrtypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(banktypes.StoreKey),
+			B:        newApp.GetKey(banktypes.StoreKey),
+			Prefixes: [][]byte{banktypes.BalancesPrefix},
+		},
+		{
+			A:        bApp.GetKey(paramstypes.StoreKey),
+			B:        newApp.GetKey(paramstypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(govtypes.StoreKey),
+			B:        newApp.GetKey(govtypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(evidencetypes.StoreKey),
+			B:        newApp.GetKey(evidencetypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(capabilitytypes.StoreKey),
+			B:        newApp.GetKey(capabilitytypes.StoreKey),
+			Prefixes: [][]byte{},
+		},
+		{
+			A:        bApp.GetKey(authzkeeper.StoreKey),
+			B:        newApp.GetKey(authzkeeper.StoreKey),
+			Prefixes: [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix},
+		},
 	}
 
-	for _, skp := range storeKeysPrefixes {
+	for _, skp := range storeKeys {
 		storeA := ctxA.KVStore(skp.A)
 		storeB := ctxB.KVStore(skp.B)
 

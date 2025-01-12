@@ -27,30 +27,19 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// DIDDocument represents a W3C Decentralized Identifier Document
+// DIDDocument represents a DID Document
 type DIDDocument struct {
-	// id is the DID of the document
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// controller is the DID of the controller
-	Controller string `protobuf:"bytes,2,opt,name=controller,proto3" json:"controller,omitempty"`
-	// verification_methods contains the public keys and other verification methods
-	VerificationMethods []VerificationMethod `protobuf:"bytes,3,rep,name=verification_methods,json=verificationMethods,proto3" json:"verification_methods"`
-	// authentication contains references to verification methods used for authentication
-	Authentication []string `protobuf:"bytes,4,rep,name=authentication,proto3" json:"authentication,omitempty"`
-	// assertion_method contains references to verification methods used for assertions
-	AssertionMethod []string `protobuf:"bytes,5,rep,name=assertion_method,json=assertionMethod,proto3" json:"assertion_method,omitempty"`
-	// capability_invocation contains references to verification methods used for capability invocation
-	CapabilityInvocation []string `protobuf:"bytes,6,rep,name=capability_invocation,json=capabilityInvocation,proto3" json:"capability_invocation,omitempty"`
-	// capability_delegation contains references to verification methods used for capability delegation
-	CapabilityDelegation []string `protobuf:"bytes,7,rep,name=capability_delegation,json=capabilityDelegation,proto3" json:"capability_delegation,omitempty"`
-	// key_agreement contains references to verification methods used for key agreement
-	KeyAgreement []string `protobuf:"bytes,8,rep,name=key_agreement,json=keyAgreement,proto3" json:"key_agreement,omitempty"`
-	// services contains service endpoints associated with the DID
-	Services []Service `protobuf:"bytes,9,rep,name=services,proto3" json:"services"`
-	// created is the timestamp when the DID document was created
-	Created *time.Time `protobuf:"bytes,10,opt,name=created,proto3,stdtime" json:"created,omitempty"`
-	// updated is the timestamp when the DID document was last updated
-	Updated *time.Time `protobuf:"bytes,11,opt,name=updated,proto3,stdtime" json:"updated,omitempty"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Controller           []string              `protobuf:"bytes,2,rep,name=controller,proto3" json:"controller,omitempty"`
+	VerificationMethod   []*VerificationMethod `protobuf:"bytes,3,rep,name=verification_method,json=verificationMethod,proto3" json:"verification_method,omitempty"`
+	Authentication       []string              `protobuf:"bytes,4,rep,name=authentication,proto3" json:"authentication,omitempty"`
+	AssertionMethod      []string              `protobuf:"bytes,5,rep,name=assertion_method,json=assertionMethod,proto3" json:"assertion_method,omitempty"`
+	KeyAgreement         []string              `protobuf:"bytes,6,rep,name=key_agreement,json=keyAgreement,proto3" json:"key_agreement,omitempty"`
+	CapabilityInvocation []string              `protobuf:"bytes,7,rep,name=capability_invocation,json=capabilityInvocation,proto3" json:"capability_invocation,omitempty"`
+	CapabilityDelegation []string              `protobuf:"bytes,8,rep,name=capability_delegation,json=capabilityDelegation,proto3" json:"capability_delegation,omitempty"`
+	Service              []*Service            `protobuf:"bytes,9,rep,name=service,proto3" json:"service,omitempty"`
+	Created              *time.Time            `protobuf:"bytes,10,opt,name=created,proto3,stdtime" json:"created,omitempty"`
+	Updated              *time.Time            `protobuf:"bytes,11,opt,name=updated,proto3,stdtime" json:"updated,omitempty"`
 }
 
 func (m *DIDDocument) Reset()         { *m = DIDDocument{} }
@@ -93,16 +82,16 @@ func (m *DIDDocument) GetId() string {
 	return ""
 }
 
-func (m *DIDDocument) GetController() string {
+func (m *DIDDocument) GetController() []string {
 	if m != nil {
 		return m.Controller
 	}
-	return ""
+	return nil
 }
 
-func (m *DIDDocument) GetVerificationMethods() []VerificationMethod {
+func (m *DIDDocument) GetVerificationMethod() []*VerificationMethod {
 	if m != nil {
-		return m.VerificationMethods
+		return m.VerificationMethod
 	}
 	return nil
 }
@@ -121,6 +110,13 @@ func (m *DIDDocument) GetAssertionMethod() []string {
 	return nil
 }
 
+func (m *DIDDocument) GetKeyAgreement() []string {
+	if m != nil {
+		return m.KeyAgreement
+	}
+	return nil
+}
+
 func (m *DIDDocument) GetCapabilityInvocation() []string {
 	if m != nil {
 		return m.CapabilityInvocation
@@ -135,16 +131,9 @@ func (m *DIDDocument) GetCapabilityDelegation() []string {
 	return nil
 }
 
-func (m *DIDDocument) GetKeyAgreement() []string {
+func (m *DIDDocument) GetService() []*Service {
 	if m != nil {
-		return m.KeyAgreement
-	}
-	return nil
-}
-
-func (m *DIDDocument) GetServices() []Service {
-	if m != nil {
-		return m.Services
+		return m.Service
 	}
 	return nil
 }
@@ -163,15 +152,11 @@ func (m *DIDDocument) GetUpdated() *time.Time {
 	return nil
 }
 
-// VerificationMethod represents a verification method in a DID document
+// VerificationMethod represents a verification method in a DID Document
 type VerificationMethod struct {
-	// id is the ID of the verification method
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// type is the type of the verification method
-	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	// controller is the DID of the controller of this verification method
-	Controller string `protobuf:"bytes,3,opt,name=controller,proto3" json:"controller,omitempty"`
-	// public_key_base58 is the base58-encoded public key
+	Id              string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type            string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Controller      string `protobuf:"bytes,3,opt,name=controller,proto3" json:"controller,omitempty"`
 	PublicKeyBase58 string `protobuf:"bytes,4,opt,name=public_key_base58,json=publicKeyBase58,proto3" json:"public_key_base58,omitempty"`
 }
 
@@ -236,14 +221,12 @@ func (m *VerificationMethod) GetPublicKeyBase58() string {
 	return ""
 }
 
-// Service represents a service endpoint in a DID document
+// Service represents a service endpoint in a DID Document
 type Service struct {
-	// id is the ID of the service
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// type is the type of the service
-	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	// service_endpoint is the URL of the service endpoint
-	ServiceEndpoint string `protobuf:"bytes,3,opt,name=service_endpoint,json=serviceEndpoint,proto3" json:"service_endpoint,omitempty"`
+	Id              string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type            string            `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	ServiceEndpoint string            `protobuf:"bytes,3,opt,name=service_endpoint,json=serviceEndpoint,proto3" json:"service_endpoint,omitempty"`
+	Properties      map[string]string `protobuf:"bytes,4,rep,name=properties,proto3" json:"properties,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *Service) Reset()         { *m = Service{} }
@@ -300,10 +283,18 @@ func (m *Service) GetServiceEndpoint() string {
 	return ""
 }
 
+func (m *Service) GetProperties() map[string]string {
+	if m != nil {
+		return m.Properties
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*DIDDocument)(nil), "selfchain.identity.DIDDocument")
 	proto.RegisterType((*VerificationMethod)(nil), "selfchain.identity.VerificationMethod")
 	proto.RegisterType((*Service)(nil), "selfchain.identity.Service")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.Service.PropertiesEntry")
 }
 
 func init() {
@@ -311,39 +302,42 @@ func init() {
 }
 
 var fileDescriptor_480df67a690bb71b = []byte{
-	// 508 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0x4f, 0x8b, 0xd3, 0x4c,
-	0x18, 0x6f, 0xda, 0xbc, 0xdb, 0xed, 0xf4, 0x75, 0xbb, 0x8e, 0x15, 0x42, 0x85, 0xb4, 0x54, 0x5c,
-	0xba, 0x1e, 0x52, 0xd8, 0x55, 0x10, 0xc1, 0x83, 0xa5, 0x1e, 0x16, 0xf1, 0x52, 0x45, 0xc4, 0x4b,
-	0x98, 0x66, 0x9e, 0xa6, 0xc3, 0xa6, 0x99, 0x90, 0x99, 0x14, 0x73, 0xf7, 0x03, 0xec, 0xb7, 0xf1,
-	0x2b, 0xec, 0x71, 0x8f, 0x9e, 0x54, 0xda, 0x2f, 0x22, 0x99, 0x4c, 0xd2, 0xd2, 0x78, 0xd8, 0xdb,
-	0xcc, 0xef, 0xcf, 0x33, 0x0f, 0xbf, 0xe7, 0x19, 0xf4, 0x4c, 0x40, 0xb0, 0xf0, 0x96, 0x84, 0x85,
-	0x63, 0x46, 0x21, 0x94, 0x4c, 0xa6, 0x63, 0xca, 0xa8, 0x4b, 0xb9, 0x97, 0xac, 0x20, 0x94, 0x4e,
-	0x14, 0x73, 0xc9, 0x31, 0x2e, 0x65, 0x4e, 0x21, 0xeb, 0x75, 0x7d, 0xee, 0x73, 0x45, 0x8f, 0xb3,
-	0x53, 0xae, 0xec, 0xf5, 0x7d, 0xce, 0xfd, 0x00, 0xc6, 0xea, 0x36, 0x4f, 0x16, 0x63, 0xc9, 0x56,
-	0x20, 0x24, 0x59, 0x45, 0xb9, 0x60, 0xf8, 0xc3, 0x44, 0xed, 0xe9, 0xd5, 0x74, 0xaa, 0x1f, 0xc0,
-	0x27, 0xa8, 0xce, 0xa8, 0x65, 0x0c, 0x8c, 0x51, 0x6b, 0x56, 0x67, 0x14, 0xdb, 0x08, 0x79, 0x3c,
-	0x94, 0x31, 0x0f, 0x02, 0x88, 0xad, 0xba, 0xc2, 0xf7, 0x10, 0xec, 0xa2, 0xee, 0x1a, 0x62, 0xb6,
-	0x60, 0x1e, 0x91, 0x8c, 0x87, 0xee, 0x0a, 0xe4, 0x92, 0x53, 0x61, 0x35, 0x06, 0x8d, 0x51, 0xfb,
-	0xe2, 0xcc, 0xa9, 0x76, 0xea, 0x7c, 0xde, 0xd3, 0x7f, 0x50, 0xf2, 0x89, 0x79, 0xfb, 0xab, 0x5f,
-	0x9b, 0x3d, 0x5a, 0x57, 0x18, 0x81, 0xcf, 0xd0, 0x09, 0x49, 0xe4, 0x32, 0xf3, 0xe6, 0x84, 0x65,
-	0x0e, 0x1a, 0xa3, 0xd6, 0xec, 0x00, 0xc5, 0xe7, 0xe8, 0x94, 0x08, 0x01, 0xf1, 0x5e, 0x17, 0xd6,
-	0x7f, 0x4a, 0xd9, 0x29, 0xf1, 0xbc, 0x26, 0xbe, 0x44, 0x8f, 0x3d, 0x12, 0x91, 0x39, 0x0b, 0x98,
-	0x4c, 0x5d, 0x16, 0xae, 0xb9, 0xae, 0x7c, 0xa4, 0xf4, 0xdd, 0x1d, 0x79, 0x55, 0x72, 0x07, 0x26,
-	0x0a, 0x01, 0xf8, 0xb9, 0xa9, 0x79, 0x68, 0x9a, 0x96, 0x1c, 0x7e, 0x8a, 0x1e, 0x5c, 0x43, 0xea,
-	0x12, 0x3f, 0x06, 0xc8, 0xe2, 0xb5, 0x8e, 0x95, 0xf8, 0xff, 0x6b, 0x48, 0xdf, 0x16, 0x18, 0x7e,
-	0x83, 0x8e, 0x05, 0xc4, 0x6b, 0xe6, 0x81, 0xb0, 0x5a, 0x2a, 0xb6, 0x27, 0xff, 0x8a, 0xed, 0x63,
-	0xae, 0xd1, 0x59, 0x95, 0x16, 0xfc, 0x1a, 0x35, 0xbd, 0x18, 0x88, 0x04, 0x6a, 0xa1, 0x81, 0x31,
-	0x6a, 0x5f, 0xf4, 0x9c, 0x7c, 0xe8, 0x4e, 0x31, 0x74, 0xe7, 0x53, 0x31, 0xf4, 0x89, 0x79, 0xf3,
-	0xbb, 0x6f, 0xcc, 0x0a, 0x43, 0xe6, 0x4d, 0x22, 0xaa, 0xbc, 0xed, 0xfb, 0x7a, 0xb5, 0x61, 0xf8,
-	0xdd, 0x40, 0xb8, 0x3a, 0xca, 0xca, 0x02, 0x61, 0x64, 0xca, 0x34, 0x02, 0xbd, 0x3a, 0xea, 0x7c,
-	0xb0, 0x54, 0x8d, 0xca, 0x52, 0x3d, 0x47, 0x0f, 0xa3, 0x64, 0x1e, 0x30, 0xcf, 0xcd, 0xd2, 0x9b,
-	0x13, 0x01, 0x2f, 0x5f, 0x59, 0xa6, 0x92, 0x75, 0x72, 0xe2, 0x3d, 0xa4, 0x13, 0x05, 0x0f, 0xbf,
-	0xa0, 0xa6, 0x4e, 0xe6, 0x5e, 0x4f, 0x9f, 0xa3, 0x53, 0x9d, 0x9c, 0x0b, 0x21, 0x8d, 0x38, 0x0b,
-	0xa5, 0x6e, 0xa0, 0xa3, 0xf1, 0x77, 0x1a, 0x9e, 0xbc, 0xb8, 0xdd, 0xd8, 0xc6, 0xdd, 0xc6, 0x36,
-	0xfe, 0x6c, 0x6c, 0xe3, 0x66, 0x6b, 0xd7, 0xee, 0xb6, 0x76, 0xed, 0xe7, 0xd6, 0xae, 0x7d, 0xed,
-	0xed, 0xbe, 0xe9, 0xb7, 0xdd, 0x47, 0xcd, 0xea, 0x8b, 0xf9, 0x91, 0x4a, 0xee, 0xf2, 0x6f, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0xab, 0xa1, 0xa2, 0x9d, 0xcb, 0x03, 0x00, 0x00,
+	// 555 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0x5f, 0x6b, 0xd3, 0x50,
+	0x14, 0x5f, 0xda, 0x6e, 0x75, 0xa7, 0xba, 0xd6, 0x6b, 0x85, 0x50, 0x21, 0x2b, 0x15, 0x47, 0xa7,
+	0x90, 0x42, 0xe7, 0x60, 0x0c, 0x7c, 0xb0, 0x74, 0x0f, 0x63, 0x08, 0x12, 0x45, 0xc1, 0x97, 0x70,
+	0x9b, 0x7b, 0x9a, 0x5e, 0x9a, 0xe6, 0x86, 0xe4, 0xa6, 0x98, 0x77, 0x3f, 0xc0, 0xbe, 0x85, 0x5f,
+	0xc5, 0xc7, 0x3d, 0xfa, 0xa6, 0xb4, 0x7e, 0x10, 0xc9, 0x4d, 0xd2, 0x96, 0x56, 0x64, 0x6f, 0x37,
+	0xbf, 0x3f, 0x39, 0xe7, 0x9e, 0xdf, 0xe1, 0xc2, 0x8b, 0x08, 0xbd, 0xb1, 0x33, 0xa1, 0xdc, 0xef,
+	0x71, 0x86, 0xbe, 0xe4, 0x32, 0xe9, 0x31, 0xce, 0x6c, 0x26, 0x9c, 0x78, 0x86, 0xbe, 0x34, 0x83,
+	0x50, 0x48, 0x41, 0xc8, 0x4a, 0x66, 0x16, 0xb2, 0x56, 0xd3, 0x15, 0xae, 0x50, 0x74, 0x2f, 0x3d,
+	0x65, 0xca, 0xd6, 0xb1, 0x2b, 0x84, 0xeb, 0x61, 0x4f, 0x7d, 0x8d, 0xe2, 0x71, 0x4f, 0xf2, 0x19,
+	0x46, 0x92, 0xce, 0x82, 0x4c, 0xd0, 0xf9, 0x5e, 0x81, 0xda, 0xf0, 0x7a, 0x38, 0xcc, 0x0b, 0x90,
+	0x23, 0x28, 0x71, 0xa6, 0x6b, 0x6d, 0xad, 0x7b, 0x68, 0x95, 0x38, 0x23, 0x06, 0x80, 0x23, 0x7c,
+	0x19, 0x0a, 0xcf, 0xc3, 0x50, 0x2f, 0xb5, 0xcb, 0xdd, 0x43, 0x6b, 0x03, 0x21, 0x9f, 0xe1, 0xc9,
+	0x1c, 0x43, 0x3e, 0xe6, 0x0e, 0x95, 0x5c, 0xf8, 0xf6, 0x0c, 0xe5, 0x44, 0x30, 0xbd, 0xdc, 0x2e,
+	0x77, 0x6b, 0xfd, 0x13, 0x73, 0xb7, 0x51, 0xf3, 0xd3, 0x86, 0xfc, 0x9d, 0x52, 0x5b, 0x64, 0xbe,
+	0x83, 0x91, 0x13, 0x38, 0xa2, 0xb1, 0x9c, 0xa4, 0xa6, 0x0c, 0xd7, 0x2b, 0xaa, 0xf8, 0x16, 0x4a,
+	0x4e, 0xa1, 0x41, 0xa3, 0x08, 0xc3, 0xcd, 0xea, 0xfb, 0x4a, 0x59, 0x5f, 0xe1, 0xf9, 0x2f, 0x9f,
+	0xc3, 0xa3, 0x29, 0x26, 0x36, 0x75, 0x43, 0xc4, 0xf4, 0xb2, 0xfa, 0x81, 0xd2, 0x3d, 0x9c, 0x62,
+	0xf2, 0xb6, 0xc0, 0xc8, 0x19, 0x3c, 0x75, 0x68, 0x40, 0x47, 0xdc, 0xe3, 0x32, 0xb1, 0xb9, 0x3f,
+	0x17, 0x79, 0xf9, 0xaa, 0x12, 0x37, 0xd7, 0xe4, 0xf5, 0x8a, 0xdb, 0x32, 0x31, 0xf4, 0xd0, 0xcd,
+	0x4c, 0x0f, 0xb6, 0x4d, 0xc3, 0x15, 0x47, 0xce, 0xa1, 0x1a, 0x61, 0x38, 0xe7, 0x0e, 0xea, 0x87,
+	0x6a, 0x5c, 0xcf, 0xfe, 0x35, 0xae, 0x0f, 0x99, 0xc4, 0x2a, 0xb4, 0xe4, 0x12, 0xaa, 0x4e, 0x88,
+	0x54, 0x22, 0xd3, 0xa1, 0xad, 0x75, 0x6b, 0xfd, 0x96, 0x99, 0x85, 0x6c, 0x16, 0x21, 0x9b, 0x1f,
+	0x8b, 0x90, 0x07, 0x95, 0xdb, 0x5f, 0xc7, 0x9a, 0x55, 0x18, 0x52, 0x6f, 0x1c, 0x30, 0xe5, 0xad,
+	0xdd, 0xd7, 0x9b, 0x1b, 0x3a, 0xdf, 0x34, 0x20, 0xbb, 0xd9, 0xed, 0x2c, 0x0c, 0x81, 0x8a, 0x4c,
+	0x02, 0xd4, 0x4b, 0x0a, 0x51, 0xe7, 0xad, 0x25, 0x2a, 0x2b, 0x66, 0x73, 0x89, 0x5e, 0xc2, 0xe3,
+	0x20, 0x1e, 0x79, 0xdc, 0xb1, 0xd3, 0x7c, 0x46, 0x34, 0xc2, 0xf3, 0x0b, 0xbd, 0xa2, 0x64, 0xf5,
+	0x8c, 0xb8, 0xc1, 0x64, 0xa0, 0xe0, 0xce, 0x1f, 0x0d, 0xaa, 0xf9, 0x4c, 0xee, 0x55, 0xfb, 0x14,
+	0x1a, 0xf9, 0xe4, 0x6c, 0xf4, 0x59, 0x20, 0xb8, 0x2f, 0xf3, 0x0e, 0xea, 0x39, 0x7e, 0x95, 0xc3,
+	0xe4, 0x06, 0x20, 0x08, 0x45, 0x90, 0xee, 0x0c, 0x46, 0x6a, 0xdd, 0x6a, 0xfd, 0x57, 0xff, 0xc9,
+	0xc4, 0x7c, 0xbf, 0x52, 0x5f, 0xf9, 0x32, 0x4c, 0xac, 0x0d, 0x7b, 0xeb, 0x0d, 0xd4, 0xb7, 0x68,
+	0xd2, 0x80, 0xf2, 0x14, 0x93, 0xbc, 0xdf, 0xf4, 0x48, 0x9a, 0xb0, 0x3f, 0xa7, 0x5e, 0x5c, 0x74,
+	0x9c, 0x7d, 0x5c, 0x96, 0x2e, 0xb4, 0xc1, 0xeb, 0x1f, 0x0b, 0x43, 0xbb, 0x5b, 0x18, 0xda, 0xef,
+	0x85, 0xa1, 0xdd, 0x2e, 0x8d, 0xbd, 0xbb, 0xa5, 0xb1, 0xf7, 0x73, 0x69, 0xec, 0x7d, 0x69, 0xad,
+	0xdf, 0x88, 0xaf, 0xeb, 0x57, 0x22, 0xbd, 0x6b, 0x34, 0x3a, 0x50, 0x31, 0x9e, 0xfd, 0x0d, 0x00,
+	0x00, 0xff, 0xff, 0x1e, 0x25, 0x2e, 0x0c, 0x48, 0x04, 0x00, 0x00,
 }
 
 func (m *DIDDocument) Marshal() (dAtA []byte, err error) {
@@ -386,10 +380,10 @@ func (m *DIDDocument) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x52
 	}
-	if len(m.Services) > 0 {
-		for iNdEx := len(m.Services) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Service) > 0 {
+		for iNdEx := len(m.Service) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Services[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Service[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -400,22 +394,13 @@ func (m *DIDDocument) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x4a
 		}
 	}
-	if len(m.KeyAgreement) > 0 {
-		for iNdEx := len(m.KeyAgreement) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.KeyAgreement[iNdEx])
-			copy(dAtA[i:], m.KeyAgreement[iNdEx])
-			i = encodeVarintDidDocument(dAtA, i, uint64(len(m.KeyAgreement[iNdEx])))
-			i--
-			dAtA[i] = 0x42
-		}
-	}
 	if len(m.CapabilityDelegation) > 0 {
 		for iNdEx := len(m.CapabilityDelegation) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.CapabilityDelegation[iNdEx])
 			copy(dAtA[i:], m.CapabilityDelegation[iNdEx])
 			i = encodeVarintDidDocument(dAtA, i, uint64(len(m.CapabilityDelegation[iNdEx])))
 			i--
-			dAtA[i] = 0x3a
+			dAtA[i] = 0x42
 		}
 	}
 	if len(m.CapabilityInvocation) > 0 {
@@ -423,6 +408,15 @@ func (m *DIDDocument) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i -= len(m.CapabilityInvocation[iNdEx])
 			copy(dAtA[i:], m.CapabilityInvocation[iNdEx])
 			i = encodeVarintDidDocument(dAtA, i, uint64(len(m.CapabilityInvocation[iNdEx])))
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
+	if len(m.KeyAgreement) > 0 {
+		for iNdEx := len(m.KeyAgreement) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.KeyAgreement[iNdEx])
+			copy(dAtA[i:], m.KeyAgreement[iNdEx])
+			i = encodeVarintDidDocument(dAtA, i, uint64(len(m.KeyAgreement[iNdEx])))
 			i--
 			dAtA[i] = 0x32
 		}
@@ -445,10 +439,10 @@ func (m *DIDDocument) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x22
 		}
 	}
-	if len(m.VerificationMethods) > 0 {
-		for iNdEx := len(m.VerificationMethods) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.VerificationMethod) > 0 {
+		for iNdEx := len(m.VerificationMethod) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.VerificationMethods[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.VerificationMethod[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -460,11 +454,13 @@ func (m *DIDDocument) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Controller) > 0 {
-		i -= len(m.Controller)
-		copy(dAtA[i:], m.Controller)
-		i = encodeVarintDidDocument(dAtA, i, uint64(len(m.Controller)))
-		i--
-		dAtA[i] = 0x12
+		for iNdEx := len(m.Controller) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Controller[iNdEx])
+			copy(dAtA[i:], m.Controller[iNdEx])
+			i = encodeVarintDidDocument(dAtA, i, uint64(len(m.Controller[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
 	}
 	if len(m.Id) > 0 {
 		i -= len(m.Id)
@@ -547,6 +543,25 @@ func (m *Service) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Properties) > 0 {
+		for k := range m.Properties {
+			v := m.Properties[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintDidDocument(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintDidDocument(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintDidDocument(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x22
+		}
+	}
 	if len(m.ServiceEndpoint) > 0 {
 		i -= len(m.ServiceEndpoint)
 		copy(dAtA[i:], m.ServiceEndpoint)
@@ -592,12 +607,14 @@ func (m *DIDDocument) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovDidDocument(uint64(l))
 	}
-	l = len(m.Controller)
-	if l > 0 {
-		n += 1 + l + sovDidDocument(uint64(l))
+	if len(m.Controller) > 0 {
+		for _, s := range m.Controller {
+			l = len(s)
+			n += 1 + l + sovDidDocument(uint64(l))
+		}
 	}
-	if len(m.VerificationMethods) > 0 {
-		for _, e := range m.VerificationMethods {
+	if len(m.VerificationMethod) > 0 {
+		for _, e := range m.VerificationMethod {
 			l = e.Size()
 			n += 1 + l + sovDidDocument(uint64(l))
 		}
@@ -614,6 +631,12 @@ func (m *DIDDocument) Size() (n int) {
 			n += 1 + l + sovDidDocument(uint64(l))
 		}
 	}
+	if len(m.KeyAgreement) > 0 {
+		for _, s := range m.KeyAgreement {
+			l = len(s)
+			n += 1 + l + sovDidDocument(uint64(l))
+		}
+	}
 	if len(m.CapabilityInvocation) > 0 {
 		for _, s := range m.CapabilityInvocation {
 			l = len(s)
@@ -626,14 +649,8 @@ func (m *DIDDocument) Size() (n int) {
 			n += 1 + l + sovDidDocument(uint64(l))
 		}
 	}
-	if len(m.KeyAgreement) > 0 {
-		for _, s := range m.KeyAgreement {
-			l = len(s)
-			n += 1 + l + sovDidDocument(uint64(l))
-		}
-	}
-	if len(m.Services) > 0 {
-		for _, e := range m.Services {
+	if len(m.Service) > 0 {
+		for _, e := range m.Service {
 			l = e.Size()
 			n += 1 + l + sovDidDocument(uint64(l))
 		}
@@ -691,6 +708,14 @@ func (m *Service) Size() (n int) {
 	l = len(m.ServiceEndpoint)
 	if l > 0 {
 		n += 1 + l + sovDidDocument(uint64(l))
+	}
+	if len(m.Properties) > 0 {
+		for k, v := range m.Properties {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovDidDocument(uint64(len(k))) + 1 + len(v) + sovDidDocument(uint64(len(v)))
+			n += mapEntrySize + 1 + sovDidDocument(uint64(mapEntrySize))
+		}
 	}
 	return n
 }
@@ -792,11 +817,11 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Controller = string(dAtA[iNdEx:postIndex])
+			m.Controller = append(m.Controller, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VerificationMethods", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field VerificationMethod", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -823,8 +848,8 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.VerificationMethods = append(m.VerificationMethods, VerificationMethod{})
-			if err := m.VerificationMethods[len(m.VerificationMethods)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.VerificationMethod = append(m.VerificationMethod, &VerificationMethod{})
+			if err := m.VerificationMethod[len(m.VerificationMethod)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -894,6 +919,38 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyAgreement", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDidDocument
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDidDocument
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDidDocument
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.KeyAgreement = append(m.KeyAgreement, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CapabilityInvocation", wireType)
 			}
 			var stringLen uint64
@@ -924,7 +981,7 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			}
 			m.CapabilityInvocation = append(m.CapabilityInvocation, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 7:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CapabilityDelegation", wireType)
 			}
@@ -956,41 +1013,9 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			}
 			m.CapabilityDelegation = append(m.CapabilityDelegation, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyAgreement", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDidDocument
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthDidDocument
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthDidDocument
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.KeyAgreement = append(m.KeyAgreement, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
 		case 9:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Services", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Service", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1017,8 +1042,8 @@ func (m *DIDDocument) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Services = append(m.Services, Service{})
-			if err := m.Services[len(m.Services)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Service = append(m.Service, &Service{})
+			if err := m.Service[len(m.Service)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1417,6 +1442,133 @@ func (m *Service) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ServiceEndpoint = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Properties", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDidDocument
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDidDocument
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDidDocument
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Properties == nil {
+				m.Properties = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowDidDocument
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowDidDocument
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthDidDocument
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthDidDocument
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowDidDocument
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthDidDocument
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthDidDocument
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipDidDocument(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthDidDocument
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Properties[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -19,7 +19,15 @@ type BankKeeper interface {
 
 // KeylessKeeper defines the expected interface for the keyless module
 type KeylessKeeper interface {
+	// ReconstructWallet reconstructs a wallet from a DID document
+	ReconstructWallet(ctx sdk.Context, didDoc DIDDocument) ([]byte, error)
+	
+	// StoreKeyShare stores a key share for a DID
+	StoreKeyShare(ctx sdk.Context, did string, keyShare []byte) error
+	
+	// GetKeyShare retrieves a key share for a DID
+	GetKeyShare(ctx sdk.Context, did string) ([]byte, bool)
+	
 	// InitiateRecovery initiates the wallet recovery process
 	InitiateRecovery(ctx sdk.Context, did string, recoveryToken string, recoveryAddress string) error
-	// Methods imported from keyless keeper should be defined here
 }

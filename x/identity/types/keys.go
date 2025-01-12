@@ -1,5 +1,9 @@
 package types
 
+import (
+	"time"
+)
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "identity"
@@ -13,57 +17,52 @@ const (
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_identity"
 
-	// Version defines the current version the IBC module supports
-	Version = "identity-1"
+	// ParamsKey is the store key for module parameters
+	ParamsKey = "params"
 
-	// DIDDocumentPrefix is the prefix for storing DID documents
-	DIDDocumentPrefix = "did_document"
-
-	// CredentialPrefix is the prefix for storing credentials
-	CredentialPrefix = "credential"
-
-	// VerificationPrefix is the prefix for storing verification statuses
-	VerificationPrefix = "verification"
-
-	// SocialIdentityPrefix is the prefix for storing social identities
-	SocialIdentityPrefix = "social_identity"
-
-	// DIDSocialPrefix is the prefix for storing DID to social identity mappings
-	DIDSocialPrefix = "did_social"
-
-	// PortID is the default port id that module binds to
-	PortID = "identity"
-
-	// Key prefixes
-	DIDDocumentKey     = "did_document/"
-	CredentialKey      = "credential/"
-	CredentialSchemaKey = "credential_schema/"
-	SocialIdentityKey  = "social_identity/"
+	// Key prefixes for different types of data
+	DIDPrefix              = "did/"
+	CredentialPrefix       = "credential/"
+	SocialIdentityPrefix   = "social_identity/"
+	SocialIdentityByIDPrefix = "social_identity_by_id/"
+	MFAConfigPrefix        = "mfa_config/"
+	AuditLogPrefix         = "audit_log/"
+	CredentialByDIDPrefix  = "credential_by_did/"
+	MFAChallengePrefix     = "mfa_challenge:"
+	MFAChallengeExpiry     = 5 * time.Minute // MFA challenge expiry time
 )
 
-var (
-	// DIDDocumentKeyPrefix is the prefix for storing DID documents
-	DIDDocumentKeyPrefix = []byte(DIDDocumentPrefix + "/")
+// DIDKey returns the store key to retrieve a DID document
+func DIDKey(did string) []byte {
+	return []byte(DIDPrefix + did)
+}
 
-	// CredentialKeyPrefix is the prefix for storing verifiable credentials
-	CredentialKeyPrefix = []byte(CredentialPrefix + "/")
+// CredentialKey returns the store key to retrieve a Credential
+func CredentialKey(id string) []byte {
+	return []byte(CredentialPrefix + id)
+}
 
-	// CredentialBySubjectKeyPrefix is the prefix for indexing credentials by subject DID
-	CredentialBySubjectKeyPrefix = []byte("credential_by_subject/")
+// CredentialByDIDKey returns the store key to retrieve Credentials by DID
+func CredentialByDIDKey(did, credentialID string) []byte {
+	return []byte(CredentialByDIDPrefix + did + "/" + credentialID)
+}
 
-	// VerificationKeyPrefix is the prefix for storing identity verification records
-	VerificationKeyPrefix = []byte(VerificationPrefix + "/")
+// CredentialByDIDPrefixKey returns the store prefix key to retrieve all Credentials for a DID
+func CredentialByDIDPrefixKey(did string) []byte {
+	return []byte(CredentialByDIDPrefix + did + "/")
+}
 
-	// SocialIdentityKeyPrefix is the prefix for storing social identities
-	SocialIdentityKeyPrefix = []byte(SocialIdentityPrefix + "/")
+// SocialIdentityKey returns the store key to retrieve a social identity
+func SocialIdentityKey(did string) []byte {
+	return []byte(SocialIdentityPrefix + did)
+}
 
-	// DIDSocialKeyPrefix is the prefix for storing DID to social identity mappings
-	DIDSocialKeyPrefix = []byte(DIDSocialPrefix + "/")
+// MFAConfigKey returns the store key to retrieve MFA configuration
+func MFAConfigKey(did string) []byte {
+	return []byte(MFAConfigPrefix + did)
+}
 
-	// PortKey defines the key to store the port ID in store
-	PortKey = []byte(ModuleName + "_" + "port")
-)
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
+// GetAuditLogKey returns the store key for audit logs
+func GetAuditLogKey(id string) []byte {
+	return []byte(AuditLogPrefix + id)
 }

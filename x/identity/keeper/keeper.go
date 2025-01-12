@@ -3,28 +3,23 @@ package keeper
 import (
 	"fmt"
 
+	"selfchain/x/identity/types"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"selfchain/x/identity/types"
 )
-
-// KeylessKeeper defines the expected keyless keeper
-type KeylessKeeper interface {
-	ReconstructWallet(ctx sdk.Context, didDoc types.DIDDocument) ([]byte, error)
-	StoreKeyShare(ctx sdk.Context, did string, keyShare []byte) error
-	GetKeyShare(ctx sdk.Context, did string) ([]byte, bool)
-}
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     storetypes.StoreKey
-		memKey       storetypes.StoreKey
-		paramstore   paramtypes.Subspace
-		keylessKeeper KeylessKeeper
+		cdc        codec.BinaryCodec
+		storeKey   storetypes.StoreKey
+		memKey     storetypes.StoreKey
+		paramstore paramtypes.Subspace
+		keyless    types.KeylessKeeper
+		rateLimiter *RateLimiter
 	}
 )
 
@@ -33,7 +28,7 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
-	keylessKeeper KeylessKeeper,
+	keyless types.KeylessKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -41,15 +36,100 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		memKey:       memKey,
-		paramstore:   ps,
-		keylessKeeper: keylessKeeper,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
+		paramstore: ps,
+		keyless:    keyless,
+		rateLimiter: NewRateLimiter(100, 100), // 100 requests per second with burst of 100
 	}
 }
 
-// Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetParams returns the total set of identity parameters.
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.paramstore.GetParamSet(ctx, &params)
+	return params
+}
+
+// SetParams sets the identity parameters to the param space.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramstore.SetParamSet(ctx, &params)
+}
+
+// VerifyOAuthToken verifies an OAuth token with the provider
+func (k Keeper) VerifyOAuthToken(ctx sdk.Context, provider string, token string) (string, error) {
+	// TODO: Implement OAuth token verification
+	return "", fmt.Errorf("not implemented")
+}
+
+// GetSocialIdentitiesByDID returns all social identities for a DID
+func (k Keeper) GetSocialIdentitiesByDID(ctx sdk.Context, did string) []types.SocialIdentity {
+	// TODO: Implement getting social identities by DID
+	return []types.SocialIdentity{}
+}
+
+// HasSocialIdentity checks if a social identity exists
+func (k Keeper) HasSocialIdentity(ctx sdk.Context, did string, provider string, userInfo string) bool {
+	// TODO: Implement checking if social identity exists
+	return false
+}
+
+// GetSocialIdentity returns a social identity by DID and provider
+func (k Keeper) GetSocialIdentity(ctx sdk.Context, did string, provider string) (*types.SocialIdentity, bool) {
+	// TODO: Implement getting social identity
+	return nil, false
+}
+
+// GetSocialIdentityBySocialID returns a social identity by provider and social ID
+func (k Keeper) GetSocialIdentityBySocialID(ctx sdk.Context, provider string, socialID string) (*types.SocialIdentity, bool) {
+	store := ctx.KVStore(k.storeKey)
+	prefixKey := append([]byte(types.SocialIdentityByIDPrefix), []byte(provider)...)
+	key := append(prefixKey, []byte(socialID)...)
+	bz := store.Get(key)
+	if bz == nil {
+		return nil, false
+	}
+
+	var identity types.SocialIdentity
+	k.cdc.MustUnmarshal(bz, &identity)
+	return &identity, true
+}
+
+// IsAuthorized checks if an address is authorized for a DID
+func (k Keeper) IsAuthorized(ctx sdk.Context, did string, address string) bool {
+	doc, found := k.GetDIDDocument(ctx, did)
+	if !found {
+		return false
+	}
+
+	// Check if the address is the controller
+	for _, controller := range doc.Controller {
+		if controller == address {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetDIDFromMsg extracts DID from various message types
+func (k Keeper) GetDIDFromMsg(msg sdk.Msg) string {
+	switch v := msg.(type) {
+	case *types.MsgCreateDID:
+		return v.Id
+	case *types.MsgUpdateDID:
+		return v.Id
+	case *types.MsgDeleteDID:
+		return v.Id
+	case *types.MsgLinkSocialIdentity:
+		return v.Creator
+	case *types.MsgUnlinkSocialIdentity:
+		return v.Creator
+	default:
+		return ""
+	}
 }

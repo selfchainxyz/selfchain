@@ -3,158 +3,211 @@ package keeper
 import (
 	"context"
 
+	"selfchain/x/identity/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"selfchain/x/identity/types"
 )
 
-var _ types.QueryServer = queryServer{}
-
+// queryServer implements the QueryServer interface
 type queryServer struct {
-	Keeper
+	k Keeper
 }
 
-// NewQueryServerImpl returns an implementation of the QueryServer interface
-// for the provided Keeper.
-func NewQueryServerImpl(k Keeper) types.QueryServer {
-	return &queryServer{Keeper: k}
+// NewQueryServer creates a new query server instance
+func NewQueryServer(k Keeper) types.QueryServer {
+	return &queryServer{k}
 }
 
-// DIDDocument returns a DID document by DID
-func (k Keeper) DIDDocument(goCtx context.Context, req *types.QueryDIDDocumentRequest) (*types.QueryDIDDocumentResponse, error) {
+// DIDDocuments implements types.QueryServer
+func (q queryServer) DIDDocuments(ctx context.Context, req *types.QueryDIDDocumentsRequest) (*types.QueryDIDDocumentsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	doc, found := k.GetDIDDocument(ctx, req.Id)
+	if req.Did == "" {
+		return nil, status.Error(codes.InvalidArgument, "DID cannot be empty")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	document, found := q.k.GetDIDDocument(sdkCtx, req.Did)
 	if !found {
 		return nil, status.Error(codes.NotFound, "DID document not found")
 	}
 
-	return &types.QueryDIDDocumentResponse{Document: doc}, nil
+	return &types.QueryDIDDocumentsResponse{
+		Document: &document,
+	}, nil
 }
 
-// Credential returns a credential by ID
-func (k Keeper) Credential(goCtx context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
+// Credential implements types.QueryServer
+func (q queryServer) Credential(ctx context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	credential, err := q.k.GetCredential(sdkCtx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &types.QueryCredentialResponse{
+		Credential: credential,
+	}, nil
+}
+
+// CredentialsByDID implements types.QueryServer
+func (q queryServer) CredentialsByDID(ctx context.Context, req *types.QueryCredentialsByDIDRequest) (*types.QueryCredentialsByDIDResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	cred, found := k.GetCredential(ctx, req.Id)
-	if !found {
-		return nil, status.Error(codes.NotFound, "credential not found")
+	if req.Did == "" {
+		return nil, status.Error(codes.InvalidArgument, "DID cannot be empty")
 	}
 
-	return &types.QueryCredentialResponse{Credential: cred}, nil
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	credentials, err := q.k.GetCredentialsByDID(sdkCtx, req.Did)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryCredentialsByDIDResponse{
+		Credentials: credentials,
+	}, nil
 }
 
-// SocialIdentity returns a social identity by DID and provider
-func (k Keeper) SocialIdentity(goCtx context.Context, req *types.QuerySocialIdentityRequest) (*types.QuerySocialIdentityResponse, error) {
+// SocialIdentities implements types.QueryServer
+func (q queryServer) SocialIdentities(ctx context.Context, req *types.QuerySocialIdentitiesRequest) (*types.QuerySocialIdentitiesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	identities, err := q.k.GetSocialIdentities(sdkCtx, req.Did)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QuerySocialIdentitiesResponse{
+		Identities: identities,
+	}, nil
+}
+
+// SocialIdentity implements types.QueryServer
+func (q queryServer) SocialIdentity(ctx context.Context, req *types.QuerySocialIdentityRequest) (*types.QuerySocialIdentityResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	identity, found := k.GetSocialIdentityByDIDAndProvider(ctx, req.Did, req.Provider)
+	if req.Did == "" || req.Provider == "" {
+		return nil, status.Error(codes.InvalidArgument, "DID and provider cannot be empty")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	identity, found := q.k.GetSocialIdentity(sdkCtx, req.Did, req.Provider)
 	if !found {
 		return nil, status.Error(codes.NotFound, "social identity not found")
 	}
 
-	return &types.QuerySocialIdentityResponse{Identity: identity}, nil
+	return &types.QuerySocialIdentityResponse{
+		SocialId: identity.ProviderId,
+	}, nil
 }
 
-// LinkedDID returns the DID linked to a social identity
-func (k Keeper) LinkedDID(goCtx context.Context, req *types.QueryLinkedDIDRequest) (*types.QueryLinkedDIDResponse, error) {
+// MFAConfig implements types.QueryServer
+func (q queryServer) MFAConfig(ctx context.Context, req *types.QueryMFAConfigRequest) (*types.QueryMFAConfigResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.Provider == "" {
-		return nil, status.Error(codes.InvalidArgument, "provider cannot be empty")
-	}
-	if req.SocialId == "" {
-		return nil, status.Error(codes.InvalidArgument, "social ID cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	identity, found := k.GetSocialIdentityBySocialID(ctx, req.Provider, req.SocialId)
-	if !found {
-		return nil, status.Error(codes.NotFound, "social identity not found")
-	}
-
-	return &types.QueryLinkedDIDResponse{Did: identity.Did}, nil
-}
-
-// VerifyCredential verifies a credential
-func (k Keeper) VerifyCredential(goCtx context.Context, req *types.QueryVerifyCredentialRequest) (*types.QueryVerifyCredentialResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	cred, found := k.GetCredential(ctx, req.Id)
-	if !found {
-		return nil, status.Error(codes.NotFound, "credential not found")
-	}
-
-	// Verify the credential
-	_, found = k.GetDIDDocument(ctx, cred.Issuer)
-	if !found {
-		return nil, status.Error(codes.NotFound, "issuer DID document not found")
-	}
-
-	// TODO: Implement actual credential verification logic
-	status := types.VerificationStatus{
-		Valid:  true,
-		Reason: "credential verification not implemented yet",
-	}
-
-	return &types.QueryVerifyCredentialResponse{Status: status}, nil
-}
-
-// MFAConfig returns the MFA configuration for a DID
-func (k Keeper) MFAConfig(goCtx context.Context, req *types.QueryMFAConfigRequest) (*types.QueryMFAConfigResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	config, found := k.GetMFAConfig(ctx, req.Did)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	config, found := q.k.GetMFAConfig(sdkCtx, req.Did)
 	if !found {
 		return nil, status.Error(codes.NotFound, "MFA config not found")
 	}
 
-	return &types.QueryMFAConfigResponse{Config: config}, nil
+	return &types.QueryMFAConfigResponse{
+		Config: config,
+	}, nil
 }
 
-// MFAChallenge returns an MFA challenge by ID
-func (k Keeper) MFAChallenge(goCtx context.Context, req *types.QueryMFAChallengeRequest) (*types.QueryMFAChallengeResponse, error) {
+// MFAChallenge implements types.QueryServer
+func (q queryServer) MFAChallenge(ctx context.Context, req *types.QueryMFAChallengeRequest) (*types.QueryMFAChallengeResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	challenge, err := q.k.CreateMFAChallenge(sdkCtx, req.Did, req.Method)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryMFAChallengeResponse{
+		Challenge: challenge,
+	}, nil
+}
+
+// LinkedDID implements types.QueryServer
+func (q queryServer) LinkedDID(ctx context.Context, req *types.QueryLinkedDIDRequest) (*types.QueryLinkedDIDResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	challenge, found := k.GetMFAChallenge(ctx, req.Id)
-	if !found {
-		return nil, status.Error(codes.NotFound, "MFA challenge not found")
+	if req.Provider == "" {
+		return nil, status.Error(codes.InvalidArgument, "provider cannot be empty")
 	}
 
-	return &types.QueryMFAChallengeResponse{Challenge: challenge}, nil
+	if req.SocialId == "" {
+		return nil, status.Error(codes.InvalidArgument, "social ID cannot be empty")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	did, found := q.k.GetLinkedDID(sdkCtx, req.Provider, req.SocialId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "no DID found for the given social identity")
+	}
+
+	return &types.QueryLinkedDIDResponse{
+		Did: did,
+	}, nil
 }
 
-// RecoverySession returns a recovery session by ID
-func (k Keeper) RecoverySession(goCtx context.Context, req *types.QueryRecoverySessionRequest) (*types.QueryRecoverySessionResponse, error) {
+// Params implements types.QueryServer
+func (q queryServer) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	session, found := k.GetRecoverySession(ctx, req.Id)
-	if !found {
-		return nil, status.Error(codes.NotFound, "recovery session not found")
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	return &types.QueryParamsResponse{Params: q.k.GetParams(sdkCtx)}, nil
+}
+
+// SocialIdentityBySocialID implements types.QueryServer
+func (q queryServer) SocialIdentityBySocialID(ctx context.Context, req *types.QuerySocialIdentityBySocialIDRequest) (*types.QuerySocialIdentityBySocialIDResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	return &types.QueryRecoverySessionResponse{Session: session}, nil
+	if req.Provider == "" {
+		return nil, status.Error(codes.InvalidArgument, "provider cannot be empty")
+	}
+
+	if req.SocialId == "" {
+		return nil, status.Error(codes.InvalidArgument, "social ID cannot be empty")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	identity, found := q.k.GetSocialIdentityBySocialID(sdkCtx, req.Provider, req.SocialId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "social identity not found")
+	}
+
+	return &types.QuerySocialIdentityBySocialIDResponse{
+		Identity: identity,
+	}, nil
 }

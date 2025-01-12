@@ -25,18 +25,14 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the identity module.
 type Params struct {
-	// allowed_oauth_providers is a list of allowed OAuth providers
-	AllowedOauthProviders []string `protobuf:"bytes,1,rep,name=allowed_oauth_providers,json=allowedOauthProviders,proto3" json:"allowed_oauth_providers,omitempty" yaml:"allowed_oauth_providers"`
-	// verification_timeout_hours is the number of hours before a verification record expires
-	VerificationTimeoutHours uint32 `protobuf:"varint,2,opt,name=verification_timeout_hours,json=verificationTimeoutHours,proto3" json:"verification_timeout_hours,omitempty" yaml:"verification_timeout_hours"`
-	// max_credentials_per_did is the maximum number of credentials that can be issued to a single DID
-	MaxCredentialsPerDid uint32 `protobuf:"varint,3,opt,name=max_credentials_per_did,json=maxCredentialsPerDid,proto3" json:"max_credentials_per_did,omitempty" yaml:"max_credentials_per_did"`
-	// allowed_credential_types is a list of allowed credential types
-	AllowedCredentialTypes []string `protobuf:"bytes,4,rep,name=allowed_credential_types,json=allowedCredentialTypes,proto3" json:"allowed_credential_types,omitempty" yaml:"allowed_credential_types"`
+	MfaParams        MFAParams        `protobuf:"bytes,1,opt,name=mfa_params,json=mfaParams,proto3" json:"mfa_params"`
+	CredentialParams CredentialParams `protobuf:"bytes,2,opt,name=credential_params,json=credentialParams,proto3" json:"credential_params"`
+	DidParams        DIDParams        `protobuf:"bytes,3,opt,name=did_params,json=didParams,proto3" json:"did_params"`
 }
 
-func (m *Params) Reset()      { *m = Params{} }
-func (*Params) ProtoMessage() {}
+func (m *Params) Reset()         { *m = Params{} }
+func (m *Params) String() string { return proto.CompactTextString(m) }
+func (*Params) ProtoMessage()    {}
 func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7b16c041552e7d33, []int{0}
 }
@@ -67,63 +63,277 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetAllowedOauthProviders() []string {
+func (m *Params) GetMfaParams() MFAParams {
 	if m != nil {
-		return m.AllowedOauthProviders
+		return m.MfaParams
 	}
-	return nil
+	return MFAParams{}
 }
 
-func (m *Params) GetVerificationTimeoutHours() uint32 {
+func (m *Params) GetCredentialParams() CredentialParams {
 	if m != nil {
-		return m.VerificationTimeoutHours
+		return m.CredentialParams
+	}
+	return CredentialParams{}
+}
+
+func (m *Params) GetDidParams() DIDParams {
+	if m != nil {
+		return m.DidParams
+	}
+	return DIDParams{}
+}
+
+// MFAParams defines the parameters for MFA functionality
+type MFAParams struct {
+	MaxMethods        int64    `protobuf:"varint,1,opt,name=max_methods,json=maxMethods,proto3" json:"max_methods,omitempty"`
+	ChallengeExpiry   int64    `protobuf:"varint,2,opt,name=challenge_expiry,json=challengeExpiry,proto3" json:"challenge_expiry,omitempty"`
+	AllowedMethods    []string `protobuf:"bytes,3,rep,name=allowed_methods,json=allowedMethods,proto3" json:"allowed_methods,omitempty"`
+	MaxFailedAttempts int64    `protobuf:"varint,4,opt,name=max_failed_attempts,json=maxFailedAttempts,proto3" json:"max_failed_attempts,omitempty"`
+}
+
+func (m *MFAParams) Reset()         { *m = MFAParams{} }
+func (m *MFAParams) String() string { return proto.CompactTextString(m) }
+func (*MFAParams) ProtoMessage()    {}
+func (*MFAParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7b16c041552e7d33, []int{1}
+}
+func (m *MFAParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MFAParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MFAParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MFAParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MFAParams.Merge(m, src)
+}
+func (m *MFAParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *MFAParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_MFAParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MFAParams proto.InternalMessageInfo
+
+func (m *MFAParams) GetMaxMethods() int64 {
+	if m != nil {
+		return m.MaxMethods
 	}
 	return 0
 }
 
-func (m *Params) GetMaxCredentialsPerDid() uint32 {
+func (m *MFAParams) GetChallengeExpiry() int64 {
+	if m != nil {
+		return m.ChallengeExpiry
+	}
+	return 0
+}
+
+func (m *MFAParams) GetAllowedMethods() []string {
+	if m != nil {
+		return m.AllowedMethods
+	}
+	return nil
+}
+
+func (m *MFAParams) GetMaxFailedAttempts() int64 {
+	if m != nil {
+		return m.MaxFailedAttempts
+	}
+	return 0
+}
+
+// CredentialParams defines the parameters for credential functionality
+type CredentialParams struct {
+	MaxCredentialsPerDid int64    `protobuf:"varint,1,opt,name=max_credentials_per_did,json=maxCredentialsPerDid,proto3" json:"max_credentials_per_did,omitempty"`
+	MaxClaimSize         int64    `protobuf:"varint,2,opt,name=max_claim_size,json=maxClaimSize,proto3" json:"max_claim_size,omitempty"`
+	AllowedTypes         []string `protobuf:"bytes,3,rep,name=allowed_types,json=allowedTypes,proto3" json:"allowed_types,omitempty"`
+	MaxValidityDuration  int64    `protobuf:"varint,4,opt,name=max_validity_duration,json=maxValidityDuration,proto3" json:"max_validity_duration,omitempty"`
+}
+
+func (m *CredentialParams) Reset()         { *m = CredentialParams{} }
+func (m *CredentialParams) String() string { return proto.CompactTextString(m) }
+func (*CredentialParams) ProtoMessage()    {}
+func (*CredentialParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7b16c041552e7d33, []int{2}
+}
+func (m *CredentialParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CredentialParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CredentialParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CredentialParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CredentialParams.Merge(m, src)
+}
+func (m *CredentialParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *CredentialParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_CredentialParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CredentialParams proto.InternalMessageInfo
+
+func (m *CredentialParams) GetMaxCredentialsPerDid() int64 {
 	if m != nil {
 		return m.MaxCredentialsPerDid
 	}
 	return 0
 }
 
-func (m *Params) GetAllowedCredentialTypes() []string {
+func (m *CredentialParams) GetMaxClaimSize() int64 {
 	if m != nil {
-		return m.AllowedCredentialTypes
+		return m.MaxClaimSize
+	}
+	return 0
+}
+
+func (m *CredentialParams) GetAllowedTypes() []string {
+	if m != nil {
+		return m.AllowedTypes
 	}
 	return nil
 }
 
+func (m *CredentialParams) GetMaxValidityDuration() int64 {
+	if m != nil {
+		return m.MaxValidityDuration
+	}
+	return 0
+}
+
+// DIDParams defines the parameters for DID functionality
+type DIDParams struct {
+	AllowedMethods         []string `protobuf:"bytes,1,rep,name=allowed_methods,json=allowedMethods,proto3" json:"allowed_methods,omitempty"`
+	MaxControllers         int64    `protobuf:"varint,2,opt,name=max_controllers,json=maxControllers,proto3" json:"max_controllers,omitempty"`
+	MaxServices            int64    `protobuf:"varint,3,opt,name=max_services,json=maxServices,proto3" json:"max_services,omitempty"`
+	MaxVerificationMethods int64    `protobuf:"varint,4,opt,name=max_verification_methods,json=maxVerificationMethods,proto3" json:"max_verification_methods,omitempty"`
+}
+
+func (m *DIDParams) Reset()         { *m = DIDParams{} }
+func (m *DIDParams) String() string { return proto.CompactTextString(m) }
+func (*DIDParams) ProtoMessage()    {}
+func (*DIDParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7b16c041552e7d33, []int{3}
+}
+func (m *DIDParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DIDParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DIDParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DIDParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DIDParams.Merge(m, src)
+}
+func (m *DIDParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *DIDParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_DIDParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DIDParams proto.InternalMessageInfo
+
+func (m *DIDParams) GetAllowedMethods() []string {
+	if m != nil {
+		return m.AllowedMethods
+	}
+	return nil
+}
+
+func (m *DIDParams) GetMaxControllers() int64 {
+	if m != nil {
+		return m.MaxControllers
+	}
+	return 0
+}
+
+func (m *DIDParams) GetMaxServices() int64 {
+	if m != nil {
+		return m.MaxServices
+	}
+	return 0
+}
+
+func (m *DIDParams) GetMaxVerificationMethods() int64 {
+	if m != nil {
+		return m.MaxVerificationMethods
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*Params)(nil), "selfchain.identity.Params")
+	proto.RegisterType((*MFAParams)(nil), "selfchain.identity.MFAParams")
+	proto.RegisterType((*CredentialParams)(nil), "selfchain.identity.CredentialParams")
+	proto.RegisterType((*DIDParams)(nil), "selfchain.identity.DIDParams")
 }
 
 func init() { proto.RegisterFile("selfchain/identity/params.proto", fileDescriptor_7b16c041552e7d33) }
 
 var fileDescriptor_7b16c041552e7d33 = []byte{
-	// 334 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x31, 0x4f, 0x32, 0x31,
-	0x18, 0xc7, 0xef, 0x5e, 0x08, 0xc9, 0x7b, 0x89, 0x4b, 0x83, 0xd2, 0x30, 0xb4, 0x58, 0x63, 0xc2,
-	0x04, 0x83, 0x4e, 0x8c, 0xe8, 0xe0, 0x26, 0xb9, 0xb0, 0x48, 0x62, 0x9a, 0x7a, 0x2d, 0xd0, 0xe4,
-	0x8e, 0x5e, 0xda, 0x82, 0xf0, 0x11, 0xdc, 0x1c, 0x1d, 0xfd, 0x38, 0x8e, 0x8c, 0x4e, 0xc4, 0xc0,
-	0x37, 0xe0, 0x13, 0x98, 0x2b, 0xe0, 0xa1, 0xc9, 0x6d, 0x4d, 0x7f, 0xbf, 0xe7, 0x79, 0xf2, 0x3c,
-	0xff, 0x00, 0x1b, 0x11, 0x0f, 0xa3, 0x31, 0x93, 0x93, 0xb6, 0xe4, 0x62, 0x62, 0xa5, 0x5d, 0xb4,
-	0x53, 0xa6, 0x59, 0x62, 0x5a, 0xa9, 0x56, 0x56, 0x01, 0xf0, 0x23, 0xb4, 0x0e, 0x42, 0xbd, 0x3a,
-	0x52, 0x23, 0xe5, 0x70, 0x3b, 0x7b, 0xed, 0x4c, 0xf2, 0x52, 0x0a, 0x2a, 0x3d, 0x57, 0x0a, 0x06,
-	0x41, 0x8d, 0xc5, 0xb1, 0x7a, 0x16, 0x9c, 0x2a, 0x36, 0xb5, 0x63, 0x9a, 0x6a, 0x35, 0x93, 0x5c,
-	0x68, 0x03, 0xfd, 0x46, 0xa9, 0xf9, 0xbf, 0x4b, 0xb6, 0x2b, 0x8c, 0x16, 0x2c, 0x89, 0x3b, 0xa4,
-	0x40, 0x24, 0xe1, 0xe9, 0x9e, 0xdc, 0x67, 0xa0, 0x77, 0xf8, 0x07, 0x51, 0x50, 0x9f, 0x09, 0x2d,
-	0x87, 0x32, 0x62, 0x56, 0xaa, 0x09, 0xb5, 0x32, 0x11, 0x6a, 0x6a, 0xe9, 0x58, 0x4d, 0xb5, 0x81,
-	0xff, 0x1a, 0x7e, 0xf3, 0xa4, 0x7b, 0xb9, 0x5d, 0xe1, 0xf3, 0x5d, 0xfb, 0x62, 0x97, 0x84, 0xf0,
-	0x18, 0xf6, 0x77, 0xec, 0x2e, 0x43, 0xe0, 0x21, 0xa8, 0x25, 0x6c, 0x4e, 0x23, 0x2d, 0xdc, 0xce,
-	0x2c, 0x36, 0x34, 0x15, 0x9a, 0x72, 0xc9, 0x61, 0xc9, 0x4d, 0x38, 0x5a, 0xa0, 0x40, 0x24, 0x61,
-	0x35, 0x61, 0xf3, 0x9b, 0x1c, 0xf4, 0x84, 0xbe, 0x95, 0x1c, 0x3c, 0x06, 0xf0, 0xb0, 0x72, 0x5e,
-	0x45, 0xed, 0x22, 0x15, 0x06, 0x96, 0xdd, 0x71, 0x2e, 0xb6, 0x2b, 0x8c, 0x7f, 0x1f, 0xe7, 0xaf,
-	0x49, 0xc2, 0xb3, 0x3d, 0xca, 0x07, 0xf4, 0x33, 0xd0, 0x29, 0xbf, 0xbd, 0x63, 0xaf, 0x7b, 0xfd,
-	0xb1, 0x46, 0xfe, 0x72, 0x8d, 0xfc, 0xaf, 0x35, 0xf2, 0x5f, 0x37, 0xc8, 0x5b, 0x6e, 0x90, 0xf7,
-	0xb9, 0x41, 0xde, 0xa0, 0x9e, 0x07, 0x3e, 0xcf, 0x23, 0x77, 0x4d, 0x9f, 0x2a, 0x2e, 0xc8, 0xab,
-	0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0xad, 0x77, 0x5a, 0xc9, 0x15, 0x02, 0x00, 0x00,
+	// 510 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0xc7, 0x6b, 0x32, 0x4d, 0xea, 0xdb, 0xd8, 0x3a, 0x33, 0xa0, 0x9a, 0x44, 0x3a, 0xca, 0xa4,
+	0x8d, 0x4b, 0x2b, 0x0d, 0x90, 0xb8, 0xae, 0x2b, 0x93, 0x38, 0x4c, 0x9a, 0x32, 0x04, 0x12, 0x97,
+	0xc8, 0xc4, 0x4e, 0x6b, 0xc9, 0x4e, 0x22, 0xc7, 0x8c, 0x74, 0x9f, 0x82, 0x8f, 0xc2, 0x99, 0x4f,
+	0xd0, 0xe3, 0x8e, 0x9c, 0x10, 0x6a, 0x4f, 0x7c, 0x0b, 0x64, 0xc7, 0x49, 0xd8, 0x28, 0xb7, 0xe8,
+	0xff, 0xde, 0xfb, 0xf9, 0xff, 0x7f, 0x8e, 0xa1, 0x97, 0x33, 0x11, 0x47, 0x53, 0xc2, 0x93, 0x21,
+	0xa7, 0x2c, 0xd1, 0x5c, 0xcf, 0x86, 0x19, 0x51, 0x44, 0xe6, 0x83, 0x4c, 0xa5, 0x3a, 0xc5, 0xb8,
+	0x6e, 0x18, 0x54, 0x0d, 0x7b, 0xbb, 0x93, 0x74, 0x92, 0xda, 0xf2, 0xd0, 0x7c, 0x95, 0x9d, 0xfd,
+	0xdf, 0x08, 0xd6, 0x2f, 0xec, 0x28, 0x1e, 0x01, 0xc8, 0x98, 0x84, 0x25, 0xa8, 0x8b, 0xf6, 0xd1,
+	0xd1, 0xc6, 0xf1, 0x93, 0xc1, 0xbf, 0xa4, 0xc1, 0xf9, 0xd9, 0x49, 0x39, 0x32, 0x5a, 0x9b, 0xff,
+	0xec, 0xb5, 0x82, 0xb6, 0x8c, 0x89, 0x63, 0x7c, 0x80, 0x9d, 0x48, 0x31, 0xdb, 0x48, 0x44, 0x85,
+	0xba, 0x67, 0x51, 0x07, 0xab, 0x50, 0xa7, 0x75, 0xf3, 0x2d, 0x62, 0x27, 0xba, 0xa3, 0x1b, 0x73,
+	0x94, 0xd3, 0x8a, 0xe8, 0xfd, 0xdf, 0xdc, 0xf8, 0xed, 0xf8, 0xb6, 0x39, 0xca, 0x69, 0x29, 0xf4,
+	0xbf, 0x21, 0x68, 0xd7, 0xde, 0x71, 0x0f, 0x36, 0x24, 0x29, 0x42, 0xc9, 0xf4, 0x34, 0xa5, 0x65,
+	0x5e, 0x2f, 0x00, 0x49, 0x8a, 0xf3, 0x52, 0xc1, 0xcf, 0xa1, 0x13, 0x4d, 0x89, 0x10, 0x2c, 0x99,
+	0xb0, 0x90, 0x15, 0x19, 0x57, 0x33, 0x1b, 0xc5, 0x0b, 0xb6, 0x6b, 0xfd, 0x8d, 0x95, 0xf1, 0x21,
+	0x6c, 0x13, 0x21, 0xd2, 0x2f, 0x8c, 0xd6, 0x3c, 0x6f, 0xdf, 0x3b, 0x6a, 0x07, 0x5b, 0x4e, 0xae,
+	0x98, 0x03, 0x78, 0x60, 0x0e, 0x8d, 0x09, 0x17, 0x8c, 0x86, 0x44, 0x6b, 0x26, 0x33, 0x9d, 0x77,
+	0xd7, 0x2c, 0x76, 0x47, 0x92, 0xe2, 0xcc, 0x56, 0x4e, 0x5c, 0xa1, 0x3f, 0x47, 0xd0, 0xb9, 0xbb,
+	0x23, 0xfc, 0x0a, 0x1e, 0x1b, 0x48, 0xb3, 0xa3, 0x3c, 0xcc, 0x98, 0x0a, 0x29, 0xa7, 0x2e, 0xc5,
+	0xae, 0x24, 0x45, 0x33, 0x95, 0x5f, 0x30, 0x35, 0xe6, 0x14, 0x1f, 0xc0, 0x96, 0x1d, 0x13, 0x84,
+	0xcb, 0x30, 0xe7, 0xd7, 0xcc, 0xa5, 0xd9, 0x34, 0xdd, 0x46, 0xbc, 0xe4, 0xd7, 0x0c, 0x3f, 0x83,
+	0xfb, 0x55, 0x14, 0x3d, 0xcb, 0x58, 0x15, 0x64, 0xd3, 0x89, 0xef, 0x8c, 0x86, 0x8f, 0xe1, 0xa1,
+	0x41, 0x5d, 0x11, 0xc1, 0x29, 0xd7, 0xb3, 0x90, 0x7e, 0x56, 0x44, 0xf3, 0x34, 0x71, 0x41, 0x4c,
+	0xc6, 0xf7, 0xae, 0x36, 0x76, 0xa5, 0xfe, 0x77, 0x04, 0xed, 0xfa, 0x72, 0x56, 0x6d, 0x0c, 0xad,
+	0xdc, 0xd8, 0x21, 0x6c, 0x5b, 0xd7, 0x69, 0xa2, 0x55, 0x2a, 0x04, 0x53, 0xb9, 0xb3, 0x6d, 0xc2,
+	0x9c, 0x36, 0x2a, 0x7e, 0x0a, 0x26, 0x48, 0x98, 0x33, 0x75, 0xc5, 0x23, 0x56, 0xfe, 0x23, 0x5e,
+	0x60, 0xee, 0xf8, 0xd2, 0x49, 0xf8, 0x35, 0x74, 0xad, 0x6d, 0xa6, 0x78, 0xcc, 0x23, 0x6b, 0xab,
+	0x3e, 0xbd, 0x74, 0xfe, 0xc8, 0x38, 0xff, 0xab, 0xec, 0x5c, 0x8c, 0x5e, 0xce, 0x17, 0x3e, 0xba,
+	0x59, 0xf8, 0xe8, 0xd7, 0xc2, 0x47, 0x5f, 0x97, 0x7e, 0xeb, 0x66, 0xe9, 0xb7, 0x7e, 0x2c, 0xfd,
+	0xd6, 0xc7, 0xbd, 0xe6, 0x2d, 0x16, 0xcd, 0x6b, 0xb4, 0xab, 0xfb, 0xb4, 0x6e, 0xdf, 0xd8, 0x8b,
+	0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xb1, 0xc2, 0x76, 0x4c, 0xb0, 0x03, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -146,30 +356,173 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.AllowedCredentialTypes) > 0 {
-		for iNdEx := len(m.AllowedCredentialTypes) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.AllowedCredentialTypes[iNdEx])
-			copy(dAtA[i:], m.AllowedCredentialTypes[iNdEx])
-			i = encodeVarintParams(dAtA, i, uint64(len(m.AllowedCredentialTypes[iNdEx])))
-			i--
-			dAtA[i] = 0x22
+	{
+		size, err := m.DidParams.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
+		i -= size
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size, err := m.CredentialParams.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.MfaParams.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *MFAParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MFAParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MFAParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.MaxFailedAttempts != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxFailedAttempts))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.AllowedMethods) > 0 {
+		for iNdEx := len(m.AllowedMethods) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.AllowedMethods[iNdEx])
+			copy(dAtA[i:], m.AllowedMethods[iNdEx])
+			i = encodeVarintParams(dAtA, i, uint64(len(m.AllowedMethods[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.ChallengeExpiry != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.ChallengeExpiry))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.MaxMethods != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxMethods))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CredentialParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CredentialParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CredentialParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.MaxValidityDuration != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxValidityDuration))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.AllowedTypes) > 0 {
+		for iNdEx := len(m.AllowedTypes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.AllowedTypes[iNdEx])
+			copy(dAtA[i:], m.AllowedTypes[iNdEx])
+			i = encodeVarintParams(dAtA, i, uint64(len(m.AllowedTypes[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.MaxClaimSize != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxClaimSize))
+		i--
+		dAtA[i] = 0x10
 	}
 	if m.MaxCredentialsPerDid != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.MaxCredentialsPerDid))
 		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DIDParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DIDParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DIDParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.MaxVerificationMethods != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxVerificationMethods))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.MaxServices != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxServices))
+		i--
 		dAtA[i] = 0x18
 	}
-	if m.VerificationTimeoutHours != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.VerificationTimeoutHours))
+	if m.MaxControllers != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxControllers))
 		i--
 		dAtA[i] = 0x10
 	}
-	if len(m.AllowedOauthProviders) > 0 {
-		for iNdEx := len(m.AllowedOauthProviders) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.AllowedOauthProviders[iNdEx])
-			copy(dAtA[i:], m.AllowedOauthProviders[iNdEx])
-			i = encodeVarintParams(dAtA, i, uint64(len(m.AllowedOauthProviders[iNdEx])))
+	if len(m.AllowedMethods) > 0 {
+		for iNdEx := len(m.AllowedMethods) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.AllowedMethods[iNdEx])
+			copy(dAtA[i:], m.AllowedMethods[iNdEx])
+			i = encodeVarintParams(dAtA, i, uint64(len(m.AllowedMethods[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -194,23 +547,83 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.AllowedOauthProviders) > 0 {
-		for _, s := range m.AllowedOauthProviders {
+	l = m.MfaParams.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.CredentialParams.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.DidParams.Size()
+	n += 1 + l + sovParams(uint64(l))
+	return n
+}
+
+func (m *MFAParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MaxMethods != 0 {
+		n += 1 + sovParams(uint64(m.MaxMethods))
+	}
+	if m.ChallengeExpiry != 0 {
+		n += 1 + sovParams(uint64(m.ChallengeExpiry))
+	}
+	if len(m.AllowedMethods) > 0 {
+		for _, s := range m.AllowedMethods {
 			l = len(s)
 			n += 1 + l + sovParams(uint64(l))
 		}
 	}
-	if m.VerificationTimeoutHours != 0 {
-		n += 1 + sovParams(uint64(m.VerificationTimeoutHours))
+	if m.MaxFailedAttempts != 0 {
+		n += 1 + sovParams(uint64(m.MaxFailedAttempts))
 	}
+	return n
+}
+
+func (m *CredentialParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.MaxCredentialsPerDid != 0 {
 		n += 1 + sovParams(uint64(m.MaxCredentialsPerDid))
 	}
-	if len(m.AllowedCredentialTypes) > 0 {
-		for _, s := range m.AllowedCredentialTypes {
+	if m.MaxClaimSize != 0 {
+		n += 1 + sovParams(uint64(m.MaxClaimSize))
+	}
+	if len(m.AllowedTypes) > 0 {
+		for _, s := range m.AllowedTypes {
 			l = len(s)
 			n += 1 + l + sovParams(uint64(l))
 		}
+	}
+	if m.MaxValidityDuration != 0 {
+		n += 1 + sovParams(uint64(m.MaxValidityDuration))
+	}
+	return n
+}
+
+func (m *DIDParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.AllowedMethods) > 0 {
+		for _, s := range m.AllowedMethods {
+			l = len(s)
+			n += 1 + l + sovParams(uint64(l))
+		}
+	}
+	if m.MaxControllers != 0 {
+		n += 1 + sovParams(uint64(m.MaxControllers))
+	}
+	if m.MaxServices != 0 {
+		n += 1 + sovParams(uint64(m.MaxServices))
+	}
+	if m.MaxVerificationMethods != 0 {
+		n += 1 + sovParams(uint64(m.MaxVerificationMethods))
 	}
 	return n
 }
@@ -252,7 +665,194 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllowedOauthProviders", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MfaParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MfaParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CredentialParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.CredentialParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DidParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.DidParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MFAParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MFAParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MFAParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxMethods", wireType)
+			}
+			m.MaxMethods = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxMethods |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChallengeExpiry", wireType)
+			}
+			m.ChallengeExpiry = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ChallengeExpiry |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowedMethods", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -280,13 +880,13 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AllowedOauthProviders = append(m.AllowedOauthProviders, string(dAtA[iNdEx:postIndex]))
+			m.AllowedMethods = append(m.AllowedMethods, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 2:
+		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VerificationTimeoutHours", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxFailedAttempts", wireType)
 			}
-			m.VerificationTimeoutHours = 0
+			m.MaxFailedAttempts = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -296,12 +896,62 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.VerificationTimeoutHours |= uint32(b&0x7F) << shift
+				m.MaxFailedAttempts |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 3:
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CredentialParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CredentialParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CredentialParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxCredentialsPerDid", wireType)
 			}
@@ -315,14 +965,33 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.MaxCredentialsPerDid |= uint32(b&0x7F) << shift
+				m.MaxCredentialsPerDid |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 4:
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxClaimSize", wireType)
+			}
+			m.MaxClaimSize = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxClaimSize |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllowedCredentialTypes", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowedTypes", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -350,8 +1019,166 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AllowedCredentialTypes = append(m.AllowedCredentialTypes, string(dAtA[iNdEx:postIndex]))
+			m.AllowedTypes = append(m.AllowedTypes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxValidityDuration", wireType)
+			}
+			m.MaxValidityDuration = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxValidityDuration |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DIDParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DIDParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DIDParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowedMethods", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AllowedMethods = append(m.AllowedMethods, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxControllers", wireType)
+			}
+			m.MaxControllers = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxControllers |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxServices", wireType)
+			}
+			m.MaxServices = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxServices |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxVerificationMethods", wireType)
+			}
+			m.MaxVerificationMethods = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxVerificationMethods |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipParams(dAtA[iNdEx:])

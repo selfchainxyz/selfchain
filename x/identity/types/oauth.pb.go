@@ -27,24 +27,84 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// SocialIdentity represents a user's identity from a social provider
+// UserInfo represents user information from an OAuth provider
+type UserInfo struct {
+	Id       string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email    string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+}
+
+func (m *UserInfo) Reset()         { *m = UserInfo{} }
+func (m *UserInfo) String() string { return proto.CompactTextString(m) }
+func (*UserInfo) ProtoMessage()    {}
+func (*UserInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1afd7a74b0bde80a, []int{0}
+}
+func (m *UserInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *UserInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_UserInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *UserInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UserInfo.Merge(m, src)
+}
+func (m *UserInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *UserInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_UserInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UserInfo proto.InternalMessageInfo
+
+func (m *UserInfo) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *UserInfo) GetUsername() string {
+	if m != nil {
+		return m.Username
+	}
+	return ""
+}
+
+func (m *UserInfo) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+// SocialIdentity represents a social identity linked to a DID
 type SocialIdentity struct {
 	Id         string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Did        string            `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
 	Provider   string            `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
-	Email      string            `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	Name       string            `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	VerifiedAt time.Time         `protobuf:"bytes,6,opt,name=verified_at,json=verifiedAt,proto3,stdtime" json:"verified_at"`
-	Metadata   map[string]string `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Verified   bool              `protobuf:"varint,8,opt,name=verified,proto3" json:"verified,omitempty"`
-	Created    *time.Time        `protobuf:"bytes,9,opt,name=created,proto3,stdtime" json:"created,omitempty"`
+	ProviderId string            `protobuf:"bytes,4,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	Profile    map[string]string `protobuf:"bytes,5,rep,name=profile,proto3" json:"profile,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	CreatedAt  *time.Time        `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	VerifiedAt *time.Time        `protobuf:"bytes,7,opt,name=verified_at,json=verifiedAt,proto3,stdtime" json:"verified_at,omitempty"`
+	LastUsed   *time.Time        `protobuf:"bytes,8,opt,name=last_used,json=lastUsed,proto3,stdtime" json:"last_used,omitempty"`
 }
 
 func (m *SocialIdentity) Reset()         { *m = SocialIdentity{} }
 func (m *SocialIdentity) String() string { return proto.CompactTextString(m) }
 func (*SocialIdentity) ProtoMessage()    {}
 func (*SocialIdentity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1afd7a74b0bde80a, []int{0}
+	return fileDescriptor_1afd7a74b0bde80a, []int{1}
 }
 func (m *SocialIdentity) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -94,164 +154,173 @@ func (m *SocialIdentity) GetProvider() string {
 	return ""
 }
 
-func (m *SocialIdentity) GetEmail() string {
+func (m *SocialIdentity) GetProviderId() string {
 	if m != nil {
-		return m.Email
+		return m.ProviderId
 	}
 	return ""
 }
 
-func (m *SocialIdentity) GetName() string {
+func (m *SocialIdentity) GetProfile() map[string]string {
+	if m != nil {
+		return m.Profile
+	}
+	return nil
+}
+
+func (m *SocialIdentity) GetCreatedAt() *time.Time {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return nil
+}
+
+func (m *SocialIdentity) GetVerifiedAt() *time.Time {
+	if m != nil {
+		return m.VerifiedAt
+	}
+	return nil
+}
+
+func (m *SocialIdentity) GetLastUsed() *time.Time {
+	if m != nil {
+		return m.LastUsed
+	}
+	return nil
+}
+
+// OAuthProvider represents an OAuth provider configuration
+type OAuthProvider struct {
+	Id           string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name         string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ClientId     string            `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret string            `protobuf:"bytes,4,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	AuthUrl      string            `protobuf:"bytes,5,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
+	TokenUrl     string            `protobuf:"bytes,6,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	ProfileUrl   string            `protobuf:"bytes,7,opt,name=profile_url,json=profileUrl,proto3" json:"profile_url,omitempty"`
+	Scopes       []string          `protobuf:"bytes,8,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	Config       map[string]string `protobuf:"bytes,9,rep,name=config,proto3" json:"config,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (m *OAuthProvider) Reset()         { *m = OAuthProvider{} }
+func (m *OAuthProvider) String() string { return proto.CompactTextString(m) }
+func (*OAuthProvider) ProtoMessage()    {}
+func (*OAuthProvider) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1afd7a74b0bde80a, []int{2}
+}
+func (m *OAuthProvider) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OAuthProvider) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OAuthProvider.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OAuthProvider) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OAuthProvider.Merge(m, src)
+}
+func (m *OAuthProvider) XXX_Size() int {
+	return m.Size()
+}
+func (m *OAuthProvider) XXX_DiscardUnknown() {
+	xxx_messageInfo_OAuthProvider.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OAuthProvider proto.InternalMessageInfo
+
+func (m *OAuthProvider) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *OAuthProvider) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *SocialIdentity) GetVerifiedAt() time.Time {
+func (m *OAuthProvider) GetClientId() string {
 	if m != nil {
-		return m.VerifiedAt
-	}
-	return time.Time{}
-}
-
-func (m *SocialIdentity) GetMetadata() map[string]string {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-func (m *SocialIdentity) GetVerified() bool {
-	if m != nil {
-		return m.Verified
-	}
-	return false
-}
-
-func (m *SocialIdentity) GetCreated() *time.Time {
-	if m != nil {
-		return m.Created
-	}
-	return nil
-}
-
-// QuerySocialIdentityRequest is the request type for querying a social identity
-type QuerySocialIdentityRequest struct {
-	Did      string `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
-	Provider string `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
-}
-
-func (m *QuerySocialIdentityRequest) Reset()         { *m = QuerySocialIdentityRequest{} }
-func (m *QuerySocialIdentityRequest) String() string { return proto.CompactTextString(m) }
-func (*QuerySocialIdentityRequest) ProtoMessage()    {}
-func (*QuerySocialIdentityRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1afd7a74b0bde80a, []int{1}
-}
-func (m *QuerySocialIdentityRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QuerySocialIdentityRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QuerySocialIdentityRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QuerySocialIdentityRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QuerySocialIdentityRequest.Merge(m, src)
-}
-func (m *QuerySocialIdentityRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QuerySocialIdentityRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QuerySocialIdentityRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QuerySocialIdentityRequest proto.InternalMessageInfo
-
-func (m *QuerySocialIdentityRequest) GetDid() string {
-	if m != nil {
-		return m.Did
+		return m.ClientId
 	}
 	return ""
 }
 
-func (m *QuerySocialIdentityRequest) GetProvider() string {
+func (m *OAuthProvider) GetClientSecret() string {
 	if m != nil {
-		return m.Provider
+		return m.ClientSecret
 	}
 	return ""
 }
 
-// QuerySocialIdentityResponse is the response type for the social identity query
-type QuerySocialIdentityResponse struct {
-	Identity SocialIdentity `protobuf:"bytes,1,opt,name=identity,proto3" json:"identity"`
-}
-
-func (m *QuerySocialIdentityResponse) Reset()         { *m = QuerySocialIdentityResponse{} }
-func (m *QuerySocialIdentityResponse) String() string { return proto.CompactTextString(m) }
-func (*QuerySocialIdentityResponse) ProtoMessage()    {}
-func (*QuerySocialIdentityResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1afd7a74b0bde80a, []int{2}
-}
-func (m *QuerySocialIdentityResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QuerySocialIdentityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QuerySocialIdentityResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QuerySocialIdentityResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QuerySocialIdentityResponse.Merge(m, src)
-}
-func (m *QuerySocialIdentityResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QuerySocialIdentityResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QuerySocialIdentityResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QuerySocialIdentityResponse proto.InternalMessageInfo
-
-func (m *QuerySocialIdentityResponse) GetIdentity() SocialIdentity {
+func (m *OAuthProvider) GetAuthUrl() string {
 	if m != nil {
-		return m.Identity
+		return m.AuthUrl
 	}
-	return SocialIdentity{}
+	return ""
 }
 
-// QueryLinkedDIDRequest is the request type for querying a DID linked to a social identity
-type QueryLinkedDIDRequest struct {
-	Provider string `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
-	SocialId string `protobuf:"bytes,2,opt,name=social_id,json=socialId,proto3" json:"social_id,omitempty"`
+func (m *OAuthProvider) GetTokenUrl() string {
+	if m != nil {
+		return m.TokenUrl
+	}
+	return ""
 }
 
-func (m *QueryLinkedDIDRequest) Reset()         { *m = QueryLinkedDIDRequest{} }
-func (m *QueryLinkedDIDRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryLinkedDIDRequest) ProtoMessage()    {}
-func (*QueryLinkedDIDRequest) Descriptor() ([]byte, []int) {
+func (m *OAuthProvider) GetProfileUrl() string {
+	if m != nil {
+		return m.ProfileUrl
+	}
+	return ""
+}
+
+func (m *OAuthProvider) GetScopes() []string {
+	if m != nil {
+		return m.Scopes
+	}
+	return nil
+}
+
+func (m *OAuthProvider) GetConfig() map[string]string {
+	if m != nil {
+		return m.Config
+	}
+	return nil
+}
+
+// OAuthSession represents an OAuth session
+type OAuthSession struct {
+	Id           string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Did          string     `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
+	Provider     string     `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
+	State        string     `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
+	CodeVerifier string     `protobuf:"bytes,5,opt,name=code_verifier,json=codeVerifier,proto3" json:"code_verifier,omitempty"`
+	CreatedAt    *time.Time `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	ExpiresAt    *time.Time `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3,stdtime" json:"expires_at,omitempty"`
+}
+
+func (m *OAuthSession) Reset()         { *m = OAuthSession{} }
+func (m *OAuthSession) String() string { return proto.CompactTextString(m) }
+func (*OAuthSession) ProtoMessage()    {}
+func (*OAuthSession) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1afd7a74b0bde80a, []int{3}
 }
-func (m *QueryLinkedDIDRequest) XXX_Unmarshal(b []byte) error {
+func (m *OAuthSession) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryLinkedDIDRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OAuthSession) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryLinkedDIDRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OAuthSession.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -261,120 +330,162 @@ func (m *QueryLinkedDIDRequest) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *QueryLinkedDIDRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryLinkedDIDRequest.Merge(m, src)
+func (m *OAuthSession) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OAuthSession.Merge(m, src)
 }
-func (m *QueryLinkedDIDRequest) XXX_Size() int {
+func (m *OAuthSession) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryLinkedDIDRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryLinkedDIDRequest.DiscardUnknown(m)
+func (m *OAuthSession) XXX_DiscardUnknown() {
+	xxx_messageInfo_OAuthSession.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryLinkedDIDRequest proto.InternalMessageInfo
+var xxx_messageInfo_OAuthSession proto.InternalMessageInfo
 
-func (m *QueryLinkedDIDRequest) GetProvider() string {
+func (m *OAuthSession) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *OAuthSession) GetDid() string {
+	if m != nil {
+		return m.Did
+	}
+	return ""
+}
+
+func (m *OAuthSession) GetProvider() string {
 	if m != nil {
 		return m.Provider
 	}
 	return ""
 }
 
-func (m *QueryLinkedDIDRequest) GetSocialId() string {
+func (m *OAuthSession) GetState() string {
 	if m != nil {
-		return m.SocialId
+		return m.State
 	}
 	return ""
 }
 
-// QueryLinkedDIDResponse is the response type for the linked DID query
-type QueryLinkedDIDResponse struct {
-	Did string `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
-}
-
-func (m *QueryLinkedDIDResponse) Reset()         { *m = QueryLinkedDIDResponse{} }
-func (m *QueryLinkedDIDResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryLinkedDIDResponse) ProtoMessage()    {}
-func (*QueryLinkedDIDResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1afd7a74b0bde80a, []int{4}
-}
-func (m *QueryLinkedDIDResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryLinkedDIDResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryLinkedDIDResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryLinkedDIDResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryLinkedDIDResponse.Merge(m, src)
-}
-func (m *QueryLinkedDIDResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryLinkedDIDResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryLinkedDIDResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryLinkedDIDResponse proto.InternalMessageInfo
-
-func (m *QueryLinkedDIDResponse) GetDid() string {
+func (m *OAuthSession) GetCodeVerifier() string {
 	if m != nil {
-		return m.Did
+		return m.CodeVerifier
 	}
 	return ""
+}
+
+func (m *OAuthSession) GetCreatedAt() *time.Time {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return nil
+}
+
+func (m *OAuthSession) GetExpiresAt() *time.Time {
+	if m != nil {
+		return m.ExpiresAt
+	}
+	return nil
 }
 
 func init() {
+	proto.RegisterType((*UserInfo)(nil), "selfchain.identity.UserInfo")
 	proto.RegisterType((*SocialIdentity)(nil), "selfchain.identity.SocialIdentity")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.SocialIdentity.MetadataEntry")
-	proto.RegisterType((*QuerySocialIdentityRequest)(nil), "selfchain.identity.QuerySocialIdentityRequest")
-	proto.RegisterType((*QuerySocialIdentityResponse)(nil), "selfchain.identity.QuerySocialIdentityResponse")
-	proto.RegisterType((*QueryLinkedDIDRequest)(nil), "selfchain.identity.QueryLinkedDIDRequest")
-	proto.RegisterType((*QueryLinkedDIDResponse)(nil), "selfchain.identity.QueryLinkedDIDResponse")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.SocialIdentity.ProfileEntry")
+	proto.RegisterType((*OAuthProvider)(nil), "selfchain.identity.OAuthProvider")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.OAuthProvider.ConfigEntry")
+	proto.RegisterType((*OAuthSession)(nil), "selfchain.identity.OAuthSession")
 }
 
 func init() { proto.RegisterFile("selfchain/identity/oauth.proto", fileDescriptor_1afd7a74b0bde80a) }
 
 var fileDescriptor_1afd7a74b0bde80a = []byte{
-	// 476 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x53, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0xce, 0x3a, 0x69, 0xeb, 0x4c, 0x44, 0x85, 0x56, 0x05, 0x59, 0xae, 0xe4, 0x44, 0x3e, 0x45,
-	0x1c, 0x6c, 0x14, 0x38, 0xa0, 0x72, 0x22, 0x4a, 0x0f, 0x45, 0x45, 0x02, 0xc3, 0x89, 0x4b, 0xb5,
-	0xcd, 0x4e, 0xd2, 0x55, 0x6d, 0xaf, 0xb1, 0xd7, 0x11, 0x7e, 0x8b, 0x3e, 0x03, 0x4f, 0xd3, 0x63,
-	0x8f, 0x9c, 0x00, 0x25, 0x2f, 0x82, 0xbc, 0xfe, 0x69, 0xd3, 0x56, 0xea, 0x6d, 0x66, 0x67, 0xe7,
-	0x9b, 0x6f, 0xbe, 0x6f, 0x17, 0x9c, 0x0c, 0xc3, 0xc5, 0xfc, 0x82, 0x89, 0xd8, 0x17, 0x1c, 0x63,
-	0x25, 0x54, 0xe1, 0x4b, 0x96, 0xab, 0x0b, 0x2f, 0x49, 0xa5, 0x92, 0x94, 0xb6, 0x75, 0xaf, 0xa9,
-	0xdb, 0x07, 0x4b, 0xb9, 0x94, 0xba, 0xec, 0x97, 0x51, 0x75, 0xd3, 0x1e, 0x2e, 0xa5, 0x5c, 0x86,
-	0xe8, 0xeb, 0xec, 0x3c, 0x5f, 0xf8, 0x4a, 0x44, 0x98, 0x29, 0x16, 0x25, 0xd5, 0x05, 0xf7, 0x57,
-	0x17, 0xf6, 0xbf, 0xca, 0xb9, 0x60, 0xe1, 0x49, 0x8d, 0x44, 0xf7, 0xc1, 0x10, 0xdc, 0x22, 0x23,
-	0x32, 0xee, 0x07, 0x86, 0xe0, 0xf4, 0x39, 0x74, 0xb9, 0xe0, 0x96, 0xa1, 0x0f, 0xca, 0x90, 0xda,
-	0x60, 0x26, 0xa9, 0x5c, 0x09, 0x8e, 0xa9, 0xd5, 0xd5, 0xc7, 0x6d, 0x4e, 0x0f, 0x60, 0x07, 0x23,
-	0x26, 0x42, 0xab, 0xa7, 0x0b, 0x55, 0x42, 0x29, 0xf4, 0x62, 0x16, 0xa1, 0xb5, 0xa3, 0x0f, 0x75,
-	0x4c, 0x8f, 0x61, 0xb0, 0xc2, 0x54, 0x2c, 0x04, 0xf2, 0x33, 0xa6, 0xac, 0xdd, 0x11, 0x19, 0x0f,
-	0x26, 0xb6, 0x57, 0x31, 0xf6, 0x1a, 0xc6, 0xde, 0xb7, 0x86, 0xf1, 0xd4, 0xbc, 0xfe, 0x33, 0xec,
-	0x5c, 0xfd, 0x1d, 0x92, 0x00, 0x9a, 0xc6, 0x0f, 0x8a, 0x9e, 0x82, 0x19, 0xa1, 0x62, 0x9c, 0x29,
-	0x66, 0xed, 0x8d, 0xba, 0xe3, 0xc1, 0xe4, 0xb5, 0xf7, 0x50, 0x1f, 0x6f, 0x7b, 0x49, 0xef, 0x53,
-	0xdd, 0x72, 0x1c, 0xab, 0xb4, 0x08, 0x5a, 0x84, 0x72, 0xb5, 0x06, 0xdb, 0x32, 0x47, 0x64, 0x6c,
-	0x06, 0x6d, 0x4e, 0x8f, 0x60, 0x6f, 0x9e, 0x22, 0x53, 0xc8, 0xad, 0xfe, 0x93, 0x64, 0x7b, 0x9a,
-	0x68, 0xd3, 0x60, 0xbf, 0x87, 0x67, 0x5b, 0x23, 0x4b, 0x55, 0x2f, 0xb1, 0xa8, 0x65, 0x2e, 0xc3,
-	0x52, 0xb9, 0x15, 0x0b, 0x73, 0xac, 0x95, 0xae, 0x92, 0x23, 0xe3, 0x1d, 0x71, 0x3f, 0x82, 0xfd,
-	0x25, 0xc7, 0xb4, 0xd8, 0xde, 0x21, 0xc0, 0x1f, 0x39, 0x66, 0xaa, 0xf1, 0x87, 0x3c, 0xee, 0x8f,
-	0xb1, 0xed, 0x8f, 0x3b, 0x87, 0xc3, 0x47, 0xb1, 0xb2, 0x44, 0xc6, 0x19, 0xd2, 0x19, 0x98, 0x8d,
-	0x64, 0x1a, 0x71, 0x30, 0x71, 0x9f, 0x56, 0x73, 0xda, 0x2b, 0x9d, 0x09, 0xda, 0x4e, 0xf7, 0x33,
-	0xbc, 0xd0, 0x43, 0x4e, 0x45, 0x7c, 0x89, 0x7c, 0x76, 0x32, 0x6b, 0xb8, 0xde, 0x65, 0x46, 0xee,
-	0xbd, 0x9c, 0x43, 0xe8, 0x67, 0x1a, 0xf6, 0xac, 0x7d, 0x6d, 0x66, 0x56, 0xcf, 0x71, 0x5f, 0xc1,
-	0xcb, 0xfb, 0x88, 0x35, 0xe3, 0x07, 0xeb, 0x4f, 0xdf, 0x5e, 0xaf, 0x1d, 0x72, 0xb3, 0x76, 0xc8,
-	0xbf, 0xb5, 0x43, 0xae, 0x36, 0x4e, 0xe7, 0x66, 0xe3, 0x74, 0x7e, 0x6f, 0x9c, 0xce, 0x77, 0xfb,
-	0xf6, 0x63, 0xfd, 0xbc, 0xfd, 0x5a, 0xaa, 0x48, 0x30, 0x3b, 0xdf, 0xd5, 0x26, 0xbe, 0xf9, 0x1f,
-	0x00, 0x00, 0xff, 0xff, 0x87, 0x93, 0x32, 0x47, 0x7d, 0x03, 0x00, 0x00,
+	// 606 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xcd, 0x4e, 0xdb, 0x4c,
+	0x14, 0xc5, 0x09, 0xf9, 0xf1, 0x4d, 0x40, 0x9f, 0x46, 0xe8, 0x93, 0xeb, 0x4a, 0x26, 0xa2, 0x9b,
+	0x6c, 0xea, 0x48, 0xb4, 0x8b, 0x16, 0xa9, 0x42, 0xa1, 0x62, 0x11, 0xa9, 0x52, 0x51, 0x28, 0x5d,
+	0x74, 0x13, 0x19, 0xcf, 0x4d, 0x18, 0xe1, 0x78, 0xac, 0x99, 0x31, 0x22, 0x8f, 0xd0, 0x1d, 0xaf,
+	0xd3, 0x37, 0xe8, 0x92, 0x65, 0x77, 0xad, 0x60, 0xd3, 0xc7, 0xa8, 0xe6, 0xc7, 0x01, 0x4a, 0x17,
+	0x20, 0x76, 0xf7, 0x9e, 0x33, 0xf7, 0xd8, 0x3e, 0xf7, 0x78, 0x20, 0x92, 0x98, 0x4d, 0xd3, 0x93,
+	0x84, 0xe5, 0x03, 0x46, 0x31, 0x57, 0x4c, 0x2d, 0x06, 0x3c, 0x29, 0xd5, 0x49, 0x5c, 0x08, 0xae,
+	0x38, 0x21, 0x4b, 0x3e, 0xae, 0xf8, 0x70, 0x63, 0xc6, 0x67, 0xdc, 0xd0, 0x03, 0x5d, 0xd9, 0x93,
+	0xe1, 0xe6, 0x8c, 0xf3, 0x59, 0x86, 0x03, 0xd3, 0x1d, 0x97, 0xd3, 0x81, 0x62, 0x73, 0x94, 0x2a,
+	0x99, 0x17, 0xf6, 0xc0, 0xd6, 0x07, 0x68, 0x1f, 0x49, 0x14, 0xa3, 0x7c, 0xca, 0xc9, 0x3a, 0xd4,
+	0x18, 0x0d, 0xbc, 0x9e, 0xd7, 0xf7, 0xc7, 0x35, 0x46, 0x49, 0x08, 0xed, 0x52, 0xa2, 0xc8, 0x93,
+	0x39, 0x06, 0x35, 0x83, 0x2e, 0x7b, 0xb2, 0x01, 0x0d, 0x9c, 0x27, 0x2c, 0x0b, 0xea, 0x86, 0xb0,
+	0xcd, 0xd6, 0xb7, 0x3a, 0xac, 0x1f, 0xf2, 0x94, 0x25, 0xd9, 0xc8, 0xbd, 0xd7, 0x3d, 0xd1, 0xff,
+	0xa0, 0x4e, 0x19, 0x75, 0x7a, 0xba, 0xd4, 0x8f, 0x29, 0x04, 0x3f, 0x63, 0x14, 0x85, 0x53, 0x5b,
+	0xf6, 0x64, 0x13, 0x3a, 0x55, 0x3d, 0x61, 0x34, 0x58, 0x35, 0x34, 0x54, 0xd0, 0x88, 0x92, 0x11,
+	0xb4, 0x0a, 0xc1, 0xa7, 0x2c, 0xc3, 0xa0, 0xd1, 0xab, 0xf7, 0x3b, 0xdb, 0x83, 0xf8, 0xbe, 0x39,
+	0xf1, 0xdd, 0x77, 0x8a, 0x0f, 0xec, 0xc4, 0x7e, 0xae, 0xc4, 0x62, 0x5c, 0xcd, 0x93, 0x5d, 0x80,
+	0x54, 0x60, 0xa2, 0x90, 0x4e, 0x12, 0x15, 0x34, 0x7b, 0x5e, 0xbf, 0xb3, 0x1d, 0xc6, 0xd6, 0xc0,
+	0xb8, 0x32, 0x30, 0xfe, 0x54, 0x19, 0xb8, 0xb7, 0x7a, 0xf1, 0x73, 0xd3, 0x1b, 0xfb, 0x6e, 0x66,
+	0xa8, 0xc8, 0x10, 0x3a, 0x67, 0x28, 0xd8, 0x94, 0x59, 0x85, 0xd6, 0x03, 0x15, 0xa0, 0x1a, 0x1a,
+	0x2a, 0xf2, 0x0e, 0xfc, 0x2c, 0x91, 0x6a, 0x52, 0x4a, 0xa4, 0x41, 0xfb, 0x81, 0x02, 0x6d, 0x3d,
+	0x72, 0x24, 0x91, 0x86, 0x3b, 0xd0, 0xbd, 0xfd, 0x6d, 0xda, 0xec, 0x53, 0x5c, 0x38, 0xf7, 0x75,
+	0xa9, 0xf7, 0x76, 0x96, 0x64, 0x65, 0xb5, 0x50, 0xdb, 0xec, 0xd4, 0xde, 0x78, 0x5b, 0xbf, 0x6b,
+	0xb0, 0xf6, 0x71, 0x58, 0xaa, 0x93, 0x83, 0xca, 0xfc, 0xbf, 0x57, 0x47, 0x60, 0xf5, 0x56, 0x16,
+	0x4c, 0x4d, 0x9e, 0x83, 0x9f, 0x66, 0x0c, 0x73, 0xa5, 0xd7, 0xe3, 0xb6, 0x67, 0x81, 0x11, 0x25,
+	0x2f, 0x60, 0xcd, 0x91, 0x12, 0x53, 0x81, 0xca, 0xed, 0xaf, 0x6b, 0xc1, 0x43, 0x83, 0x91, 0x67,
+	0xd0, 0xd6, 0xd1, 0x9e, 0x94, 0x22, 0x0b, 0x1a, 0x86, 0x6f, 0xe9, 0xfe, 0x48, 0x64, 0x5a, 0x5c,
+	0xf1, 0x53, 0xcc, 0x0d, 0xd7, 0xb4, 0xe2, 0x06, 0xd0, 0xa4, 0x8d, 0x86, 0xfe, 0x56, 0x43, 0xb7,
+	0x96, 0xd1, 0xd0, 0x90, 0x3e, 0xf0, 0x3f, 0x34, 0x65, 0xca, 0x0b, 0x94, 0x41, 0xbb, 0x57, 0xef,
+	0xfb, 0x63, 0xd7, 0x91, 0x7d, 0x68, 0xa6, 0x3c, 0x9f, 0xb2, 0x59, 0xe0, 0x9b, 0xc4, 0xbc, 0xfc,
+	0x57, 0x62, 0xee, 0x38, 0x11, 0xbf, 0x37, 0xe7, 0x6d, 0x5e, 0xdc, 0x70, 0xf8, 0x16, 0x3a, 0xb7,
+	0xe0, 0x47, 0x59, 0xfd, 0xb5, 0x06, 0x5d, 0xf3, 0x80, 0x43, 0x94, 0x92, 0xf1, 0xfc, 0x89, 0x3f,
+	0xc9, 0x06, 0x34, 0xa4, 0x4a, 0x14, 0x3a, 0x7b, 0x6d, 0x63, 0xcc, 0xe7, 0x14, 0x27, 0x2e, 0x5d,
+	0xc2, 0x99, 0xdb, 0xd5, 0xe0, 0x67, 0x87, 0x3d, 0x3d, 0xf3, 0xbb, 0x00, 0x78, 0x5e, 0x30, 0x81,
+	0xf2, 0x31, 0x91, 0xf7, 0xdd, 0xcc, 0x50, 0xed, 0xbd, 0xfe, 0x7e, 0x15, 0x79, 0x97, 0x57, 0x91,
+	0xf7, 0xeb, 0x2a, 0xf2, 0x2e, 0xae, 0xa3, 0x95, 0xcb, 0xeb, 0x68, 0xe5, 0xc7, 0x75, 0xb4, 0xf2,
+	0x25, 0xbc, 0xb9, 0x05, 0xcf, 0x6f, 0xee, 0x41, 0xb5, 0x28, 0x50, 0x1e, 0x37, 0x8d, 0xf4, 0xab,
+	0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xb0, 0x43, 0x74, 0x97, 0x2a, 0x05, 0x00, 0x00,
+}
+
+func (m *UserInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UserInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *UserInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Email) > 0 {
+		i -= len(m.Email)
+		copy(dAtA[i:], m.Email)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Email)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Username) > 0 {
+		i -= len(m.Username)
+		copy(dAtA[i:], m.Username)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Username)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *SocialIdentity) Marshal() (dAtA []byte, err error) {
@@ -397,29 +508,39 @@ func (m *SocialIdentity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Created != nil {
-		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Created, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created):])
+	if m.LastUsed != nil {
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.LastUsed, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.LastUsed):])
 		if err1 != nil {
 			return 0, err1
 		}
 		i -= n1
 		i = encodeVarintOauth(dAtA, i, uint64(n1))
 		i--
-		dAtA[i] = 0x4a
+		dAtA[i] = 0x42
 	}
-	if m.Verified {
-		i--
-		if m.Verified {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+	if m.VerifiedAt != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.VerifiedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.VerifiedAt):])
+		if err2 != nil {
+			return 0, err2
 		}
+		i -= n2
+		i = encodeVarintOauth(dAtA, i, uint64(n2))
 		i--
-		dAtA[i] = 0x40
+		dAtA[i] = 0x3a
 	}
-	if len(m.Metadata) > 0 {
-		for k := range m.Metadata {
-			v := m.Metadata[k]
+	if m.CreatedAt != nil {
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err3 != nil {
+			return 0, err3
+		}
+		i -= n3
+		i = encodeVarintOauth(dAtA, i, uint64(n3))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Profile) > 0 {
+		for k := range m.Profile {
+			v := m.Profile[k]
 			baseI := i
 			i -= len(v)
 			copy(dAtA[i:], v)
@@ -433,28 +554,13 @@ func (m *SocialIdentity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0xa
 			i = encodeVarintOauth(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x3a
+			dAtA[i] = 0x2a
 		}
 	}
-	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.VerifiedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.VerifiedAt):])
-	if err2 != nil {
-		return 0, err2
-	}
-	i -= n2
-	i = encodeVarintOauth(dAtA, i, uint64(n2))
-	i--
-	dAtA[i] = 0x32
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.Email) > 0 {
-		i -= len(m.Email)
-		copy(dAtA[i:], m.Email)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.Email)))
+	if len(m.ProviderId) > 0 {
+		i -= len(m.ProviderId)
+		copy(dAtA[i:], m.ProviderId)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.ProviderId)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -482,7 +588,7 @@ func (m *SocialIdentity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QuerySocialIdentityRequest) Marshal() (dAtA []byte, err error) {
+func (m *OAuthProvider) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -492,104 +598,97 @@ func (m *QuerySocialIdentityRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QuerySocialIdentityRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *OAuthProvider) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QuerySocialIdentityRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OAuthProvider) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Provider) > 0 {
-		i -= len(m.Provider)
-		copy(dAtA[i:], m.Provider)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.Provider)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Did) > 0 {
-		i -= len(m.Did)
-		copy(dAtA[i:], m.Did)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.Did)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QuerySocialIdentityResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QuerySocialIdentityResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QuerySocialIdentityResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.Identity.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if len(m.Config) > 0 {
+		for k := range m.Config {
+			v := m.Config[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintOauth(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintOauth(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintOauth(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x4a
 		}
-		i -= size
-		i = encodeVarintOauth(dAtA, i, uint64(size))
 	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryLinkedDIDRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
+	if len(m.Scopes) > 0 {
+		for iNdEx := len(m.Scopes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Scopes[iNdEx])
+			copy(dAtA[i:], m.Scopes[iNdEx])
+			i = encodeVarintOauth(dAtA, i, uint64(len(m.Scopes[iNdEx])))
+			i--
+			dAtA[i] = 0x42
+		}
 	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryLinkedDIDRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryLinkedDIDRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.SocialId) > 0 {
-		i -= len(m.SocialId)
-		copy(dAtA[i:], m.SocialId)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.SocialId)))
+	if len(m.ProfileUrl) > 0 {
+		i -= len(m.ProfileUrl)
+		copy(dAtA[i:], m.ProfileUrl)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.ProfileUrl)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.TokenUrl) > 0 {
+		i -= len(m.TokenUrl)
+		copy(dAtA[i:], m.TokenUrl)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.TokenUrl)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.AuthUrl) > 0 {
+		i -= len(m.AuthUrl)
+		copy(dAtA[i:], m.AuthUrl)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.AuthUrl)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.ClientSecret) > 0 {
+		i -= len(m.ClientSecret)
+		copy(dAtA[i:], m.ClientSecret)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.ClientSecret)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.ClientId) > 0 {
+		i -= len(m.ClientId)
+		copy(dAtA[i:], m.ClientId)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.ClientId)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Name)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Provider) > 0 {
-		i -= len(m.Provider)
-		copy(dAtA[i:], m.Provider)
-		i = encodeVarintOauth(dAtA, i, uint64(len(m.Provider)))
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Id)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryLinkedDIDResponse) Marshal() (dAtA []byte, err error) {
+func (m *OAuthSession) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -599,20 +698,68 @@ func (m *QueryLinkedDIDResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryLinkedDIDResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *OAuthSession) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryLinkedDIDResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OAuthSession) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.ExpiresAt != nil {
+		n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
+		if err4 != nil {
+			return 0, err4
+		}
+		i -= n4
+		i = encodeVarintOauth(dAtA, i, uint64(n4))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.CreatedAt != nil {
+		n5, err5 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err5 != nil {
+			return 0, err5
+		}
+		i -= n5
+		i = encodeVarintOauth(dAtA, i, uint64(n5))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.CodeVerifier) > 0 {
+		i -= len(m.CodeVerifier)
+		copy(dAtA[i:], m.CodeVerifier)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.CodeVerifier)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.State) > 0 {
+		i -= len(m.State)
+		copy(dAtA[i:], m.State)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.State)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Provider) > 0 {
+		i -= len(m.Provider)
+		copy(dAtA[i:], m.Provider)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Provider)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Did) > 0 {
 		i -= len(m.Did)
 		copy(dAtA[i:], m.Did)
 		i = encodeVarintOauth(dAtA, i, uint64(len(m.Did)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintOauth(dAtA, i, uint64(len(m.Id)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -630,6 +777,27 @@ func encodeVarintOauth(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *UserInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.Username)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.Email)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	return n
+}
+
 func (m *SocialIdentity) Size() (n int) {
 	if m == nil {
 		return 0
@@ -648,7 +816,40 @@ func (m *SocialIdentity) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
-	l = len(m.Email)
+	l = len(m.ProviderId)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	if len(m.Profile) > 0 {
+		for k, v := range m.Profile {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovOauth(uint64(len(k))) + 1 + len(v) + sovOauth(uint64(len(v)))
+			n += mapEntrySize + 1 + sovOauth(uint64(mapEntrySize))
+		}
+	}
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	if m.VerifiedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.VerifiedAt)
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	if m.LastUsed != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.LastUsed)
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	return n
+}
+
+func (m *OAuthProvider) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Id)
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
@@ -656,32 +857,53 @@ func (m *SocialIdentity) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.VerifiedAt)
-	n += 1 + l + sovOauth(uint64(l))
-	if len(m.Metadata) > 0 {
-		for k, v := range m.Metadata {
+	l = len(m.ClientId)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.ClientSecret)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.AuthUrl)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.TokenUrl)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	l = len(m.ProfileUrl)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
+	if len(m.Scopes) > 0 {
+		for _, s := range m.Scopes {
+			l = len(s)
+			n += 1 + l + sovOauth(uint64(l))
+		}
+	}
+	if len(m.Config) > 0 {
+		for k, v := range m.Config {
 			_ = k
 			_ = v
 			mapEntrySize := 1 + len(k) + sovOauth(uint64(len(k))) + 1 + len(v) + sovOauth(uint64(len(v)))
 			n += mapEntrySize + 1 + sovOauth(uint64(mapEntrySize))
 		}
 	}
-	if m.Verified {
-		n += 2
-	}
-	if m.Created != nil {
-		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created)
-		n += 1 + l + sovOauth(uint64(l))
-	}
 	return n
 }
 
-func (m *QuerySocialIdentityRequest) Size() (n int) {
+func (m *OAuthSession) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovOauth(uint64(l))
+	}
 	l = len(m.Did)
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
@@ -690,45 +912,20 @@ func (m *QuerySocialIdentityRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
-	return n
-}
-
-func (m *QuerySocialIdentityResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Identity.Size()
-	n += 1 + l + sovOauth(uint64(l))
-	return n
-}
-
-func (m *QueryLinkedDIDRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Provider)
+	l = len(m.State)
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
-	l = len(m.SocialId)
+	l = len(m.CodeVerifier)
 	if l > 0 {
 		n += 1 + l + sovOauth(uint64(l))
 	}
-	return n
-}
-
-func (m *QueryLinkedDIDResponse) Size() (n int) {
-	if m == nil {
-		return 0
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
+		n += 1 + l + sovOauth(uint64(l))
 	}
-	var l int
-	_ = l
-	l = len(m.Did)
-	if l > 0 {
+	if m.ExpiresAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt)
 		n += 1 + l + sovOauth(uint64(l))
 	}
 	return n
@@ -739,6 +936,152 @@ func sovOauth(x uint64) (n int) {
 }
 func sozOauth(x uint64) (n int) {
 	return sovOauth(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *UserInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOauth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UserInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UserInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Username", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Username = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Email", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Email = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOauth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -867,7 +1210,7 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Email", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ProviderId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -895,43 +1238,11 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Email = string(dAtA[iNdEx:postIndex])
+			m.ProviderId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOauth
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOauth
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VerifiedAt", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Profile", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -958,41 +1269,8 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.VerifiedAt, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOauth
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthOauth
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metadata == nil {
-				m.Metadata = make(map[string]string)
+			if m.Profile == nil {
+				m.Profile = make(map[string]string)
 			}
 			var mapkey string
 			var mapvalue string
@@ -1087,13 +1365,85 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Metadata[mapkey] = mapvalue
+			m.Profile[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VerifiedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.VerifiedAt == nil {
+				m.VerifiedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.VerifiedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Verified", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastUsed", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOauth
@@ -1103,15 +1453,337 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Verified = bool(v != 0)
+			if msglen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.LastUsed == nil {
+				m.LastUsed = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.LastUsed, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOauth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OAuthProvider) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOauth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OAuthProvider: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OAuthProvider: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClientId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClientId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClientSecret", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClientSecret = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AuthUrl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AuthUrl = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TokenUrl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TokenUrl = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProfileUrl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProfileUrl = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Scopes", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Scopes = append(m.Scopes, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		case 9:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Created", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Config", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1138,12 +1810,103 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Created == nil {
-				m.Created = new(time.Time)
+			if m.Config == nil {
+				m.Config = make(map[string]string)
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.Created, dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowOauth
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowOauth
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthOauth
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthOauth
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowOauth
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthOauth
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthOauth
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipOauth(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthOauth
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
 			}
+			m.Config[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1166,7 +1929,7 @@ func (m *SocialIdentity) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QuerySocialIdentityRequest) Unmarshal(dAtA []byte) error {
+func (m *OAuthSession) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1189,13 +1952,45 @@ func (m *QuerySocialIdentityRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QuerySocialIdentityRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: OAuthSession: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QuerySocialIdentityRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OAuthSession: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
 			}
@@ -1227,7 +2022,7 @@ func (m *QuerySocialIdentityRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Did = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Provider", wireType)
 			}
@@ -1259,59 +2054,73 @@ func (m *QuerySocialIdentityRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Provider = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipOauth(dAtA[iNdEx:])
-			if err != nil {
-				return err
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthOauth
 			}
-			if (iNdEx + skippy) > l {
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QuerySocialIdentityResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowOauth
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QuerySocialIdentityResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QuerySocialIdentityResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+			m.State = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Identity", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CodeVerifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOauth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOauth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOauth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CodeVerifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1338,65 +2147,18 @@ func (m *QuerySocialIdentityResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Identity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipOauth(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryLinkedDIDRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowOauth
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryLinkedDIDRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryLinkedDIDRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Provider", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpiresAt", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOauth
@@ -1406,137 +2168,27 @@ func (m *QueryLinkedDIDRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthOauth
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthOauth
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Provider = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SocialId", wireType)
+			if m.ExpiresAt == nil {
+				m.ExpiresAt = new(time.Time)
 			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOauth
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOauth
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SocialId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipOauth(dAtA[iNdEx:])
-			if err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ExpiresAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryLinkedDIDResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowOauth
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryLinkedDIDResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryLinkedDIDResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOauth
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOauth
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOauth
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Did = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
