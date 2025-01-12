@@ -120,7 +120,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if err := cred.ValidateBasic(); err != nil {
 			panic(fmt.Sprintf("invalid credential: %v", err))
 		}
-		k.SetCredential(ctx, cred)
+		k.SetCredential(ctx, &cred)
 	}
 
 	// Store social identities

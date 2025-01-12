@@ -52174,6 +52174,700 @@ paths:
                         }
       tags:
         - Query
+  /selfchain/identity/credential/{id}:
+    get:
+      summary: Queries a credential by ID
+      operationId: SelfchainIdentityCredential
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              credential:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  issuer:
+                    type: string
+                  subject:
+                    type: string
+                  claims:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  issuance_date:
+                    type: string
+                    format: int64
+                  expiration_date:
+                    type: string
+                    format: int64
+                  status:
+                    type: string
+                  proof:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      created:
+                        type: string
+                        format: int64
+                      verification_method:
+                        type: string
+                      proof_purpose:
+                        type: string
+                    title: CredentialProof represents a proof for a credential
+                title: Credential represents a verifiable credential
+            description: >-
+              QueryCredentialResponse is response type for the Query/Credential
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/credentials/{did}:
+    get:
+      summary: Queries credentials by DID
+      operationId: SelfchainIdentityCredentialsByDID
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              credentials:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                    issuer:
+                      type: string
+                    subject:
+                      type: string
+                    claims:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    issuance_date:
+                      type: string
+                      format: int64
+                    expiration_date:
+                      type: string
+                      format: int64
+                    status:
+                      type: string
+                    proof:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        created:
+                          type: string
+                          format: int64
+                        verification_method:
+                          type: string
+                        proof_purpose:
+                          type: string
+                      title: CredentialProof represents a proof for a credential
+                  title: Credential represents a verifiable credential
+            description: >-
+              QueryCredentialsByDIDResponse is response type for the
+              Query/CredentialsByDID method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/did_documents/{did}:
+    get:
+      summary: Queries a list of DIDDocuments items.
+      operationId: SelfchainIdentityDIDDocuments
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              document:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  controller:
+                    type: array
+                    items:
+                      type: string
+                  verification_method:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        controller:
+                          type: string
+                        public_key_base58:
+                          type: string
+                      title: >-
+                        VerificationMethod represents a verification method in a
+                        DID Document
+                  authentication:
+                    type: array
+                    items:
+                      type: string
+                  assertion_method:
+                    type: array
+                    items:
+                      type: string
+                  key_agreement:
+                    type: array
+                    items:
+                      type: string
+                  capability_invocation:
+                    type: array
+                    items:
+                      type: string
+                  capability_delegation:
+                    type: array
+                    items:
+                      type: string
+                  service:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        service_endpoint:
+                          type: string
+                        properties:
+                          type: object
+                          additionalProperties:
+                            type: string
+                      title: Service represents a service endpoint in a DID Document
+                  created:
+                    type: string
+                    format: date-time
+                  updated:
+                    type: string
+                    format: date-time
+                title: DIDDocument represents a DID Document
+            description: >-
+              QueryDIDDocumentsResponse is response type for the
+              Query/DIDDocuments method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/linked_did/{provider}/{social_id}:
+    get:
+      summary: LinkedDID queries a DID linked to a social identity
+      operationId: SelfchainIdentityLinkedDID
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              did:
+                type: string
+            title: >-
+              QueryLinkedDIDResponse is response type for the Query/LinkedDID
+              RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          type: string
+        - name: social_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/mfa_challenge/{did}/{method}:
+    get:
+      summary: Queries MFA challenge.
+      operationId: SelfchainIdentityMFAChallenge
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              challenge:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  did:
+                    type: string
+                  method:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  expires_at:
+                    type: string
+                    format: date-time
+                title: MFAChallenge represents an MFA challenge
+            description: >-
+              QueryMFAChallengeResponse is response type for the
+              Query/MFAChallenge method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+        - name: method
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/mfa_config/{did}:
+    get:
+      summary: Queries MFA configuration.
+      operationId: SelfchainIdentityMFAConfig
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              config:
+                type: object
+                properties:
+                  did:
+                    type: string
+                  methods:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        secret:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        status:
+                          type: string
+                          enum:
+                            - MFA_METHOD_STATUS_UNSPECIFIED
+                            - MFA_METHOD_STATUS_ACTIVE
+                            - MFA_METHOD_STATUS_PENDING
+                            - MFA_METHOD_STATUS_DISABLED
+                          default: MFA_METHOD_STATUS_UNSPECIFIED
+                          title: >-
+                            MFAMethodStatus represents the status of an MFA
+                            method
+                      title: MFAMethod represents an MFA method
+                title: MFAConfig represents the MFA configuration for a DID
+            description: >-
+              QueryMFAConfigResponse is response type for the Query/MFAConfig
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: SelfchainIdentityParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+                properties:
+                  mfa_params:
+                    type: object
+                    properties:
+                      max_methods:
+                        type: string
+                        format: int64
+                      challenge_expiry:
+                        type: string
+                        format: int64
+                      allowed_methods:
+                        type: array
+                        items:
+                          type: string
+                      max_failed_attempts:
+                        type: string
+                        format: int64
+                    title: MFAParams defines the parameters for MFA functionality
+                  credential_params:
+                    type: object
+                    properties:
+                      max_credentials_per_did:
+                        type: string
+                        format: int64
+                      max_claim_size:
+                        type: string
+                        format: int64
+                      allowed_types:
+                        type: array
+                        items:
+                          type: string
+                      max_validity_duration:
+                        type: string
+                        format: int64
+                    title: >-
+                      CredentialParams defines the parameters for credential
+                      functionality
+                  did_params:
+                    type: object
+                    properties:
+                      allowed_methods:
+                        type: array
+                        items:
+                          type: string
+                      max_controllers:
+                        type: string
+                        format: int64
+                      max_services:
+                        type: string
+                        format: int64
+                      max_verification_methods:
+                        type: string
+                        format: int64
+                    title: DIDParams defines the parameters for DID functionality
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
+  /selfchain/identity/social_identities/{did}:
+    get:
+      summary: Queries a list of SocialIdentities items.
+      operationId: SelfchainIdentitySocialIdentities
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              identities:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    did:
+                      type: string
+                    provider:
+                      type: string
+                    provider_id:
+                      type: string
+                    profile:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    created_at:
+                      type: string
+                      format: date-time
+                    verified_at:
+                      type: string
+                      format: date-time
+                    last_used:
+                      type: string
+                      format: date-time
+                  title: SocialIdentity represents a social identity linked to a DID
+            description: >-
+              QuerySocialIdentitiesResponse is response type for the
+              Query/SocialIdentities method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/social_identity/{did}/{provider}:
+    get:
+      summary: SocialIdentity queries a social identity by DID and provider
+      operationId: SelfchainIdentitySocialIdentity
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              social_id:
+                type: string
+            title: >-
+              QuerySocialIdentityResponse is response type for the
+              Query/SocialIdentity RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: did
+          in: path
+          required: true
+          type: string
+        - name: provider
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/identity/social_identity/{provider}/{social_id}:
+    get:
+      summary: Queries a social identity by provider and social ID.
+      operationId: SelfchainIdentitySocialIdentityBySocialID
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              identity:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  did:
+                    type: string
+                  provider:
+                    type: string
+                  provider_id:
+                    type: string
+                  profile:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  verified_at:
+                    type: string
+                    format: date-time
+                  last_used:
+                    type: string
+                    format: date-time
+                title: SocialIdentity represents a social identity linked to a DID
+            description: >-
+              QuerySocialIdentityBySocialIDResponse is response type for the
+              Query/SocialIdentityBySocialID method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          type: string
+        - name: social_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /selfchain/migration/acl:
     get:
       summary: Queries a Acl by index.
@@ -83226,6 +83920,755 @@ definitions:
     description: |-
       Version defines the versioning scheme used to negotiate the IBC verison in
       the connection handshake.
+  selfchain.identity.Credential:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+      issuer:
+        type: string
+      subject:
+        type: string
+      claims:
+        type: object
+        additionalProperties:
+          type: string
+      issuance_date:
+        type: string
+        format: int64
+      expiration_date:
+        type: string
+        format: int64
+      status:
+        type: string
+      proof:
+        type: object
+        properties:
+          type:
+            type: string
+          created:
+            type: string
+            format: int64
+          verification_method:
+            type: string
+          proof_purpose:
+            type: string
+        title: CredentialProof represents a proof for a credential
+    title: Credential represents a verifiable credential
+  selfchain.identity.CredentialParams:
+    type: object
+    properties:
+      max_credentials_per_did:
+        type: string
+        format: int64
+      max_claim_size:
+        type: string
+        format: int64
+      allowed_types:
+        type: array
+        items:
+          type: string
+      max_validity_duration:
+        type: string
+        format: int64
+    title: CredentialParams defines the parameters for credential functionality
+  selfchain.identity.CredentialProof:
+    type: object
+    properties:
+      type:
+        type: string
+      created:
+        type: string
+        format: int64
+      verification_method:
+        type: string
+      proof_purpose:
+        type: string
+    title: CredentialProof represents a proof for a credential
+  selfchain.identity.DIDDocument:
+    type: object
+    properties:
+      id:
+        type: string
+      controller:
+        type: array
+        items:
+          type: string
+      verification_method:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            controller:
+              type: string
+            public_key_base58:
+              type: string
+          title: >-
+            VerificationMethod represents a verification method in a DID
+            Document
+      authentication:
+        type: array
+        items:
+          type: string
+      assertion_method:
+        type: array
+        items:
+          type: string
+      key_agreement:
+        type: array
+        items:
+          type: string
+      capability_invocation:
+        type: array
+        items:
+          type: string
+      capability_delegation:
+        type: array
+        items:
+          type: string
+      service:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            service_endpoint:
+              type: string
+            properties:
+              type: object
+              additionalProperties:
+                type: string
+          title: Service represents a service endpoint in a DID Document
+      created:
+        type: string
+        format: date-time
+      updated:
+        type: string
+        format: date-time
+    title: DIDDocument represents a DID Document
+  selfchain.identity.DIDParams:
+    type: object
+    properties:
+      allowed_methods:
+        type: array
+        items:
+          type: string
+      max_controllers:
+        type: string
+        format: int64
+      max_services:
+        type: string
+        format: int64
+      max_verification_methods:
+        type: string
+        format: int64
+    title: DIDParams defines the parameters for DID functionality
+  selfchain.identity.MFAChallenge:
+    type: object
+    properties:
+      id:
+        type: string
+      did:
+        type: string
+      method:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      expires_at:
+        type: string
+        format: date-time
+    title: MFAChallenge represents an MFA challenge
+  selfchain.identity.MFAConfig:
+    type: object
+    properties:
+      did:
+        type: string
+      methods:
+        type: array
+        items:
+          type: object
+          properties:
+            type:
+              type: string
+            secret:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum:
+                - MFA_METHOD_STATUS_UNSPECIFIED
+                - MFA_METHOD_STATUS_ACTIVE
+                - MFA_METHOD_STATUS_PENDING
+                - MFA_METHOD_STATUS_DISABLED
+              default: MFA_METHOD_STATUS_UNSPECIFIED
+              title: MFAMethodStatus represents the status of an MFA method
+          title: MFAMethod represents an MFA method
+    title: MFAConfig represents the MFA configuration for a DID
+  selfchain.identity.MFAMethod:
+    type: object
+    properties:
+      type:
+        type: string
+      secret:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      status:
+        type: string
+        enum:
+          - MFA_METHOD_STATUS_UNSPECIFIED
+          - MFA_METHOD_STATUS_ACTIVE
+          - MFA_METHOD_STATUS_PENDING
+          - MFA_METHOD_STATUS_DISABLED
+        default: MFA_METHOD_STATUS_UNSPECIFIED
+        title: MFAMethodStatus represents the status of an MFA method
+    title: MFAMethod represents an MFA method
+  selfchain.identity.MFAMethodStatus:
+    type: string
+    enum:
+      - MFA_METHOD_STATUS_UNSPECIFIED
+      - MFA_METHOD_STATUS_ACTIVE
+      - MFA_METHOD_STATUS_PENDING
+      - MFA_METHOD_STATUS_DISABLED
+    default: MFA_METHOD_STATUS_UNSPECIFIED
+    title: MFAMethodStatus represents the status of an MFA method
+  selfchain.identity.MFAParams:
+    type: object
+    properties:
+      max_methods:
+        type: string
+        format: int64
+      challenge_expiry:
+        type: string
+        format: int64
+      allowed_methods:
+        type: array
+        items:
+          type: string
+      max_failed_attempts:
+        type: string
+        format: int64
+    title: MFAParams defines the parameters for MFA functionality
+  selfchain.identity.MsgAddMFAResponse:
+    type: object
+  selfchain.identity.MsgCreateCredentialResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgCreateDIDResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgDeleteDIDResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgLinkSocialIdentityResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+      social_id:
+        type: string
+  selfchain.identity.MsgRemoveMFAResponse:
+    type: object
+  selfchain.identity.MsgRevokeCredentialResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgUnlinkSocialIdentityResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgUpdateCredentialResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgUpdateDIDResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+  selfchain.identity.MsgVerifyMFAResponse:
+    type: object
+  selfchain.identity.Params:
+    type: object
+    properties:
+      mfa_params:
+        type: object
+        properties:
+          max_methods:
+            type: string
+            format: int64
+          challenge_expiry:
+            type: string
+            format: int64
+          allowed_methods:
+            type: array
+            items:
+              type: string
+          max_failed_attempts:
+            type: string
+            format: int64
+        title: MFAParams defines the parameters for MFA functionality
+      credential_params:
+        type: object
+        properties:
+          max_credentials_per_did:
+            type: string
+            format: int64
+          max_claim_size:
+            type: string
+            format: int64
+          allowed_types:
+            type: array
+            items:
+              type: string
+          max_validity_duration:
+            type: string
+            format: int64
+        title: CredentialParams defines the parameters for credential functionality
+      did_params:
+        type: object
+        properties:
+          allowed_methods:
+            type: array
+            items:
+              type: string
+          max_controllers:
+            type: string
+            format: int64
+          max_services:
+            type: string
+            format: int64
+          max_verification_methods:
+            type: string
+            format: int64
+        title: DIDParams defines the parameters for DID functionality
+    description: Params defines the parameters for the identity module.
+  selfchain.identity.QueryCredentialResponse:
+    type: object
+    properties:
+      credential:
+        type: object
+        properties:
+          id:
+            type: string
+          type:
+            type: string
+          issuer:
+            type: string
+          subject:
+            type: string
+          claims:
+            type: object
+            additionalProperties:
+              type: string
+          issuance_date:
+            type: string
+            format: int64
+          expiration_date:
+            type: string
+            format: int64
+          status:
+            type: string
+          proof:
+            type: object
+            properties:
+              type:
+                type: string
+              created:
+                type: string
+                format: int64
+              verification_method:
+                type: string
+              proof_purpose:
+                type: string
+            title: CredentialProof represents a proof for a credential
+        title: Credential represents a verifiable credential
+    description: QueryCredentialResponse is response type for the Query/Credential method.
+  selfchain.identity.QueryCredentialsByDIDResponse:
+    type: object
+    properties:
+      credentials:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            issuer:
+              type: string
+            subject:
+              type: string
+            claims:
+              type: object
+              additionalProperties:
+                type: string
+            issuance_date:
+              type: string
+              format: int64
+            expiration_date:
+              type: string
+              format: int64
+            status:
+              type: string
+            proof:
+              type: object
+              properties:
+                type:
+                  type: string
+                created:
+                  type: string
+                  format: int64
+                verification_method:
+                  type: string
+                proof_purpose:
+                  type: string
+              title: CredentialProof represents a proof for a credential
+          title: Credential represents a verifiable credential
+    description: >-
+      QueryCredentialsByDIDResponse is response type for the
+      Query/CredentialsByDID method.
+  selfchain.identity.QueryDIDDocumentsResponse:
+    type: object
+    properties:
+      document:
+        type: object
+        properties:
+          id:
+            type: string
+          controller:
+            type: array
+            items:
+              type: string
+          verification_method:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                controller:
+                  type: string
+                public_key_base58:
+                  type: string
+              title: >-
+                VerificationMethod represents a verification method in a DID
+                Document
+          authentication:
+            type: array
+            items:
+              type: string
+          assertion_method:
+            type: array
+            items:
+              type: string
+          key_agreement:
+            type: array
+            items:
+              type: string
+          capability_invocation:
+            type: array
+            items:
+              type: string
+          capability_delegation:
+            type: array
+            items:
+              type: string
+          service:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                service_endpoint:
+                  type: string
+                properties:
+                  type: object
+                  additionalProperties:
+                    type: string
+              title: Service represents a service endpoint in a DID Document
+          created:
+            type: string
+            format: date-time
+          updated:
+            type: string
+            format: date-time
+        title: DIDDocument represents a DID Document
+    description: >-
+      QueryDIDDocumentsResponse is response type for the Query/DIDDocuments
+      method.
+  selfchain.identity.QueryLinkedDIDResponse:
+    type: object
+    properties:
+      did:
+        type: string
+    title: QueryLinkedDIDResponse is response type for the Query/LinkedDID RPC method
+  selfchain.identity.QueryMFAChallengeResponse:
+    type: object
+    properties:
+      challenge:
+        type: object
+        properties:
+          id:
+            type: string
+          did:
+            type: string
+          method:
+            type: string
+          created_at:
+            type: string
+            format: date-time
+          expires_at:
+            type: string
+            format: date-time
+        title: MFAChallenge represents an MFA challenge
+    description: >-
+      QueryMFAChallengeResponse is response type for the Query/MFAChallenge
+      method.
+  selfchain.identity.QueryMFAConfigResponse:
+    type: object
+    properties:
+      config:
+        type: object
+        properties:
+          did:
+            type: string
+          methods:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                secret:
+                  type: string
+                created_at:
+                  type: string
+                  format: date-time
+                status:
+                  type: string
+                  enum:
+                    - MFA_METHOD_STATUS_UNSPECIFIED
+                    - MFA_METHOD_STATUS_ACTIVE
+                    - MFA_METHOD_STATUS_PENDING
+                    - MFA_METHOD_STATUS_DISABLED
+                  default: MFA_METHOD_STATUS_UNSPECIFIED
+                  title: MFAMethodStatus represents the status of an MFA method
+              title: MFAMethod represents an MFA method
+        title: MFAConfig represents the MFA configuration for a DID
+    description: QueryMFAConfigResponse is response type for the Query/MFAConfig method.
+  selfchain.identity.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          mfa_params:
+            type: object
+            properties:
+              max_methods:
+                type: string
+                format: int64
+              challenge_expiry:
+                type: string
+                format: int64
+              allowed_methods:
+                type: array
+                items:
+                  type: string
+              max_failed_attempts:
+                type: string
+                format: int64
+            title: MFAParams defines the parameters for MFA functionality
+          credential_params:
+            type: object
+            properties:
+              max_credentials_per_did:
+                type: string
+                format: int64
+              max_claim_size:
+                type: string
+                format: int64
+              allowed_types:
+                type: array
+                items:
+                  type: string
+              max_validity_duration:
+                type: string
+                format: int64
+            title: >-
+              CredentialParams defines the parameters for credential
+              functionality
+          did_params:
+            type: object
+            properties:
+              allowed_methods:
+                type: array
+                items:
+                  type: string
+              max_controllers:
+                type: string
+                format: int64
+              max_services:
+                type: string
+                format: int64
+              max_verification_methods:
+                type: string
+                format: int64
+            title: DIDParams defines the parameters for DID functionality
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  selfchain.identity.QuerySocialIdentitiesResponse:
+    type: object
+    properties:
+      identities:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            did:
+              type: string
+            provider:
+              type: string
+            provider_id:
+              type: string
+            profile:
+              type: object
+              additionalProperties:
+                type: string
+            created_at:
+              type: string
+              format: date-time
+            verified_at:
+              type: string
+              format: date-time
+            last_used:
+              type: string
+              format: date-time
+          title: SocialIdentity represents a social identity linked to a DID
+    description: >-
+      QuerySocialIdentitiesResponse is response type for the
+      Query/SocialIdentities method.
+  selfchain.identity.QuerySocialIdentityBySocialIDResponse:
+    type: object
+    properties:
+      identity:
+        type: object
+        properties:
+          id:
+            type: string
+          did:
+            type: string
+          provider:
+            type: string
+          provider_id:
+            type: string
+          profile:
+            type: object
+            additionalProperties:
+              type: string
+          created_at:
+            type: string
+            format: date-time
+          verified_at:
+            type: string
+            format: date-time
+          last_used:
+            type: string
+            format: date-time
+        title: SocialIdentity represents a social identity linked to a DID
+    description: >-
+      QuerySocialIdentityBySocialIDResponse is response type for the
+      Query/SocialIdentityBySocialID method.
+  selfchain.identity.QuerySocialIdentityResponse:
+    type: object
+    properties:
+      social_id:
+        type: string
+    title: >-
+      QuerySocialIdentityResponse is response type for the Query/SocialIdentity
+      RPC method
+  selfchain.identity.Service:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+      service_endpoint:
+        type: string
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+    title: Service represents a service endpoint in a DID Document
+  selfchain.identity.SocialIdentity:
+    type: object
+    properties:
+      id:
+        type: string
+      did:
+        type: string
+      provider:
+        type: string
+      provider_id:
+        type: string
+      profile:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      verified_at:
+        type: string
+        format: date-time
+      last_used:
+        type: string
+        format: date-time
+    title: SocialIdentity represents a social identity linked to a DID
+  selfchain.identity.VerificationMethod:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+      controller:
+        type: string
+      public_key_base58:
+        type: string
+    title: VerificationMethod represents a verification method in a DID Document
   selfchain.migration.Acl:
     type: object
     properties:
