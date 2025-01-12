@@ -7,13 +7,16 @@ import "gogoproto/gogo.proto";
 import "selfchain/identity/params.proto";
 import "selfchain/identity/did_document.proto";
 import "selfchain/identity/credential.proto";
+import "selfchain/identity/mfa.proto";
 import "selfchain/identity/oauth.proto";
+import "selfchain/identity/audit.proto";
 
 // GenesisState defines the identity module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
-  repeated DIDDocument dids = 2 [(gogoproto.nullable) = false];
+  repeated DIDDocument did_documents = 2 [(gogoproto.nullable) = false];
   repeated Credential credentials = 3 [(gogoproto.nullable) = false];
-  repeated SocialIdentity social_identities = 4 [(gogoproto.nullable) = false];
-  repeated CredentialSchema credential_schemas = 5 [(gogoproto.nullable) = false];
+  repeated MFAConfig mfa_configs = 4 [(gogoproto.nullable) = false];
+  repeated AuditLogEntry audit_logs = 5 [(gogoproto.nullable) = false];
+  repeated SocialIdentity social_identities = 6 [(gogoproto.nullable) = false];
 }

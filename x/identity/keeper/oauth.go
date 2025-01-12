@@ -2,90 +2,79 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
+
+	"selfchain/x/identity/types"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"selfchain/x/identity/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// StoreSocialIdentity stores a social identity
-func (k Keeper) StoreSocialIdentity(ctx sdk.Context, identity types.SocialIdentity) error {
-	// Validate required fields
-	if identity.Did == "" {
-		return fmt.Errorf("DID cannot be empty")
-	}
-	if identity.Provider == "" {
-		return fmt.Errorf("provider cannot be empty")
-	}
-	if identity.Id == "" {
-		return fmt.Errorf("social ID cannot be empty")
+// LinkSocialIdentity links a social identity to a DID
+func (k Keeper) LinkSocialIdentity(ctx sdk.Context, did string, provider string, token string) error {
+	// Verify DID exists
+	if !k.HasDIDDocument(ctx, did) {
+		return sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
-	// Check if DID exists
-	if !k.HasDIDDocument(ctx, identity.Did) {
-		return fmt.Errorf("DID not found: %s", identity.Did)
+	// Verify token with provider
+	socialID, err := k.verifySocialToken(ctx, provider, token)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidToken, err.Error())
 	}
 
-	// Store by DID and provider
-	storeDID := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.SocialIdentityKey+"did/"))
-	keyDID := []byte(identity.Did + "/" + identity.Provider)
-	bz := k.cdc.MustMarshal(&identity)
-	storeDID.Set(keyDID, bz)
+	// Create social identity
+	blockTime := ctx.BlockTime()
+	identity := types.SocialIdentity{
+		Did:        did,
+		Provider:   provider,
+		ProviderId: socialID,
+		CreatedAt:  &blockTime,
+		LastUsed:   &blockTime,
+	}
 
-	// Store by social ID and provider
-	storeSocial := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.SocialIdentityKey+"social/"))
-	keySocial := []byte(identity.Provider + "/" + identity.Id)
-	storeSocial.Set(keySocial, bz)
+	// Store social identity
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SocialIdentityPrefix))
+	key := []byte(fmt.Sprintf("%s-%s", did, provider))
+	bz, err := k.cdc.Marshal(&identity)
+	if err != nil {
+		return err
+	}
+	store.Set(key, bz)
 
 	return nil
 }
 
-// GetSocialIdentityByDID returns a social identity by DID and provider
-func (k Keeper) GetSocialIdentityByDID(ctx sdk.Context, did string, provider string) (types.SocialIdentity, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.SocialIdentityKey+"did/"))
-	key := []byte(did + "/" + provider)
-	b := store.Get(key)
-	if b == nil {
-		return types.SocialIdentity{}, false
+// UnlinkSocialIdentity unlinks a social identity from a DID
+func (k Keeper) UnlinkSocialIdentity(ctx sdk.Context, did string, socialID string) error {
+	// Find and delete the social identity
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SocialIdentityPrefix))
+	iterator := sdk.KVStorePrefixIterator(store, []byte(did))
+	defer iterator.Close()
+
+	found := false
+	for ; iterator.Valid(); iterator.Next() {
+		var identity types.SocialIdentity
+		if err := k.cdc.Unmarshal(iterator.Value(), &identity); err != nil {
+			return err
+		}
+		if identity.ProviderId == socialID {
+			store.Delete(iterator.Key())
+			found = true
+			break
+		}
 	}
 
-	var identity types.SocialIdentity
-	k.cdc.MustUnmarshal(b, &identity)
-	return identity, true
+	if !found {
+		return sdkerrors.Wrap(types.ErrSocialIdentityNotFound, "social identity not found")
+	}
+
+	return nil
 }
 
-// GetSocialIdentityBySocialID returns a social identity by social ID and provider
-func (k Keeper) GetSocialIdentityBySocialID(ctx sdk.Context, provider string, socialId string) (types.SocialIdentity, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.SocialIdentityKey+"social/"))
-	key := []byte(provider + "/" + socialId)
-	b := store.Get(key)
-	if b == nil {
-		return types.SocialIdentity{}, false
-	}
-
-	var identity types.SocialIdentity
-	k.cdc.MustUnmarshal(b, &identity)
-	return identity, true
-}
-
-// VerifyOAuthToken verifies an OAuth token and returns the social ID
-func (k Keeper) VerifyOAuthToken(ctx sdk.Context, provider string, token string) (string, error) {
-	// Check rate limit
-	rateLimitKey := fmt.Sprintf("oauth:%s:%s", provider, token[:8]) // Use first 8 chars of token
-	if err := k.CheckRateLimit(ctx, rateLimitKey); err != nil {
-		return "", fmt.Errorf("rate limit exceeded: %w", err)
-	}
-
-	provider = strings.ToLower(provider)
-	switch provider {
-	case "google":
-		return k.verifyGoogleToken(ctx, token)
-	case "github":
-		return k.verifyGithubToken(ctx, token)
-	case "apple":
-		return k.verifyAppleToken(ctx, token)
-	default:
-		return "", fmt.Errorf("unsupported OAuth provider: %s", provider)
-	}
+// verifySocialToken verifies a social identity token with the provider
+func (k Keeper) verifySocialToken(ctx sdk.Context, provider string, token string) (string, error) {
+	// TODO: Implement actual token verification with providers
+	// For now, just return a dummy social ID
+	return fmt.Sprintf("%s-user-123", provider), nil
 }

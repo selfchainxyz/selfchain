@@ -1,0 +1,35 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// AuditLogType represents the type of audit log entry
+enum AuditLogType {
+  AUDIT_LOG_TYPE_UNSPECIFIED = 0;
+  AUDIT_LOG_TYPE_CREDENTIAL_CREATED = 1;
+  AUDIT_LOG_TYPE_CREDENTIAL_UPDATED = 2;
+  AUDIT_LOG_TYPE_CREDENTIAL_DELETED = 3;
+  AUDIT_LOG_TYPE_CREDENTIAL_REVOKED = 4;
+  AUDIT_LOG_TYPE_DID_CREATED = 5;
+  AUDIT_LOG_TYPE_DID_UPDATED = 6;
+  AUDIT_LOG_TYPE_DID_DELETED = 7;
+  AUDIT_LOG_TYPE_MFA_CONFIGURED = 8;
+  AUDIT_LOG_TYPE_MFA_UPDATED = 9;
+  AUDIT_LOG_TYPE_MFA_DISABLED = 10;
+  AUDIT_LOG_TYPE_SOCIAL_IDENTITY_LINKED = 11;
+  AUDIT_LOG_TYPE_SOCIAL_IDENTITY_UNLINKED = 12;
+}
+
+// AuditLogEntry represents an audit log entry
+message AuditLogEntry {
+  string id = 1;
+  AuditLogType type = 2;
+  string did = 3;
+  string action = 4;
+  string actor = 5;
+  map<string, string> metadata = 6;
+  google.protobuf.Timestamp timestamp = 7 [(gogoproto.stdtime) = true];
+}

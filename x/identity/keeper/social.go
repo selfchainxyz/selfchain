@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/identity/types"
 )
@@ -16,42 +16,101 @@ const (
 	SocialIdentityBySocialIDPrefix = "social_identity_by_social_id/"
 )
 
-// GetSocialIdentityByDIDAndProvider returns a social identity by DID and provider
-func (k Keeper) GetSocialIdentityByDIDAndProvider(ctx sdk.Context, did string, provider string) (types.SocialIdentity, bool) {
-	return k.GetSocialIdentityByDID(ctx, did, provider)
+// StoreSocialIdentity stores a social identity
+func (k Keeper) StoreSocialIdentity(ctx sdk.Context, identity types.SocialIdentity) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityPrefix))
+	bz := k.cdc.MustMarshal(&identity)
+	store.Set([]byte(identity.Id), bz)
+	return nil
 }
 
-// SetSocialIdentity stores a social identity
-func (k Keeper) SetSocialIdentity(ctx sdk.Context, identity types.SocialIdentity) {
+// GetSocialIdentityById returns a social identity by ID
+func (k Keeper) GetSocialIdentityById(ctx sdk.Context, id string) (*types.SocialIdentity, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityPrefix))
-	key := []byte(fmt.Sprintf("%s/%s", identity.Provider, identity.Id))
-	value := k.cdc.MustMarshal(&identity)
-	store.Set(key, value)
+	bz := store.Get([]byte(id))
+	if bz == nil {
+		return nil, sdkerrors.Wrap(types.ErrSocialIdentityNotFound, id)
+	}
 
-	// Store by DID and provider
-	byDIDStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityByDIDPrefix))
-	byDIDKey := []byte(fmt.Sprintf("%s/%s", identity.Did, identity.Provider))
-	byDIDStore.Set(byDIDKey, value)
-
-	// Store by provider and social ID
-	bySocialIDStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityBySocialIDPrefix))
-	bySocialIDKey := []byte(fmt.Sprintf("%s/%s", identity.Provider, identity.Id))
-	bySocialIDStore.Set(bySocialIDKey, value)
+	var identity types.SocialIdentity
+	k.cdc.MustUnmarshal(bz, &identity)
+	return &identity, nil
 }
 
 // DeleteSocialIdentity deletes a social identity
-func (k Keeper) DeleteSocialIdentity(ctx sdk.Context, identity types.SocialIdentity) {
+func (k Keeper) DeleteSocialIdentity(ctx sdk.Context, id string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityPrefix))
-	key := []byte(fmt.Sprintf("%s/%s", identity.Provider, identity.Id))
-	store.Delete(key)
+	if !store.Has([]byte(id)) {
+		return sdkerrors.Wrap(types.ErrSocialIdentityNotFound, id)
+	}
+	store.Delete([]byte(id))
+	return nil
+}
 
-	// Delete by DID and provider
-	byDIDStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityByDIDPrefix))
-	byDIDKey := []byte(fmt.Sprintf("%s/%s", identity.Did, identity.Provider))
-	byDIDStore.Delete(byDIDKey)
+// GetAllSocialIdentities returns all social identities
+func (k Keeper) GetAllSocialIdentities(ctx sdk.Context) []types.SocialIdentity {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityPrefix))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
 
-	// Delete by provider and social ID
-	bySocialIDStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityBySocialIDPrefix))
-	bySocialIDKey := []byte(fmt.Sprintf("%s/%s", identity.Provider, identity.Id))
-	bySocialIDStore.Delete(bySocialIDKey)
+	var identities []types.SocialIdentity
+	for ; iterator.Valid(); iterator.Next() {
+		var identity types.SocialIdentity
+		k.cdc.MustUnmarshal(iterator.Value(), &identity)
+		identities = append(identities, identity)
+	}
+	return identities
+}
+
+// ValidateSocialIdentity validates a social identity
+func (k Keeper) ValidateSocialIdentity(ctx sdk.Context, identity *types.SocialIdentity) error {
+	if identity.Id == "" {
+		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "missing ID")
+	}
+	if identity.Did == "" {
+		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "missing DID")
+	}
+	if identity.Provider == "" {
+		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "missing provider")
+	}
+	if identity.ProviderId == "" {
+		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "missing social ID")
+	}
+	
+	// Check if provider is allowed
+	if !k.IsOAuthProviderAllowed(ctx, identity.Provider) {
+		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "provider not allowed")
+	}
+
+	return nil
+}
+
+// GetSocialIdentities returns all social identities for a DID
+func (k Keeper) GetSocialIdentities(ctx sdk.Context, did string) ([]*types.SocialIdentity, error) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(types.SocialIdentityPrefix+did))
+	defer iterator.Close()
+
+	var identities []*types.SocialIdentity
+	for ; iterator.Valid(); iterator.Next() {
+		var identity types.SocialIdentity
+		k.cdc.MustUnmarshal(iterator.Value(), &identity)
+		identities = append(identities, &identity)
+	}
+
+	return identities, nil
+}
+
+// GetLinkedDID returns the DID linked to a social identity
+func (k Keeper) GetLinkedDID(ctx sdk.Context, provider string, socialId string) (string, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(SocialIdentityBySocialIDPrefix))
+	key := []byte(provider + ":" + socialId)
+	bz := store.Get(key)
+	if bz == nil {
+		return "", false
+	}
+
+	var identity types.SocialIdentity
+	k.cdc.MustUnmarshal(bz, &identity)
+	return identity.Did, true
 }

@@ -27,12 +27,42 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MFAMethodStatus represents the status of an MFA method
+type MFAMethodStatus int32
+
+const (
+	MFAMethodStatus_MFA_METHOD_STATUS_UNSPECIFIED MFAMethodStatus = 0
+	MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE      MFAMethodStatus = 1
+	MFAMethodStatus_MFA_METHOD_STATUS_PENDING     MFAMethodStatus = 2
+	MFAMethodStatus_MFA_METHOD_STATUS_DISABLED    MFAMethodStatus = 3
+)
+
+var MFAMethodStatus_name = map[int32]string{
+	0: "MFA_METHOD_STATUS_UNSPECIFIED",
+	1: "MFA_METHOD_STATUS_ACTIVE",
+	2: "MFA_METHOD_STATUS_PENDING",
+	3: "MFA_METHOD_STATUS_DISABLED",
+}
+
+var MFAMethodStatus_value = map[string]int32{
+	"MFA_METHOD_STATUS_UNSPECIFIED": 0,
+	"MFA_METHOD_STATUS_ACTIVE":      1,
+	"MFA_METHOD_STATUS_PENDING":     2,
+	"MFA_METHOD_STATUS_DISABLED":    3,
+}
+
+func (x MFAMethodStatus) String() string {
+	return proto.EnumName(MFAMethodStatus_name, int32(x))
+}
+
+func (MFAMethodStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{0}
+}
+
 // MFAConfig represents the MFA configuration for a DID
 type MFAConfig struct {
-	Did       string       `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
-	Enabled   bool         `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Methods   []*MFAMethod `protobuf:"bytes,3,rep,name=methods,proto3" json:"methods,omitempty"`
-	UpdatedAt time.Time    `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3,stdtime" json:"updated_at"`
+	Did     string       `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
+	Methods []*MFAMethod `protobuf:"bytes,2,rep,name=methods,proto3" json:"methods,omitempty"`
 }
 
 func (m *MFAConfig) Reset()         { *m = MFAConfig{} }
@@ -75,13 +105,6 @@ func (m *MFAConfig) GetDid() string {
 	return ""
 }
 
-func (m *MFAConfig) GetEnabled() bool {
-	if m != nil {
-		return m.Enabled
-	}
-	return false
-}
-
 func (m *MFAConfig) GetMethods() []*MFAMethod {
 	if m != nil {
 		return m.Methods
@@ -89,20 +112,12 @@ func (m *MFAConfig) GetMethods() []*MFAMethod {
 	return nil
 }
 
-func (m *MFAConfig) GetUpdatedAt() time.Time {
-	if m != nil {
-		return m.UpdatedAt
-	}
-	return time.Time{}
-}
-
-// MFAMethod represents a specific MFA method
+// MFAMethod represents an MFA method
 type MFAMethod struct {
-	Type       string    `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Identifier string    `protobuf:"bytes,2,opt,name=identifier,proto3" json:"identifier,omitempty"`
-	Secret     []byte    `protobuf:"bytes,3,opt,name=secret,proto3" json:"secret,omitempty"`
-	Verified   bool      `protobuf:"varint,4,opt,name=verified,proto3" json:"verified,omitempty"`
-	CreatedAt  time.Time `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at"`
+	Type      string          `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Secret    string          `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
+	CreatedAt *time.Time      `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	Status    MFAMethodStatus `protobuf:"varint,4,opt,name=status,proto3,enum=selfchain.identity.MFAMethodStatus" json:"status,omitempty"`
 }
 
 func (m *MFAMethod) Reset()         { *m = MFAMethod{} }
@@ -145,42 +160,34 @@ func (m *MFAMethod) GetType() string {
 	return ""
 }
 
-func (m *MFAMethod) GetIdentifier() string {
+func (m *MFAMethod) GetSecret() string {
 	if m != nil {
-		return m.Identifier
+		return m.Secret
 	}
 	return ""
 }
 
-func (m *MFAMethod) GetSecret() []byte {
+func (m *MFAMethod) GetCreatedAt() *time.Time {
 	if m != nil {
-		return m.Secret
+		return m.CreatedAt
 	}
 	return nil
 }
 
-func (m *MFAMethod) GetVerified() bool {
+func (m *MFAMethod) GetStatus() MFAMethodStatus {
 	if m != nil {
-		return m.Verified
+		return m.Status
 	}
-	return false
+	return MFAMethodStatus_MFA_METHOD_STATUS_UNSPECIFIED
 }
 
-func (m *MFAMethod) GetCreatedAt() time.Time {
-	if m != nil {
-		return m.CreatedAt
-	}
-	return time.Time{}
-}
-
-// MFAChallenge represents an active MFA challenge
+// MFAChallenge represents an MFA challenge
 type MFAChallenge struct {
-	Id            string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Did           string    `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
-	MethodType    string    `protobuf:"bytes,3,opt,name=method_type,json=methodType,proto3" json:"method_type,omitempty"`
-	ChallengeData []byte    `protobuf:"bytes,4,opt,name=challenge_data,json=challengeData,proto3" json:"challenge_data,omitempty"`
-	ExpiresAt     time.Time `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3,stdtime" json:"expires_at"`
-	Completed     bool      `protobuf:"varint,6,opt,name=completed,proto3" json:"completed,omitempty"`
+	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Did       string     `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
+	Method    string     `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
+	CreatedAt *time.Time `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	ExpiresAt *time.Time `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3,stdtime" json:"expires_at,omitempty"`
 }
 
 func (m *MFAChallenge) Reset()         { *m = MFAChallenge{} }
@@ -230,54 +237,47 @@ func (m *MFAChallenge) GetDid() string {
 	return ""
 }
 
-func (m *MFAChallenge) GetMethodType() string {
+func (m *MFAChallenge) GetMethod() string {
 	if m != nil {
-		return m.MethodType
+		return m.Method
 	}
 	return ""
 }
 
-func (m *MFAChallenge) GetChallengeData() []byte {
+func (m *MFAChallenge) GetCreatedAt() *time.Time {
 	if m != nil {
-		return m.ChallengeData
+		return m.CreatedAt
 	}
 	return nil
 }
 
-func (m *MFAChallenge) GetExpiresAt() time.Time {
+func (m *MFAChallenge) GetExpiresAt() *time.Time {
 	if m != nil {
 		return m.ExpiresAt
 	}
-	return time.Time{}
+	return nil
 }
 
-func (m *MFAChallenge) GetCompleted() bool {
-	if m != nil {
-		return m.Completed
-	}
-	return false
+// Messages
+type MsgAddMFA struct {
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Did     string `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
+	Method  string `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
+	Secret  string `protobuf:"bytes,4,opt,name=secret,proto3" json:"secret,omitempty"`
 }
 
-// MsgEnableMFA represents the message to enable MFA
-type MsgEnableMFA struct {
-	Creator    string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Did        string `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
-	MethodType string `protobuf:"bytes,3,opt,name=method_type,json=methodType,proto3" json:"method_type,omitempty"`
-	Identifier string `protobuf:"bytes,4,opt,name=identifier,proto3" json:"identifier,omitempty"`
-}
-
-func (m *MsgEnableMFA) Reset()         { *m = MsgEnableMFA{} }
-func (m *MsgEnableMFA) String() string { return proto.CompactTextString(m) }
-func (*MsgEnableMFA) ProtoMessage()    {}
-func (*MsgEnableMFA) Descriptor() ([]byte, []int) {
+func (m *MsgAddMFA) Reset()         { *m = MsgAddMFA{} }
+func (m *MsgAddMFA) String() string { return proto.CompactTextString(m) }
+func (*MsgAddMFA) ProtoMessage()    {}
+func (*MsgAddMFA) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6f98fdf45cff8027, []int{3}
 }
-func (m *MsgEnableMFA) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddMFA) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgEnableMFA) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddMFA) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgEnableMFA.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddMFA.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -287,58 +287,190 @@ func (m *MsgEnableMFA) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *MsgEnableMFA) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgEnableMFA.Merge(m, src)
+func (m *MsgAddMFA) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddMFA.Merge(m, src)
 }
-func (m *MsgEnableMFA) XXX_Size() int {
+func (m *MsgAddMFA) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgEnableMFA) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgEnableMFA.DiscardUnknown(m)
+func (m *MsgAddMFA) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddMFA.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgEnableMFA proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddMFA proto.InternalMessageInfo
 
-func (m *MsgEnableMFA) GetCreator() string {
+func (m *MsgAddMFA) GetCreator() string {
 	if m != nil {
 		return m.Creator
 	}
 	return ""
 }
 
-func (m *MsgEnableMFA) GetDid() string {
+func (m *MsgAddMFA) GetDid() string {
 	if m != nil {
 		return m.Did
 	}
 	return ""
 }
 
-func (m *MsgEnableMFA) GetMethodType() string {
+func (m *MsgAddMFA) GetMethod() string {
 	if m != nil {
-		return m.MethodType
+		return m.Method
 	}
 	return ""
 }
 
-func (m *MsgEnableMFA) GetIdentifier() string {
+func (m *MsgAddMFA) GetSecret() string {
 	if m != nil {
-		return m.Identifier
+		return m.Secret
 	}
 	return ""
 }
 
-// MsgVerifyMFA represents the message to verify an MFA challenge
+type MsgAddMFAResponse struct {
+}
+
+func (m *MsgAddMFAResponse) Reset()         { *m = MsgAddMFAResponse{} }
+func (m *MsgAddMFAResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddMFAResponse) ProtoMessage()    {}
+func (*MsgAddMFAResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{4}
+}
+func (m *MsgAddMFAResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddMFAResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddMFAResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddMFAResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddMFAResponse.Merge(m, src)
+}
+func (m *MsgAddMFAResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddMFAResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddMFAResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddMFAResponse proto.InternalMessageInfo
+
+type MsgRemoveMFA struct {
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Did     string `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
+	Method  string `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
+}
+
+func (m *MsgRemoveMFA) Reset()         { *m = MsgRemoveMFA{} }
+func (m *MsgRemoveMFA) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveMFA) ProtoMessage()    {}
+func (*MsgRemoveMFA) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{5}
+}
+func (m *MsgRemoveMFA) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveMFA) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveMFA.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveMFA) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveMFA.Merge(m, src)
+}
+func (m *MsgRemoveMFA) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveMFA) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveMFA.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveMFA proto.InternalMessageInfo
+
+func (m *MsgRemoveMFA) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgRemoveMFA) GetDid() string {
+	if m != nil {
+		return m.Did
+	}
+	return ""
+}
+
+func (m *MsgRemoveMFA) GetMethod() string {
+	if m != nil {
+		return m.Method
+	}
+	return ""
+}
+
+type MsgRemoveMFAResponse struct {
+}
+
+func (m *MsgRemoveMFAResponse) Reset()         { *m = MsgRemoveMFAResponse{} }
+func (m *MsgRemoveMFAResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveMFAResponse) ProtoMessage()    {}
+func (*MsgRemoveMFAResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{6}
+}
+func (m *MsgRemoveMFAResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveMFAResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveMFAResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveMFAResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveMFAResponse.Merge(m, src)
+}
+func (m *MsgRemoveMFAResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveMFAResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveMFAResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveMFAResponse proto.InternalMessageInfo
+
 type MsgVerifyMFA struct {
-	Creator     string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	ChallengeId string `protobuf:"bytes,2,opt,name=challenge_id,json=challengeId,proto3" json:"challenge_id,omitempty"`
-	Response    string `protobuf:"bytes,3,opt,name=response,proto3" json:"response,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Did     string `protobuf:"bytes,2,opt,name=did,proto3" json:"did,omitempty"`
+	Method  string `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
+	Code    string `protobuf:"bytes,4,opt,name=code,proto3" json:"code,omitempty"`
 }
 
 func (m *MsgVerifyMFA) Reset()         { *m = MsgVerifyMFA{} }
 func (m *MsgVerifyMFA) String() string { return proto.CompactTextString(m) }
 func (*MsgVerifyMFA) ProtoMessage()    {}
 func (*MsgVerifyMFA) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{4}
+	return fileDescriptor_6f98fdf45cff8027, []int{7}
 }
 func (m *MsgVerifyMFA) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -374,64 +506,114 @@ func (m *MsgVerifyMFA) GetCreator() string {
 	return ""
 }
 
-func (m *MsgVerifyMFA) GetChallengeId() string {
+func (m *MsgVerifyMFA) GetDid() string {
 	if m != nil {
-		return m.ChallengeId
+		return m.Did
 	}
 	return ""
 }
 
-func (m *MsgVerifyMFA) GetResponse() string {
+func (m *MsgVerifyMFA) GetMethod() string {
 	if m != nil {
-		return m.Response
+		return m.Method
 	}
 	return ""
 }
+
+func (m *MsgVerifyMFA) GetCode() string {
+	if m != nil {
+		return m.Code
+	}
+	return ""
+}
+
+type MsgVerifyMFAResponse struct {
+}
+
+func (m *MsgVerifyMFAResponse) Reset()         { *m = MsgVerifyMFAResponse{} }
+func (m *MsgVerifyMFAResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgVerifyMFAResponse) ProtoMessage()    {}
+func (*MsgVerifyMFAResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{8}
+}
+func (m *MsgVerifyMFAResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgVerifyMFAResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgVerifyMFAResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgVerifyMFAResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgVerifyMFAResponse.Merge(m, src)
+}
+func (m *MsgVerifyMFAResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgVerifyMFAResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgVerifyMFAResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgVerifyMFAResponse proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterEnum("selfchain.identity.MFAMethodStatus", MFAMethodStatus_name, MFAMethodStatus_value)
 	proto.RegisterType((*MFAConfig)(nil), "selfchain.identity.MFAConfig")
 	proto.RegisterType((*MFAMethod)(nil), "selfchain.identity.MFAMethod")
 	proto.RegisterType((*MFAChallenge)(nil), "selfchain.identity.MFAChallenge")
-	proto.RegisterType((*MsgEnableMFA)(nil), "selfchain.identity.MsgEnableMFA")
+	proto.RegisterType((*MsgAddMFA)(nil), "selfchain.identity.MsgAddMFA")
+	proto.RegisterType((*MsgAddMFAResponse)(nil), "selfchain.identity.MsgAddMFAResponse")
+	proto.RegisterType((*MsgRemoveMFA)(nil), "selfchain.identity.MsgRemoveMFA")
+	proto.RegisterType((*MsgRemoveMFAResponse)(nil), "selfchain.identity.MsgRemoveMFAResponse")
 	proto.RegisterType((*MsgVerifyMFA)(nil), "selfchain.identity.MsgVerifyMFA")
+	proto.RegisterType((*MsgVerifyMFAResponse)(nil), "selfchain.identity.MsgVerifyMFAResponse")
 }
 
 func init() { proto.RegisterFile("selfchain/identity/mfa.proto", fileDescriptor_6f98fdf45cff8027) }
 
 var fileDescriptor_6f98fdf45cff8027 = []byte{
-	// 504 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xcf, 0x8a, 0xdb, 0x30,
-	0x10, 0xc6, 0xa3, 0x64, 0x9b, 0x4d, 0x94, 0x74, 0x29, 0xa2, 0x14, 0x13, 0xb6, 0x8e, 0x6b, 0x28,
-	0xf8, 0x64, 0xc3, 0xb6, 0xd0, 0xb3, 0x77, 0xdb, 0x40, 0x0f, 0xbe, 0x98, 0xa5, 0x87, 0x5e, 0x82,
-	0x62, 0x8d, 0x1d, 0x83, 0x6d, 0x19, 0x5b, 0x5b, 0x36, 0xf4, 0x25, 0xf6, 0x65, 0x0a, 0x7d, 0x84,
-	0x3d, 0xee, 0xb1, 0x50, 0x68, 0x4b, 0xf2, 0x22, 0x45, 0xb2, 0x65, 0xf7, 0x0f, 0x14, 0xb6, 0x37,
-	0xcd, 0x68, 0x24, 0xfd, 0xbe, 0x6f, 0x46, 0xf8, 0xb4, 0x86, 0x2c, 0x8e, 0xb6, 0x34, 0x2d, 0xbc,
-	0x94, 0x41, 0x21, 0x52, 0xb1, 0xf3, 0xf2, 0x98, 0xba, 0x65, 0xc5, 0x05, 0x27, 0xa4, 0xdb, 0x75,
-	0xf5, 0xee, 0xe2, 0x71, 0xc2, 0x13, 0xae, 0xb6, 0x3d, 0xb9, 0x6a, 0x2a, 0x17, 0xcb, 0x84, 0xf3,
-	0x24, 0x03, 0x4f, 0x45, 0x9b, 0xab, 0xd8, 0x13, 0x69, 0x0e, 0xb5, 0xa0, 0x79, 0xd9, 0x14, 0xd8,
-	0x9f, 0x10, 0x9e, 0x06, 0x2b, 0xff, 0x82, 0x17, 0x71, 0x9a, 0x90, 0x47, 0x78, 0xc4, 0x52, 0x66,
-	0x20, 0x0b, 0x39, 0xd3, 0x50, 0x2e, 0x89, 0x81, 0x8f, 0xa1, 0xa0, 0x9b, 0x0c, 0x98, 0x31, 0xb4,
-	0x90, 0x33, 0x09, 0x75, 0x48, 0x5e, 0xe1, 0xe3, 0x1c, 0xc4, 0x96, 0xb3, 0xda, 0x18, 0x59, 0x23,
-	0x67, 0x76, 0xf6, 0xd4, 0xfd, 0x1b, 0xcb, 0x0d, 0x56, 0x7e, 0xa0, 0xaa, 0x42, 0x5d, 0x4d, 0x2e,
-	0x30, 0xbe, 0x2a, 0x19, 0x15, 0xc0, 0xd6, 0x54, 0x18, 0x47, 0x16, 0x72, 0x66, 0x67, 0x0b, 0xb7,
-	0x01, 0x75, 0x35, 0xa8, 0x7b, 0xa9, 0x41, 0xcf, 0x27, 0xb7, 0xdf, 0x96, 0x83, 0x9b, 0xef, 0x4b,
-	0x14, 0x4e, 0xdb, 0x73, 0xbe, 0xb0, 0x3f, 0x37, 0xdc, 0xcd, 0xdd, 0x84, 0xe0, 0x23, 0xb1, 0x2b,
-	0xa1, 0x05, 0x57, 0x6b, 0x62, 0x62, 0xdc, 0x50, 0xc4, 0x29, 0x54, 0x0a, 0x7e, 0x1a, 0xfe, 0x92,
-	0x21, 0x4f, 0xf0, 0xb8, 0x86, 0xa8, 0x02, 0x61, 0x8c, 0x2c, 0xe4, 0xcc, 0xc3, 0x36, 0x22, 0x0b,
-	0x3c, 0xf9, 0x00, 0x95, 0xac, 0x61, 0x0a, 0x6e, 0x12, 0x76, 0xb1, 0x44, 0x8f, 0x2a, 0xd0, 0xe8,
-	0x0f, 0xee, 0x83, 0xde, 0x9e, 0xf3, 0x85, 0xfd, 0x15, 0xe1, 0xb9, 0xb4, 0x7c, 0x4b, 0xb3, 0x0c,
-	0x8a, 0x04, 0xc8, 0x09, 0x1e, 0x76, 0xa6, 0x0f, 0x53, 0xa6, 0xbb, 0x30, 0xec, 0xbb, 0xb0, 0xc4,
-	0xb3, 0xc6, 0xbd, 0xb5, 0x92, 0x39, 0x6a, 0xc4, 0x34, 0xa9, 0x4b, 0x29, 0xf6, 0x39, 0x3e, 0x89,
-	0xf4, 0x7d, 0x6b, 0x46, 0x05, 0x55, 0xe8, 0xf3, 0xf0, 0x61, 0x97, 0x7d, 0x4d, 0x05, 0x95, 0xfc,
-	0x70, 0x5d, 0xa6, 0x15, 0xd4, 0xf7, 0xe6, 0x6f, 0xcf, 0xf9, 0x82, 0x9c, 0xe2, 0x69, 0xc4, 0xf3,
-	0x32, 0x03, 0x01, 0xcc, 0x18, 0x2b, 0x87, 0xfa, 0x84, 0xfd, 0x11, 0xcf, 0x83, 0x3a, 0x79, 0xa3,
-	0x86, 0x24, 0x58, 0xf9, 0x72, 0x80, 0x94, 0x74, 0x5e, 0xb5, 0x0a, 0x75, 0xf8, 0x3f, 0x32, 0x7f,
-	0xef, 0xe9, 0xd1, 0x9f, 0x3d, 0xb5, 0x13, 0xf5, 0xf8, 0x3b, 0xd9, 0xae, 0xdd, 0xbf, 0x1f, 0x7f,
-	0x86, 0xe7, 0xbd, 0x61, 0x1d, 0xc5, 0xac, 0xcb, 0xbd, 0x65, 0x72, 0x10, 0x2a, 0xa8, 0x4b, 0x5e,
-	0xd4, 0x1a, 0xa5, 0x8b, 0xcf, 0x5f, 0xde, 0xee, 0x4d, 0x74, 0xb7, 0x37, 0xd1, 0x8f, 0xbd, 0x89,
-	0x6e, 0x0e, 0xe6, 0xe0, 0xee, 0x60, 0x0e, 0xbe, 0x1c, 0xcc, 0xc1, 0xfb, 0x45, 0xff, 0x73, 0xaf,
-	0xfb, 0xbf, 0x2b, 0xf5, 0xd4, 0x9b, 0xb1, 0xb2, 0xf8, 0xc5, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0xb5, 0x4b, 0xb6, 0x23, 0xde, 0x03, 0x00, 0x00,
+	// 541 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xc1, 0x6e, 0xda, 0x40,
+	0x10, 0x65, 0x8d, 0x4b, 0xc4, 0x24, 0x4a, 0xe9, 0x36, 0x8a, 0x5c, 0x14, 0x1c, 0xea, 0x5e, 0x50,
+	0x0f, 0x46, 0xa2, 0x95, 0x7a, 0xe8, 0x21, 0x32, 0x60, 0x5a, 0xa4, 0x9a, 0x46, 0x86, 0x70, 0xe8,
+	0x05, 0x39, 0x78, 0x6c, 0x2c, 0x01, 0x8b, 0xbc, 0x9b, 0x2a, 0xfc, 0x45, 0xfa, 0x31, 0xfd, 0x87,
+	0xaa, 0xa7, 0x1c, 0x7b, 0x6b, 0x05, 0x3f, 0x52, 0xb1, 0xd8, 0x10, 0x05, 0xa9, 0x6a, 0xa4, 0xdc,
+	0x66, 0x3c, 0x6f, 0xde, 0x9b, 0x37, 0xbb, 0x5e, 0x38, 0xe1, 0x38, 0x0e, 0x86, 0x23, 0x2f, 0x9a,
+	0x56, 0x23, 0x1f, 0xa7, 0x22, 0x12, 0xf3, 0xea, 0x24, 0xf0, 0xcc, 0x59, 0xcc, 0x04, 0xa3, 0x74,
+	0x53, 0x35, 0xd3, 0x6a, 0xf1, 0x28, 0x64, 0x21, 0x93, 0xe5, 0xea, 0x2a, 0x5a, 0x23, 0x8b, 0xa7,
+	0x21, 0x63, 0xe1, 0x18, 0xab, 0x32, 0xbb, 0xbc, 0x0a, 0xaa, 0x22, 0x9a, 0x20, 0x17, 0xde, 0x64,
+	0xb6, 0x06, 0x18, 0x7d, 0xc8, 0x3b, 0x2d, 0xab, 0xc1, 0xa6, 0x41, 0x14, 0xd2, 0x02, 0x64, 0xfd,
+	0xc8, 0xd7, 0x48, 0x99, 0x54, 0xf2, 0xee, 0x2a, 0xa4, 0xef, 0x60, 0x6f, 0x82, 0x62, 0xc4, 0x7c,
+	0xae, 0x29, 0xe5, 0x6c, 0x65, 0xbf, 0x56, 0x32, 0x77, 0xb5, 0x4d, 0xa7, 0x65, 0x39, 0x12, 0xe5,
+	0xa6, 0x68, 0xe3, 0x3b, 0x91, 0xc4, 0xeb, 0xcf, 0x94, 0x82, 0x2a, 0xe6, 0x33, 0x4c, 0x98, 0x65,
+	0x4c, 0x8f, 0x21, 0xc7, 0x71, 0x18, 0xa3, 0xd0, 0x14, 0xf9, 0x35, 0xc9, 0xe8, 0x19, 0xc0, 0x30,
+	0x46, 0x4f, 0xa0, 0x3f, 0xf0, 0x84, 0x96, 0x2d, 0x93, 0xca, 0x7e, 0xad, 0x68, 0xae, 0x7d, 0x98,
+	0xa9, 0x0f, 0xb3, 0x97, 0xfa, 0xa8, 0xab, 0x37, 0xbf, 0x4f, 0x89, 0x9b, 0x4f, 0x7a, 0x2c, 0x41,
+	0xdf, 0x43, 0x8e, 0x0b, 0x4f, 0x5c, 0x71, 0x4d, 0x2d, 0x93, 0xca, 0x61, 0xed, 0xd5, 0x3f, 0x47,
+	0xee, 0x4a, 0xa8, 0x9b, 0xb4, 0x18, 0x3f, 0x09, 0x1c, 0xac, 0x16, 0x32, 0xf2, 0xc6, 0x63, 0x9c,
+	0x86, 0x48, 0x0f, 0x41, 0xd9, 0xac, 0x44, 0x89, 0xfc, 0x74, 0x47, 0xca, 0x76, 0x47, 0xc7, 0x90,
+	0x5b, 0xbb, 0x96, 0xc3, 0xe6, 0xdd, 0x24, 0xbb, 0x67, 0x44, 0x7d, 0xb8, 0x91, 0x33, 0x00, 0xbc,
+	0x9e, 0x45, 0x31, 0xf2, 0x15, 0xc1, 0x93, 0xff, 0x25, 0x48, 0x7a, 0x2c, 0x61, 0x84, 0x90, 0x77,
+	0x78, 0x68, 0xf9, 0xbe, 0xd3, 0xb2, 0xa8, 0x06, 0x7b, 0x92, 0x9a, 0xc5, 0x89, 0x9b, 0x34, 0x7d,
+	0x80, 0xa5, 0xed, 0x99, 0xa9, 0x77, 0xcf, 0xcc, 0x78, 0x0e, 0xcf, 0x36, 0x42, 0x2e, 0xf2, 0x19,
+	0x9b, 0x72, 0x34, 0x5c, 0x38, 0x70, 0x78, 0xe8, 0xe2, 0x84, 0x7d, 0xc5, 0x47, 0x1a, 0xc0, 0x38,
+	0x86, 0xa3, 0xbb, 0x9c, 0x1b, 0xad, 0x40, 0x6a, 0xf5, 0x31, 0x8e, 0x82, 0xf9, 0x63, 0x99, 0xa5,
+	0xa0, 0x0e, 0x99, 0x8f, 0x89, 0x55, 0x19, 0x27, 0xfa, 0x1b, 0x9d, 0x54, 0xff, 0xf5, 0x37, 0x02,
+	0x4f, 0xef, 0x5d, 0x29, 0xfa, 0x12, 0x4a, 0x4e, 0xcb, 0x1a, 0x38, 0x76, 0xef, 0xe3, 0xe7, 0xe6,
+	0xa0, 0xdb, 0xb3, 0x7a, 0x17, 0xdd, 0xc1, 0x45, 0xa7, 0x7b, 0x6e, 0x37, 0xda, 0xad, 0xb6, 0xdd,
+	0x2c, 0x64, 0xe8, 0x09, 0x68, 0xbb, 0x10, 0xab, 0xd1, 0x6b, 0xf7, 0xed, 0x02, 0xa1, 0x25, 0x78,
+	0xb1, 0x5b, 0x3d, 0xb7, 0x3b, 0xcd, 0x76, 0xe7, 0x43, 0x41, 0xa1, 0x3a, 0x14, 0x77, 0xcb, 0xcd,
+	0x76, 0xd7, 0xaa, 0x7f, 0xb2, 0x9b, 0x85, 0x6c, 0xfd, 0xed, 0x8f, 0x85, 0x4e, 0x6e, 0x17, 0x3a,
+	0xf9, 0xb3, 0xd0, 0xc9, 0xcd, 0x52, 0xcf, 0xdc, 0x2e, 0xf5, 0xcc, 0xaf, 0xa5, 0x9e, 0xf9, 0x52,
+	0xdc, 0xbe, 0x2e, 0xd7, 0xdb, 0xf7, 0x65, 0xf5, 0x57, 0xf2, 0xcb, 0x9c, 0xbc, 0x58, 0x6f, 0xfe,
+	0x06, 0x00, 0x00, 0xff, 0xff, 0xb1, 0x50, 0x71, 0xae, 0x82, 0x04, 0x00, 0x00,
 }
 
 func (m *MFAConfig) Marshal() (dAtA []byte, err error) {
@@ -454,14 +636,6 @@ func (m *MFAConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.UpdatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt):])
-	if err1 != nil {
-		return 0, err1
-	}
-	i -= n1
-	i = encodeVarintMfa(dAtA, i, uint64(n1))
-	i--
-	dAtA[i] = 0x22
 	if len(m.Methods) > 0 {
 		for iNdEx := len(m.Methods) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -473,18 +647,8 @@ func (m *MFAConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintMfa(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
-	}
-	if m.Enabled {
-		i--
-		if m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x10
 	}
 	if len(m.Did) > 0 {
 		i -= len(m.Did)
@@ -516,35 +680,25 @@ func (m *MFAMethod) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt):])
-	if err2 != nil {
-		return 0, err2
-	}
-	i -= n2
-	i = encodeVarintMfa(dAtA, i, uint64(n2))
-	i--
-	dAtA[i] = 0x2a
-	if m.Verified {
-		i--
-		if m.Verified {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
+	if m.Status != 0 {
+		i = encodeVarintMfa(dAtA, i, uint64(m.Status))
 		i--
 		dAtA[i] = 0x20
+	}
+	if m.CreatedAt != nil {
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err1 != nil {
+			return 0, err1
+		}
+		i -= n1
+		i = encodeVarintMfa(dAtA, i, uint64(n1))
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Secret) > 0 {
 		i -= len(m.Secret)
 		copy(dAtA[i:], m.Secret)
 		i = encodeVarintMfa(dAtA, i, uint64(len(m.Secret)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Identifier) > 0 {
-		i -= len(m.Identifier)
-		copy(dAtA[i:], m.Identifier)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.Identifier)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -578,35 +732,30 @@ func (m *MFAChallenge) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Completed {
-		i--
-		if m.Completed {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+	if m.ExpiresAt != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
+		if err2 != nil {
+			return 0, err2
 		}
+		i -= n2
+		i = encodeVarintMfa(dAtA, i, uint64(n2))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x2a
 	}
-	n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.ExpiresAt):])
-	if err3 != nil {
-		return 0, err3
-	}
-	i -= n3
-	i = encodeVarintMfa(dAtA, i, uint64(n3))
-	i--
-	dAtA[i] = 0x2a
-	if len(m.ChallengeData) > 0 {
-		i -= len(m.ChallengeData)
-		copy(dAtA[i:], m.ChallengeData)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.ChallengeData)))
+	if m.CreatedAt != nil {
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err3 != nil {
+			return 0, err3
+		}
+		i -= n3
+		i = encodeVarintMfa(dAtA, i, uint64(n3))
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.MethodType) > 0 {
-		i -= len(m.MethodType)
-		copy(dAtA[i:], m.MethodType)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.MethodType)))
+	if len(m.Method) > 0 {
+		i -= len(m.Method)
+		copy(dAtA[i:], m.Method)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Method)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -627,7 +776,7 @@ func (m *MFAChallenge) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgEnableMFA) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddMFA) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -637,27 +786,27 @@ func (m *MsgEnableMFA) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgEnableMFA) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddMFA) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgEnableMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Identifier) > 0 {
-		i -= len(m.Identifier)
-		copy(dAtA[i:], m.Identifier)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.Identifier)))
+	if len(m.Secret) > 0 {
+		i -= len(m.Secret)
+		copy(dAtA[i:], m.Secret)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Secret)))
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.MethodType) > 0 {
-		i -= len(m.MethodType)
-		copy(dAtA[i:], m.MethodType)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.MethodType)))
+	if len(m.Method) > 0 {
+		i -= len(m.Method)
+		copy(dAtA[i:], m.Method)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Method)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -675,6 +824,96 @@ func (m *MsgEnableMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0xa
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddMFAResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddMFAResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddMFAResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveMFA) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveMFA) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Method) > 0 {
+		i -= len(m.Method)
+		copy(dAtA[i:], m.Method)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Method)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Did) > 0 {
+		i -= len(m.Did)
+		copy(dAtA[i:], m.Did)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Did)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveMFAResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveMFAResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveMFAResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	return len(dAtA) - i, nil
 }
 
@@ -698,17 +937,24 @@ func (m *MsgVerifyMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Response) > 0 {
-		i -= len(m.Response)
-		copy(dAtA[i:], m.Response)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.Response)))
+	if len(m.Code) > 0 {
+		i -= len(m.Code)
+		copy(dAtA[i:], m.Code)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Code)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Method) > 0 {
+		i -= len(m.Method)
+		copy(dAtA[i:], m.Method)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Method)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.ChallengeId) > 0 {
-		i -= len(m.ChallengeId)
-		copy(dAtA[i:], m.ChallengeId)
-		i = encodeVarintMfa(dAtA, i, uint64(len(m.ChallengeId)))
+	if len(m.Did) > 0 {
+		i -= len(m.Did)
+		copy(dAtA[i:], m.Did)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Did)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -719,6 +965,29 @@ func (m *MsgVerifyMFA) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0xa
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgVerifyMFAResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgVerifyMFAResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgVerifyMFAResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	return len(dAtA) - i, nil
 }
 
@@ -743,17 +1012,12 @@ func (m *MFAConfig) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	if m.Enabled {
-		n += 2
-	}
 	if len(m.Methods) > 0 {
 		for _, e := range m.Methods {
 			l = e.Size()
 			n += 1 + l + sovMfa(uint64(l))
 		}
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt)
-	n += 1 + l + sovMfa(uint64(l))
 	return n
 }
 
@@ -767,19 +1031,17 @@ func (m *MFAMethod) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.Identifier)
-	if l > 0 {
-		n += 1 + l + sovMfa(uint64(l))
-	}
 	l = len(m.Secret)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	if m.Verified {
-		n += 2
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
+		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt)
-	n += 1 + l + sovMfa(uint64(l))
+	if m.Status != 0 {
+		n += 1 + sovMfa(uint64(m.Status))
+	}
 	return n
 }
 
@@ -797,23 +1059,22 @@ func (m *MFAChallenge) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.MethodType)
+	l = len(m.Method)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.ChallengeData)
-	if l > 0 {
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.ExpiresAt)
-	n += 1 + l + sovMfa(uint64(l))
-	if m.Completed {
-		n += 2
+	if m.ExpiresAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt)
+		n += 1 + l + sovMfa(uint64(l))
 	}
 	return n
 }
 
-func (m *MsgEnableMFA) Size() (n int) {
+func (m *MsgAddMFA) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -827,14 +1088,53 @@ func (m *MsgEnableMFA) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.MethodType)
+	l = len(m.Method)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.Identifier)
+	l = len(m.Secret)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
+	return n
+}
+
+func (m *MsgAddMFAResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRemoveMFA) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	l = len(m.Did)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	l = len(m.Method)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveMFAResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -848,14 +1148,27 @@ func (m *MsgVerifyMFA) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.ChallengeId)
+	l = len(m.Did)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
-	l = len(m.Response)
+	l = len(m.Method)
 	if l > 0 {
 		n += 1 + l + sovMfa(uint64(l))
 	}
+	l = len(m.Code)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgVerifyMFAResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -927,26 +1240,6 @@ func (m *MFAConfig) Unmarshal(dAtA []byte) error {
 			m.Did = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMfa
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Enabled = bool(v != 0)
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Methods", wireType)
 			}
@@ -977,39 +1270,6 @@ func (m *MFAConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.Methods = append(m.Methods, &MFAMethod{})
 			if err := m.Methods[len(m.Methods)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UpdatedAt", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMfa
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMfa
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMfa
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.UpdatedAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1097,7 +1357,7 @@ func (m *MFAMethod) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Identifier", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Secret", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1125,63 +1385,9 @@ func (m *MFAMethod) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Identifier = string(dAtA[iNdEx:postIndex])
+			m.Secret = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Secret", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMfa
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthMfa
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMfa
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Secret = append(m.Secret[:0], dAtA[iNdEx:postIndex]...)
-			if m.Secret == nil {
-				m.Secret = []byte{}
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Verified", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMfa
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Verified = bool(v != 0)
-		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
@@ -1210,10 +1416,32 @@ func (m *MFAMethod) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= MFAMethodStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMfa(dAtA[iNdEx:])
@@ -1330,7 +1558,7 @@ func (m *MFAChallenge) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MethodType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Method", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1358,13 +1586,13 @@ func (m *MFAChallenge) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MethodType = string(dAtA[iNdEx:postIndex])
+			m.Method = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChallengeData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowMfa
@@ -1374,24 +1602,26 @@ func (m *MFAChallenge) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthMfa
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthMfa
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChallengeData = append(m.ChallengeData[:0], dAtA[iNdEx:postIndex]...)
-			if m.ChallengeData == nil {
-				m.ChallengeData = []byte{}
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
 		case 5:
@@ -1423,30 +1653,13 @@ func (m *MFAChallenge) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.ExpiresAt, dAtA[iNdEx:postIndex]); err != nil {
+			if m.ExpiresAt == nil {
+				m.ExpiresAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ExpiresAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Completed", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMfa
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Completed = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMfa(dAtA[iNdEx:])
@@ -1468,7 +1681,7 @@ func (m *MFAChallenge) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgEnableMFA) Unmarshal(dAtA []byte) error {
+func (m *MsgAddMFA) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1491,10 +1704,10 @@ func (m *MsgEnableMFA) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgEnableMFA: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddMFA: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgEnableMFA: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddMFA: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1563,7 +1776,7 @@ func (m *MsgEnableMFA) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MethodType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Method", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1591,11 +1804,11 @@ func (m *MsgEnableMFA) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MethodType = string(dAtA[iNdEx:postIndex])
+			m.Method = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Identifier", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Secret", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1623,8 +1836,254 @@ func (m *MsgEnableMFA) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Identifier = string(dAtA[iNdEx:postIndex])
+			m.Secret = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMfa(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddMFAResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMfa
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddMFAResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddMFAResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMfa(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveMFA) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMfa
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveMFA: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveMFA: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Did = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Method", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Method = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMfa(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveMFAResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMfa
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveMFAResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveMFAResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMfa(dAtA[iNdEx:])
@@ -1709,7 +2168,7 @@ func (m *MsgVerifyMFA) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChallengeId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1737,11 +2196,11 @@ func (m *MsgVerifyMFA) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChallengeId = string(dAtA[iNdEx:postIndex])
+			m.Did = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Response", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Method", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1769,8 +2228,90 @@ func (m *MsgVerifyMFA) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Response = string(dAtA[iNdEx:postIndex])
+			m.Method = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Code = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMfa(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgVerifyMFAResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMfa
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgVerifyMFAResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgVerifyMFAResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMfa(dAtA[iNdEx:])

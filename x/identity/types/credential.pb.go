@@ -27,15 +27,48 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// CredentialStatus represents the status of a credential
+type CredentialStatus int32
+
+const (
+	CredentialStatus_ACTIVE  CredentialStatus = 0
+	CredentialStatus_REVOKED CredentialStatus = 1
+	CredentialStatus_EXPIRED CredentialStatus = 2
+	CredentialStatus_PENDING CredentialStatus = 3
+)
+
+var CredentialStatus_name = map[int32]string{
+	0: "ACTIVE",
+	1: "REVOKED",
+	2: "EXPIRED",
+	3: "PENDING",
+}
+
+var CredentialStatus_value = map[string]int32{
+	"ACTIVE":  0,
+	"REVOKED": 1,
+	"EXPIRED": 2,
+	"PENDING": 3,
+}
+
+func (x CredentialStatus) String() string {
+	return proto.EnumName(CredentialStatus_name, int32(x))
+}
+
+func (CredentialStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_7272e24855266b3e, []int{0}
+}
+
 // Credential represents a verifiable credential
 type Credential struct {
-	Id       string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Issuer   string            `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Subject  string            `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
-	Claims   map[string]string `protobuf:"bytes,4,rep,name=claims,proto3" json:"claims,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	SchemaId string            `protobuf:"bytes,5,opt,name=schema_id,json=schemaId,proto3" json:"schema_id,omitempty"`
-	Created  *time.Time        `protobuf:"bytes,6,opt,name=created,proto3,stdtime" json:"created,omitempty"`
-	Revoked  bool              `protobuf:"varint,7,opt,name=revoked,proto3" json:"revoked,omitempty"`
+	Id             string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type           string           `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Issuer         string           `protobuf:"bytes,3,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Subject        string           `protobuf:"bytes,4,opt,name=subject,proto3" json:"subject,omitempty"`
+	Claims         []string         `protobuf:"bytes,5,rep,name=claims,proto3" json:"claims,omitempty"`
+	IssuanceDate   *time.Time       `protobuf:"bytes,6,opt,name=issuance_date,json=issuanceDate,proto3,stdtime" json:"issuance_date,omitempty"`
+	ExpirationDate *time.Time       `protobuf:"bytes,7,opt,name=expiration_date,json=expirationDate,proto3,stdtime" json:"expiration_date,omitempty"`
+	Status         CredentialStatus `protobuf:"varint,8,opt,name=status,proto3,enum=selfchain.identity.CredentialStatus" json:"status,omitempty"`
 }
 
 func (m *Credential) Reset()         { *m = Credential{} }
@@ -78,6 +111,13 @@ func (m *Credential) GetId() string {
 	return ""
 }
 
+func (m *Credential) GetType() string {
+	if m != nil {
+		return m.Type
+	}
+	return ""
+}
+
 func (m *Credential) GetIssuer() string {
 	if m != nil {
 		return m.Issuer
@@ -92,56 +132,55 @@ func (m *Credential) GetSubject() string {
 	return ""
 }
 
-func (m *Credential) GetClaims() map[string]string {
+func (m *Credential) GetClaims() []string {
 	if m != nil {
 		return m.Claims
 	}
 	return nil
 }
 
-func (m *Credential) GetSchemaId() string {
+func (m *Credential) GetIssuanceDate() *time.Time {
 	if m != nil {
-		return m.SchemaId
-	}
-	return ""
-}
-
-func (m *Credential) GetCreated() *time.Time {
-	if m != nil {
-		return m.Created
+		return m.IssuanceDate
 	}
 	return nil
 }
 
-func (m *Credential) GetRevoked() bool {
+func (m *Credential) GetExpirationDate() *time.Time {
 	if m != nil {
-		return m.Revoked
+		return m.ExpirationDate
 	}
-	return false
+	return nil
 }
 
-// CredentialSchema represents a schema for verifiable credentials
-type CredentialSchema struct {
-	Id          string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string            `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Properties  map[string]string `protobuf:"bytes,4,rep,name=properties,proto3" json:"properties,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Required    bool              `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`
-	Created     *time.Time        `protobuf:"bytes,6,opt,name=created,proto3,stdtime" json:"created,omitempty"`
+func (m *Credential) GetStatus() CredentialStatus {
+	if m != nil {
+		return m.Status
+	}
+	return CredentialStatus_ACTIVE
 }
 
-func (m *CredentialSchema) Reset()         { *m = CredentialSchema{} }
-func (m *CredentialSchema) String() string { return proto.CompactTextString(m) }
-func (*CredentialSchema) ProtoMessage()    {}
-func (*CredentialSchema) Descriptor() ([]byte, []int) {
+// CredentialPresentation represents a presentation of a credential
+type CredentialPresentation struct {
+	CredentialId     string           `protobuf:"bytes,1,opt,name=credential_id,json=credentialId,proto3" json:"credential_id,omitempty"`
+	Verifier         string           `protobuf:"bytes,2,opt,name=verifier,proto3" json:"verifier,omitempty"`
+	DisclosedClaims  []string         `protobuf:"bytes,3,rep,name=disclosed_claims,json=disclosedClaims,proto3" json:"disclosed_claims,omitempty"`
+	PresentationDate *time.Time       `protobuf:"bytes,4,opt,name=presentation_date,json=presentationDate,proto3,stdtime" json:"presentation_date,omitempty"`
+	Proof            *CredentialProof `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
+}
+
+func (m *CredentialPresentation) Reset()         { *m = CredentialPresentation{} }
+func (m *CredentialPresentation) String() string { return proto.CompactTextString(m) }
+func (*CredentialPresentation) ProtoMessage()    {}
+func (*CredentialPresentation) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7272e24855266b3e, []int{1}
 }
-func (m *CredentialSchema) XXX_Unmarshal(b []byte) error {
+func (m *CredentialPresentation) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CredentialSchema) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CredentialPresentation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CredentialSchema.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CredentialPresentation.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -151,65 +190,135 @@ func (m *CredentialSchema) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *CredentialSchema) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CredentialSchema.Merge(m, src)
+func (m *CredentialPresentation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CredentialPresentation.Merge(m, src)
 }
-func (m *CredentialSchema) XXX_Size() int {
+func (m *CredentialPresentation) XXX_Size() int {
 	return m.Size()
 }
-func (m *CredentialSchema) XXX_DiscardUnknown() {
-	xxx_messageInfo_CredentialSchema.DiscardUnknown(m)
+func (m *CredentialPresentation) XXX_DiscardUnknown() {
+	xxx_messageInfo_CredentialPresentation.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CredentialSchema proto.InternalMessageInfo
+var xxx_messageInfo_CredentialPresentation proto.InternalMessageInfo
 
-func (m *CredentialSchema) GetId() string {
+func (m *CredentialPresentation) GetCredentialId() string {
 	if m != nil {
-		return m.Id
+		return m.CredentialId
 	}
 	return ""
 }
 
-func (m *CredentialSchema) GetName() string {
+func (m *CredentialPresentation) GetVerifier() string {
 	if m != nil {
-		return m.Name
+		return m.Verifier
 	}
 	return ""
 }
 
-func (m *CredentialSchema) GetDescription() string {
+func (m *CredentialPresentation) GetDisclosedClaims() []string {
 	if m != nil {
-		return m.Description
-	}
-	return ""
-}
-
-func (m *CredentialSchema) GetProperties() map[string]string {
-	if m != nil {
-		return m.Properties
+		return m.DisclosedClaims
 	}
 	return nil
 }
 
-func (m *CredentialSchema) GetRequired() bool {
+func (m *CredentialPresentation) GetPresentationDate() *time.Time {
 	if m != nil {
-		return m.Required
+		return m.PresentationDate
 	}
-	return false
+	return nil
 }
 
-func (m *CredentialSchema) GetCreated() *time.Time {
+func (m *CredentialPresentation) GetProof() *CredentialProof {
+	if m != nil {
+		return m.Proof
+	}
+	return nil
+}
+
+// CredentialProof represents a proof for a credential or presentation
+type CredentialProof struct {
+	Type               string     `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Created            *time.Time `protobuf:"bytes,2,opt,name=created,proto3,stdtime" json:"created,omitempty"`
+	VerificationMethod string     `protobuf:"bytes,3,opt,name=verification_method,json=verificationMethod,proto3" json:"verification_method,omitempty"`
+	ProofPurpose       string     `protobuf:"bytes,4,opt,name=proof_purpose,json=proofPurpose,proto3" json:"proof_purpose,omitempty"`
+	Signature          []byte     `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (m *CredentialProof) Reset()         { *m = CredentialProof{} }
+func (m *CredentialProof) String() string { return proto.CompactTextString(m) }
+func (*CredentialProof) ProtoMessage()    {}
+func (*CredentialProof) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7272e24855266b3e, []int{2}
+}
+func (m *CredentialProof) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CredentialProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CredentialProof.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CredentialProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CredentialProof.Merge(m, src)
+}
+func (m *CredentialProof) XXX_Size() int {
+	return m.Size()
+}
+func (m *CredentialProof) XXX_DiscardUnknown() {
+	xxx_messageInfo_CredentialProof.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CredentialProof proto.InternalMessageInfo
+
+func (m *CredentialProof) GetType() string {
+	if m != nil {
+		return m.Type
+	}
+	return ""
+}
+
+func (m *CredentialProof) GetCreated() *time.Time {
 	if m != nil {
 		return m.Created
 	}
 	return nil
 }
 
+func (m *CredentialProof) GetVerificationMethod() string {
+	if m != nil {
+		return m.VerificationMethod
+	}
+	return ""
+}
+
+func (m *CredentialProof) GetProofPurpose() string {
+	if m != nil {
+		return m.ProofPurpose
+	}
+	return ""
+}
+
+func (m *CredentialProof) GetSignature() []byte {
+	if m != nil {
+		return m.Signature
+	}
+	return nil
+}
+
 func init() {
+	proto.RegisterEnum("selfchain.identity.CredentialStatus", CredentialStatus_name, CredentialStatus_value)
 	proto.RegisterType((*Credential)(nil), "selfchain.identity.Credential")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.Credential.ClaimsEntry")
-	proto.RegisterType((*CredentialSchema)(nil), "selfchain.identity.CredentialSchema")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.identity.CredentialSchema.PropertiesEntry")
+	proto.RegisterType((*CredentialPresentation)(nil), "selfchain.identity.CredentialPresentation")
+	proto.RegisterType((*CredentialProof)(nil), "selfchain.identity.CredentialProof")
 }
 
 func init() {
@@ -217,35 +326,42 @@ func init() {
 }
 
 var fileDescriptor_7272e24855266b3e = []byte{
-	// 436 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x93, 0xcf, 0x6a, 0xdb, 0x40,
-	0x10, 0xc6, 0xbd, 0xb2, 0x63, 0x3b, 0x63, 0x68, 0xc3, 0x12, 0x8a, 0x50, 0x41, 0x11, 0xe9, 0xc5,
-	0xf4, 0xb0, 0x82, 0x34, 0x87, 0x36, 0xd0, 0x8b, 0x43, 0x0f, 0xbd, 0x15, 0x35, 0xa7, 0x5e, 0x8a,
-	0x2c, 0x4d, 0x9c, 0x6d, 0x24, 0xad, 0xba, 0xbb, 0x0a, 0xf5, 0x5b, 0xe4, 0x91, 0x7a, 0x29, 0xf4,
-	0x98, 0x63, 0x6f, 0x2d, 0xf6, 0x8b, 0x14, 0xef, 0x6a, 0x2d, 0x53, 0x43, 0xa1, 0xf4, 0x36, 0xdf,
-	0xec, 0xfc, 0xf9, 0xe6, 0x07, 0x0b, 0xcf, 0x14, 0x16, 0xd7, 0xd9, 0x4d, 0xca, 0xab, 0x98, 0xe7,
-	0x58, 0x69, 0xae, 0x97, 0x71, 0x26, 0xd1, 0x84, 0x69, 0xc1, 0x6a, 0x29, 0xb4, 0xa0, 0x74, 0x5b,
-	0xc4, 0x5c, 0x51, 0x70, 0xbc, 0x10, 0x0b, 0x61, 0x9e, 0xe3, 0x4d, 0x64, 0x2b, 0x83, 0x93, 0x85,
-	0x10, 0x8b, 0x02, 0x63, 0xa3, 0xe6, 0xcd, 0x75, 0xac, 0x79, 0x89, 0x4a, 0xa7, 0x65, 0x6d, 0x0b,
-	0x4e, 0xbf, 0x7a, 0x00, 0x97, 0xdb, 0xf9, 0xf4, 0x11, 0x78, 0x3c, 0xf7, 0x49, 0x44, 0xa6, 0x87,
-	0x89, 0xc7, 0x73, 0xfa, 0x04, 0x86, 0x5c, 0xa9, 0x06, 0xa5, 0xef, 0x99, 0x5c, 0xab, 0xa8, 0x0f,
-	0x23, 0xd5, 0xcc, 0x3f, 0x61, 0xa6, 0xfd, 0xbe, 0x79, 0x70, 0x92, 0xce, 0x60, 0x98, 0x15, 0x29,
-	0x2f, 0x95, 0x3f, 0x88, 0xfa, 0xd3, 0xc9, 0xd9, 0x73, 0xb6, 0x6f, 0x96, 0x75, 0x1b, 0xd9, 0xa5,
-	0x29, 0x7e, 0x53, 0x69, 0xb9, 0x4c, 0xda, 0x4e, 0xfa, 0x14, 0x0e, 0x55, 0x76, 0x83, 0x65, 0xfa,
-	0x91, 0xe7, 0xfe, 0x81, 0x99, 0x3f, 0xb6, 0x89, 0xb7, 0x39, 0xbd, 0x80, 0x51, 0x26, 0x31, 0xd5,
-	0x98, 0xfb, 0xc3, 0x88, 0x4c, 0x27, 0x67, 0x01, 0xb3, 0x47, 0x32, 0x77, 0x24, 0xbb, 0x72, 0x47,
-	0xce, 0x06, 0xf7, 0x3f, 0x4f, 0x48, 0xe2, 0x1a, 0x36, 0xb6, 0x25, 0xde, 0x89, 0x5b, 0xcc, 0xfd,
-	0x51, 0x44, 0xa6, 0xe3, 0xc4, 0xc9, 0xe0, 0x15, 0x4c, 0x76, 0x9c, 0xd0, 0x23, 0xe8, 0xdf, 0xe2,
-	0xb2, 0x05, 0xb1, 0x09, 0xe9, 0x31, 0x1c, 0xdc, 0xa5, 0x45, 0x83, 0x2d, 0x08, 0x2b, 0x2e, 0xbc,
-	0x97, 0xe4, 0xf4, 0x9b, 0x07, 0x47, 0xdd, 0x41, 0xef, 0x8d, 0xcf, 0x3d, 0x90, 0x14, 0x06, 0x55,
-	0x5a, 0xba, 0x6e, 0x13, 0xd3, 0x08, 0x26, 0x39, 0xaa, 0x4c, 0xf2, 0x5a, 0x73, 0x51, 0xb5, 0x20,
-	0x77, 0x53, 0xf4, 0x0a, 0xa0, 0x96, 0xa2, 0x46, 0xa9, 0x39, 0x3a, 0xa0, 0xe7, 0x7f, 0x07, 0x6a,
-	0xf7, 0xb3, 0x77, 0xdb, 0x36, 0x8b, 0x76, 0x67, 0x0e, 0x0d, 0x60, 0x2c, 0xf1, 0x73, 0xc3, 0x25,
-	0x5a, 0xba, 0xe3, 0x64, 0xab, 0xff, 0x87, 0x6e, 0xf0, 0x1a, 0x1e, 0xff, 0xb1, 0xf6, 0x5f, 0x38,
-	0xce, 0xce, 0xbf, 0xaf, 0x42, 0xf2, 0xb0, 0x0a, 0xc9, 0xaf, 0x55, 0x48, 0xee, 0xd7, 0x61, 0xef,
-	0x61, 0x1d, 0xf6, 0x7e, 0xac, 0xc3, 0xde, 0x87, 0xa0, 0xfb, 0x14, 0x5f, 0xba, 0x6f, 0xa1, 0x97,
-	0x35, 0xaa, 0xf9, 0xd0, 0xf8, 0x7a, 0xf1, 0x3b, 0x00, 0x00, 0xff, 0xff, 0xe8, 0x14, 0xd4, 0x05,
-	0x39, 0x03, 0x00, 0x00,
+	// 558 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x4f, 0x6b, 0xdb, 0x4c,
+	0x10, 0xc6, 0x2d, 0xd9, 0xb1, 0x93, 0x89, 0x63, 0xeb, 0xdd, 0xb7, 0x04, 0x61, 0x8a, 0x62, 0xec,
+	0x1e, 0xdc, 0x1e, 0x24, 0x48, 0x7b, 0x69, 0xe9, 0xa5, 0xb1, 0x45, 0x31, 0x25, 0xa9, 0x51, 0x43,
+	0x28, 0xbd, 0x18, 0x59, 0x1a, 0x3b, 0x5b, 0x6c, 0xad, 0xd0, 0xae, 0x4a, 0xf2, 0x25, 0x4a, 0x3e,
+	0x56, 0xe9, 0x29, 0x97, 0x42, 0x6f, 0x2d, 0xf6, 0x17, 0x29, 0x5a, 0xfd, 0x33, 0x29, 0x14, 0xdf,
+	0x76, 0x9e, 0x99, 0x67, 0x34, 0xfb, 0xd3, 0xb0, 0xd0, 0xe7, 0xb8, 0x9c, 0x7b, 0xd7, 0x2e, 0x0d,
+	0x2c, 0xea, 0x63, 0x20, 0xa8, 0xb8, 0xb5, 0xbc, 0x08, 0xe5, 0xd1, 0x5d, 0x9a, 0x61, 0xc4, 0x04,
+	0x23, 0xa4, 0x28, 0x32, 0xf3, 0xa2, 0xce, 0xa3, 0x05, 0x5b, 0x30, 0x99, 0xb6, 0x92, 0x53, 0x5a,
+	0xd9, 0x39, 0x59, 0x30, 0xb6, 0x58, 0xa2, 0x25, 0xa3, 0x59, 0x3c, 0xb7, 0x04, 0x5d, 0x21, 0x17,
+	0xee, 0x2a, 0x4c, 0x0b, 0x7a, 0xdf, 0x55, 0x80, 0x61, 0xd1, 0x9f, 0xb4, 0x40, 0xa5, 0xbe, 0xae,
+	0x74, 0x95, 0xc1, 0x81, 0xa3, 0x52, 0x9f, 0x10, 0xa8, 0x89, 0xdb, 0x10, 0x75, 0x55, 0x2a, 0xf2,
+	0x4c, 0x8e, 0xa1, 0x4e, 0x39, 0x8f, 0x31, 0xd2, 0xab, 0x52, 0xcd, 0x22, 0xa2, 0x43, 0x83, 0xc7,
+	0xb3, 0xcf, 0xe8, 0x09, 0xbd, 0x26, 0x13, 0x79, 0x98, 0x38, 0xbc, 0xa5, 0x4b, 0x57, 0x5c, 0xdf,
+	0xeb, 0x56, 0x13, 0x47, 0x1a, 0x11, 0x1b, 0x8e, 0x12, 0xaf, 0x1b, 0x78, 0x38, 0xf5, 0x5d, 0x81,
+	0x7a, 0xbd, 0xab, 0x0c, 0x0e, 0x4f, 0x3b, 0x66, 0x3a, 0xb5, 0x99, 0x4f, 0x6d, 0x5e, 0xe6, 0x53,
+	0x9f, 0xd5, 0xee, 0x7e, 0x9d, 0x28, 0x4e, 0x33, 0xb7, 0x8d, 0x5c, 0x81, 0x64, 0x0c, 0x6d, 0xbc,
+	0x09, 0x69, 0xe4, 0x0a, 0xca, 0x82, 0xb4, 0x51, 0x63, 0xc7, 0x46, 0xad, 0xd2, 0x28, 0x5b, 0xbd,
+	0x86, 0x3a, 0x17, 0xae, 0x88, 0xb9, 0xbe, 0xdf, 0x55, 0x06, 0xad, 0xd3, 0x27, 0xe6, 0xdf, 0xa8,
+	0xcd, 0x92, 0xd7, 0x07, 0x59, 0xeb, 0x64, 0x9e, 0xde, 0x57, 0x15, 0x8e, 0xcb, 0xe4, 0x24, 0x42,
+	0x8e, 0x81, 0x90, 0xcd, 0x49, 0x1f, 0x8e, 0xca, 0xdf, 0x38, 0x2d, 0x18, 0x37, 0x4b, 0x71, 0xec,
+	0x93, 0x0e, 0xec, 0x7f, 0xc1, 0x88, 0xce, 0x29, 0x46, 0x19, 0xf1, 0x22, 0x26, 0x4f, 0x41, 0xf3,
+	0x29, 0xf7, 0x96, 0x8c, 0xa3, 0x3f, 0xcd, 0x68, 0x56, 0x25, 0xcd, 0x76, 0xa1, 0x0f, 0x53, 0xac,
+	0xe7, 0xf0, 0x5f, 0xb8, 0xf5, 0xed, 0x94, 0x48, 0x6d, 0x47, 0x22, 0xda, 0xb6, 0x55, 0x32, 0x79,
+	0x09, 0x7b, 0x61, 0xc4, 0xd8, 0x5c, 0xdf, 0x93, 0x2d, 0xfa, 0xff, 0x46, 0x32, 0x49, 0x4a, 0x9d,
+	0xd4, 0xd1, 0xfb, 0xa1, 0x40, 0xfb, 0x41, 0xaa, 0x58, 0x29, 0x65, 0x6b, 0xa5, 0x5e, 0x41, 0xc3,
+	0x8b, 0xd0, 0x15, 0xe8, 0xcb, 0x7b, 0xef, 0x32, 0x67, 0x6e, 0x20, 0x16, 0xfc, 0x9f, 0x42, 0xf2,
+	0xd2, 0xdb, 0xae, 0x50, 0x5c, 0x33, 0x3f, 0xdb, 0x4d, 0xb2, 0x9d, 0x3a, 0x97, 0x99, 0xe4, 0x57,
+	0xc8, 0xe9, 0xa6, 0x61, 0x1c, 0x85, 0x8c, 0x63, 0xb6, 0xad, 0x4d, 0x29, 0x4e, 0x52, 0x8d, 0x3c,
+	0x86, 0x03, 0x4e, 0x17, 0x81, 0x2b, 0xe2, 0x08, 0xe5, 0xc5, 0x9b, 0x4e, 0x29, 0x3c, 0xb3, 0x41,
+	0x7b, 0xb8, 0x04, 0x04, 0xa0, 0xfe, 0x66, 0x78, 0x39, 0xbe, 0xb2, 0xb5, 0x0a, 0x39, 0x84, 0x86,
+	0x63, 0x5f, 0xbd, 0x7f, 0x67, 0x8f, 0x34, 0x25, 0x09, 0xec, 0x8f, 0x93, 0xb1, 0x63, 0x8f, 0x34,
+	0x35, 0x09, 0x26, 0xf6, 0xc5, 0x68, 0x7c, 0xf1, 0x56, 0xab, 0x9e, 0xbd, 0xf8, 0xb6, 0x36, 0x94,
+	0xfb, 0xb5, 0xa1, 0xfc, 0x5e, 0x1b, 0xca, 0xdd, 0xc6, 0xa8, 0xdc, 0x6f, 0x8c, 0xca, 0xcf, 0x8d,
+	0x51, 0xf9, 0xd4, 0x29, 0x9f, 0x81, 0x9b, 0xf2, 0x21, 0x48, 0x58, 0xf1, 0x59, 0x5d, 0x32, 0x79,
+	0xfe, 0x27, 0x00, 0x00, 0xff, 0xff, 0xa1, 0xea, 0x39, 0x4d, 0x2b, 0x04, 0x00, 0x00,
 }
 
 func (m *Credential) Marshal() (dAtA []byte, err error) {
@@ -268,50 +384,38 @@ func (m *Credential) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Revoked {
+	if m.Status != 0 {
+		i = encodeVarintCredential(dAtA, i, uint64(m.Status))
 		i--
-		if m.Revoked {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x40
 	}
-	if m.Created != nil {
-		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Created, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created):])
+	if m.ExpirationDate != nil {
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpirationDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpirationDate):])
 		if err1 != nil {
 			return 0, err1
 		}
 		i -= n1
 		i = encodeVarintCredential(dAtA, i, uint64(n1))
 		i--
+		dAtA[i] = 0x3a
+	}
+	if m.IssuanceDate != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.IssuanceDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.IssuanceDate):])
+		if err2 != nil {
+			return 0, err2
+		}
+		i -= n2
+		i = encodeVarintCredential(dAtA, i, uint64(n2))
+		i--
 		dAtA[i] = 0x32
 	}
-	if len(m.SchemaId) > 0 {
-		i -= len(m.SchemaId)
-		copy(dAtA[i:], m.SchemaId)
-		i = encodeVarintCredential(dAtA, i, uint64(len(m.SchemaId)))
-		i--
-		dAtA[i] = 0x2a
-	}
 	if len(m.Claims) > 0 {
-		for k := range m.Claims {
-			v := m.Claims[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintCredential(dAtA, i, uint64(len(v)))
+		for iNdEx := len(m.Claims) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Claims[iNdEx])
+			copy(dAtA[i:], m.Claims[iNdEx])
+			i = encodeVarintCredential(dAtA, i, uint64(len(m.Claims[iNdEx])))
 			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintCredential(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintCredential(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x2a
 		}
 	}
 	if len(m.Subject) > 0 {
@@ -319,12 +423,19 @@ func (m *Credential) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Subject)
 		i = encodeVarintCredential(dAtA, i, uint64(len(m.Subject)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x22
 	}
 	if len(m.Issuer) > 0 {
 		i -= len(m.Issuer)
 		copy(dAtA[i:], m.Issuer)
 		i = encodeVarintCredential(dAtA, i, uint64(len(m.Issuer)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Type) > 0 {
+		i -= len(m.Type)
+		copy(dAtA[i:], m.Type)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.Type)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -338,7 +449,7 @@ func (m *Credential) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *CredentialSchema) Marshal() (dAtA []byte, err error) {
+func (m *CredentialPresentation) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -348,73 +459,119 @@ func (m *CredentialSchema) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CredentialSchema) MarshalTo(dAtA []byte) (int, error) {
+func (m *CredentialPresentation) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *CredentialSchema) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *CredentialPresentation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Created != nil {
-		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Created, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created):])
-		if err2 != nil {
-			return 0, err2
-		}
-		i -= n2
-		i = encodeVarintCredential(dAtA, i, uint64(n2))
-		i--
-		dAtA[i] = 0x32
-	}
-	if m.Required {
-		i--
-		if m.Required {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+	if m.Proof != nil {
+		{
+			size, err := m.Proof.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCredential(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x2a
 	}
-	if len(m.Properties) > 0 {
-		for k := range m.Properties {
-			v := m.Properties[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintCredential(dAtA, i, uint64(len(v)))
+	if m.PresentationDate != nil {
+		n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.PresentationDate, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.PresentationDate):])
+		if err4 != nil {
+			return 0, err4
+		}
+		i -= n4
+		i = encodeVarintCredential(dAtA, i, uint64(n4))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.DisclosedClaims) > 0 {
+		for iNdEx := len(m.DisclosedClaims) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.DisclosedClaims[iNdEx])
+			copy(dAtA[i:], m.DisclosedClaims[iNdEx])
+			i = encodeVarintCredential(dAtA, i, uint64(len(m.DisclosedClaims[iNdEx])))
 			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintCredential(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintCredential(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintCredential(dAtA, i, uint64(len(m.Description)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintCredential(dAtA, i, uint64(len(m.Name)))
+	if len(m.Verifier) > 0 {
+		i -= len(m.Verifier)
+		copy(dAtA[i:], m.Verifier)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.Verifier)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintCredential(dAtA, i, uint64(len(m.Id)))
+	if len(m.CredentialId) > 0 {
+		i -= len(m.CredentialId)
+		copy(dAtA[i:], m.CredentialId)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.CredentialId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CredentialProof) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CredentialProof) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CredentialProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Signature) > 0 {
+		i -= len(m.Signature)
+		copy(dAtA[i:], m.Signature)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.Signature)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.ProofPurpose) > 0 {
+		i -= len(m.ProofPurpose)
+		copy(dAtA[i:], m.ProofPurpose)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.ProofPurpose)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.VerificationMethod) > 0 {
+		i -= len(m.VerificationMethod)
+		copy(dAtA[i:], m.VerificationMethod)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.VerificationMethod)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Created != nil {
+		n5, err5 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Created, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created):])
+		if err5 != nil {
+			return 0, err5
+		}
+		i -= n5
+		i = encodeVarintCredential(dAtA, i, uint64(n5))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Type) > 0 {
+		i -= len(m.Type)
+		copy(dAtA[i:], m.Type)
+		i = encodeVarintCredential(dAtA, i, uint64(len(m.Type)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -442,6 +599,10 @@ func (m *Credential) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovCredential(uint64(l))
 	}
+	l = len(m.Type)
+	if l > 0 {
+		n += 1 + l + sovCredential(uint64(l))
+	}
 	l = len(m.Issuer)
 	if l > 0 {
 		n += 1 + l + sovCredential(uint64(l))
@@ -451,58 +612,80 @@ func (m *Credential) Size() (n int) {
 		n += 1 + l + sovCredential(uint64(l))
 	}
 	if len(m.Claims) > 0 {
-		for k, v := range m.Claims {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovCredential(uint64(len(k))) + 1 + len(v) + sovCredential(uint64(len(v)))
-			n += mapEntrySize + 1 + sovCredential(uint64(mapEntrySize))
+		for _, s := range m.Claims {
+			l = len(s)
+			n += 1 + l + sovCredential(uint64(l))
 		}
 	}
-	l = len(m.SchemaId)
-	if l > 0 {
+	if m.IssuanceDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.IssuanceDate)
 		n += 1 + l + sovCredential(uint64(l))
 	}
-	if m.Created != nil {
-		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created)
+	if m.ExpirationDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpirationDate)
 		n += 1 + l + sovCredential(uint64(l))
 	}
-	if m.Revoked {
-		n += 2
+	if m.Status != 0 {
+		n += 1 + sovCredential(uint64(m.Status))
 	}
 	return n
 }
 
-func (m *CredentialSchema) Size() (n int) {
+func (m *CredentialPresentation) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Id)
+	l = len(m.CredentialId)
 	if l > 0 {
 		n += 1 + l + sovCredential(uint64(l))
 	}
-	l = len(m.Name)
+	l = len(m.Verifier)
 	if l > 0 {
 		n += 1 + l + sovCredential(uint64(l))
 	}
-	l = len(m.Description)
-	if l > 0 {
-		n += 1 + l + sovCredential(uint64(l))
-	}
-	if len(m.Properties) > 0 {
-		for k, v := range m.Properties {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovCredential(uint64(len(k))) + 1 + len(v) + sovCredential(uint64(len(v)))
-			n += mapEntrySize + 1 + sovCredential(uint64(mapEntrySize))
+	if len(m.DisclosedClaims) > 0 {
+		for _, s := range m.DisclosedClaims {
+			l = len(s)
+			n += 1 + l + sovCredential(uint64(l))
 		}
 	}
-	if m.Required {
-		n += 2
+	if m.PresentationDate != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.PresentationDate)
+		n += 1 + l + sovCredential(uint64(l))
+	}
+	if m.Proof != nil {
+		l = m.Proof.Size()
+		n += 1 + l + sovCredential(uint64(l))
+	}
+	return n
+}
+
+func (m *CredentialProof) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Type)
+	if l > 0 {
+		n += 1 + l + sovCredential(uint64(l))
 	}
 	if m.Created != nil {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Created)
+		n += 1 + l + sovCredential(uint64(l))
+	}
+	l = len(m.VerificationMethod)
+	if l > 0 {
+		n += 1 + l + sovCredential(uint64(l))
+	}
+	l = len(m.ProofPurpose)
+	if l > 0 {
+		n += 1 + l + sovCredential(uint64(l))
+	}
+	l = len(m.Signature)
+	if l > 0 {
 		n += 1 + l + sovCredential(uint64(l))
 	}
 	return n
@@ -577,6 +760,38 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Type = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Issuer", wireType)
 			}
 			var stringLen uint64
@@ -607,7 +822,7 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 			}
 			m.Issuer = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subject", wireType)
 			}
@@ -639,136 +854,9 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 			}
 			m.Subject = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Claims", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowCredential
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthCredential
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthCredential
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Claims == nil {
-				m.Claims = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCredential
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCredential
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthCredential
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCredential
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthCredential
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipCredential(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Claims[mapkey] = mapvalue
-			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SchemaId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Claims", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -796,11 +884,11 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SchemaId = string(dAtA[iNdEx:postIndex])
+			m.Claims = append(m.Claims, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Created", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field IssuanceDate", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -827,18 +915,18 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Created == nil {
-				m.Created = new(time.Time)
+			if m.IssuanceDate == nil {
+				m.IssuanceDate = new(time.Time)
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.Created, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.IssuanceDate, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Revoked", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpirationDate", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowCredential
@@ -848,12 +936,47 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Revoked = bool(v != 0)
+			if msglen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ExpirationDate == nil {
+				m.ExpirationDate = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ExpirationDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= CredentialStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipCredential(dAtA[iNdEx:])
@@ -875,7 +998,7 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
+func (m *CredentialPresentation) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -898,15 +1021,15 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CredentialSchema: wiretype end group for non-group")
+			return fmt.Errorf("proto: CredentialPresentation: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CredentialSchema: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CredentialPresentation: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CredentialId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -934,11 +1057,11 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Id = string(dAtA[iNdEx:postIndex])
+			m.CredentialId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Verifier", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -966,11 +1089,11 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			m.Verifier = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DisclosedClaims", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -998,11 +1121,11 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Description = string(dAtA[iNdEx:postIndex])
+			m.DisclosedClaims = append(m.DisclosedClaims, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Properties", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PresentationDate", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1029,109 +1152,18 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Properties == nil {
-				m.Properties = make(map[string]string)
+			if m.PresentationDate == nil {
+				m.PresentationDate = new(time.Time)
 			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCredential
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCredential
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthCredential
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCredential
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthCredential
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipCredential(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthCredential
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.PresentationDate, dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			m.Properties[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Required", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowCredential
@@ -1141,13 +1173,111 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Required = bool(v != 0)
-		case 6:
+			if msglen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Proof == nil {
+				m.Proof = &CredentialProof{}
+			}
+			if err := m.Proof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCredential(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CredentialProof) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCredential
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CredentialProof: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CredentialProof: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Type = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Created", wireType)
 			}
@@ -1181,6 +1311,104 @@ func (m *CredentialSchema) Unmarshal(dAtA []byte) error {
 			}
 			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.Created, dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VerificationMethod", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VerificationMethod = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProofPurpose", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProofPurpose = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredential
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCredential
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCredential
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signature = append(m.Signature[:0], dAtA[iNdEx:postIndex]...)
+			if m.Signature == nil {
+				m.Signature = []byte{}
 			}
 			iNdEx = postIndex
 		default:

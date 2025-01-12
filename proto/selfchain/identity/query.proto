@@ -1,16 +1,16 @@
 syntax = "proto3";
 package selfchain.identity;
 
-option go_package = "selfchain/x/identity/types";
-
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/identity/params.proto";
 import "selfchain/identity/did_document.proto";
 import "selfchain/identity/credential.proto";
 import "selfchain/identity/oauth.proto";
 import "selfchain/identity/mfa.proto";
-import "selfchain/identity/recovery.proto";
+
+option go_package = "selfchain/x/identity/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -19,44 +19,49 @@ service Query {
     option (google.api.http).get = "/selfchain/identity/params";
   }
   
-  // DIDDocument queries a DID document by ID.
-  rpc DIDDocument(QueryDIDDocumentRequest) returns (QueryDIDDocumentResponse) {
-    option (google.api.http).get = "/selfchain/identity/did/{id}";
+  // Queries a list of DIDDocuments items.
+  rpc DIDDocuments(QueryDIDDocumentsRequest) returns (QueryDIDDocumentsResponse) {
+    option (google.api.http).get = "/selfchain/identity/did_documents/{did}";
   }
-  
-  // Credential queries a credential by ID.
+
+  // Queries a credential by ID
   rpc Credential(QueryCredentialRequest) returns (QueryCredentialResponse) {
     option (google.api.http).get = "/selfchain/identity/credential/{id}";
   }
-  
-  // SocialIdentity queries a social identity by DID and provider.
+
+  // Queries credentials by DID
+  rpc CredentialsByDID(QueryCredentialsByDIDRequest) returns (QueryCredentialsByDIDResponse) {
+    option (google.api.http).get = "/selfchain/identity/credentials/{did}";
+  }
+
+  // Queries a list of SocialIdentities items.
+  rpc SocialIdentities(QuerySocialIdentitiesRequest) returns (QuerySocialIdentitiesResponse) {
+    option (google.api.http).get = "/selfchain/identity/social_identities/{did}";
+  }
+
+  // Queries a social identity by provider and social ID.
+  rpc SocialIdentityBySocialID(QuerySocialIdentityBySocialIDRequest) returns (QuerySocialIdentityBySocialIDResponse) {
+    option (google.api.http).get = "/selfchain/identity/social_identity/{provider}/{social_id}";
+  }
+
+  // SocialIdentity queries a social identity by DID and provider
   rpc SocialIdentity(QuerySocialIdentityRequest) returns (QuerySocialIdentityResponse) {
-    option (google.api.http).get = "/selfchain/identity/social/{did}/{provider}";
+    option (google.api.http).get = "/selfchain/identity/social_identity/{did}/{provider}";
   }
-  
-  // LinkedDID queries the DID linked to a social identity.
+
+  // LinkedDID queries a DID linked to a social identity
   rpc LinkedDID(QueryLinkedDIDRequest) returns (QueryLinkedDIDResponse) {
-    option (google.api.http).get = "/selfchain/identity/social/linked/{provider}/{social_id}";
-  }
-  
-  // VerifyCredential verifies a credential.
-  rpc VerifyCredential(QueryVerifyCredentialRequest) returns (QueryVerifyCredentialResponse) {
-    option (google.api.http).get = "/selfchain/identity/credential/verify/{id}";
+    option (google.api.http).get = "/selfchain/identity/linked_did/{provider}/{social_id}";
   }
 
-  // MFAConfig queries the MFA configuration for a DID.
+  // Queries MFA configuration.
   rpc MFAConfig(QueryMFAConfigRequest) returns (QueryMFAConfigResponse) {
-    option (google.api.http).get = "/selfchain/identity/mfa/config/{did}";
+    option (google.api.http).get = "/selfchain/identity/mfa_config/{did}";
   }
 
-  // MFAChallenge queries an MFA challenge by ID.
+  // Queries MFA challenge.
   rpc MFAChallenge(QueryMFAChallengeRequest) returns (QueryMFAChallengeResponse) {
-    option (google.api.http).get = "/selfchain/identity/mfa/challenge/{id}";
-  }
-
-  // RecoverySession queries a recovery session by ID.
-  rpc RecoverySession(QueryRecoverySessionRequest) returns (QueryRecoverySessionResponse) {
-    option (google.api.http).get = "/selfchain/identity/recovery/session/{id}";
+    option (google.api.http).get = "/selfchain/identity/mfa_challenge/{did}/{method}";
   }
 }
 
@@ -65,17 +70,18 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
+  // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryDIDDocumentRequest is request type for the Query/DIDDocument method.
-message QueryDIDDocumentRequest {
-  string id = 1;
+// QueryDIDDocumentsRequest is request type for the Query/DIDDocuments method.
+message QueryDIDDocumentsRequest {
+  string did = 1;
 }
 
-// QueryDIDDocumentResponse is response type for the Query/DIDDocument method.
-message QueryDIDDocumentResponse {
-  DIDDocument document = 1 [(gogoproto.nullable) = false];
+// QueryDIDDocumentsResponse is response type for the Query/DIDDocuments method.
+message QueryDIDDocumentsResponse {
+  DIDDocument document = 1;
 }
 
 // QueryCredentialRequest is request type for the Query/Credential method.
@@ -85,23 +91,60 @@ message QueryCredentialRequest {
 
 // QueryCredentialResponse is response type for the Query/Credential method.
 message QueryCredentialResponse {
-  Credential credential = 1 [(gogoproto.nullable) = false];
+  Credential credential = 1;
 }
 
-// QueryVerifyCredentialRequest is request type for the Query/VerifyCredential method.
-message QueryVerifyCredentialRequest {
-  string id = 1;
+// QueryCredentialsByDIDRequest is request type for the Query/CredentialsByDID method.
+message QueryCredentialsByDIDRequest {
+  string did = 1;
 }
 
-// QueryVerifyCredentialResponse is response type for the Query/VerifyCredential method.
-message QueryVerifyCredentialResponse {
-  VerificationStatus status = 1 [(gogoproto.nullable) = false];
+// QueryCredentialsByDIDResponse is response type for the Query/CredentialsByDID method.
+message QueryCredentialsByDIDResponse {
+  repeated Credential credentials = 1;
 }
 
-// VerificationStatus represents the verification status of a credential.
-message VerificationStatus {
-  bool valid = 1;
-  string reason = 2;
+// QuerySocialIdentitiesRequest is request type for the Query/SocialIdentities method.
+message QuerySocialIdentitiesRequest {
+  string did = 1;
+}
+
+// QuerySocialIdentitiesResponse is response type for the Query/SocialIdentities method.
+message QuerySocialIdentitiesResponse {
+  repeated SocialIdentity identities = 1;
+}
+
+// QuerySocialIdentityBySocialIDRequest is request type for the Query/SocialIdentityBySocialID method.
+message QuerySocialIdentityBySocialIDRequest {
+  string provider = 1;
+  string social_id = 2;
+}
+
+// QuerySocialIdentityBySocialIDResponse is response type for the Query/SocialIdentityBySocialID method.
+message QuerySocialIdentityBySocialIDResponse {
+  SocialIdentity identity = 1;
+}
+
+// QuerySocialIdentityRequest is request type for the Query/SocialIdentity RPC method
+message QuerySocialIdentityRequest {
+  string did = 1;
+  string provider = 2;
+}
+
+// QuerySocialIdentityResponse is response type for the Query/SocialIdentity RPC method
+message QuerySocialIdentityResponse {
+  string social_id = 1;
+}
+
+// QueryLinkedDIDRequest is request type for the Query/LinkedDID RPC method
+message QueryLinkedDIDRequest {
+  string provider = 1;
+  string social_id = 2;
+}
+
+// QueryLinkedDIDResponse is response type for the Query/LinkedDID RPC method
+message QueryLinkedDIDResponse {
+  string did = 1;
 }
 
 // QueryMFAConfigRequest is request type for the Query/MFAConfig method.
@@ -111,25 +154,16 @@ message QueryMFAConfigRequest {
 
 // QueryMFAConfigResponse is response type for the Query/MFAConfig method.
 message QueryMFAConfigResponse {
-  MFAConfig config = 1 [(gogoproto.nullable) = false];
+  MFAConfig config = 1;
 }
 
 // QueryMFAChallengeRequest is request type for the Query/MFAChallenge method.
 message QueryMFAChallengeRequest {
-  string id = 1;
+  string did = 1;
+  string method = 2;
 }
 
 // QueryMFAChallengeResponse is response type for the Query/MFAChallenge method.
 message QueryMFAChallengeResponse {
-  MFAChallenge challenge = 1 [(gogoproto.nullable) = false];
-}
-
-// QueryRecoverySessionRequest is request type for the Query/RecoverySession method.
-message QueryRecoverySessionRequest {
-  string id = 1;
-}
-
-// QueryRecoverySessionResponse is response type for the Query/RecoverySession method.
-message QueryRecoverySessionResponse {
-  RecoverySession session = 1 [(gogoproto.nullable) = false];
+  MFAChallenge challenge = 1;
 }

@@ -63,36 +63,25 @@ func (k Keeper) DeleteDIDDocument(ctx sdk.Context, did string) {
 // ValidateDIDDocument validates a DID document
 func (k Keeper) ValidateDIDDocument(document types.DIDDocument) error {
 	if document.Id == "" {
-		return fmt.Errorf("DID cannot be empty")
+		return fmt.Errorf("DID document ID cannot be empty")
 	}
 
-	if len(document.Controller) == 0 {
-		return fmt.Errorf("at least one controller is required")
+	if len(document.VerificationMethod) == 0 {
+		return fmt.Errorf("DID document must have at least one verification method")
 	}
 
-	// Validate verification methods
-	for _, vm := range document.VerificationMethods {
-		if vm.Id == "" {
+	for _, method := range document.VerificationMethod {
+		if method.Id == "" {
 			return fmt.Errorf("verification method ID cannot be empty")
 		}
-		if vm.Type == "" {
+		if method.Type == "" {
 			return fmt.Errorf("verification method type cannot be empty")
 		}
-		if vm.Controller == "" {
+		if method.Controller == "" {
 			return fmt.Errorf("verification method controller cannot be empty")
 		}
-	}
-
-	// Validate services
-	for _, svc := range document.Services {
-		if svc.Id == "" {
-			return fmt.Errorf("service ID cannot be empty")
-		}
-		if svc.Type == "" {
-			return fmt.Errorf("service type cannot be empty")
-		}
-		if svc.ServiceEndpoint == "" {
-			return fmt.Errorf("service endpoint cannot be empty")
+		if method.PublicKeyBase58 == "" {
+			return fmt.Errorf("verification method public key cannot be empty")
 		}
 	}
 
@@ -101,44 +90,6 @@ func (k Keeper) ValidateDIDDocument(document types.DIDDocument) error {
 
 // HasDIDDocument checks if a DID document exists
 func (k Keeper) HasDIDDocument(ctx sdk.Context, did string) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has([]byte(fmt.Sprintf("did:%s", did)))
-}
-
-// StoreDIDDocument stores a DID document
-func (k Keeper) StoreDIDDocument(ctx sdk.Context, doc types.DIDDocument) string {
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("did:%s", doc.Id))
-	value := k.cdc.MustMarshal(&doc)
-	store.Set(key, value)
-	return doc.Id
-}
-
-// GetDIDDocument retrieves a DID document
-func (k Keeper) GetDIDDocumentFromStore(ctx sdk.Context, did string) (types.DIDDocument, bool) {
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("did:%s", did))
-	value := store.Get(key)
-	if value == nil {
-		return types.DIDDocument{}, false
-	}
-
-	var doc types.DIDDocument
-	k.cdc.MustUnmarshal(value, &doc)
-	return doc, true
-}
-
-// GetAllDIDDocuments returns all DID documents
-func (k Keeper) GetAllDIDDocumentsFromStore(ctx sdk.Context) []types.DIDDocument {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, []byte("did:"))
-	defer iterator.Close()
-
-	var documents []types.DIDDocument
-	for ; iterator.Valid(); iterator.Next() {
-		var doc types.DIDDocument
-		k.cdc.MustUnmarshal(iterator.Value(), &doc)
-		documents = append(documents, doc)
-	}
-	return documents
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(DIDDocumentPrefix))
+	return store.Has([]byte(did))
 }

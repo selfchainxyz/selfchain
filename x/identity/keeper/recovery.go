@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"selfchain/x/identity/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"selfchain/x/identity/types"
 )
 
 const (
 	RecoverySessionPrefix = "recovery_session/"
-	RecoveryExpiry       = 30 * time.Minute
+	RecoveryExpiry        = 30 * time.Minute
 )
 
 // InitiateRecovery starts a new wallet recovery session
@@ -37,15 +38,15 @@ func (k Keeper) InitiateRecovery(ctx sdk.Context, socialProvider string, oauthTo
 	}
 
 	session := &types.RecoverySession{
-		Id:              base32.StdEncoding.EncodeToString(sessionID),
-		Did:             identity.Did,
-		SocialProvider:  socialProvider,
-		SocialId:        socialID,
-		MfaVerified:     false,
+		Id:               base32.StdEncoding.EncodeToString(sessionID),
+		Did:              identity.Did,
+		SocialProvider:   socialProvider,
+		SocialId:         socialID,
+		MfaVerified:      false,
 		IdentityVerified: true,
-		RecoveryData:    nil, // Will be set by keyless module
-		ExpiresAt:       ctx.BlockTime().Add(RecoveryExpiry),
-		CreatedAt:       ctx.BlockTime(),
+		RecoveryData:     nil, // Will be set by keyless module
+		ExpiresAt:        ctx.BlockTime().Add(RecoveryExpiry),
+		CreatedAt:        ctx.BlockTime(),
 	}
 
 	// Store session
@@ -82,15 +83,15 @@ func (k Keeper) CompleteRecovery(ctx sdk.Context, sessionID string, mfaCode stri
 
 	// Check if MFA is required
 	mfaConfig, hasMFA := k.GetMFAConfig(ctx, session.Did)
-	if hasMFA && mfaConfig.Enabled {
+	if hasMFA && len(mfaConfig.Methods) > 0 {
 		// Create MFA challenge if not verified
 		if !session.MfaVerified {
-			challenge, err := k.CreateMFAChallenge(ctx, session.Did, "totp")
+			_, err := k.CreateMFAChallenge(ctx, session.Did, "totp")
 			if err != nil {
 				return fmt.Errorf("failed to create MFA challenge: %v", err)
 			}
 
-			if err := k.VerifyMFAChallenge(ctx, challenge.Id, mfaCode); err != nil {
+			if err := k.VerifyMFAChallenge(ctx, session.Did, "totp", mfaCode); err != nil {
 				return fmt.Errorf("MFA verification failed: %v", err)
 			}
 
@@ -105,13 +106,13 @@ func (k Keeper) CompleteRecovery(ctx sdk.Context, sessionID string, mfaCode stri
 	}
 
 	// Call keyless module to reconstruct wallet
-	recoveryData, err := k.keylessKeeper.ReconstructWallet(ctx, didDoc)
+	recoveryData, err := k.keyless.ReconstructWallet(ctx, didDoc)
 	if err != nil {
 		return fmt.Errorf("failed to reconstruct wallet: %v", err)
 	}
 
 	session.RecoveryData = recoveryData
-	
+
 	// Update session
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoverySessionPrefix))
 	sessionBytes := k.cdc.MustMarshal(&session)
