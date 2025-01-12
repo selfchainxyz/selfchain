@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"time"
 
 	"selfchain/x/identity/types"
@@ -94,26 +94,29 @@ func (k msgServer) CreateCredential(goCtx context.Context, msg *types.MsgCreateC
 		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "subject DID not found")
 	}
 
-	// Convert map[string]string claims to []string
-	claims := make([]string, 0, len(msg.Claims))
-	for key, value := range msg.Claims {
-		claims = append(claims, fmt.Sprintf("%s:%s", key, value))
+	// Convert []string claims to map[string]string
+	claimsMap := make(map[string]string)
+	for _, claim := range msg.Claims {
+		parts := strings.SplitN(claim, ":", 2)
+		if len(parts) == 2 {
+			claimsMap[parts[0]] = parts[1]
+		}
 	}
 
 	// Create credential
-	now := time.Now()
+	now := time.Now().Unix()
 	credential := types.Credential{
 		Id:           msg.Id,
 		Type:         msg.Type,
 		Issuer:       msg.Issuer,
 		Subject:      msg.Subject,
-		Claims:       claims,
-		IssuanceDate: &now,
-		Status:       types.CredentialStatus_ACTIVE,
+		Claims:       claimsMap,
+		IssuanceDate: now,
+		Status:       string(types.CredentialStatusActive),
 	}
 
 	// Store credential
-	if err := k.SetCredential(ctx, credential); err != nil {
+	if err := k.Keeper.CreateCredential(ctx, &credential); err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to store credential")
 	}
 
@@ -134,19 +137,22 @@ func (k msgServer) UpdateCredential(goCtx context.Context, msg *types.MsgUpdateC
 		return nil, sdkerrors.Wrap(types.ErrUnauthorized, "not the credential issuer")
 	}
 
-	// Convert map[string]string claims to []string
-	claims := make([]string, 0, len(msg.Claims))
-	for key, value := range msg.Claims {
-		claims = append(claims, fmt.Sprintf("%s:%s", key, value))
+	// Convert []string claims to map[string]string
+	claimsMap := make(map[string]string)
+	for _, claim := range msg.Claims {
+		parts := strings.SplitN(claim, ":", 2)
+		if len(parts) == 2 {
+			claimsMap[parts[0]] = parts[1]
+		}
 	}
 
 	// Update credential
-	credential.Claims = claims
-	now := time.Now()
-	credential.IssuanceDate = &now
+	credential.Claims = claimsMap
+	now := time.Now().Unix()
+	credential.IssuanceDate = now
 
 	// Store updated credential
-	if err := k.SetCredential(ctx, *credential); err != nil {
+	if err := k.Keeper.CreateCredential(ctx, credential); err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to update credential")
 	}
 
@@ -168,12 +174,12 @@ func (k msgServer) RevokeCredential(goCtx context.Context, msg *types.MsgRevokeC
 	}
 
 	// Update credential status
-	credential.Status = types.CredentialStatus_REVOKED
-	now := time.Now()
-	credential.IssuanceDate = &now
+	credential.Status = string(types.CredentialStatusRevoked)
+	now := time.Now().Unix()
+	credential.IssuanceDate = now
 
 	// Store updated credential
-	if err := k.SetCredential(ctx, *credential); err != nil {
+	if err := k.Keeper.CreateCredential(ctx, credential); err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to revoke credential")
 	}
 
@@ -255,7 +261,7 @@ func (k msgServer) ConfigureMFA(goCtx context.Context, msg *types.MsgConfigureMF
 			Type: method,
 		}
 	}
-	
+
 	mfaConfig := types.MFAConfig{
 		Did:     msg.Did,
 		Methods: methods,
@@ -296,20 +302,19 @@ func (k msgServer) IssueCredential(goCtx context.Context, msg *types.MsgCreateCr
 	}
 
 	// Create credential
-	now := time.Now()
-	credential := &types.Credential{
-		Id:             msg.Id,
-		Type:           msg.Type,
-		Issuer:         msg.Issuer,
-		Subject:        msg.Subject,
-		Claims:         []string{},
-		IssuanceDate:   &now,
-		ExpirationDate: msg.ExpiryDate,
-		Status:         types.CredentialStatus_ACTIVE,
+	now := time.Now().Unix()
+	credential := types.Credential{
+		Id:           msg.Id,
+		Type:         msg.Type,
+		Issuer:       msg.Creator,
+		Subject:      msg.Subject,
+		Claims:       msg.Claims,
+		IssuanceDate: now,
+		Status:       string(types.CredentialStatusActive),
 	}
 
 	// Store credential
-	if err := k.Keeper.SetCredential(ctx, *credential); err != nil {
+	if err := k.Keeper.CreateCredential(ctx, &credential); err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to store credential")
 	}
 
@@ -393,6 +398,6 @@ func (k msgServer) AddMFA(goCtx context.Context, msg *types.MsgAddMFA) (*types.M
 	if err := k.Keeper.AddMFAMethod(ctx, msg.Did, *method); err != nil {
 		return nil, err
 	}
-	
+
 	return &types.MsgAddMFAResponse{}, nil
 }

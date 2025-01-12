@@ -7,6 +7,7 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -86,10 +87,9 @@ func (k Keeper) GetSocialIdentity(ctx sdk.Context, did string, provider string) 
 
 // GetSocialIdentityBySocialID returns a social identity by provider and social ID
 func (k Keeper) GetSocialIdentityBySocialID(ctx sdk.Context, provider string, socialID string) (*types.SocialIdentity, bool) {
-	store := ctx.KVStore(k.storeKey)
-	prefixKey := append([]byte(types.SocialIdentityByIDPrefix), []byte(provider)...)
-	key := append(prefixKey, []byte(socialID)...)
-	bz := store.Get(key)
+	store := k.GetStore(ctx, []byte(types.SocialIdentityByIDPrefix))
+	prefixKey := append([]byte(provider), []byte(socialID)...)
+	bz := store.Get(prefixKey)
 	if bz == nil {
 		return nil, false
 	}
@@ -132,4 +132,9 @@ func (k Keeper) GetDIDFromMsg(msg sdk.Msg) string {
 	default:
 		return ""
 	}
+}
+
+// GetStore returns a store for a given prefix
+func (k Keeper) GetStore(ctx sdk.Context, storePrefix []byte) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), storePrefix)
 }

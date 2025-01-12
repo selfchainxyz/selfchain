@@ -15,7 +15,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 	// Set all the credentials
 	for _, elem := range genState.Credentials {
-		k.SetCredential(ctx, elem)
+		if err := k.CreateCredential(ctx, &elem); err != nil {
+			panic(fmt.Sprintf("failed to create credential: %v", err))
+		}
 	}
 
 	// Set all the social identities

@@ -1,0 +1,47 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// ZKProof represents a zero-knowledge proof
+message ZKProof {
+  // Type of the proof (e.g., "Schnorr", "ElGamal", etc.)
+  string type = 1;
+
+  // The proof data in bytes
+  bytes proof_data = 2;
+
+  // Hash of the original claims
+  string claims_hash = 3;
+
+  // List of disclosed claim indices
+  repeated uint32 disclosed_indices = 4;
+
+  // Timestamp when the proof was created
+  int64 created = 5;
+
+  // The verification key or method to be used
+  string verification_key = 6;
+
+  // Additional metadata for the proof
+  map<string, string> metadata = 7;
+}
+
+// ZKPresentationProof extends CredentialProof with ZKP capabilities
+message ZKPresentationProof {
+  // Standard credential proof fields
+  string type = 1;
+  int64 created = 2;
+  string verification_method = 3;
+  string proof_purpose = 4;
+
+  // Zero-knowledge proof
+  ZKProof zk_proof = 5;
+
+  // Challenge-response for freshness
+  string challenge = 6;
+  string response = 7;
+}

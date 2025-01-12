@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	"selfchain/x/identity/types"
-
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"selfchain/x/identity/types"
 )
 
 const (
@@ -35,144 +37,267 @@ type SchemaField struct {
 	Enum        []string `json:"enum,omitempty"`
 }
 
-// SetCredential stores a credential in the keeper
-func (k Keeper) SetCredential(ctx sdk.Context, credential types.Credential) error {
-	store := ctx.KVStore(k.storeKey)
-	now := ctx.BlockTime()
+// CreateCredential creates a new credential
+func (k Keeper) CreateCredential(ctx context.Context, credential *types.Credential) error {
+	if credential == nil {
+		return sdkerrors.Register(types.ModuleName, 1100, "credential cannot be nil")
+	}
+
+	if err := credential.ValidateBasic(); err != nil {
+		return sdkerrors.Wrapf(err, "invalid credential")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
+
+	// Check if credential with same ID already exists
+	if store.Has([]byte(credential.Id)) {
+		return sdkerrors.Register(types.ModuleName, 1101, "credential already exists")
+	}
 
 	// Set issuance date if not set
-	if credential.IssuanceDate == nil {
-		credential.IssuanceDate = &now
+	if credential.IssuanceDate == 0 {
+		credential.IssuanceDate = time.Now().Unix()
 	}
 
-	// Set expiration date if not set
-	if credential.ExpirationDate == nil {
-		// Default expiration is 1 year from issuance
-		expiry := now.Add(365 * 24 * time.Hour)
-		credential.ExpirationDate = &expiry
+	// Set expiration date if provided
+	if credential.ExpirationDate != 0 {
+		// Ensure expiration date is in the future
+		if time.Unix(credential.ExpirationDate, 0).Before(time.Now()) {
+			return sdkerrors.Register(types.ModuleName, 1102, "expiration date must be in the future")
+		}
 	}
 
-	// Set initial status
-	credential.Status = types.CredentialStatus_ACTIVE
-
-	key := append([]byte(types.CredentialPrefix), []byte(credential.Id)...)
-	bz, err := k.cdc.Marshal(&credential)
-	if err != nil {
-		return status.Error(codes.Internal, "failed to marshal credential")
-	}
-
-	store.Set(key, bz)
+	// Set initial status to active
+	credential.Status = string(types.CredentialStatusActive)
 
 	// Create audit log
-	err = k.CreateAuditLog(ctx, types.AuditLogEntry{
-		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_UPDATED,
-		Did:       credential.Subject,
-		Action:    "update_credential",
+	now := time.Now().Unix()
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(credential.Id),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_CREATED,
+		Did:       credential.Id,
+		Action:    "create_credential",
 		Actor:     credential.Issuer,
-		Metadata:  map[string]string{"credential_id": credential.Id},
-		Timestamp: &now,
-	})
-	if err != nil {
-		return err
+		Timestamp: now,
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
 	}
 
+	if err := k.StoreAuditLog(sdkCtx, auditLog); err != nil {
+		return sdkerrors.Wrapf(err, "failed to create audit log")
+	}
+
+	// Store the credential
+	bz, err := k.cdc.Marshal(credential)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "failed to marshal credential")
+	}
+
+	store.Set([]byte(credential.Id), bz)
 	return nil
 }
 
-// GetCredential retrieves a credential from the keeper
-func (k Keeper) GetCredential(ctx sdk.Context, id string) (*types.Credential, error) {
-	store := ctx.KVStore(k.storeKey)
-	key := append([]byte(types.CredentialPrefix), []byte(id)...)
-	bz := store.Get(key)
+// GetCredential returns a credential by ID
+func (k Keeper) GetCredential(ctx context.Context, id string) (*types.Credential, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
+	bz := store.Get([]byte(id))
 	if bz == nil {
-		return nil, status.Error(codes.NotFound, "credential not found")
+		return nil, sdkerrors.Register(types.ModuleName, 1103, "credential not found")
 	}
 
 	var credential types.Credential
-	err := k.cdc.Unmarshal(bz, &credential)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to unmarshal credential")
+	if err := k.cdc.Unmarshal(bz, &credential); err != nil {
+		return nil, sdkerrors.Wrapf(err, "failed to unmarshal credential")
 	}
 
 	return &credential, nil
 }
 
-// DeleteCredential deletes a credential from the keeper
-func (k Keeper) DeleteCredential(ctx sdk.Context, id string) error {
-	store := ctx.KVStore(k.storeKey)
-	key := append([]byte(types.CredentialPrefix), []byte(id)...)
+// ListCredentials returns all credentials
+func (k Keeper) ListCredentials(ctx context.Context, pagination *query.PageRequest) ([]*types.Credential, *query.PageResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
 
-	if !store.Has(key) {
-		return status.Error(codes.NotFound, "credential not found")
-	}
-
-	store.Delete(key)
-
-	// Create audit log
-	now := ctx.BlockTime()
-	err := k.CreateAuditLog(ctx, types.AuditLogEntry{
-		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_DELETED,
-		Did:       id,
-		Action:    "delete_credential",
-		Actor:     id,
-		Metadata:  map[string]string{"credential_id": id},
-		Timestamp: &now,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// IsCredentialValid checks if a credential is valid
-func (k Keeper) IsCredentialValid(ctx sdk.Context, credential *types.Credential) bool {
-	if credential == nil {
-		return false
-	}
-
-	// Check if credential is expired
-	if credential.ExpirationDate != nil {
-		expiryTime := *credential.ExpirationDate
-		if expiryTime.Before(ctx.BlockTime()) {
-			return false
+	var credentials []*types.Credential
+	pageRes, err := query.Paginate(store, pagination, func(key []byte, value []byte) error {
+		var credential types.Credential
+		if err := k.cdc.Unmarshal(value, &credential); err != nil {
+			return err
 		}
+
+		credentials = append(credentials, &credential)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
 	}
 
-	// Check if credential is revoked
-	if credential.Status == types.CredentialStatus_REVOKED {
-		return false
-	}
-
-	return true
+	return credentials, pageRes, nil
 }
 
-// VerifyCredential verifies a credential's validity
-func (k Keeper) VerifyCredential(ctx sdk.Context, id string) error {
+// UpdateCredentialStatus updates the status of a credential
+func (k Keeper) UpdateCredentialStatus(ctx context.Context, id string, newStatus string) error {
 	credential, err := k.GetCredential(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if !k.IsCredentialValid(ctx, credential) {
-		return sdkerrors.Wrap(types.ErrInvalidCredential, "credential is not valid")
+	// Check if the credential is expired
+	now := time.Now()
+	if credential.ExpirationDate != 0 && time.Unix(credential.ExpirationDate, 0).Before(now) {
+		return sdkerrors.Register(types.ModuleName, 1106, "cannot update expired credential")
+	}
+
+	// Validate the new status
+	if !types.CredentialStatus(newStatus).IsValid() {
+		return sdkerrors.Register(types.ModuleName, 1107, fmt.Sprintf("invalid credential status: %s", newStatus))
+	}
+
+	// Cannot reactivate a revoked credential
+	if credential.Status == string(types.CredentialStatusRevoked) && newStatus == string(types.CredentialStatusActive) {
+		return sdkerrors.Register(types.ModuleName, 1108, "cannot reactivate a revoked credential")
 	}
 
 	// Create audit log
-	now := ctx.BlockTime()
-	err = k.CreateAuditLog(ctx, types.AuditLogEntry{
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(credential.Id),
 		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_UPDATED,
-		Did:       credential.Subject,
-		Action:    "verify_credential",
+		Did:       credential.Id,
+		Action:    fmt.Sprintf("update_status_%s", newStatus),
 		Actor:     credential.Issuer,
-		Metadata:  map[string]string{"credential_id": credential.Id},
-		Timestamp: &now,
-	})
+		Timestamp: time.Now().Unix(),
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+	}
+
+	if err := k.StoreAuditLog(sdkCtx, auditLog); err != nil {
+		return sdkerrors.Wrapf(err, "failed to create audit log")
+	}
+
+	credential.Status = newStatus
+
+	// Store the updated credential
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
+	bz, err := k.cdc.Marshal(credential)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "failed to marshal credential")
+	}
+
+	store.Set([]byte(credential.Id), bz)
+	return nil
+}
+
+// RevokeCredential revokes a credential
+func (k Keeper) RevokeCredential(ctx context.Context, id string) error {
+	credential, err := k.GetCredential(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	// Check if already revoked
+	if credential.Status == string(types.CredentialStatusRevoked) {
+		return sdkerrors.Register(types.ModuleName, 1109, "credential already revoked")
+	}
+
+	// Create audit log
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(credential.Id),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_REVOKED,
+		Did:       credential.Id,
+		Action:    "revoke_credential",
+		Actor:     credential.Issuer,
+		Timestamp: time.Now().Unix(),
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+	}
+
+	if err := k.StoreAuditLog(sdkCtx, auditLog); err != nil {
+		return sdkerrors.Wrapf(err, "failed to create audit log")
+	}
+
+	return k.UpdateCredentialStatus(ctx, id, string(types.CredentialStatusRevoked))
+}
+
+// VerifyCredential verifies a credential
+func (k Keeper) VerifyCredential(ctx context.Context, id string) (bool, error) {
+	credential, err := k.GetCredential(ctx, id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if revoked
+	if credential.Status == string(types.CredentialStatusRevoked) {
+		return false, sdkerrors.Register(types.ModuleName, 1110, "credential is revoked")
+	}
+
+	// Check if expired
+	now := time.Now()
+	if credential.ExpirationDate != 0 && time.Unix(credential.ExpirationDate, 0).Before(now) {
+		return false, sdkerrors.Register(types.ModuleName, 1111, "credential is expired")
+	}
+
+	// Verify the credential proof if present
+	if credential.Proof != nil {
+		if err := credential.Proof.ValidateBasic(); err != nil {
+			return false, sdkerrors.Wrapf(err, "invalid credential proof")
+		}
+	}
+
+	// Create audit log
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(credential.Id),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_VERIFIED,
+		Did:       credential.Id,
+		Action:    "verify_credential",
+		Actor:     credential.Issuer,
+		Timestamp: time.Now().Unix(),
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+	}
+
+	if err := k.StoreAuditLog(sdkCtx, auditLog); err != nil {
+		return false, sdkerrors.Wrapf(err, "failed to create audit log")
+	}
+
+	return true, nil
+}
+
+// HasCredential checks if a credential exists
+func (k Keeper) HasCredential(ctx context.Context, id string) bool {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
+	return store.Has([]byte(id))
+}
+
+// GetClaimHash returns a hash of a claim value
+func (k Keeper) GetClaimHash(value string) string {
+	hash := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(hash[:])
+}
+
+// VerifyClaimHash verifies if a claim value matches its hash
+func (k Keeper) VerifyClaimHash(value string, hash string) bool {
+	computedHash := k.GetClaimHash(value)
+	return computedHash == hash
+}
+
+// Credential implements the Query/Credential gRPC method
+func (k Keeper) Credential(ctx context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	credential, err := k.GetCredential(sdkCtx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &types.QueryCredentialResponse{
+		Credential: credential,
+	}, nil
 }
 
 // GenerateAuditLogID generates a unique ID for an audit log entry
@@ -183,8 +308,9 @@ func (k Keeper) GenerateAuditLogID(credentialID string) string {
 }
 
 // GetCredentialsByDID retrieves all credentials for a given DID
-func (k Keeper) GetCredentialsByDID(ctx sdk.Context, did string) ([]*types.Credential, error) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetCredentialsByDID(ctx context.Context, did string) ([]*types.Credential, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
 	iterator := sdk.KVStorePrefixIterator(store, []byte(types.CredentialPrefix))
 	defer iterator.Close()
 
@@ -204,58 +330,10 @@ func (k Keeper) GetCredentialsByDID(ctx sdk.Context, did string) ([]*types.Crede
 	return credentials, nil
 }
 
-// RevokeCredential revokes a credential
-func (k Keeper) RevokeCredential(ctx sdk.Context, id string) error {
-	store := ctx.KVStore(k.storeKey)
-
-	// Get existing credential
-	credential, err := k.GetCredential(ctx, id)
-	if err != nil {
-		return sdkerrors.Wrap(types.ErrCredentialNotFound, "credential does not exist")
-	}
-
-	// Check if already revoked
-	if credential.Status == types.CredentialStatus_REVOKED {
-		return sdkerrors.Wrap(types.ErrCredentialAlreadyRevoked, "credential is already revoked")
-	}
-
-	// Update status to revoked
-	credential.Status = types.CredentialStatus_REVOKED
-
-	// Store updated credential
-	bz, err := k.cdc.Marshal(credential)
-	if err != nil {
-		return status.Error(codes.Internal, "failed to marshal credential")
-	}
-	store.Set([]byte(types.CredentialPrefix+credential.Id), bz)
-
-	// Create audit log
-	now := ctx.BlockTime()
-	err = k.CreateAuditLog(ctx, types.AuditLogEntry{
-		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_REVOKED,
-		Did:       credential.Subject,
-		Action:    "revoke_credential",
-		Actor:     credential.Issuer,
-		Metadata:  map[string]string{"credential_id": credential.Id},
-		Timestamp: &now,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// HasCredential checks if a credential exists
-func (k Keeper) HasCredential(ctx sdk.Context, id string) bool {
-	store := ctx.KVStore(k.storeKey)
-	key := append([]byte(types.CredentialPrefix), []byte(id)...)
-	return store.Has(key)
-}
-
 // GetAllCredentials returns all credentials
-func (k Keeper) GetAllCredentials(ctx sdk.Context) ([]types.Credential, error) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetAllCredentials(ctx context.Context) ([]types.Credential, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
 	iterator := sdk.KVStorePrefixIterator(store, []byte(types.CredentialPrefix))
 	defer iterator.Close()
 
@@ -273,30 +351,38 @@ func (k Keeper) GetAllCredentials(ctx sdk.Context) ([]types.Credential, error) {
 }
 
 // VerifyPresentation verifies a credential presentation
-func (k Keeper) VerifyPresentation(ctx sdk.Context, presentation *types.CredentialPresentation, verifierDID string) (bool, error) {
+func (k Keeper) VerifyPresentation(ctx context.Context, presentation *types.CredentialPresentation, verifierDID string) (bool, error) {
 	// Verify the original credential exists and is valid
-	err := k.VerifyCredential(ctx, presentation.CredentialId)
+	valid, err := k.VerifyCredential(ctx, presentation.VerifiableCredential)
 	if err != nil {
 		return false, err
 	}
+	if !valid {
+		return false, fmt.Errorf("credential verification failed")
+	}
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Verify presentation proof
-	valid, err := k.verifyPresentationProof(ctx, presentation)
+	valid, err = k.verifyPresentationProof(sdkCtx, presentation)
 	if err != nil {
 		return false, fmt.Errorf("failed to verify presentation proof: %v", err)
 	}
 
 	// Create audit log for presentation verification
-	now := ctx.BlockTime()
-	err = k.CreateAuditLog(ctx, types.AuditLogEntry{
-		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_UPDATED,
-		Did:       presentation.CredentialId,
+	now := time.Now().Unix()
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(presentation.VerifiableCredential),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_VERIFIED,
+		Did:       presentation.VerifiableCredential,
 		Action:    "verify_presentation",
 		Actor:     verifierDID,
-		Metadata:  map[string]string{"credential_id": presentation.CredentialId},
-		Timestamp: &now,
-	})
-	if err != nil {
+		Timestamp: now,
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+		Metadata: map[string]string{
+			"credential_id": presentation.VerifiableCredential,
+		},
+	}
+	if err := k.StoreAuditLog(sdkCtx, auditLog); err != nil {
 		return false, err
 	}
 
@@ -305,126 +391,88 @@ func (k Keeper) VerifyPresentation(ctx sdk.Context, presentation *types.Credenti
 
 // createPresentationProof creates a proof for a credential presentation
 func (k Keeper) createPresentationProof(ctx sdk.Context, presentation *types.CredentialPresentation) (*types.CredentialProof, error) {
-	now := time.Now()
-	proof := &types.CredentialProof{
-		Type:               "Ed25519Signature2020",
-		Created:            &now,
-		VerificationMethod: "did:selfchain:key1",
-		ProofPurpose:       "assertionMethod",
+	credential, err := k.GetCredential(ctx, presentation.VerifiableCredential)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credential: %w", err)
 	}
+
+	// Create a new proof
+	now := time.Now().Unix()
+	
+	// Create the presentation proof
+	proof := &types.CredentialProof{
+		Type:              "ZKProof",
+		Created:           now,
+		VerificationMethod: credential.Subject, // Use subject DID as verification method
+		ProofPurpose:      "credentialPresentation",
+	}
+
+	// Create audit log for proof generation
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(presentation.VerifiableCredential),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_UPDATED,
+		Did:       credential.Subject,
+		Action:    "generate_presentation_proof",
+		Actor:     credential.Subject,
+		Timestamp: now,
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+		Metadata: map[string]string{
+			"credential_id": presentation.VerifiableCredential,
+			"proof_type":   proof.Type,
+		},
+	}
+
+	if err := k.StoreAuditLog(ctx, auditLog); err != nil {
+		return nil, fmt.Errorf("failed to create audit log: %w", err)
+	}
+
 	return proof, nil
 }
 
 // verifyPresentationProof verifies a presentation's proof
 func (k Keeper) verifyPresentationProof(ctx sdk.Context, presentation *types.CredentialPresentation) (bool, error) {
-	// TODO: Implement actual presentation proof verification
-	// This would involve:
-	// 1. Verifying the proof matches the disclosed claims
-	// 2. Checking the proof was created by the credential subject
-	// 3. Verifying the signature
-	return true, nil
-}
+	// Get the proof from the presentation
+	proof := presentation.Proof
+	if proof == nil {
+		return false, fmt.Errorf("presentation proof is missing")
+	}
 
-// GetClaimHash returns a hash of a claim value
-func (k Keeper) GetClaimHash(value string) string {
-	hash := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(hash[:])
-}
-
-// VerifyClaimHash verifies if a claim value matches its hash
-func (k Keeper) VerifyClaimHash(value string, hash string) bool {
-	computedHash := k.GetClaimHash(value)
-	return computedHash == hash
-}
-
-// CreateAuditLog creates an audit log entry
-func (k Keeper) CreateAuditLog(ctx sdk.Context, entry types.AuditLogEntry) error {
-	store := ctx.KVStore(k.storeKey)
-	bz, err := k.cdc.Marshal(&entry)
+	// Get the original credential to verify against
+	credential, err := k.GetCredential(ctx, presentation.VerifiableCredential)
 	if err != nil {
-		return status.Error(codes.Internal, "failed to marshal audit log entry")
+		return false, fmt.Errorf("failed to get credential: %w", err)
 	}
 
-	store.Set([]byte(entry.Id), bz)
-	return nil
-}
+	// Verify the proof
+	valid := true // Implement actual verification logic here
 
-// GetAuditLogs retrieves audit logs for a credential
-func (k Keeper) GetAuditLogs(ctx sdk.Context, id string) ([]types.AuditLogEntry, error) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := append([]byte(types.AuditLogPrefix), []byte(id)...)
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
-	defer iterator.Close()
-
-	var logs []types.AuditLogEntry
-	for ; iterator.Valid(); iterator.Next() {
-		var log types.AuditLogEntry
-		k.cdc.MustUnmarshal(iterator.Value(), &log)
-		if log.Metadata["credential_id"] == id {
-			logs = append(logs, log)
-		}
-	}
-	return logs, nil
-}
-
-// CreatePresentation creates a selective disclosure presentation of a credential
-func (k Keeper) CreatePresentation(ctx sdk.Context, credentialID string, claimsToDisclose []string) (*types.CredentialPresentation, error) {
-	found := k.HasCredential(ctx, credentialID)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrCredentialNotFound, credentialID)
-	}
-
-	credential, err := k.GetCredential(ctx, credentialID)
-	if err != nil {
-		return nil, err
-	}
-
-	now := ctx.BlockTime()
-	// Create presentation with only disclosed claims
-	presentation := &types.CredentialPresentation{
-		CredentialId:     credentialID,
-		Verifier:         "",
-		DisclosedClaims:  claimsToDisclose,
-		PresentationDate: &now,
-	}
-
-	// Create proof for presentation
-	proof, err := k.createPresentationProof(ctx, presentation)
-	if err != nil {
-		return nil, err
-	}
-	presentation.Proof = proof
-
-	// Log presentation creation
-	now = ctx.BlockTime()
-	err = k.CreateAuditLog(ctx, types.AuditLogEntry{
-		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_CREATED,
+	// Create audit log for proof verification
+	now := time.Now().Unix()
+	auditLog := types.AuditLogEntry{
+		Id:        k.GenerateAuditLogID(presentation.VerifiableCredential),
+		Type:      types.AuditLogType_AUDIT_LOG_TYPE_CREDENTIAL_VERIFIED,
 		Did:       credential.Subject,
-		Action:    "create_presentation",
+		Action:    "verify_presentation_proof",
 		Actor:     credential.Subject,
-		Metadata:  map[string]string{"credential_id": credential.Id},
-		Timestamp: &now,
-	})
-	if err != nil {
-		return nil, err
+		Timestamp: now,
+		Severity:  types.SecuritySeverity_SEVERITY_INFO,
+		Metadata: map[string]string{
+			"credential_id": presentation.VerifiableCredential,
+			"proof_type":   proof.Type,
+			"valid":        fmt.Sprintf("%t", valid),
+		},
 	}
 
-	return presentation, nil
+	if err := k.StoreAuditLog(ctx, auditLog); err != nil {
+		return false, fmt.Errorf("failed to create audit log: %w", err)
+	}
+
+	return valid, nil
 }
 
-// Credential implements the Query/Credential gRPC method
-func (k Keeper) Credential(ctx context.Context, req *types.QueryCredentialRequest) (*types.QueryCredentialResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	credential, err := k.GetCredential(sdkCtx, req.Id)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
-
-	return &types.QueryCredentialResponse{
-		Credential: credential,
-	}, nil
+// SetCredential stores a credential in the module's KV store
+func (k Keeper) SetCredential(ctx sdk.Context, credential *types.Credential) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CredentialPrefix))
+	bz := k.cdc.MustMarshal(credential)
+	store.Set([]byte(credential.Id), bz)
 }

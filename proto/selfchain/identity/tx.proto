@@ -84,7 +84,7 @@ message MsgUpdateCredential {
   string creator = 1;
   string id = 2;
   map<string, string> claims = 3;
-  CredentialStatus status = 4;
+  string status = 4;
   google.protobuf.Timestamp expiry_date = 5 [(gogoproto.stdtime) = true];
 }
 

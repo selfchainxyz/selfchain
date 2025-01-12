@@ -32,33 +32,38 @@ const (
 	MFAChallengeExpiry     = 5 * time.Minute // MFA challenge expiry time
 )
 
-// DIDKey returns the store key to retrieve a DID document
-func DIDKey(did string) []byte {
+// KeyPrefix returns the prefix for a given key type
+func KeyPrefix(prefix string) []byte {
+	return []byte(prefix)
+}
+
+// GetDIDKey returns the store key to retrieve a DID document
+func GetDIDKey(did string) []byte {
 	return []byte(DIDPrefix + did)
 }
 
-// CredentialKey returns the store key to retrieve a Credential
-func CredentialKey(id string) []byte {
+// GetCredentialKey returns the store key to retrieve a Credential
+func GetCredentialKey(id string) []byte {
 	return []byte(CredentialPrefix + id)
 }
 
-// CredentialByDIDKey returns the store key to retrieve Credentials by DID
-func CredentialByDIDKey(did, credentialID string) []byte {
+// GetCredentialByDIDKey returns the store key to retrieve Credentials by DID
+func GetCredentialByDIDKey(did, credentialID string) []byte {
 	return []byte(CredentialByDIDPrefix + did + "/" + credentialID)
 }
 
-// CredentialByDIDPrefixKey returns the store prefix key to retrieve all Credentials for a DID
-func CredentialByDIDPrefixKey(did string) []byte {
+// GetCredentialByDIDPrefixKey returns the store prefix key to retrieve all Credentials for a DID
+func GetCredentialByDIDPrefixKey(did string) []byte {
 	return []byte(CredentialByDIDPrefix + did + "/")
 }
 
-// SocialIdentityKey returns the store key to retrieve a social identity
-func SocialIdentityKey(did string) []byte {
+// GetSocialIdentityKey returns the store key to retrieve a social identity
+func GetSocialIdentityKey(did string) []byte {
 	return []byte(SocialIdentityPrefix + did)
 }
 
-// MFAConfigKey returns the store key to retrieve MFA configuration
-func MFAConfigKey(did string) []byte {
+// GetMFAConfigKey returns the store key to retrieve MFA configuration
+func GetMFAConfigKey(did string) []byte {
 	return []byte(MFAConfigPrefix + did)
 }
 
