@@ -15,6 +15,7 @@ type SigningContext struct {
 	Message     []byte
 	Party1Data  interface{}
 	Party2Data  interface{}
+	Metadata    map[string]interface{} // Network-specific metadata
 }
 
 // SigningFactory handles creation of appropriate signers for different networks
@@ -36,15 +37,23 @@ func (f *SigningFactory) CreateSigner(networkType networks.NetworkType, chainID 
 		return nil, fmt.Errorf("failed to get network info: %w", err)
 	}
 
-	switch networkInfo.Curve {
-	case networks.Secp256k1:
-		return &Secp256k1Signer{networkInfo: networkInfo}, nil
-	case networks.Ed25519:
-		return &Ed25519Signer{networkInfo: networkInfo}, nil
-	case networks.BLS12_381:
-		return &BLSSigner{networkInfo: networkInfo}, nil
+	switch networkInfo.NetworkType {
+	case networks.Bitcoin:
+		return &BitcoinSigner{networkInfo: networkInfo}, nil
+	case networks.Ethereum:
+		return &EthereumSigner{networkInfo: networkInfo}, nil
+	case networks.Cosmos:
+		return &CosmosSigner{networkInfo: networkInfo}, nil
+	case networks.Solana:
+		return &SolanaSigner{networkInfo: networkInfo}, nil
+	case networks.Cardano:
+		return &CardanoSigner{networkInfo: networkInfo}, nil
+	case networks.Aptos:
+		return &AptosSigner{networkInfo: networkInfo}, nil
+	case networks.Sui:
+		return &SuiSigner{networkInfo: networkInfo}, nil
 	default:
-		return nil, fmt.Errorf("unsupported curve type: %s", networkInfo.Curve)
+		return nil, fmt.Errorf("unsupported network type: %s", networkInfo.NetworkType)
 	}
 }
 
@@ -54,12 +63,12 @@ type Signer interface {
 	Verify(pubKey []byte, msg []byte, signature []byte) (bool, error)
 }
 
-// Secp256k1Signer implements Signer for secp256k1-based networks
-type Secp256k1Signer struct {
+// BitcoinSigner implements Signer for Bitcoin-like networks
+type BitcoinSigner struct {
 	networkInfo *networks.NetworkInfo
 }
 
-func (s *Secp256k1Signer) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
+func (s *BitcoinSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
 	// Convert generic interface{} to specific TSS party data
 	party1Data, ok := signingCtx.Party1Data.(*keygen.LocalPartySaveData)
 	if !ok {
@@ -76,55 +85,103 @@ func (s *Secp256k1Signer) Sign(ctx context.Context, signingCtx *SigningContext) 
 		return nil, fmt.Errorf("tss signing failed: %w", err)
 	}
 
-	// Format signature according to network requirements
-	return formatSignature(s.networkInfo.NetworkType, result)
+	// Format signature according to Bitcoin requirements (DER format)
+	return formatBitcoinSignature(result)
 }
 
-func (s *Secp256k1Signer) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
-	// Implement secp256k1 signature verification
+func (s *BitcoinSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	// Implement Bitcoin signature verification
 	return false, fmt.Errorf("not implemented")
 }
 
-// Ed25519Signer implements Signer for Ed25519-based networks
-type Ed25519Signer struct {
+// EthereumSigner implements Signer for Ethereum and EVM-compatible networks
+type EthereumSigner struct {
 	networkInfo *networks.NetworkInfo
 }
 
-func (s *Ed25519Signer) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
-	// Implement Ed25519 signing using TSS
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *Ed25519Signer) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
-	// Implement Ed25519 signature verification
-	return false, fmt.Errorf("not implemented")
-}
-
-// BLSSigner implements Signer for BLS-based networks
-type BLSSigner struct {
-	networkInfo *networks.NetworkInfo
-}
-
-func (s *BLSSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
-	// Implement BLS signing using TSS
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *BLSSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
-	// Implement BLS signature verification
-	return false, fmt.Errorf("not implemented")
-}
-
-// formatSignature formats the raw signature according to network requirements
-func formatSignature(networkType networks.NetworkType, result *tss.SignResult) ([]byte, error) {
-	switch networkType {
-	case networks.Ethereum:
-		// Format signature as R || S || V for Ethereum
-		return nil, fmt.Errorf("not implemented")
-	case networks.Cosmos:
-		// Format signature as R || S for Cosmos
-		return nil, fmt.Errorf("not implemented")
-	default:
-		return nil, fmt.Errorf("unsupported network type: %s", networkType)
+func (s *EthereumSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
+	party1Data, ok := signingCtx.Party1Data.(*keygen.LocalPartySaveData)
+	if !ok {
+		return nil, fmt.Errorf("invalid party1 data type")
 	}
+	party2Data, ok := signingCtx.Party2Data.(*keygen.LocalPartySaveData)
+	if !ok {
+		return nil, fmt.Errorf("invalid party2 data type")
+	}
+
+	// Use TSS to sign
+	result, err := tss.SignMessage(ctx, signingCtx.Message, party1Data, party2Data)
+	if err != nil {
+		return nil, fmt.Errorf("tss signing failed: %w", err)
+	}
+
+	// Format signature according to Ethereum requirements (R || S || V)
+	chainID := s.networkInfo.SigningConfig.ChainID
+	return formatEthereumSignature(result, chainID)
+}
+
+func (s *EthereumSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	// Implement Ethereum signature verification
+	return false, fmt.Errorf("not implemented")
+}
+
+// CosmosSigner implements Signer for Cosmos-SDK based networks
+type CosmosSigner struct {
+	networkInfo *networks.NetworkInfo
+}
+
+func (s *CosmosSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
+	party1Data, ok := signingCtx.Party1Data.(*keygen.LocalPartySaveData)
+	if !ok {
+		return nil, fmt.Errorf("invalid party1 data type")
+	}
+	party2Data, ok := signingCtx.Party2Data.(*keygen.LocalPartySaveData)
+	if !ok {
+		return nil, fmt.Errorf("invalid party2 data type")
+	}
+
+	// Use TSS to sign
+	result, err := tss.SignMessage(ctx, signingCtx.Message, party1Data, party2Data)
+	if err != nil {
+		return nil, fmt.Errorf("tss signing failed: %w", err)
+	}
+
+	// Format signature according to Cosmos requirements
+	return formatCosmosSignature(result)
+}
+
+func (s *CosmosSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	// Implement Cosmos signature verification
+	return false, fmt.Errorf("not implemented")
+}
+
+// SolanaSigner implements Signer for Solana network
+type SolanaSigner struct {
+	networkInfo *networks.NetworkInfo
+}
+
+func (s *SolanaSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
+	// Implement Solana Ed25519 signing
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *SolanaSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	// Implement Solana signature verification
+	return false, fmt.Errorf("not implemented")
+}
+
+// Helper functions for signature formatting
+func formatBitcoinSignature(result *tss.SignResult) ([]byte, error) {
+	// TODO: Implement DER encoding for Bitcoin signatures
+	return nil, fmt.Errorf("not implemented")
+}
+
+func formatEthereumSignature(result *tss.SignResult, chainID string) ([]byte, error) {
+	// TODO: Implement Ethereum signature formatting with chainID
+	return nil, fmt.Errorf("not implemented")
+}
+
+func formatCosmosSignature(result *tss.SignResult) ([]byte, error) {
+	// TODO: Implement Cosmos signature formatting
+	return nil, fmt.Errorf("not implemented")
 }
