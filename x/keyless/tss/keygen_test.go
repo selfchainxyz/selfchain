@@ -40,7 +40,7 @@ func TestGenerateKey(t *testing.T) {
 			}
 			assert.NotNil(t, preParams)
 
-			result, err := GenerateKey(ctx, preParams)
+			result, err := GenerateKey(ctx, preParams, "test-chain-1")
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -84,7 +84,7 @@ func TestGenerateKey_ContextCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	result, err := GenerateKey(ctx, preParams)
+	result, err := GenerateKey(ctx, preParams, "test-chain-1")
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, context.Canceled, ctx.Err())

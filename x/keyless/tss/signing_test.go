@@ -23,7 +23,7 @@ func TestSignMessage(t *testing.T) {
 	}
 	assert.NotNil(t, preParams)
 
-	keygenResult, err := GenerateKey(ctx, preParams)
+	keygenResult, err := GenerateKey(ctx, preParams, "test-chain-1")
 	if err != nil {
 		t.Fatalf("Failed to generate key: %v", err)
 		return
@@ -101,7 +101,7 @@ func TestSignMessageCancel(t *testing.T) {
 	}
 	assert.NotNil(t, preParams)
 
-	keygenResult, err := GenerateKey(ctx, preParams)
+	keygenResult, err := GenerateKey(ctx, preParams, "test-chain-1")
 	cancel()
 	if err != nil {
 		t.Fatalf("Failed to generate key: %v", err)
@@ -140,7 +140,7 @@ func TestEndToEnd(t *testing.T) {
 	}
 	assert.NotNil(t, preParams)
 
-	keygenResult, err := GenerateKey(ctx, preParams)
+	keygenResult, err := GenerateKey(ctx, preParams, "test-chain-1")
 	if err != nil {
 		t.Fatalf("Failed to generate key: %v", err)
 		return
