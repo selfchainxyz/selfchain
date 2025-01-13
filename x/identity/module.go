@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -12,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/cometbft/cometbft/abci/types"
 
 	"selfchain/x/identity/client/cli"
 	"selfchain/x/identity/keeper"

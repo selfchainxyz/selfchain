@@ -2,17 +2,17 @@ package types
 
 import (
 	"fmt"
-// this line is used by starport scaffolding # genesis/types/import
+	// this line is used by starport scaffolding # genesis/types/import
 )
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:        DefaultParams(),
-		DidDocuments:  []DIDDocument{},
-		Credentials:   []Credential{},
-		MfaConfigs:    []MFAConfig{},
-		AuditLogs:     []AuditLogEntry{},
+		Params:       DefaultParams(),
+		DidDocuments: []DIDDocument{},
+		Credentials:  []Credential{},
+		MfaConfigs:   []MFAConfig{},
+		AuditLogs:    []AuditLogEntry{},
 		// this line is used by starport scaffolding # genesis/types/default
 	}
 }

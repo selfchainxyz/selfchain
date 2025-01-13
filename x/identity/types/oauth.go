@@ -7,12 +7,12 @@ import (
 )
 
 var (
-	ErrInvalidOAuthProvider    = sdkerrors.Register(ModuleName, 1300, "invalid OAuth provider")
-	ErrInvalidOAuthSession     = sdkerrors.Register(ModuleName, 1301, "invalid OAuth session")
-	ErrOAuthSessionExpired     = sdkerrors.Register(ModuleName, 1303, "OAuth session expired")
-	ErrOAuthProviderNotFound   = sdkerrors.Register(ModuleName, 1304, "OAuth provider not found")
-	ErrOAuthSessionNotFound    = sdkerrors.Register(ModuleName, 1305, "OAuth session not found")
-	ErrSocialIdentityNotFound  = sdkerrors.Register(ModuleName, 1306, "social identity not found")
+	ErrInvalidOAuthProvider   = sdkerrors.Register(ModuleName, 1300, "invalid OAuth provider")
+	ErrInvalidOAuthSession    = sdkerrors.Register(ModuleName, 1301, "invalid OAuth session")
+	ErrOAuthSessionExpired    = sdkerrors.Register(ModuleName, 1303, "OAuth session expired")
+	ErrOAuthProviderNotFound  = sdkerrors.Register(ModuleName, 1304, "OAuth provider not found")
+	ErrOAuthSessionNotFound   = sdkerrors.Register(ModuleName, 1305, "OAuth session not found")
+	ErrSocialIdentityNotFound = sdkerrors.Register(ModuleName, 1306, "social identity not found")
 )
 
 // ValidateBasic performs basic validation of social identity

@@ -3,8 +3,8 @@ package testutil
 import (
 	"time"
 
-	"github.com/cometbft/cometbft/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cometbft/cometbft/types"
 )
 
 // EmptyAppOptions is a stub implementing AppOptions

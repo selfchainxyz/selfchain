@@ -1,0 +1,12 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
+import "selfchain/keyless/params.proto";
+
+option go_package = "selfchain/x/keyless/types";
+
+// GenesisState defines the keyless module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}

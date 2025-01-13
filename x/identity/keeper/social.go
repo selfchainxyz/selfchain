@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"selfchain/x/identity/types"
 )
 
@@ -76,7 +76,7 @@ func (k Keeper) ValidateSocialIdentity(ctx sdk.Context, identity *types.SocialId
 	if identity.ProviderId == "" {
 		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "missing social ID")
 	}
-	
+
 	// Check if provider is allowed
 	if !k.IsOAuthProviderAllowed(ctx, identity.Provider) {
 		return sdkerrors.Wrap(types.ErrInvalidSocialIdentity, "provider not allowed")

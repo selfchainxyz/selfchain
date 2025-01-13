@@ -13,27 +13,27 @@ func DefaultGenesis() *types.GenesisState {
 		Params: types.Params{
 			MfaParams: types.MFAParams{
 				MaxMethods:        3,
-				ChallengeExpiry:  300, // 5 minutes
-				AllowedMethods:   []string{"totp", "email"},
+				ChallengeExpiry:   300, // 5 minutes
+				AllowedMethods:    []string{"totp", "email"},
 				MaxFailedAttempts: 3,
 			},
 			CredentialParams: types.CredentialParams{
 				MaxCredentialsPerDid: 100,
-				MaxClaimSize:        1024 * 1024, // 1MB
-				AllowedTypes:        []string{"VerifiableCredential"},
-				MaxValidityDuration: 31536000, // 1 year
+				MaxClaimSize:         1024 * 1024, // 1MB
+				AllowedTypes:         []string{"VerifiableCredential"},
+				MaxValidityDuration:  31536000, // 1 year
 			},
 			DidParams: types.DIDParams{
 				AllowedMethods:         []string{"self"},
 				MaxControllers:         5,
-				MaxServices:           10,
+				MaxServices:            10,
 				MaxVerificationMethods: 10,
 			},
 		},
-		DidDocuments: []types.DIDDocument{},
-		Credentials:  []types.Credential{},
-		MfaConfigs:   []types.MFAConfig{},
-		AuditLogs:    []types.AuditLogEntry{},
+		DidDocuments:     []types.DIDDocument{},
+		Credentials:      []types.Credential{},
+		MfaConfigs:       []types.MFAConfig{},
+		AuditLogs:        []types.AuditLogEntry{},
 		SocialIdentities: []types.SocialIdentity{},
 	}
 }

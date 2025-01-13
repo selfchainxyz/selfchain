@@ -15,11 +15,11 @@ import (
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		paramstore paramtypes.Subspace
-		keyless    types.KeylessKeeper
+		cdc         codec.BinaryCodec
+		storeKey    storetypes.StoreKey
+		memKey      storetypes.StoreKey
+		paramstore  paramtypes.Subspace
+		keyless     types.KeylessKeeper
 		rateLimiter *RateLimiter
 	}
 )
@@ -37,11 +37,11 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		keyless:    keyless,
+		cdc:         cdc,
+		storeKey:    storeKey,
+		memKey:      memKey,
+		paramstore:  ps,
+		keyless:     keyless,
 		rateLimiter: NewRateLimiter(100, 100), // 100 requests per second with burst of 100
 	}
 }
