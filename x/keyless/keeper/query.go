@@ -1,63 +1,86 @@
 package keeper
 
 import (
-    "context"
-    "fmt"
+	"context"
 
-    sdk "github.com/cosmos/cosmos-sdk/types"
-    "google.golang.org/grpc/codes"
-    "google.golang.org/grpc/status"
-    "selfchain/x/keyless/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"selfchain/x/keyless/types"
 )
 
 var _ types.QueryServer = Keeper{}
 
-// Params implements the Query/Params gRPC method
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-    if req == nil {
-        return nil, status.Error(codes.InvalidArgument, "invalid request")
-    }
-    ctx := sdk.UnwrapSDKContext(c)
+// GetWallet returns a wallet by its address
+func (k Keeper) GetWallet(goCtx context.Context, req *types.QueryGetWalletRequest) (*types.QueryGetWalletResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 
-    return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	wallet, found := k.getWallet(ctx, req.WalletAddress)
+	if !found {
+		return nil, status.Error(codes.NotFound, "wallet not found")
+	}
+
+	return &types.QueryGetWalletResponse{
+		Wallet: wallet,
+	}, nil
 }
 
-// GetWallet implements the Query/GetWallet gRPC method
-func (k Keeper) GetWallet(c context.Context, req *types.QueryGetWalletRequest) (*types.QueryGetWalletResponse, error) {
-    if req == nil {
-        return nil, status.Error(codes.InvalidArgument, "invalid request")
-    }
+// getWallet returns a wallet by its address
+func (k Keeper) getWallet(ctx sdk.Context, address string) (types.Wallet, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
+	
+	bz := store.Get([]byte(address))
+	if bz == nil {
+		return types.Wallet{}, false
+	}
 
-    ctx := sdk.UnwrapSDKContext(c)
-    
-    wallet, err := k.GetWalletState(ctx, req.Address)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get wallet: %w", err)
-    }
-
-    return &types.QueryGetWalletResponse{
-        Address: wallet.Address,
-        Did:     wallet.Did,
-        Status:  wallet.Status,
-    }, nil
+	var wallet types.Wallet
+	k.cdc.MustUnmarshal(bz, &wallet)
+	return wallet, true
 }
 
-// GetWalletByDID implements the Query/GetWalletByDID gRPC method
-func (k Keeper) GetWalletByDID(c context.Context, req *types.QueryGetWalletByDIDRequest) (*types.QueryGetWalletByDIDResponse, error) {
-    if req == nil {
-        return nil, status.Error(codes.InvalidArgument, "invalid request")
-    }
+// ListWallets returns all wallets
+func (k Keeper) ListWallets(goCtx context.Context, req *types.QueryListWalletsRequest) (*types.QueryListWalletsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 
-    ctx := sdk.UnwrapSDKContext(c)
-    
-    wallet, err := k.GetWalletStateByDID(ctx, req.Did)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get wallet by DID: %w", err)
-    }
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-    return &types.QueryGetWalletByDIDResponse{
-        Address: wallet.Address,
-        Did:     wallet.Did,
-        Status:  wallet.Status,
-    }, nil
+	wallets := k.GetAllWallets(ctx)
+
+	return &types.QueryListWalletsResponse{
+		Wallets: wallets,
+	}, nil
+}
+
+// GetAllWallets returns all wallets
+func (k Keeper) GetAllWallets(ctx sdk.Context) []types.Wallet {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	wallets := []types.Wallet{}
+	for ; iterator.Valid(); iterator.Next() {
+		var wallet types.Wallet
+		k.cdc.MustUnmarshal(iterator.Value(), &wallet)
+		wallets = append(wallets, wallet)
+	}
+
+	return wallets
+}
+
+// Params returns the module parameters
+func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }

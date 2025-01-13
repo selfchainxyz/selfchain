@@ -3,12 +3,10 @@ package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
-// Wallet represents a keyless wallet in the system
+// Wallet represents a keyless wallet
 message Wallet {
-  string address = 1;
-  string did = 2;
-  string status = 3;
-  string personal_share = 4;
-  string remote_share = 5;
-  string creator = 6;
+  string creator = 1;
+  string pub_key = 2;
+  string wallet_address = 3;
+  string chain_id = 4;
 }

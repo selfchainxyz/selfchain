@@ -1,17 +1,17 @@
 package tss
 
 import (
-    "crypto/rand"
-    "math/big"
-    "strconv"
+	"fmt"
+	"math/big"
 
-    "github.com/bnb-chain/tss-lib/v2/tss"
+	"github.com/bnb-chain/tss-lib/v2/tss"
 )
 
 const (
-    // We use 2-party TSS setup (user device and chain)
+    // TotalPartyCount is the total number of parties in the TSS protocol
     TotalPartyCount = 2
-    Threshold       = 1 // t+1 must be <= n, where n is TotalPartyCount
+    // Threshold is the minimum number of parties required to sign
+    Threshold = TotalPartyCount - 1
 )
 
 // SharedPartyUpdater is a helper function to update a party with a message
@@ -35,20 +35,32 @@ func SharedPartyUpdater(party tss.Party, msg tss.Message, errCh chan<- *tss.Erro
     }
 }
 
-// GeneratePartyID creates a new party ID for TSS operations
-func GeneratePartyID(index int, partyCount int) (*tss.PartyID, error) {
-    // Generate random key
-    key := make([]byte, 32)
-    if _, err := rand.Read(key); err != nil {
-        return nil, err
-    }
-
-    // Convert to big.Int for PartyID
-    keyBigInt := new(big.Int).SetBytes(key)
+// GeneratePartyID creates a new party ID for TSS
+func GeneratePartyID(index int) (*tss.PartyID, error) {
+    // Convert index to big.Int for party ID
+    key := big.NewInt(int64(index))
     
-    // Create a unique party ID with string index
-    moniker := "P" + strconv.FormatInt(int64(index), 10)
-    id := tss.NewPartyID(moniker, moniker, keyBigInt)
-    id.Index = index
+    // Create a unique moniker for the party
+    moniker := fmt.Sprintf("P%d", index)
+    
+    // Create and sort party ID
+    id := tss.NewPartyID(key.String(), moniker, key)
     return id, nil
+}
+
+// GeneratePartyIDs creates a sorted list of party IDs
+func GeneratePartyIDs(count int) ([]*tss.PartyID, error) {
+    var parties []*tss.PartyID
+    
+    for i := 0; i < count; i++ {
+        id, err := GeneratePartyID(i)
+        if err != nil {
+            return nil, fmt.Errorf("failed to generate party ID %d: %w", i, err)
+        }
+        parties = append(parties, id)
+    }
+    
+    // Sort party IDs
+    sorted := tss.SortPartyIDs(parties)
+    return sorted, nil
 }
