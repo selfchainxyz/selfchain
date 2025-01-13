@@ -52870,9 +52870,125 @@ paths:
               params:
                 description: params holds all the parameters of this module.
                 type: object
+                properties:
+                  max_wallets_per_did:
+                    type: integer
+                    format: int64
+                  max_shares_per_wallet:
+                    type: integer
+                    format: int64
+                  min_recovery_threshold:
+                    type: integer
+                    format: int64
+                  max_recovery_threshold:
+                    type: integer
+                    format: int64
+                  recovery_window_seconds:
+                    type: integer
+                    format: int64
+                  max_signing_attempts:
+                    type: integer
+                    format: int64
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
+  /selfchain/keyless/wallet/{wallet_address}:
+    get:
+      summary: GetWallet returns wallet info by address
+      operationId: SelfchainKeylessGetWallet
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wallet:
+                type: object
+                properties:
+                  creator:
+                    type: string
+                  pub_key:
+                    type: string
+                  wallet_address:
+                    type: string
+                  chain_id:
+                    type: string
+                title: Wallet represents a keyless wallet
+            title: >-
+              QueryGetWalletResponse is response type for the Query/GetWallet
+              RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_address
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/keyless/wallets:
+    get:
+      summary: ListWallets returns all wallets
+      operationId: SelfchainKeylessListWallets
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wallets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    creator:
+                      type: string
+                    pub_key:
+                      type: string
+                    wallet_address:
+                      type: string
+                    chain_id:
+                      type: string
+                  title: Wallet represents a keyless wallet
+            title: >-
+              QueryListWalletsResponse is response type for the
+              Query/ListWallets RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -84699,16 +84815,117 @@ definitions:
         type: string
       public_key_base58:
         type: string
+  selfchain.keyless.MsgCreateWalletResponse:
+    type: object
+    properties:
+      walletAddress:
+        type: string
+  selfchain.keyless.MsgRecoverWalletResponse:
+    type: object
+    properties:
+      walletAddress:
+        type: string
+  selfchain.keyless.MsgSignTransactionResponse:
+    type: object
+    properties:
+      signedTx:
+        type: string
   selfchain.keyless.Params:
     type: object
+    properties:
+      max_wallets_per_did:
+        type: integer
+        format: int64
+      max_shares_per_wallet:
+        type: integer
+        format: int64
+      min_recovery_threshold:
+        type: integer
+        format: int64
+      max_recovery_threshold:
+        type: integer
+        format: int64
+      recovery_window_seconds:
+        type: integer
+        format: int64
+      max_signing_attempts:
+        type: integer
+        format: int64
     description: Params defines the parameters for the module.
+  selfchain.keyless.QueryGetWalletResponse:
+    type: object
+    properties:
+      wallet:
+        type: object
+        properties:
+          creator:
+            type: string
+          pub_key:
+            type: string
+          wallet_address:
+            type: string
+          chain_id:
+            type: string
+        title: Wallet represents a keyless wallet
+    title: QueryGetWalletResponse is response type for the Query/GetWallet RPC method
+  selfchain.keyless.QueryListWalletsResponse:
+    type: object
+    properties:
+      wallets:
+        type: array
+        items:
+          type: object
+          properties:
+            creator:
+              type: string
+            pub_key:
+              type: string
+            wallet_address:
+              type: string
+            chain_id:
+              type: string
+          title: Wallet represents a keyless wallet
+    title: >-
+      QueryListWalletsResponse is response type for the Query/ListWallets RPC
+      method
   selfchain.keyless.QueryParamsResponse:
     type: object
     properties:
       params:
         description: params holds all the parameters of this module.
         type: object
+        properties:
+          max_wallets_per_did:
+            type: integer
+            format: int64
+          max_shares_per_wallet:
+            type: integer
+            format: int64
+          min_recovery_threshold:
+            type: integer
+            format: int64
+          max_recovery_threshold:
+            type: integer
+            format: int64
+          recovery_window_seconds:
+            type: integer
+            format: int64
+          max_signing_attempts:
+            type: integer
+            format: int64
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  selfchain.keyless.Wallet:
+    type: object
+    properties:
+      creator:
+        type: string
+      pub_key:
+        type: string
+      wallet_address:
+        type: string
+      chain_id:
+        type: string
+    title: Wallet represents a keyless wallet
   selfchain.migration.Acl:
     type: object
     properties:
