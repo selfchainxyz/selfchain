@@ -1,0 +1,14 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// Wallet represents a keyless wallet in the system
+message Wallet {
+  string address = 1;
+  string did = 2;
+  string status = 3;
+  string personal_share = 4;
+  string remote_share = 5;
+  string creator = 6;
+}

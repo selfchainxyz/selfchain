@@ -1,33 +1,14 @@
 package types
 
-// Wallet represents a keyless wallet in the system
-type Wallet struct {
-    // Address is the wallet's address on the blockchain
-    Address string `json:"address"`
-    
-    // DID is the decentralized identifier associated with this wallet
-    DID string `json:"did"`
-    
-    // Status represents the current state of the wallet (e.g., active, recovering)
-    Status string `json:"status"`
-    
-    // PersonalShare is the encrypted key share stored on the user's device
-    PersonalShare string `json:"personal_share,omitempty"`
-    
-    // RemoteShare is the key share stored on the chain (encrypted)
-    RemoteShare string `json:"remote_share,omitempty"`
-    
-    // Creator is the address that created this wallet
-    Creator string `json:"creator"`
-}
-
 // NewWallet creates a new Wallet instance
-func NewWallet(address, did, creator string) Wallet {
+func NewWallet(address string, did string, creator string) Wallet {
     return Wallet{
-        Address: address,
-        DID:     did,
-        Status:  "active",
-        Creator: creator,
+        Address:       address,
+        Did:          did,
+        Status:       "active",
+        PersonalShare: "", // Will be set during MPC-TSS setup
+        RemoteShare:   "", // Will be set during MPC-TSS setup
+        Creator:       creator,
     }
 }
 
@@ -36,11 +17,11 @@ func (w Wallet) ValidateBasic() error {
     if w.Address == "" {
         return ErrInvalidWalletAddress
     }
-    if w.DID == "" {
-        return ErrInvalidDID
+    if w.Did == "" {
+        return ErrInvalidWalletDID
     }
     if w.Creator == "" {
-        return ErrInvalidCreator
+        return ErrInvalidWalletCreator
     }
     return nil
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
     "context"
+    "fmt"
 
     sdk "github.com/cosmos/cosmos-sdk/types"
     "google.golang.org/grpc/codes"
@@ -27,11 +28,18 @@ func (k Keeper) GetWallet(c context.Context, req *types.QueryGetWalletRequest) (
         return nil, status.Error(codes.InvalidArgument, "invalid request")
     }
 
-    _ = sdk.UnwrapSDKContext(c)
-    // TODO: Implement get wallet logic
-    // This will be implemented in the next step
+    ctx := sdk.UnwrapSDKContext(c)
+    
+    wallet, err := k.GetWalletState(ctx, req.Address)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get wallet: %w", err)
+    }
 
-    return &types.QueryGetWalletResponse{}, nil
+    return &types.QueryGetWalletResponse{
+        Address: wallet.Address,
+        Did:     wallet.Did,
+        Status:  wallet.Status,
+    }, nil
 }
 
 // GetWalletByDID implements the Query/GetWalletByDID gRPC method
@@ -40,9 +48,16 @@ func (k Keeper) GetWalletByDID(c context.Context, req *types.QueryGetWalletByDID
         return nil, status.Error(codes.InvalidArgument, "invalid request")
     }
 
-    _ = sdk.UnwrapSDKContext(c)
-    // TODO: Implement get wallet by DID logic
-    // This will be implemented in the next step
+    ctx := sdk.UnwrapSDKContext(c)
+    
+    wallet, err := k.GetWalletStateByDID(ctx, req.Did)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get wallet by DID: %w", err)
+    }
 
-    return &types.QueryGetWalletByDIDResponse{}, nil
+    return &types.QueryGetWalletByDIDResponse{
+        Address: wallet.Address,
+        Did:     wallet.Did,
+        Status:  wallet.Status,
+    }, nil
 }
