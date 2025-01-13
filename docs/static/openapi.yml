@@ -52358,29 +52358,6 @@ paths:
                           type: string
                         public_key_base58:
                           type: string
-                      title: >-
-                        VerificationMethod represents a verification method in a
-                        DID Document
-                  authentication:
-                    type: array
-                    items:
-                      type: string
-                  assertion_method:
-                    type: array
-                    items:
-                      type: string
-                  key_agreement:
-                    type: array
-                    items:
-                      type: string
-                  capability_invocation:
-                    type: array
-                    items:
-                      type: string
-                  capability_delegation:
-                    type: array
-                    items:
-                      type: string
                   service:
                     type: array
                     items:
@@ -52394,16 +52371,28 @@ paths:
                           type: string
                         properties:
                           type: object
-                          additionalProperties:
-                            type: string
-                      title: Service represents a service endpoint in a DID Document
+                          properties:
+                            data:
+                              type: object
+                              additionalProperties:
+                                type: string
+                          title: Common metadata type
                   created:
                     type: string
                     format: date-time
                   updated:
                     type: string
                     format: date-time
-                title: DIDDocument represents a DID Document
+                  status:
+                    type: string
+                    enum:
+                      - STATUS_UNSPECIFIED
+                      - STATUS_ACTIVE
+                      - STATUS_PENDING
+                      - STATUS_DISABLED
+                      - STATUS_REVOKED
+                    default: STATUS_UNSPECIFIED
+                    title: Common status enum for all resources
             description: >-
               QueryDIDDocumentsResponse is response type for the
               Query/DIDDocuments method.
@@ -84009,29 +83998,6 @@ definitions:
               type: string
             public_key_base58:
               type: string
-          title: >-
-            VerificationMethod represents a verification method in a DID
-            Document
-      authentication:
-        type: array
-        items:
-          type: string
-      assertion_method:
-        type: array
-        items:
-          type: string
-      key_agreement:
-        type: array
-        items:
-          type: string
-      capability_invocation:
-        type: array
-        items:
-          type: string
-      capability_delegation:
-        type: array
-        items:
-          type: string
       service:
         type: array
         items:
@@ -84045,16 +84011,28 @@ definitions:
               type: string
             properties:
               type: object
-              additionalProperties:
-                type: string
-          title: Service represents a service endpoint in a DID Document
+              properties:
+                data:
+                  type: object
+                  additionalProperties:
+                    type: string
+              title: Common metadata type
       created:
         type: string
         format: date-time
       updated:
         type: string
         format: date-time
-    title: DIDDocument represents a DID Document
+      status:
+        type: string
+        enum:
+          - STATUS_UNSPECIFIED
+          - STATUS_ACTIVE
+          - STATUS_PENDING
+          - STATUS_DISABLED
+          - STATUS_REVOKED
+        default: STATUS_UNSPECIFIED
+        title: Common status enum for all resources
   selfchain.identity.DIDParams:
     type: object
     properties:
@@ -84162,6 +84140,14 @@ definitions:
         type: string
         format: int64
     title: MFAParams defines the parameters for MFA functionality
+  selfchain.identity.Metadata:
+    type: object
+    properties:
+      data:
+        type: object
+        additionalProperties:
+          type: string
+    title: Common metadata type
   selfchain.identity.MsgAddMFAResponse:
     type: object
   selfchain.identity.MsgCreateCredentialResponse:
@@ -84210,6 +84196,13 @@ definitions:
         type: boolean
   selfchain.identity.MsgVerifyMFAResponse:
     type: object
+  selfchain.identity.MsgVerifyOAuthTokenResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+      id:
+        type: string
   selfchain.identity.Params:
     type: object
     properties:
@@ -84376,29 +84369,6 @@ definitions:
                   type: string
                 public_key_base58:
                   type: string
-              title: >-
-                VerificationMethod represents a verification method in a DID
-                Document
-          authentication:
-            type: array
-            items:
-              type: string
-          assertion_method:
-            type: array
-            items:
-              type: string
-          key_agreement:
-            type: array
-            items:
-              type: string
-          capability_invocation:
-            type: array
-            items:
-              type: string
-          capability_delegation:
-            type: array
-            items:
-              type: string
           service:
             type: array
             items:
@@ -84412,16 +84382,28 @@ definitions:
                   type: string
                 properties:
                   type: object
-                  additionalProperties:
-                    type: string
-              title: Service represents a service endpoint in a DID Document
+                  properties:
+                    data:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  title: Common metadata type
           created:
             type: string
             format: date-time
           updated:
             type: string
             format: date-time
-        title: DIDDocument represents a DID Document
+          status:
+            type: string
+            enum:
+              - STATUS_UNSPECIFIED
+              - STATUS_ACTIVE
+              - STATUS_PENDING
+              - STATUS_DISABLED
+              - STATUS_REVOKED
+            default: STATUS_UNSPECIFIED
+            title: Common status enum for all resources
     description: >-
       QueryDIDDocumentsResponse is response type for the Query/DIDDocuments
       method.
@@ -84629,9 +84611,12 @@ definitions:
         type: string
       properties:
         type: object
-        additionalProperties:
-          type: string
-    title: Service represents a service endpoint in a DID Document
+        properties:
+          data:
+            type: object
+            additionalProperties:
+              type: string
+        title: Common metadata type
   selfchain.identity.SocialIdentity:
     type: object
     properties:
@@ -84657,6 +84642,16 @@ definitions:
         type: string
         format: date-time
     title: SocialIdentity represents a social identity linked to a DID
+  selfchain.identity.Status:
+    type: string
+    enum:
+      - STATUS_UNSPECIFIED
+      - STATUS_ACTIVE
+      - STATUS_PENDING
+      - STATUS_DISABLED
+      - STATUS_REVOKED
+    default: STATUS_UNSPECIFIED
+    title: Common status enum for all resources
   selfchain.identity.VerificationMethod:
     type: object
     properties:
@@ -84668,7 +84663,6 @@ definitions:
         type: string
       public_key_base58:
         type: string
-    title: VerificationMethod represents a verification method in a DID Document
   selfchain.migration.Acl:
     type: object
     properties:

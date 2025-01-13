@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/identity/params.proto";
-import "selfchain/identity/did_document.proto";
+import "selfchain/identity/did.proto";
 import "selfchain/identity/credential.proto";
 import "selfchain/identity/oauth.proto";
 import "selfchain/identity/mfa.proto";

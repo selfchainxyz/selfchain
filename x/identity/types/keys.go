@@ -29,6 +29,7 @@ const (
 	AuditLogPrefix         = "audit_log/"
 	CredentialByDIDPrefix  = "credential_by_did/"
 	MFAChallengePrefix     = "mfa_challenge:"
+	OAuthProviderPrefix    = "oauth_provider/"
 	MFAChallengeExpiry     = 5 * time.Minute // MFA challenge expiry time
 )
 

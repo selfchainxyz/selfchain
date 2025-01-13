@@ -3,9 +3,10 @@ package selfchain.identity;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
-import "selfchain/identity/did_document.proto";
+import "selfchain/identity/did.proto";
 import "selfchain/identity/credential.proto";
 import "selfchain/identity/mfa.proto";
+import "selfchain/identity/oauth.proto";
 
 option go_package = "selfchain/x/identity/types";
 
@@ -24,6 +25,9 @@ service Msg {
   // Social Identity operations
   rpc LinkSocialIdentity(MsgLinkSocialIdentity) returns (MsgLinkSocialIdentityResponse);
   rpc UnlinkSocialIdentity(MsgUnlinkSocialIdentity) returns (MsgUnlinkSocialIdentityResponse);
+
+  // OAuth operations
+  rpc VerifyOAuthToken(MsgVerifyOAuthToken) returns (MsgVerifyOAuthTokenResponse);
 
   // MFA operations
   rpc AddMFA(MsgAddMFA) returns (MsgAddMFAResponse);
@@ -121,4 +125,16 @@ message MsgUnlinkSocialIdentity {
 
 message MsgUnlinkSocialIdentityResponse {
   bool success = 1;
+}
+
+// OAuth Messages
+message MsgVerifyOAuthToken {
+  string creator = 1;
+  string provider = 2;
+  string token = 3;
+}
+
+message MsgVerifyOAuthTokenResponse {
+  bool success = 1;
+  string id = 2;
 }

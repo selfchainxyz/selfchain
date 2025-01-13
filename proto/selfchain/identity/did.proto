@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+import "selfchain/identity/common.proto";
+
+message DIDDocument {
+  string id = 1;
+  repeated string controller = 2;
+  repeated VerificationMethod verification_method = 3;
+  repeated Service service = 4;
+  google.protobuf.Timestamp created = 5 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp updated = 6 [(gogoproto.stdtime) = true];
+  Status status = 7;
+}
+
+message VerificationMethod {
+  string id = 1;
+  string type = 2;
+  string controller = 3;
+  string public_key_base58 = 4;
+}
+
+message Service {
+  string id = 1;
+  string type = 2;
+  string service_endpoint = 3;
+  Metadata properties = 4;
+}

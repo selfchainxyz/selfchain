@@ -132,6 +132,7 @@ import (
 	identitymodule "selfchain/x/identity"
 	identitymodulekeeper "selfchain/x/identity/keeper"
 	identitymoduletypes "selfchain/x/identity/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "selfchain/app/params"
