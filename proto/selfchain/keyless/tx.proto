@@ -1,7 +1,50 @@
 syntax = "proto3";
 package selfchain.keyless;
 
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
 option go_package = "selfchain/x/keyless/types";
 
 // Msg defines the Msg service.
-service Msg {}
+service Msg {
+  // CreateWallet defines a method for creating a new keyless wallet
+  rpc CreateWallet(MsgCreateWallet) returns (MsgCreateWalletResponse);
+  // SignTransaction defines a method for signing transactions using distributed key shares
+  rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
+  // RecoverWallet defines a method for wallet recovery using DID
+  rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+}
+
+// MsgCreateWallet defines the message for creating a new keyless wallet
+message MsgCreateWallet {
+  string creator = 1;
+  string did = 2;
+}
+
+message MsgCreateWalletResponse {
+  string address = 1;
+}
+
+// MsgSignTransaction defines the message for signing a transaction
+message MsgSignTransaction {
+  string creator = 1;
+  string wallet_address = 2;
+  bytes transaction_data = 3;
+  string chain_id = 4;
+}
+
+message MsgSignTransactionResponse {
+  bytes signature = 1;
+}
+
+// MsgRecoverWallet defines the message for wallet recovery
+message MsgRecoverWallet {
+  string creator = 1;
+  string did = 2;
+  string new_device_public_key = 3;
+}
+
+message MsgRecoverWalletResponse {
+  string address = 1;
+}
