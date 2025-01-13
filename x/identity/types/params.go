@@ -9,9 +9,9 @@ import (
 
 // Parameter store keys
 var (
-	MFAParamsKey       = []byte("MFAParams")
+	MFAParamsKey        = []byte("MFAParams")
 	CredentialParamsKey = []byte("CredentialParams")
-	DIDParamsKey       = []byte("DIDParams")
+	DIDParamsKey        = []byte("DIDParams")
 )
 
 // ParamKeyTable returns the parameter key table.
@@ -22,9 +22,9 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns default identity module parameters
 func DefaultParams() Params {
 	return Params{
-		MfaParams:       DefaultMFAParams(),
+		MfaParams:        DefaultMFAParams(),
 		CredentialParams: DefaultCredentialParams(),
-		DidParams:       DefaultDIDParams(),
+		DidParams:        DefaultDIDParams(),
 	}
 }
 
@@ -32,7 +32,7 @@ func DefaultParams() Params {
 func DefaultMFAParams() MFAParams {
 	return MFAParams{
 		MaxMethods:        3,
-		ChallengeExpiry:  int64(5 * time.Minute),
+		ChallengeExpiry:   int64(5 * time.Minute),
 		AllowedMethods:    []string{"totp", "recovery"},
 		MaxFailedAttempts: 5,
 	}

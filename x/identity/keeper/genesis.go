@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/identity/types"
-	"fmt"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

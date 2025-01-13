@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"google.golang.org/grpc"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
 
 	"selfchain/app"
 	"selfchain/testutil"
@@ -19,11 +19,11 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	app        *app.App
-	ctx        sdk.Context
-	msgServer  types.MsgServer
+	app         *app.App
+	ctx         sdk.Context
+	msgServer   types.MsgServer
 	queryClient types.QueryClient
-	addrs      []sdk.AccAddress
+	addrs       []sdk.AccAddress
 }
 
 func (suite *IntegrationTestSuite) SetupTest() {

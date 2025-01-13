@@ -21,16 +21,16 @@ const (
 	ParamsKey = "params"
 
 	// Key prefixes for different types of data
-	DIDPrefix              = "did/"
-	CredentialPrefix       = "credential/"
-	SocialIdentityPrefix   = "social_identity/"
+	DIDPrefix                = "did/"
+	CredentialPrefix         = "credential/"
+	SocialIdentityPrefix     = "social_identity/"
 	SocialIdentityByIDPrefix = "social_identity_by_id/"
-	MFAConfigPrefix        = "mfa_config/"
-	AuditLogPrefix         = "audit_log/"
-	CredentialByDIDPrefix  = "credential_by_did/"
-	MFAChallengePrefix     = "mfa_challenge:"
-	OAuthProviderPrefix    = "oauth_provider/"
-	MFAChallengeExpiry     = 5 * time.Minute // MFA challenge expiry time
+	MFAConfigPrefix          = "mfa_config/"
+	AuditLogPrefix           = "audit_log/"
+	CredentialByDIDPrefix    = "credential_by_did/"
+	MFAChallengePrefix       = "mfa_challenge:"
+	OAuthProviderPrefix      = "oauth_provider/"
+	MFAChallengeExpiry       = 5 * time.Minute // MFA challenge expiry time
 )
 
 // KeyPrefix returns the prefix for a given key type

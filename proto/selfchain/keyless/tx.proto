@@ -1,0 +1,7 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// Msg defines the Msg service.
+service Msg {}

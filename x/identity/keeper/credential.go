@@ -398,13 +398,13 @@ func (k Keeper) createPresentationProof(ctx sdk.Context, presentation *types.Cre
 
 	// Create a new proof
 	now := time.Now().Unix()
-	
+
 	// Create the presentation proof
 	proof := &types.CredentialProof{
-		Type:              "ZKProof",
-		Created:           now,
+		Type:               "ZKProof",
+		Created:            now,
 		VerificationMethod: credential.Subject, // Use subject DID as verification method
-		ProofPurpose:      "credentialPresentation",
+		ProofPurpose:       "credentialPresentation",
 	}
 
 	// Create audit log for proof generation
@@ -418,7 +418,7 @@ func (k Keeper) createPresentationProof(ctx sdk.Context, presentation *types.Cre
 		Severity:  types.SecuritySeverity_SEVERITY_INFO,
 		Metadata: map[string]string{
 			"credential_id": presentation.VerifiableCredential,
-			"proof_type":   proof.Type,
+			"proof_type":    proof.Type,
 		},
 	}
 
@@ -458,8 +458,8 @@ func (k Keeper) verifyPresentationProof(ctx sdk.Context, presentation *types.Cre
 		Severity:  types.SecuritySeverity_SEVERITY_INFO,
 		Metadata: map[string]string{
 			"credential_id": presentation.VerifiableCredential,
-			"proof_type":   proof.Type,
-			"valid":        fmt.Sprintf("%t", valid),
+			"proof_type":    proof.Type,
+			"valid":         fmt.Sprintf("%t", valid),
 		},
 	}
 

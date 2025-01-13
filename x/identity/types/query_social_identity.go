@@ -17,7 +17,7 @@ func NewQuerySocialIdentityRequest(did string, provider string) *QuerySocialIden
 // NewQueryLinkedDIDRequest creates a new QueryLinkedDIDRequest instance
 func NewQueryLinkedDIDRequest(provider string, socialId string) *QueryLinkedDIDRequest {
 	return &QueryLinkedDIDRequest{
-		Provider:  provider,
+		Provider: provider,
 		SocialId: socialId,
 	}
 }

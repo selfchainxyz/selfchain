@@ -155,7 +155,7 @@ func GenerateZKProof(claims map[string]string, disclosedClaims []string, verific
 
 	now := time.Now().Unix()
 	return &ZKProof{
-		Type:              "Schnorr",
+		Type:             "Schnorr",
 		ProofData:        proofData,
 		ClaimsHash:       ComputeClaimsHash(claims),
 		DisclosedIndices: disclosedIndices,

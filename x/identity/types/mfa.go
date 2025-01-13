@@ -9,9 +9,9 @@ import (
 // MFAMethodStatus values
 const (
 	MFAMethodStatusUnspecified = MFAMethodStatus_MFA_METHOD_STATUS_UNSPECIFIED
-	MFAMethodStatusActive     = MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE
-	MFAMethodStatusPending    = MFAMethodStatus_MFA_METHOD_STATUS_PENDING
-	MFAMethodStatusDisabled   = MFAMethodStatus_MFA_METHOD_STATUS_DISABLED
+	MFAMethodStatusActive      = MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE
+	MFAMethodStatusPending     = MFAMethodStatus_MFA_METHOD_STATUS_PENDING
+	MFAMethodStatusDisabled    = MFAMethodStatus_MFA_METHOD_STATUS_DISABLED
 )
 
 // ValidateBasic performs basic validation of MFA configuration

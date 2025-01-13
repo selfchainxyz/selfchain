@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	ErrInvalidDIDID          = sdkerrors.Register(ModuleName, 1500, "invalid DID identifier")
-	ErrInvalidDIDController  = sdkerrors.Register(ModuleName, 1501, "invalid DID controller")
+	ErrInvalidDIDID              = sdkerrors.Register(ModuleName, 1500, "invalid DID identifier")
+	ErrInvalidDIDController      = sdkerrors.Register(ModuleName, 1501, "invalid DID controller")
 	ErrInvalidVerificationMethod = sdkerrors.Register(ModuleName, 1502, "invalid verification method")
 	ErrInvalidServiceEndpoint    = sdkerrors.Register(ModuleName, 1503, "invalid service endpoint")
-	ErrUnauthorizedDIDUpdate = sdkerrors.Register(ModuleName, 1506, "unauthorized DID update")
+	ErrUnauthorizedDIDUpdate     = sdkerrors.Register(ModuleName, 1506, "unauthorized DID update")
 )
 
 // ValidateBasic performs basic validation of DID document
