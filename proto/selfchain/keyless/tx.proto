@@ -1,23 +1,24 @@
 syntax = "proto3";
-package selfchain.keyless;
 
-import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
+package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
 // Msg defines the Msg service.
 service Msg {
-  // CreateWallet defines a method for creating a new keyless wallet
-  rpc CreateWallet(MsgCreateWallet) returns (MsgCreateWalletResponse);
-  // SignTransaction defines a method for signing transactions using distributed key shares
-  rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
-  // RecoverWallet defines a method for wallet recovery using DID
-  rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+  rpc CreateWallet (MsgCreateWallet) returns (MsgCreateWalletResponse);
+  rpc SignTransaction (MsgSignTransaction) returns (MsgSignTransactionResponse);
+  rpc RecoverWallet (MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+  rpc GenerateKey (MsgGenerateKey) returns (MsgGenerateKeyResponse);
 }
 
-// MsgCreateWallet defines the message for creating a new keyless wallet
 message MsgCreateWallet {
+  option (cosmos.msg.v1.signer) = "creator";
+  
   string creator = 1;
   string did = 2;
 }
@@ -26,25 +27,39 @@ message MsgCreateWalletResponse {
   string address = 1;
 }
 
-// MsgSignTransaction defines the message for signing a transaction
 message MsgSignTransaction {
+  option (cosmos.msg.v1.signer) = "creator";
+  
   string creator = 1;
   string wallet_address = 2;
   bytes transaction_data = 3;
-  string chain_id = 4;
+  bytes personal_share = 4;
+  bytes signature_metadata = 5;
 }
 
 message MsgSignTransactionResponse {
   bytes signature = 1;
 }
 
-// MsgRecoverWallet defines the message for wallet recovery
 message MsgRecoverWallet {
+  option (cosmos.msg.v1.signer) = "creator";
+  
   string creator = 1;
   string did = 2;
-  string new_device_public_key = 3;
 }
 
 message MsgRecoverWalletResponse {
   string address = 1;
+}
+
+message MsgGenerateKey {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+}
+
+message MsgGenerateKeyResponse {
+  bytes personal_share = 1;
+  bytes public_key = 2;
 }
