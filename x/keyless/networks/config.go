@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// SigningAlgorithm represents the type of signing algorithm
+// SigningAlgorithm represents a supported signing algorithm
 type SigningAlgorithm string
 
 const (
@@ -18,75 +18,34 @@ const (
 	BLS SigningAlgorithm = "BLS"
 )
 
-// NetworkConfig represents the configuration for a blockchain network
+// NetworkConfig represents the configuration for a specific network
 type NetworkConfig struct {
-	// ChainID is the unique identifier for the network
-	ChainID string
-	// Name is the human-readable name of the network
-	Name string
-	// Algorithm is the signing algorithm used by this network
-	Algorithm SigningAlgorithm
-	// Prefix is the address prefix used by this network
-	Prefix string
-	// CoinType is the BIP44 coin type
-	CoinType uint32
-	// Derivation is the derivation path template
-	Derivation string
+	ChainID          string
+	SigningAlgorithm SigningAlgorithm
+	AddressPrefix    string
+	CoinType         uint32
 }
 
-// NetworkRegistry maintains a registry of supported networks
-type NetworkRegistry struct {
-	networks map[string]NetworkConfig
-}
-
-// NewNetworkRegistry creates a new network registry
-func NewNetworkRegistry() *NetworkRegistry {
-	return &NetworkRegistry{
-		networks: make(map[string]NetworkConfig),
+// ValidateSigningAlgorithm checks if the signing algorithm is supported
+func ValidateSigningAlgorithm(algo SigningAlgorithm) error {
+	switch algo {
+	case ECDSA, EdDSA:
+		return nil
+	case Schnorr, BLS:
+		return fmt.Errorf("signing algorithm %s not yet implemented", algo)
+	default:
+		return fmt.Errorf("unsupported signing algorithm: %s", algo)
 	}
 }
 
-// RegisterNetwork adds a new network configuration to the registry
-func (r *NetworkRegistry) RegisterNetwork(config NetworkConfig) error {
-	if _, exists := r.networks[config.ChainID]; exists {
-		return fmt.Errorf("network with chain ID %s already registered", config.ChainID)
-	}
-	r.networks[config.ChainID] = config
-	return nil
-}
-
-// GetNetwork retrieves a network configuration by chain ID
-func (r *NetworkRegistry) GetNetwork(chainID string) (NetworkConfig, error) {
-	config, exists := r.networks[chainID]
-	if !exists {
-		return NetworkConfig{}, fmt.Errorf("network with chain ID %s not found", chainID)
-	}
-	return config, nil
-}
-
-// DefaultRegistry creates a registry with default network configurations
-func DefaultRegistry() *NetworkRegistry {
-	registry := NewNetworkRegistry()
-
-	// Register Cosmos SDK based chains
-	registry.RegisterNetwork(NetworkConfig{
-		ChainID:    "selfchain_1234-1",
-		Name:       "Self Chain",
-		Algorithm:  ECDSA,
-		Prefix:     "self",
-		CoinType:   118,
-		Derivation: "m/44'/118'/0'/0/0",
-	})
-
-	// Register Ethereum
-	registry.RegisterNetwork(NetworkConfig{
-		ChainID:    "1",
-		Name:       "Ethereum Mainnet",
-		Algorithm:  ECDSA,
-		Prefix:     "0x",
-		CoinType:   60,
-		Derivation: "m/44'/60'/0'/0/0",
-	})
-
-	return registry
+// GetNetworkConfig returns the configuration for a specific chain ID
+func GetNetworkConfig(chainID string) (*NetworkConfig, error) {
+	// TODO: Implement network registry
+	// For now, return default config for testing
+	return &NetworkConfig{
+		ChainID:          chainID,
+		SigningAlgorithm: ECDSA,
+		AddressPrefix:    "self",
+		CoinType:         118,
+	}, nil
 }
