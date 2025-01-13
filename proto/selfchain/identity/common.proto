@@ -1,0 +1,35 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+// Common status enum for all resources
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1;
+  STATUS_PENDING = 2;
+  STATUS_DISABLED = 3;
+  STATUS_REVOKED = 4;
+}
+
+// Common metadata type
+message Metadata {
+  map<string, string> data = 1;
+}
+
+// Common timestamp wrapper with stdtime
+message Timestamp {
+  google.protobuf.Timestamp time = 1 [(gogoproto.stdtime) = true];
+}
+
+// Common proof type
+message Proof {
+  string type = 1;
+  string verification_method = 2;
+  string purpose = 3;
+  google.protobuf.Timestamp created = 4 [(gogoproto.stdtime) = true];
+  string value = 5;
+}
