@@ -14,6 +14,16 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/selfchain/keyless/params";
   }
+
+  // GetWallet returns wallet information by address
+  rpc GetWallet(QueryGetWalletRequest) returns (QueryGetWalletResponse) {
+    option (google.api.http).get = "/selfchain/keyless/wallet/{address}";
+  }
+
+  // GetWalletByDID returns wallet information by DID
+  rpc GetWalletByDID(QueryGetWalletByDIDRequest) returns (QueryGetWalletByDIDResponse) {
+    option (google.api.http).get = "/selfchain/keyless/wallet_by_did/{did}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -23,4 +33,28 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryGetWalletRequest is request type for the Query/GetWallet method
+message QueryGetWalletRequest {
+  string address = 1;
+}
+
+// QueryGetWalletResponse is response type for the Query/GetWallet method
+message QueryGetWalletResponse {
+  string address = 1;
+  string did = 2;
+  string status = 3;
+}
+
+// QueryGetWalletByDIDRequest is request type for the Query/GetWalletByDID method
+message QueryGetWalletByDIDRequest {
+  string did = 1;
+}
+
+// QueryGetWalletByDIDResponse is response type for the Query/GetWalletByDID method
+message QueryGetWalletByDIDResponse {
+  string address = 1;
+  string did = 2;
+  string status = 3;
 }
