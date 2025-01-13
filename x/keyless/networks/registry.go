@@ -23,19 +23,38 @@ type NetworkType string
 
 const (
 	// Major network types
+	Bitcoin     NetworkType = "bitcoin"
 	Ethereum    NetworkType = "ethereum"
 	Cosmos      NetworkType = "cosmos"
-	Bitcoin     NetworkType = "bitcoin"
 	Solana      NetworkType = "solana"
 	Polkadot    NetworkType = "polkadot"
-	Tron        NetworkType = "tron"
 	Cardano     NetworkType = "cardano"
 	Algorand    NetworkType = "algorand"
+	Tron        NetworkType = "tron"
 	Near        NetworkType = "near"
 	Stellar     NetworkType = "stellar"
 	Aptos       NetworkType = "aptos"
 	Sui         NetworkType = "sui"
 )
+
+// SigningConfig contains network-specific signing parameters
+type SigningConfig struct {
+	// Bitcoin-specific
+	P2PKHPrefix    uint8  // Pay to Public Key Hash prefix
+	P2SHPrefix     uint8  // Pay to Script Hash prefix
+	HRP            string // Human Readable Part for bech32 addresses
+	Base58Hasher   string // Base58 hashing algorithm
+	
+	// Ethereum-specific
+	ChainID        string // EVM chain ID
+	GasToken       string // Native gas token symbol
+	
+	// Cosmos-specific
+	AddressPrefix  string // Bech32 address prefix
+	PubKeyPrefix   string // Public key prefix
+	
+	// Additional parameters can be added for other chains
+}
 
 // NetworkInfo contains detailed information about a blockchain network
 type NetworkInfo struct {
@@ -48,6 +67,7 @@ type NetworkInfo struct {
 	Decimals        uint8
 	SymbolName      string
 	DisplayName     string
+	SigningConfig   *SigningConfig // Network-specific signing parameters
 }
 
 // NetworkRegistry manages the registry of supported networks
@@ -69,6 +89,22 @@ func NewNetworkRegistry() *NetworkRegistry {
 func (r *NetworkRegistry) initializeDefaultNetworks() {
 	defaultNetworks := []*NetworkInfo{
 		{
+			NetworkType:      Bitcoin,
+			ChainID:         "mainnet",
+			SigningAlgorithm: ECDSA,
+			Curve:           Secp256k1,
+			CoinType:        0,
+			Decimals:        8,
+			SymbolName:      "BTC",
+			DisplayName:     "Bitcoin",
+			SigningConfig: &SigningConfig{
+				P2PKHPrefix:  0x00,
+				P2SHPrefix:   0x05,
+				HRP:          "bc",
+				Base58Hasher: "sha256",
+			},
+		},
+		{
 			NetworkType:      Ethereum,
 			ChainID:         "1",
 			SigningAlgorithm: ECDSA,
@@ -77,6 +113,10 @@ func (r *NetworkRegistry) initializeDefaultNetworks() {
 			Decimals:        18,
 			SymbolName:      "ETH",
 			DisplayName:     "Ethereum",
+			SigningConfig: &SigningConfig{
+				ChainID:  "1",
+				GasToken: "ETH",
+			},
 		},
 		{
 			NetworkType:      Cosmos,
@@ -88,6 +128,10 @@ func (r *NetworkRegistry) initializeDefaultNetworks() {
 			Decimals:        6,
 			SymbolName:      "ATOM",
 			DisplayName:     "Cosmos Hub",
+			SigningConfig: &SigningConfig{
+				AddressPrefix: "cosmos",
+				PubKeyPrefix:  "cosmospub",
+			},
 		},
 		{
 			NetworkType:      Solana,
