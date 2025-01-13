@@ -6,6 +6,7 @@ import (
 
     sdk "github.com/cosmos/cosmos-sdk/types"
     "selfchain/x/keyless/types"
+    "selfchain/x/keyless/tss"
 )
 
 type msgServer struct {
@@ -35,6 +36,40 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
     }, nil
 }
 
+// GenerateKey implements types.MsgServer
+func (k msgServer) GenerateKey(goCtx context.Context, msg *types.MsgGenerateKey) (*types.MsgGenerateKeyResponse, error) {
+    ctx := sdk.UnwrapSDKContext(goCtx)
+
+    // Get the wallet
+    wallet, err := k.Keeper.GetWalletState(ctx, msg.WalletAddress)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get wallet: %w", err)
+    }
+
+    // Verify the creator is the wallet creator
+    if wallet.Creator != msg.Creator {
+        return nil, types.ErrUnauthorized
+    }
+
+    // Generate TSS key shares
+    result, err := tss.GenerateKey(goCtx)
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate key shares: %w", err)
+    }
+
+    // Update wallet with remote share and public key
+    wallet.RemoteShare = string(result.RemoteShare)
+    // TODO: Store public key in a proper format
+
+    // Store updated wallet
+    k.Keeper.SetWallet(ctx, wallet)
+
+    return &types.MsgGenerateKeyResponse{
+        PersonalShare: result.PersonalShare,
+        PublicKey:    result.PublicKey,
+    }, nil
+}
+
 // SignTransaction implements types.MsgServer
 func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTransaction) (*types.MsgSignTransactionResponse, error) {
     ctx := sdk.UnwrapSDKContext(goCtx)
@@ -50,10 +85,23 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
         return nil, types.ErrUnauthorized
     }
 
-    // TODO: Implement MPC-TSS signing logic
-    // For now, return empty signature
+    // Get the remote share from wallet
+    remoteShare := []byte(wallet.RemoteShare)
+    if len(remoteShare) == 0 {
+        return nil, fmt.Errorf("wallet has no remote share")
+    }
+
+    // Sign the transaction using TSS
+    result, err := tss.SignMessage(goCtx, msg.TransactionData, msg.PersonalShare, remoteShare)
+    if err != nil {
+        return nil, fmt.Errorf("failed to sign transaction: %w", err)
+    }
+
+    // Combine R and S into a single signature byte slice
+    signature := append(result.R.Bytes(), result.S.Bytes()...)
+
     return &types.MsgSignTransactionResponse{
-        Signature: []byte{},
+        Signature: signature,
     }, nil
 }
 
