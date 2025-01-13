@@ -1,8 +1,7 @@
-package keeper
+package testutil
 
 import (
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -18,7 +17,8 @@ import (
 	"selfchain/x/keyless/types"
 )
 
-func KeylessKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+// NewTestKeeper creates a new keeper for testing
+func NewTestKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 	paramsStoreKey := storetypes.NewKVStoreKey("params")
@@ -46,12 +46,7 @@ func KeylessKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		paramsSubspace,
 	)
 
-	header := tmproto.Header{
-		ChainID: "test-chain",
-		Height:  1,
-		Time:    time.Now(),
-	}
-	ctx := sdk.NewContext(stateStore, header, false, log.NewNopLogger())
+	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	// Initialize params
 	k.SetParams(ctx, types.DefaultParams())

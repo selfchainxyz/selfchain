@@ -2,15 +2,10 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"time"
 
-	selfchainTss "selfchain/x/keyless/tss"
-	"selfchain/x/keyless/types"
-
-	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"selfchain/x/keyless/types"
 )
 
 type msgServer struct {
@@ -25,179 +20,67 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// CreateWallet implements types.MsgServer
+// CreateWallet creates a new wallet
 func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWallet) (*types.MsgCreateWalletResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Create the wallet using keeper method
-	wallet, err := k.Keeper.CreateWallet(ctx, msg.Creator, msg.Did)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create wallet: %w", err)
+	// Check if the wallet already exists
+	_, found := k.getWallet(ctx, msg.WalletAddress)
+	if found {
+		return nil, fmt.Errorf("wallet already exists: %s", msg.WalletAddress)
 	}
+
+	// Create wallet in store
+	wallet := types.Wallet{
+		Creator:       msg.Creator,
+		PubKey:        msg.PubKey,
+		WalletAddress: msg.WalletAddress,
+		ChainId:       msg.ChainId,
+	}
+
+	k.setWallet(ctx, wallet)
 
 	return &types.MsgCreateWalletResponse{
-		Address: wallet.Address,
+		WalletAddress: msg.WalletAddress,
 	}, nil
 }
 
-// GenerateKey implements types.MsgServer
-func (k msgServer) GenerateKey(goCtx context.Context, msg *types.MsgGenerateKey) (*types.MsgGenerateKeyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Get the wallet
-	wallet, err := k.Keeper.GetWalletState(ctx, msg.WalletAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get wallet: %w", err)
-	}
-
-	// Verify the creator is the wallet creator
-	if wallet.Creator != msg.Creator {
-		return nil, types.ErrUnauthorized
-	}
-
-	// Get network configuration
-	networkRegistry := networks.DefaultRegistry()
-	networkConfig, err := networkRegistry.GetNetwork(msg.ChainID)
-	if err != nil {
-		return nil, fmt.Errorf("unsupported chain ID: %w", err)
-	}
-
-	// Generate encryption key for personal share
-	encryptionKey, err := crypto.NewEncryptionKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
-	}
-
-	// Generate pre-parameters for TSS
-	preParams, err := keygen.GeneratePreParams(time.Minute)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate pre-parameters: %w", err)
-	}
-
-	// Generate TSS key shares
-	result, err := selfchainTss.GenerateKey(goCtx, preParams, msg.ChainID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate key shares: %w", err)
-	}
-
-	// Encrypt party2's data for storage
-	remoteShare, err := selfchainTss.EncryptShare(encryptionKey, result.Party2Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt remote share: %w", err)
-	}
-
-	// Encrypt party1's data for response
-	personalShare, err := selfchainTss.EncryptShare(encryptionKey, result.Party1Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt personal share: %w", err)
-	}
-
-	// Get the public key from either party (they should be the same)
-	publicKeyBytes, err := json.Marshal(result.Party1Data.ECDSAPub)
-	if err != nil {
-		return nil, fmt.Errorf("failed to serialize public key: %w", err)
-	}
-
-	// Update wallet with remote share
-	wallet.RemoteShare = remoteShare.EncryptedData
-	wallet.ChainID = msg.ChainID
-	
-	// Store updated wallet
-	k.Keeper.SetWallet(ctx, wallet)
-
-	return &types.MsgGenerateKeyResponse{
-		PersonalShare: []byte(personalShare.EncryptedData),
-		PublicKey:    publicKeyBytes,
-	}, nil
-}
-
-// SignTransaction implements types.MsgServer
+// SignTransaction signs a transaction using the wallet's private key
 func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTransaction) (*types.MsgSignTransactionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Get the wallet
-	wallet, err := k.Keeper.GetWalletState(ctx, msg.WalletAddress)
+	// Check if the wallet exists and validate owner
+	err := k.ValidateWalletOwner(ctx, msg.WalletAddress, msg.Creator)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get wallet: %w", err)
+		return nil, err
 	}
 
-	// Verify the signer is the wallet creator
-	if wallet.Creator != msg.Creator {
-		return nil, types.ErrUnauthorized
-	}
-
-	// Get network configuration
-	networkRegistry := networks.DefaultRegistry()
-	networkConfig, err := networkRegistry.GetNetwork(wallet.ChainID)
-	if err != nil {
-		return nil, fmt.Errorf("unsupported chain ID: %w", err)
-	}
-
-	// Generate encryption key (in production this should be securely stored/retrieved)
-	encryptionKey, err := crypto.NewEncryptionKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
-	}
-
-	// Get the remote share from wallet and decrypt it
-	remoteShare := &selfchainTss.EncryptedShare{
-		EncryptedData: wallet.RemoteShare,
-		ChainID:      wallet.ChainID,
-	}
-	remoteShareData, err := selfchainTss.DecryptShare(encryptionKey, remoteShare)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt remote share: %w", err)
-	}
-
-	// Decrypt personal share
-	personalShare := &selfchainTss.EncryptedShare{
-		EncryptedData: string(msg.PersonalShare),
-		ChainID:      wallet.ChainID,
-	}
-	personalShareData, err := selfchainTss.DecryptShare(encryptionKey, personalShare)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt personal share: %w", err)
-	}
-
-	// Sign the transaction using TSS with appropriate algorithm
-	result, err := selfchainTss.SignMessage(goCtx, msg.TransactionData, personalShareData, remoteShareData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign transaction: %w", err)
-	}
-
-	// Format signature based on network requirements
-	var signature []byte
-	switch networkConfig.Algorithm {
-	case networks.ECDSA:
-		signature = append(result.R.Bytes(), result.S.Bytes()...)
-	case networks.EdDSA:
-		// Add EdDSA signature formatting
-		return nil, fmt.Errorf("EdDSA signing not yet implemented")
-	default:
-		return nil, fmt.Errorf("unsupported signing algorithm: %s", networkConfig.Algorithm)
-	}
+	// TODO: Implement actual transaction signing logic here
+	signedTx := msg.UnsignedTx // Placeholder for actual signing
 
 	return &types.MsgSignTransactionResponse{
-		Signature: signature,
+		SignedTx: signedTx,
 	}, nil
 }
 
-// RecoverWallet implements types.MsgServer
+// RecoverWallet recovers a wallet using recovery proof
 func (k msgServer) RecoverWallet(goCtx context.Context, msg *types.MsgRecoverWallet) (*types.MsgRecoverWalletResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Get the wallet by DID
-	wallet, err := k.Keeper.GetWalletStateByDID(ctx, msg.Did)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get wallet: %w", err)
+	// Check if the wallet exists
+	wallet, found := k.getWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", msg.WalletAddress)
 	}
 
-	// Verify the creator is the original wallet creator
-	if wallet.Creator != msg.Creator {
-		return nil, types.ErrUnauthorized
-	}
+	// TODO: Verify recovery proof
+	// This should be implemented based on your recovery mechanism
+
+	// Update the wallet with new public key
+	wallet.PubKey = msg.NewPubKey
+	k.setWallet(ctx, wallet)
 
 	return &types.MsgRecoverWalletResponse{
-		Address: wallet.Address,
+		WalletAddress: msg.WalletAddress,
 	}, nil
 }

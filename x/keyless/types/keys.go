@@ -12,17 +12,13 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_keyless"
-)
 
-var (
-	// WalletKeyPrefix is the prefix for storing wallets
-	WalletKeyPrefix = []byte{0x01}
-)
+	// WalletKey defines the key for storing wallets
+	WalletKey = "Wallet-value-"
 
-// WalletKey returns the store key to retrieve a Wallet from the index fields
-func WalletKey(address string) []byte {
-	return append(WalletKeyPrefix, []byte(address)...)
-}
+	// ParamsKey defines the store key for module parameters
+	ParamsKey = "params"
+)
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

@@ -10,57 +10,46 @@ import "gogoproto/gogo.proto";
 
 // Msg defines the Msg service.
 service Msg {
-  rpc CreateWallet (MsgCreateWallet) returns (MsgCreateWalletResponse);
-  rpc SignTransaction (MsgSignTransaction) returns (MsgSignTransactionResponse);
-  rpc RecoverWallet (MsgRecoverWallet) returns (MsgRecoverWalletResponse);
-  rpc GenerateKey (MsgGenerateKey) returns (MsgGenerateKeyResponse);
+  rpc CreateWallet(MsgCreateWallet) returns (MsgCreateWalletResponse);
+  rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+  rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
 }
 
 message MsgCreateWallet {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string did = 2;
+  string pubKey = 2;
+  string walletAddress = 3;
+  string chainId = 4;
 }
 
 message MsgCreateWalletResponse {
-  string address = 1;
-}
-
-message MsgSignTransaction {
-  option (cosmos.msg.v1.signer) = "creator";
-  
-  string creator = 1;
-  string wallet_address = 2;
-  bytes transaction_data = 3;
-  bytes personal_share = 4;
-  bytes signature_metadata = 5;
-}
-
-message MsgSignTransactionResponse {
-  bytes signature = 1;
+  string walletAddress = 1;
 }
 
 message MsgRecoverWallet {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string did = 2;
+  string walletAddress = 2;
+  string recoveryProof = 3;
+  string newPubKey = 4;
 }
 
 message MsgRecoverWalletResponse {
-  string address = 1;
+  string walletAddress = 1;
 }
 
-message MsgGenerateKey {
+message MsgSignTransaction {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string wallet_address = 2;
-  string chain_id = 3;
+  string walletAddress = 2;
+  string unsignedTx = 3;
+  string chainId = 4;
 }
 
-message MsgGenerateKeyResponse {
-  bytes personal_share = 1;
-  bytes public_key = 2;
+message MsgSignTransactionResponse {
+  string signedTx = 1;
 }

@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/keyless/params.proto";
+import "selfchain/keyless/wallet.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
@@ -15,14 +16,14 @@ service Query {
     option (google.api.http).get = "/selfchain/keyless/params";
   }
 
-  // GetWallet returns wallet information by address
+  // GetWallet returns wallet info by address
   rpc GetWallet(QueryGetWalletRequest) returns (QueryGetWalletResponse) {
-    option (google.api.http).get = "/selfchain/keyless/wallet/{address}";
+    option (google.api.http).get = "/selfchain/keyless/wallet/{wallet_address}";
   }
 
-  // GetWalletByDID returns wallet information by DID
-  rpc GetWalletByDID(QueryGetWalletByDIDRequest) returns (QueryGetWalletByDIDResponse) {
-    option (google.api.http).get = "/selfchain/keyless/wallet_by_did/{did}";
+  // ListWallets returns all wallets
+  rpc ListWallets(QueryListWalletsRequest) returns (QueryListWalletsResponse) {
+    option (google.api.http).get = "/selfchain/keyless/wallets";
   }
 }
 
@@ -35,26 +36,20 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryGetWalletRequest is request type for the Query/GetWallet method
+// QueryGetWalletRequest is request type for the Query/GetWallet RPC method
 message QueryGetWalletRequest {
-  string address = 1;
+  string wallet_address = 1;
 }
 
-// QueryGetWalletResponse is response type for the Query/GetWallet method
+// QueryGetWalletResponse is response type for the Query/GetWallet RPC method
 message QueryGetWalletResponse {
-  string address = 1;
-  string did = 2;
-  string status = 3;
+  Wallet wallet = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryGetWalletByDIDRequest is request type for the Query/GetWalletByDID method
-message QueryGetWalletByDIDRequest {
-  string did = 1;
-}
+// QueryListWalletsRequest is request type for the Query/ListWallets RPC method
+message QueryListWalletsRequest {}
 
-// QueryGetWalletByDIDResponse is response type for the Query/GetWalletByDID method
-message QueryGetWalletByDIDResponse {
-  string address = 1;
-  string did = 2;
-  string status = 3;
+// QueryListWalletsResponse is response type for the Query/ListWallets RPC method
+message QueryListWalletsResponse {
+  repeated Wallet wallets = 1 [(gogoproto.nullable) = false];
 }
