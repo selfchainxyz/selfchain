@@ -11,6 +11,7 @@ import (
 	"selfchain/x/keyless/crypto/signing"
 	"selfchain/x/keyless/networks"
 	"selfchain/x/keyless/tss"
+	"selfchain/x/keyless/storage"
 )
 
 type msgServer struct {
@@ -52,10 +53,8 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 
 // getTSSPartyData retrieves TSS party data for a wallet
 func (k msgServer) getTSSPartyData(ctx sdk.Context, wallet types.Wallet) (*keygen.LocalPartySaveData, *keygen.LocalPartySaveData, error) {
-	// TODO: Implement TSS party data retrieval from wallet
-	// This should retrieve the TSS key shares from secure storage
-	// For now, we'll return an error
-	return nil, nil, fmt.Errorf("TSS party data retrieval not implemented")
+	store := storage.NewStorage(k.GetPartyDataStore(ctx))
+	return store.GetPartyData(ctx, wallet.WalletAddress)
 }
 
 // SignTransaction signs a transaction using the wallet's private key
