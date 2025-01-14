@@ -40,12 +40,28 @@ func ValidateSigningAlgorithm(algo SigningAlgorithm) error {
 
 // GetNetworkConfig returns the configuration for a specific chain ID
 func GetNetworkConfig(chainID string) (*NetworkConfig, error) {
-	// TODO: Implement network registry
-	// For now, return default config for testing
+	registry := NewNetworkRegistry()
+	
+	// Try to find the network in registry
+	var networkType NetworkType
+	switch {
+	case chainID == "1" || chainID == "5":
+		networkType = Ethereum
+	case chainID == "bitcoin" || chainID == "bitcoin-testnet":
+		networkType = Bitcoin
+	default:
+		networkType = Cosmos // Default to Cosmos for other chains
+	}
+	
+	networkInfo, err := registry.GetNetwork(networkType, chainID)
+	if err != nil {
+		return nil, err
+	}
+	
 	return &NetworkConfig{
-		ChainID:          chainID,
-		SigningAlgorithm: ECDSA,
-		AddressPrefix:    "self",
-		CoinType:         118,
+		ChainID:          networkInfo.ChainID,
+		SigningAlgorithm: networkInfo.SigningAlgorithm,
+		AddressPrefix:    networkInfo.AddressPrefix,
+		CoinType:         networkInfo.CoinType,
 	}, nil
 }

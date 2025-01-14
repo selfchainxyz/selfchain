@@ -2,6 +2,7 @@ package networks
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -189,4 +190,17 @@ func (r *NetworkRegistry) ListNetworks() []*NetworkInfo {
 func (r *NetworkRegistry) IsSupportedNetwork(networkType NetworkType, chainID string) bool {
 	_, err := r.GetNetwork(networkType, chainID)
 	return err == nil
+}
+
+// ParseNetworkID parses a network ID into network type and chain ID
+func ParseNetworkID(networkID string) (NetworkType, string, error) {
+	parts := strings.Split(networkID, ":")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid network ID format, expected 'type:chainID', got %s", networkID)
+	}
+
+	networkType := NetworkType(parts[0])
+	chainID := parts[1]
+
+	return networkType, chainID, nil
 }
