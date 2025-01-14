@@ -6,9 +6,11 @@ import (
 	"crypto/sha256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
 	"selfchain/x/keyless/types"
 	"selfchain/x/keyless/crypto/signing"
 	"selfchain/x/keyless/networks"
+	"selfchain/x/keyless/tss"
 )
 
 type msgServer struct {
@@ -48,6 +50,14 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 	}, nil
 }
 
+// getTSSPartyData retrieves TSS party data for a wallet
+func (k msgServer) getTSSPartyData(ctx sdk.Context, wallet types.Wallet) (*keygen.LocalPartySaveData, *keygen.LocalPartySaveData, error) {
+	// TODO: Implement TSS party data retrieval from wallet
+	// This should retrieve the TSS key shares from secure storage
+	// For now, we'll return an error
+	return nil, nil, fmt.Errorf("TSS party data retrieval not implemented")
+}
+
 // SignTransaction signs a transaction using the wallet's private key
 func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTransaction) (*types.MsgSignTransactionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -70,11 +80,23 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 	// Convert unsigned transaction to bytes
 	unsignedTx := []byte(msg.UnsignedTx)
 
-	// Sign the transaction
+	// Get TSS party data from wallet
+	party1Data, party2Data, err := k.getTSSPartyData(ctx, wallet)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TSS party data: %w", err)
+	}
+
+	// Sign using TSS
+	signResult, err := tss.SignMessage(ctx, unsignedTx, party1Data, party2Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign with TSS: %w", err)
+	}
+
+	// Format signature according to network
 	signature, err := signerFactory.Sign(ctx, wallet.ChainId, unsignedTx, map[string]interface{}{
 		"wallet_address": msg.WalletAddress,
 		"public_key":    wallet.PubKey,
-	})
+	}, signResult)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign transaction: %w", err)
 	}
