@@ -13,13 +13,14 @@ const (
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_keyless"
 
-	// WalletKey defines the key for storing wallets
-	WalletKey = "Wallet-value-"
-
-	// ParamsKey defines the store key for module parameters
-	ParamsKey = "params"
+	// Key prefixes
+	WalletKey    = "wallet"
+	KeyShareKey  = "keyshare"
+	ParamsKey    = "params"
+	PartyDataKey = "partydata"
 )
 
+// KeyPrefix returns the KVStore key prefix for the given key type
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }

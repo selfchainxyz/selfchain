@@ -14,9 +14,10 @@ import (
 
 // KeygenResult contains the result of key generation
 type KeygenResult struct {
-	Party1Data *keygen.LocalPartySaveData
-	Party2Data *keygen.LocalPartySaveData
-	ChainID    string
+	Party1Data     *keygen.LocalPartySaveData
+	Party2Data     *keygen.LocalPartySaveData
+	ChainID        string
+	PublicKeyBytes []byte
 }
 
 // EncryptedShare represents an encrypted key share
@@ -157,9 +158,11 @@ func GenerateKey(ctx context.Context, preParams *keygen.LocalPreParams, chainID 
 		return nil, fmt.Errorf("failed to receive data from both parties")
 	}
 
+	publicKeyBytes := make([]byte, 33) // 33 bytes for compressed secp256k1 public key
 	return &KeygenResult{
-		Party1Data: party1Data,
-		Party2Data: party2Data,
-		ChainID:    chainID,
+		Party1Data:     party1Data,
+		Party2Data:     party2Data,
+		ChainID:        chainID,
+		PublicKeyBytes: publicKeyBytes,
 	}, nil
 }

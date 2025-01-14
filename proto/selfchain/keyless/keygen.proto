@@ -1,0 +1,56 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// SecurityLevel defines the security requirements
+enum SecurityLevel {
+  SECURITY_LEVEL_UNSPECIFIED = 0;
+  SECURITY_LEVEL_STANDARD = 1;
+  SECURITY_LEVEL_HIGH = 2;
+  SECURITY_LEVEL_ENTERPRISE = 3;
+}
+
+// BackupStatus represents the current backup state of key shares
+enum BackupStatus {
+  BACKUP_STATUS_UNSPECIFIED = 0;
+  BACKUP_STATUS_NONE = 1;
+  BACKUP_STATUS_PENDING = 2;
+  BACKUP_STATUS_COMPLETED = 3;
+  BACKUP_STATUS_FAILED = 4;
+}
+
+// KeyMetadata tracks key status and usage
+message KeyMetadata {
+  google.protobuf.Timestamp created_at = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp last_rotated = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp last_used = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  uint64 usage_count = 4;
+  BackupStatus backup_status = 5;
+  SecurityLevel security_level = 6;
+}
+
+// EncryptedShare represents an encrypted key share with metadata
+message EncryptedShare {
+  string encrypted_data = 1;
+  string key_id = 2;
+  uint32 version = 3;
+  google.protobuf.Timestamp created_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// KeyGenRequest represents a request to generate new key shares
+message KeyGenRequest {
+  string wallet_id = 1;
+  string chain_id = 2;
+  SecurityLevel security_level = 3;
+}
+
+// KeyGenResponse represents the response from key generation
+message KeyGenResponse {
+  string wallet_id = 1;
+  bytes public_key = 2;
+  KeyMetadata metadata = 3;
+}

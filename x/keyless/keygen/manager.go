@@ -1,0 +1,118 @@
+package keygen
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
+
+	"selfchain/x/keyless/types"
+	"selfchain/x/keyless/storage"
+	"selfchain/x/keyless/tss"
+)
+
+// KeyGenManager handles the key generation lifecycle
+type KeyGenManager struct {
+	keeper       storage.Storage
+	encryptionMgr *EncryptionManager
+}
+
+// NewKeyGenManager creates a new key generation manager
+func NewKeyGenManager(keeper storage.Storage) *KeyGenManager {
+	return &KeyGenManager{
+		keeper:       keeper,
+		encryptionMgr: NewEncryptionManager(),
+	}
+}
+
+// GenerateKeyShares creates a new key pair with enhanced security
+func (km *KeyGenManager) GenerateKeyShares(ctx context.Context, req *types.KeyGenRequest) (*types.KeyGenResponse, error) {
+	// 1. Validate request
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	// 2. Generate pre-parameters with timeout
+	preParams, err := km.generateSecurePreParams(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("pre-params generation failed: %w", err)
+	}
+
+	// 3. Generate key shares using TSS
+	keygenResult, err := tss.GenerateKey(ctx, preParams, req.ChainId)
+	if err != nil {
+		return nil, fmt.Errorf("key generation failed: %w", err)
+	}
+
+	// Add metadata
+	now := time.Now()
+	metadata := &types.KeyMetadata{
+		CreatedAt:     now,
+		LastRotated:   now,
+		LastUsed:      now,
+		UsageCount:    0,
+		BackupStatus:  types.BackupStatus_BACKUP_STATUS_NONE,
+		SecurityLevel: req.SecurityLevel,
+	}
+
+	// 4. Encrypt key shares
+	encryptedShares, err := km.encryptKeyShares(ctx, keygenResult)
+	if err != nil {
+		return nil, fmt.Errorf("share encryption failed: %w", err)
+	}
+
+	// 5. Store encrypted shares
+	if err := km.storeKeyShares(ctx, req.WalletId, encryptedShares); err != nil {
+		return nil, fmt.Errorf("share storage failed: %w", err)
+	}
+
+	return &types.KeyGenResponse{
+		WalletId:  req.WalletId,
+		PublicKey: keygenResult.PublicKeyBytes,
+		Metadata:  metadata,
+	}, nil
+}
+
+func (km *KeyGenManager) generateSecurePreParams(ctx context.Context) (*keygen.LocalPreParams, error) {
+	// Add timeout for pre-params generation
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	preParams, err := keygen.GeneratePreParams(1 * time.Minute)
+	if err != nil {
+		return nil, err
+	}
+
+	return preParams, nil
+}
+
+func (km *KeyGenManager) encryptKeyShares(ctx context.Context, result *tss.KeygenResult) ([]*types.EncryptedShare, error) {
+	shares := make([]*types.EncryptedShare, 2)
+
+	// Encrypt Party1 Data
+	share1, err := km.encryptionMgr.EncryptShare(result.Party1Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt party 1 share: %w", err)
+	}
+	shares[0] = share1
+
+	// Encrypt Party2 Data
+	share2, err := km.encryptionMgr.EncryptShare(result.Party2Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt party 2 share: %w", err)
+	}
+	shares[1] = share2
+
+	return shares, nil
+}
+
+func (km *KeyGenManager) storeKeyShares(ctx context.Context, walletID string, shares []*types.EncryptedShare) error {
+	for i, share := range shares {
+		key := fmt.Sprintf("%s_share_%d", walletID, i+1)
+		if err := km.keeper.SavePartyShare(ctx, key, share); err != nil {
+			return fmt.Errorf("failed to store share %d: %w", i+1, err)
+		}
+	}
+	return nil
+}
