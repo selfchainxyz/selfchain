@@ -1,56 +1,67 @@
 syntax = "proto3";
-
 package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
+import "cosmos/msg/v1/msg.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
-import "cosmos/msg/v1/msg.proto";
-import "cosmos_proto/cosmos.proto";
-import "gogoproto/gogo.proto";
-
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // CreateWallet creates a new keyless wallet
   rpc CreateWallet(MsgCreateWallet) returns (MsgCreateWalletResponse);
+  
+  // RecoverWallet recovers a wallet using recovery proof
   rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+  
+  // SignTransaction signs a transaction using the keyless wallet
   rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
 }
 
+// MsgCreateWallet defines the CreateWallet request type
 message MsgCreateWallet {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string pubKey = 2;
-  string walletAddress = 3;
-  string chainId = 4;
+  string pub_key = 2;
+  string wallet_address = 3;
+  string chain_id = 4;
 }
 
+// MsgCreateWalletResponse defines the CreateWallet response type
 message MsgCreateWalletResponse {
-  string walletAddress = 1;
+  string wallet_address = 1;
 }
 
+// MsgRecoverWallet defines the RecoverWallet request type
 message MsgRecoverWallet {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string walletAddress = 2;
-  string recoveryProof = 3;
-  string newPubKey = 4;
+  string wallet_address = 2;
+  string recovery_proof = 3;
+  string new_pub_key = 4;
   string signature = 5;
 }
 
+// MsgRecoverWalletResponse defines the RecoverWallet response type
 message MsgRecoverWalletResponse {
-  string walletAddress = 1;
+  string wallet_address = 1;
 }
 
+// MsgSignTransaction defines the SignTransaction request type
 message MsgSignTransaction {
   option (cosmos.msg.v1.signer) = "creator";
   
   string creator = 1;
-  string walletAddress = 2;
-  string unsignedTx = 3;
-  string chainId = 4;
+  string wallet_address = 2;
+  string unsigned_tx = 3;
+  string chain_id = 4;
 }
 
+// MsgSignTransactionResponse defines the SignTransaction response type
 message MsgSignTransactionResponse {
-  string signedTx = 1;
+  string signed_tx = 1;
 }
