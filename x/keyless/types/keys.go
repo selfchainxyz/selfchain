@@ -14,10 +14,10 @@ const (
 	MemStoreKey = "mem_keyless"
 
 	// Key prefixes
-	WalletKey    = "wallet"
+	WalletKey    = "Wallet-"
 	KeyShareKey  = "keyshare"
 	ParamsKey    = "params"
-	PartyDataKey = "partydata"
+	PartyDataKey = "PartyData-"
 )
 
 // KeyPrefix returns the KVStore key prefix for the given key type

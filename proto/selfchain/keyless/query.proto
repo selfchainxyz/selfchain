@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/keyless/params.proto";
+import "selfchain/keyless/keygen.proto";
 import "selfchain/keyless/wallet.proto";
 
 option go_package = "selfchain/x/keyless/types";
@@ -16,14 +17,19 @@ service Query {
     option (google.api.http).get = "/selfchain/keyless/params";
   }
 
-  // GetWallet returns wallet info by address
-  rpc GetWallet(QueryGetWalletRequest) returns (QueryGetWalletResponse) {
-    option (google.api.http).get = "/selfchain/keyless/wallet/{wallet_address}";
+  // Wallet queries a wallet by address
+  rpc Wallet(QueryWalletRequest) returns (QueryWalletResponse) {
+    option (google.api.http).get = "/selfchain/keyless/wallet/{address}";
   }
 
-  // ListWallets returns all wallets
-  rpc ListWallets(QueryListWalletsRequest) returns (QueryListWalletsResponse) {
+  // Wallets queries all wallets
+  rpc Wallets(QueryWalletsRequest) returns (QueryWalletsResponse) {
     option (google.api.http).get = "/selfchain/keyless/wallets";
+  }
+
+  // PartyData queries TSS party data for a wallet
+  rpc PartyData(QueryPartyDataRequest) returns (QueryPartyDataResponse) {
+    option (google.api.http).get = "/selfchain/keyless/party_data/{wallet_address}";
   }
 }
 
@@ -36,20 +42,34 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryGetWalletRequest is request type for the Query/GetWallet RPC method
-message QueryGetWalletRequest {
+// QueryWalletRequest is request type for the Query/Wallet RPC method.
+message QueryWalletRequest {
+  string address = 1;
+}
+
+// QueryWalletResponse is response type for the Query/Wallet RPC method.
+message QueryWalletResponse {
+  Wallet wallet = 1;
+}
+
+// QueryWalletsRequest is request type for the Query/Wallets RPC method.
+message QueryWalletsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryWalletsResponse is response type for the Query/Wallets RPC method.
+message QueryWalletsResponse {
+  repeated Wallet wallets = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryPartyDataRequest is request type for the Query/PartyData RPC method.
+message QueryPartyDataRequest {
   string wallet_address = 1;
 }
 
-// QueryGetWalletResponse is response type for the Query/GetWallet RPC method
-message QueryGetWalletResponse {
-  Wallet wallet = 1 [(gogoproto.nullable) = false];
-}
-
-// QueryListWalletsRequest is request type for the Query/ListWallets RPC method
-message QueryListWalletsRequest {}
-
-// QueryListWalletsResponse is response type for the Query/ListWallets RPC method
-message QueryListWalletsResponse {
-  repeated Wallet wallets = 1 [(gogoproto.nullable) = false];
+// QueryPartyDataResponse is response type for the Query/PartyData RPC method.
+message QueryPartyDataResponse {
+  string wallet_address = 1;
+  PartyData party_data = 2;
 }

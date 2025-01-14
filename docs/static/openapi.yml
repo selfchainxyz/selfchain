@@ -52912,31 +52912,40 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /selfchain/keyless/wallet/{wallet_address}:
+  /selfchain/keyless/party_data/{wallet_address}:
     get:
-      summary: GetWallet returns wallet info by address
-      operationId: SelfchainKeylessGetWallet
+      summary: PartyData queries TSS party data for a wallet
+      operationId: SelfchainKeylessPartyData
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              wallet:
+              wallet_address:
+                type: string
+              party_data:
                 type: object
                 properties:
-                  creator:
+                  party_id:
                     type: string
-                  pub_key:
+                  public_key:
                     type: string
-                  wallet_address:
+                    format: byte
+                  party_share:
                     type: string
+                    format: byte
+                  verification_data:
+                    type: string
+                    format: byte
                   chain_id:
                     type: string
-                title: Wallet represents a keyless wallet
-            title: >-
-              QueryGetWalletResponse is response type for the Query/GetWallet
-              RPC method
+                  status:
+                    type: string
+                title: PartyData represents TSS party data
+            description: >-
+              QueryPartyDataResponse is response type for the Query/PartyData
+              RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -52962,33 +52971,33 @@ paths:
           type: string
       tags:
         - Query
-  /selfchain/keyless/wallets:
+  /selfchain/keyless/wallet/{address}:
     get:
-      summary: ListWallets returns all wallets
-      operationId: SelfchainKeylessListWallets
+      summary: Wallet queries a wallet by address
+      operationId: SelfchainKeylessWallet
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              wallets:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    creator:
-                      type: string
-                    pub_key:
-                      type: string
-                    wallet_address:
-                      type: string
-                    chain_id:
-                      type: string
-                  title: Wallet represents a keyless wallet
-            title: >-
-              QueryListWalletsResponse is response type for the
-              Query/ListWallets RPC method
+              wallet:
+                type: object
+                properties:
+                  creator:
+                    type: string
+                  address:
+                    type: string
+                  pub_key:
+                    type: string
+                  chain_id:
+                    type: string
+                  status:
+                    type: string
+                title: Wallet represents a keyless wallet
+            description: >-
+              QueryWalletResponse is response type for the Query/Wallet RPC
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -53007,6 +53016,145 @@ paths:
                     '@type':
                       type: string
                   additionalProperties: {}
+      parameters:
+        - name: address
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/keyless/wallets:
+    get:
+      summary: Wallets queries all wallets
+      operationId: SelfchainKeylessWallets
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wallets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    creator:
+                      type: string
+                    address:
+                      type: string
+                    pub_key:
+                      type: string
+                    chain_id:
+                      type: string
+                    status:
+                      type: string
+                  title: Wallet represents a keyless wallet
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            description: >-
+              QueryWalletsResponse is response type for the Query/Wallets RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   /selfchain/migration/acl:
@@ -84818,18 +84966,21 @@ definitions:
   selfchain.keyless.MsgCreateWalletResponse:
     type: object
     properties:
-      walletAddress:
+      wallet_address:
         type: string
+    title: MsgCreateWalletResponse defines the CreateWallet response type
   selfchain.keyless.MsgRecoverWalletResponse:
     type: object
     properties:
-      walletAddress:
+      wallet_address:
         type: string
+    title: MsgRecoverWalletResponse defines the RecoverWallet response type
   selfchain.keyless.MsgSignTransactionResponse:
     type: object
     properties:
-      signedTx:
+      signed_tx:
         type: string
+    title: MsgSignTransactionResponse defines the SignTransaction response type
   selfchain.keyless.Params:
     type: object
     properties:
@@ -84852,42 +85003,25 @@ definitions:
         type: integer
         format: int64
     description: Params defines the parameters for the module.
-  selfchain.keyless.QueryGetWalletResponse:
+  selfchain.keyless.PartyData:
     type: object
     properties:
-      wallet:
-        type: object
-        properties:
-          creator:
-            type: string
-          pub_key:
-            type: string
-          wallet_address:
-            type: string
-          chain_id:
-            type: string
-        title: Wallet represents a keyless wallet
-    title: QueryGetWalletResponse is response type for the Query/GetWallet RPC method
-  selfchain.keyless.QueryListWalletsResponse:
-    type: object
-    properties:
-      wallets:
-        type: array
-        items:
-          type: object
-          properties:
-            creator:
-              type: string
-            pub_key:
-              type: string
-            wallet_address:
-              type: string
-            chain_id:
-              type: string
-          title: Wallet represents a keyless wallet
-    title: >-
-      QueryListWalletsResponse is response type for the Query/ListWallets RPC
-      method
+      party_id:
+        type: string
+      public_key:
+        type: string
+        format: byte
+      party_share:
+        type: string
+        format: byte
+      verification_data:
+        type: string
+        format: byte
+      chain_id:
+        type: string
+      status:
+        type: string
+    title: PartyData represents TSS party data
   selfchain.keyless.QueryParamsResponse:
     type: object
     properties:
@@ -84914,16 +85048,109 @@ definitions:
             type: integer
             format: int64
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  selfchain.keyless.QueryPartyDataResponse:
+    type: object
+    properties:
+      wallet_address:
+        type: string
+      party_data:
+        type: object
+        properties:
+          party_id:
+            type: string
+          public_key:
+            type: string
+            format: byte
+          party_share:
+            type: string
+            format: byte
+          verification_data:
+            type: string
+            format: byte
+          chain_id:
+            type: string
+          status:
+            type: string
+        title: PartyData represents TSS party data
+    description: >-
+      QueryPartyDataResponse is response type for the Query/PartyData RPC
+      method.
+  selfchain.keyless.QueryWalletResponse:
+    type: object
+    properties:
+      wallet:
+        type: object
+        properties:
+          creator:
+            type: string
+          address:
+            type: string
+          pub_key:
+            type: string
+          chain_id:
+            type: string
+          status:
+            type: string
+        title: Wallet represents a keyless wallet
+    description: QueryWalletResponse is response type for the Query/Wallet RPC method.
+  selfchain.keyless.QueryWalletsResponse:
+    type: object
+    properties:
+      wallets:
+        type: array
+        items:
+          type: object
+          properties:
+            creator:
+              type: string
+            address:
+              type: string
+            pub_key:
+              type: string
+            chain_id:
+              type: string
+            status:
+              type: string
+          title: Wallet represents a keyless wallet
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    description: QueryWalletsResponse is response type for the Query/Wallets RPC method.
   selfchain.keyless.Wallet:
     type: object
     properties:
       creator:
         type: string
+      address:
+        type: string
       pub_key:
         type: string
-      wallet_address:
-        type: string
       chain_id:
+        type: string
+      status:
         type: string
     title: Wallet represents a keyless wallet
   selfchain.migration.Acl:

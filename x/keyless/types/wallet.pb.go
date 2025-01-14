@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -24,10 +25,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Wallet represents a keyless wallet
 type Wallet struct {
-	Creator       string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	PubKey        string `protobuf:"bytes,2,opt,name=pub_key,json=pubKey,proto3" json:"pub_key,omitempty"`
-	WalletAddress string `protobuf:"bytes,3,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
-	ChainId       string `protobuf:"bytes,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	PubKey  string `protobuf:"bytes,3,opt,name=pub_key,json=pubKey,proto3" json:"pub_key,omitempty"`
+	ChainId string `protobuf:"bytes,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	Status  string `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
 }
 
 func (m *Wallet) Reset()         { *m = Wallet{} }
@@ -70,16 +72,16 @@ func (m *Wallet) GetCreator() string {
 	return ""
 }
 
-func (m *Wallet) GetPubKey() string {
+func (m *Wallet) GetAddress() string {
 	if m != nil {
-		return m.PubKey
+		return m.Address
 	}
 	return ""
 }
 
-func (m *Wallet) GetWalletAddress() string {
+func (m *Wallet) GetPubKey() string {
 	if m != nil {
-		return m.WalletAddress
+		return m.PubKey
 	}
 	return ""
 }
@@ -91,6 +93,13 @@ func (m *Wallet) GetChainId() string {
 	return ""
 }
 
+func (m *Wallet) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*Wallet)(nil), "selfchain.keyless.Wallet")
 }
@@ -98,20 +107,21 @@ func init() {
 func init() { proto.RegisterFile("selfchain/keyless/wallet.proto", fileDescriptor_26dddf90ae5a75d4) }
 
 var fileDescriptor_26dddf90ae5a75d4 = []byte{
-	// 197 bytes of a gzipped FileDescriptorProto
+	// 218 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2b, 0x4e, 0xcd, 0x49,
 	0x4b, 0xce, 0x48, 0xcc, 0xcc, 0xd3, 0xcf, 0x4e, 0xad, 0xcc, 0x49, 0x2d, 0x2e, 0xd6, 0x2f, 0x4f,
 	0xcc, 0xc9, 0x49, 0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x84, 0xcb, 0xeb, 0x41,
-	0xe5, 0x95, 0x6a, 0xb9, 0xd8, 0xc2, 0xc1, 0x4a, 0x84, 0x24, 0xb8, 0xd8, 0x93, 0x8b, 0x52, 0x13,
-	0x4b, 0xf2, 0x8b, 0x24, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0x60, 0x5c, 0x21, 0x71, 0x2e, 0xf6,
-	0x82, 0xd2, 0xa4, 0xf8, 0xec, 0xd4, 0x4a, 0x09, 0x26, 0xb0, 0x0c, 0x5b, 0x41, 0x69, 0x92, 0x77,
-	0x6a, 0xa5, 0x90, 0x2a, 0x17, 0x1f, 0xc4, 0xfc, 0xf8, 0xc4, 0x94, 0x94, 0xa2, 0xd4, 0xe2, 0x62,
-	0x09, 0x66, 0xb0, 0x3c, 0x2f, 0x44, 0xd4, 0x11, 0x22, 0x28, 0x24, 0xc9, 0xc5, 0x01, 0xb6, 0x34,
-	0x3e, 0x33, 0x45, 0x82, 0x05, 0x6a, 0x34, 0x88, 0xef, 0x99, 0xe2, 0x64, 0x7c, 0xe2, 0x91, 0x1c,
-	0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1,
-	0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x51, 0x92, 0x08, 0xbf, 0x54, 0xc0, 0x7d, 0x53, 0x52, 0x59,
-	0x90, 0x5a, 0x9c, 0xc4, 0x06, 0xf6, 0x8d, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xce, 0x08, 0x23,
-	0xf5, 0xef, 0x00, 0x00, 0x00,
+	0xe5, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xb2, 0xfa, 0x20, 0x16, 0x44, 0xa1, 0x52, 0x07,
+	0x23, 0x17, 0x5b, 0x38, 0x58, 0xa7, 0x90, 0x04, 0x17, 0x7b, 0x72, 0x51, 0x6a, 0x62, 0x49, 0x7e,
+	0x91, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x8c, 0x0b, 0x92, 0x49, 0x4c, 0x49, 0x29, 0x4a,
+	0x2d, 0x2e, 0x96, 0x60, 0x82, 0xc8, 0x40, 0xb9, 0x42, 0xe2, 0x5c, 0xec, 0x05, 0xa5, 0x49, 0xf1,
+	0xd9, 0xa9, 0x95, 0x12, 0xcc, 0x60, 0x19, 0xb6, 0x82, 0xd2, 0x24, 0xef, 0xd4, 0x4a, 0x21, 0x49,
+	0x2e, 0x0e, 0xb0, 0xf5, 0xf1, 0x99, 0x29, 0x12, 0x2c, 0x50, 0xd3, 0x40, 0x7c, 0xcf, 0x14, 0x21,
+	0x31, 0x2e, 0xb6, 0xe2, 0x92, 0xc4, 0x92, 0xd2, 0x62, 0x09, 0x56, 0x88, 0x16, 0x08, 0xcf, 0xc9,
+	0xf8, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58,
+	0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x24, 0x11, 0xbe, 0xad, 0x80,
+	0xfb, 0xb7, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0xec, 0x0d, 0x63, 0x40, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0x7f, 0x1d, 0xd6, 0x52, 0x11, 0x01, 0x00, 0x00,
 }
 
 func (m *Wallet) Marshal() (dAtA []byte, err error) {
@@ -134,6 +144,13 @@ func (m *Wallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Status) > 0 {
+		i -= len(m.Status)
+		copy(dAtA[i:], m.Status)
+		i = encodeVarintWallet(dAtA, i, uint64(len(m.Status)))
+		i--
+		dAtA[i] = 0x2a
+	}
 	if len(m.ChainId) > 0 {
 		i -= len(m.ChainId)
 		copy(dAtA[i:], m.ChainId)
@@ -141,17 +158,17 @@ func (m *Wallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.WalletAddress) > 0 {
-		i -= len(m.WalletAddress)
-		copy(dAtA[i:], m.WalletAddress)
-		i = encodeVarintWallet(dAtA, i, uint64(len(m.WalletAddress)))
-		i--
-		dAtA[i] = 0x1a
-	}
 	if len(m.PubKey) > 0 {
 		i -= len(m.PubKey)
 		copy(dAtA[i:], m.PubKey)
 		i = encodeVarintWallet(dAtA, i, uint64(len(m.PubKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintWallet(dAtA, i, uint64(len(m.Address)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -186,15 +203,19 @@ func (m *Wallet) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovWallet(uint64(l))
+	}
 	l = len(m.PubKey)
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
-	l = len(m.WalletAddress)
+	l = len(m.ChainId)
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
-	l = len(m.ChainId)
+	l = len(m.Status)
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
@@ -270,6 +291,38 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWallet
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthWallet
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthWallet
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PubKey", wireType)
 			}
 			var stringLen uint64
@@ -299,38 +352,6 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.PubKey = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthWallet
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthWallet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.WalletAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -363,6 +384,38 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWallet
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthWallet
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthWallet
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Status = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

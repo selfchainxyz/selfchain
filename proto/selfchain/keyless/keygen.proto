@@ -41,6 +41,16 @@ message EncryptedShare {
   google.protobuf.Timestamp created_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
+// PartyData represents TSS party data
+message PartyData {
+  string party_id = 1;
+  bytes public_key = 2;
+  bytes party_share = 3;
+  bytes verification_data = 4;
+  string chain_id = 5;
+  string status = 6;
+}
+
 // KeyGenRequest represents a request to generate new key shares
 message KeyGenRequest {
   string wallet_id = 1;
