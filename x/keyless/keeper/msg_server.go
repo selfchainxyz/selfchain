@@ -3,9 +3,12 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"crypto/sha256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/keyless/types"
+	"selfchain/x/keyless/crypto/signing"
+	"selfchain/x/keyless/networks"
 )
 
 type msgServer struct {
@@ -55,11 +58,29 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 		return nil, err
 	}
 
-	// TODO: Implement actual transaction signing logic here
-	signedTx := msg.UnsignedTx // Placeholder for actual signing
+	// Get wallet
+	wallet, found := k.getWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", msg.WalletAddress)
+	}
+
+	// Create signer factory
+	signerFactory := signing.NewSignerFactory(networks.NewNetworkRegistry())
+
+	// Convert unsigned transaction to bytes
+	unsignedTx := []byte(msg.UnsignedTx)
+
+	// Sign the transaction
+	signature, err := signerFactory.Sign(ctx, wallet.ChainId, unsignedTx, map[string]interface{}{
+		"wallet_address": msg.WalletAddress,
+		"public_key":    wallet.PubKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign transaction: %w", err)
+	}
 
 	return &types.MsgSignTransactionResponse{
-		SignedTx: signedTx,
+		SignedTx: string(signature),
 	}, nil
 }
 
@@ -73,8 +94,27 @@ func (k msgServer) RecoverWallet(goCtx context.Context, msg *types.MsgRecoverWal
 		return nil, fmt.Errorf("wallet not found: %s", msg.WalletAddress)
 	}
 
-	// TODO: Verify recovery proof
-	// This should be implemented based on your recovery mechanism
+	// Verify recovery proof
+	// 1. Hash the recovery data
+	recoveryHash := sha256.Sum256([]byte(msg.RecoveryProof))
+	
+	// 2. Create signer factory for verification
+	signerFactory := signing.NewSignerFactory(networks.NewNetworkRegistry())
+	
+	// 3. Verify the recovery proof signature
+	pubKeyBytes := []byte(wallet.PubKey)
+	if msg.Signature == "" {
+		return nil, fmt.Errorf("recovery signature is required")
+	}
+	signatureBytes := []byte(msg.Signature)
+	
+	valid, err := signerFactory.Verify(wallet.ChainId, pubKeyBytes, recoveryHash[:], signatureBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify recovery proof: %w", err)
+	}
+	if !valid {
+		return nil, fmt.Errorf("invalid recovery proof")
+	}
 
 	// Update the wallet with new public key
 	wallet.PubKey = msg.NewPubKey
