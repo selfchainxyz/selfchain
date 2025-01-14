@@ -9,72 +9,66 @@ import (
 	"io"
 )
 
-// EncryptionKey represents a key used for encryption/decryption
+// EncryptionKey is a type alias for byte slice
 type EncryptionKey []byte
 
-// NewEncryptionKey generates a random 32-byte key for AES-256
+// NewEncryptionKey generates a new random encryption key
 func NewEncryptionKey() (EncryptionKey, error) {
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
-		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
+		return nil, err
 	}
 	return key, nil
 }
 
-// Encrypt encrypts data using AES-256-GCM
+// Encrypt encrypts data using AES-GCM
 func Encrypt(key EncryptionKey, plaintext []byte) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", fmt.Errorf("failed to create cipher: %w", err)
+		return "", err
 	}
 
-	// Never use more than 2^32 random nonces with a given key
-	nonce := make([]byte, 12)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", fmt.Errorf("failed to generate nonce: %w", err)
-	}
-
-	aesgcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", fmt.Errorf("failed to create GCM: %w", err)
+		return "", err
 	}
 
-	// Encrypt and append nonce
-	ciphertext := aesgcm.Seal(nil, nonce, plaintext, nil)
-	encrypted := append(nonce, ciphertext...)
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
 
-	// Encode as base64 for storage
-	return base64.StdEncoding.EncodeToString(encrypted), nil
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return base64.StdEncoding.EncodeToString(append(nonce, ciphertext...)), nil
 }
 
-// Decrypt decrypts data using AES-256-GCM
-func Decrypt(key EncryptionKey, encryptedStr string) ([]byte, error) {
-	// Decode from base64
-	encrypted, err := base64.StdEncoding.DecodeString(encryptedStr)
+// Decrypt decrypts data using AES-GCM
+func Decrypt(key EncryptionKey, ciphertext string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	if len(encrypted) < 12 {
-		return nil, fmt.Errorf("invalid ciphertext length")
-	}
-
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create cipher: %w", err)
+		return nil, err
 	}
 
-	aesgcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GCM: %w", err)
+		return nil, err
 	}
 
-	nonce := encrypted[:12]
-	ciphertext := encrypted[12:]
+	if len(data) < gcm.NonceSize() {
+		return nil, fmt.Errorf("malformed ciphertext")
+	}
 
-	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
+	nonce := data[:gcm.NonceSize()]
+	ciphertextBytes := data[gcm.NonceSize():]
+
+	plaintext, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt: %w", err)
+		return nil, err
 	}
 
 	return plaintext, nil
