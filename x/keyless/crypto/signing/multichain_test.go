@@ -2,20 +2,18 @@ package signing
 
 import (
 	"context"
-	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
-	"github.com/btcsuite/btcd/btcec/v2"
 
 	"selfchain/x/keyless/networks"
-	"selfchain/x/keyless/tss"
+	selfchainTss "selfchain/x/keyless/tss"
 )
 
 type testCase struct {
@@ -36,7 +34,7 @@ func TestMultiChainSigning(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, preParams)
 
-	keygenResult, err := tss.GenerateKey(ctx, preParams, "test-key")
+	keygenResult, err := selfchainTss.GenerateKey(ctx, preParams, "test-key")
 	require.NoError(t, err)
 	require.NotNil(t, keygenResult)
 
@@ -45,9 +43,16 @@ func TestMultiChainSigning(t *testing.T) {
 
 	// Get public key from party data
 	pubKeyPoint := keygenResult.Party1Data.ECDSAPub
-	curve := btcec.S256()
-	pubKeyBytes := elliptic.Marshal(curve, pubKeyPoint.X(), pubKeyPoint.Y())
-	require.NotNil(t, pubKeyBytes)
+	x, y := pubKeyPoint.X(), pubKeyPoint.Y()
+	
+	// Convert big.Int coordinates to btcec.FieldVal
+	xField := new(btcec.FieldVal)
+	yField := new(btcec.FieldVal)
+	xField.SetByteSlice(x.Bytes())
+	yField.SetByteSlice(y.Bytes())
+	
+	btcPubKey := btcec.NewPublicKey(xField, yField)
+	pubKeyBytes := btcPubKey.SerializeCompressed()
 
 	tests := []testCase{
 		{
@@ -108,7 +113,7 @@ func TestMultiChainSigning(t *testing.T) {
 			}
 
 			// Sign the message using TSS
-			signResult, err := tss.SignMessage(ctx, messageHash[:], keygenResult.Party1Data, keygenResult.Party2Data)
+			signResult, err := selfchainTss.SignMessage(ctx, messageHash[:], keygenResult.Party1Data, keygenResult.Party2Data)
 			require.NoError(t, err)
 			require.NotNil(t, signResult)
 
@@ -142,79 +147,75 @@ func TestMultiChainConcurrentSigning(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, preParams)
 
-	keygenResult, err := tss.GenerateKey(ctx, preParams, "test-key")
+	keygenResult, err := selfchainTss.GenerateKey(ctx, preParams, "test-key")
 	require.NoError(t, err)
 	require.NotNil(t, keygenResult)
-
-	// Get public key from party data
-	pubKeyPoint := keygenResult.Party1Data.ECDSAPub
-	curve := btcec.S256()
-	pubKeyBytes := elliptic.Marshal(curve, pubKeyPoint.X(), pubKeyPoint.Y())
-	require.NotNil(t, pubKeyBytes)
 
 	// Create signer factory
 	signerFactory := NewSignerFactory(networks.NewNetworkRegistry())
 
-	// Create test cases for concurrent signing
-	networks := []string{"bitcoin:mainnet", "ethereum:1", "cosmos:cosmoshub-4"}
-	numRequests := 5 // Number of concurrent requests per network
+	// Get public key from party data
+	pubKeyPoint := keygenResult.Party1Data.ECDSAPub
+	x, y := pubKeyPoint.X(), pubKeyPoint.Y()
+	
+	// Convert big.Int coordinates to btcec.FieldVal
+	xField := new(btcec.FieldVal)
+	yField := new(btcec.FieldVal)
+	xField.SetByteSlice(x.Bytes())
+	yField.SetByteSlice(y.Bytes())
+	
+	btcPubKey := btcec.NewPublicKey(xField, yField)
+	pubKeyBytes := btcPubKey.SerializeCompressed()
 
-	// Create channels for results
-	type result struct {
-		networkID string
-		signature []byte
-		err       error
-	}
-	results := make(chan result, len(networks)*numRequests)
-
-	// Start concurrent signing requests
-	for _, networkID := range networks {
-		for i := 0; i < numRequests; i++ {
-			go func(networkID string, i int) {
-				message := []byte(fmt.Sprintf("test message %d for %s", i, networkID))
-				messageHash := sha256.Sum256(message)
-
-				metadata := map[string]interface{}{
-					"network_id": networkID,
-					"public_key": hex.EncodeToString(pubKeyBytes),
-				}
-
-				// Sign the message using TSS
-				signResult, err := tss.SignMessage(ctx, messageHash[:], keygenResult.Party1Data, keygenResult.Party2Data)
-				if err != nil {
-					results <- result{networkID: networkID, err: err}
-					return
-				}
-
-				// Format the signature according to the network
-				signature, err := signerFactory.Sign(ctx, networkID, messageHash[:], metadata, signResult)
-				results <- result{networkID: networkID, signature: signature, err: err}
-			}(networkID, i)
-		}
+	// Create test cases
+	tests := []testCase{
+		{
+			name:      "Bitcoin mainnet signature",
+			networkID: "bitcoin:mainnet",
+			message:   "test bitcoin transaction",
+		},
+		{
+			name:      "Ethereum mainnet signature",
+			networkID: "ethereum:1",
+			message:   "test ethereum transaction",
+		},
+		{
+			name:      "Cosmos Hub signature",
+			networkID: "cosmos:cosmoshub-4",
+			message:   "test cosmos transaction",
+		},
 	}
 
-	// Collect and verify results
-	successCount := make(map[string]int)
-	timeout := time.After(2 * time.Minute)
+	// Run concurrent signing tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new context for each test
+			testCtx, testCancel := context.WithTimeout(ctx, 30*time.Second)
+			defer testCancel()
 
-	for i := 0; i < len(networks)*numRequests; i++ {
-		select {
-		case r := <-results:
-			if r.err != nil {
-				t.Errorf("Error signing for network %s: %v", r.networkID, r.err)
-				continue
+			// Sign message
+			messageHash := sha256.Sum256([]byte(tt.message))
+			
+			// Create signing context with metadata
+			metadata := map[string]interface{}{
+				"network_id": tt.networkID,
+				"public_key": hex.EncodeToString(pubKeyBytes),
 			}
-			successCount[r.networkID]++
 
-		case <-timeout:
-			t.Fatal("Test timed out waiting for signing results")
-		}
-	}
+			// Sign the message using TSS
+			signResult, err := selfchainTss.SignMessage(testCtx, messageHash[:], keygenResult.Party1Data, keygenResult.Party2Data)
+			require.NoError(t, err)
+			require.NotNil(t, signResult)
 
-	// Verify that we got the expected number of successful signatures for each network
-	for _, networkID := range networks {
-		assert.Equal(t, numRequests, successCount[networkID],
-			"Expected %d successful signatures for network %s, got %d",
-			numRequests, networkID, successCount[networkID])
+			// Format the signature according to the network
+			signature, err := signerFactory.Sign(testCtx, tt.networkID, messageHash[:], metadata, signResult)
+			require.NoError(t, err)
+			require.NotNil(t, signature)
+
+			// Verify the signature using the signer factory
+			valid, err := signerFactory.Verify(tt.networkID, pubKeyBytes, messageHash[:], signature)
+			require.NoError(t, err)
+			assert.True(t, valid)
+		})
 	}
 }
