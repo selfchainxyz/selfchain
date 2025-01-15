@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// RotationStatus represents the status of a key rotation
+enum RotationStatus {
+  ROTATION_STATUS_UNSPECIFIED = 0;
+  ROTATION_STATUS_PENDING = 1;
+  ROTATION_STATUS_IN_PROGRESS = 2;
+  ROTATION_STATUS_COMPLETED = 3;
+  ROTATION_STATUS_FAILED = 4;
+}
+
+// KeyRotation represents a key rotation record
+message KeyRotation {
+  string wallet_id = 1;
+  uint64 version = 2;
+  RotationStatus status = 3;
+  google.protobuf.Timestamp initiated_at = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp completed_at = 5 [(gogoproto.stdtime) = true];
+  string error = 6;
+  map<string, string> metadata = 7;
+}

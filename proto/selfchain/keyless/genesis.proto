@@ -1,12 +1,19 @@
 syntax = "proto3";
+
 package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
 
 import "gogoproto/gogo.proto";
 import "selfchain/keyless/params.proto";
-
-option go_package = "selfchain/x/keyless/types";
+import "selfchain/keyless/wallet.proto";
+import "selfchain/keyless/rotation.proto";
+import "selfchain/keyless/audit.proto";
 
 // GenesisState defines the keyless module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
+  repeated Wallet wallets = 2 [(gogoproto.nullable) = false];
+  repeated KeyRotation rotations = 3 [(gogoproto.nullable) = false];
+  repeated AuditEvent audit_events = 4 [(gogoproto.nullable) = false];
 }

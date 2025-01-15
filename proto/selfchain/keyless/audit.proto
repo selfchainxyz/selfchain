@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+
+// AuditEvent represents an audit event
+message AuditEvent {
+  string id = 1;
+  string wallet_id = 2;
+  string event_type = 3;
+  uint64 key_version = 4;
+  bool success = 5;
+  string error = 6;
+  google.protobuf.Timestamp timestamp = 7 [(gogoproto.stdtime) = true];
+  map<string, string> metadata = 8;
+}
+
+// QueryAuditEventsRequest is the request type for the Query/AuditEvents RPC method
+message QueryAuditEventsRequest {
+  string wallet_id = 1;
+  string event_type = 2;
+  bool success = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
+}
+
+// QueryAuditEventsResponse is the response type for the Query/AuditEvents RPC method
+message QueryAuditEventsResponse {
+  repeated AuditEvent events = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

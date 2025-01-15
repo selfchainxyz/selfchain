@@ -1,7 +1,11 @@
 syntax = "proto3";
+
 package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 // NetworkParams defines the parameters for network-specific signing operations
 message NetworkParams {
@@ -27,4 +31,23 @@ message SigningConfig {
   string gas_token = 6;
   string address_prefix = 7;
   string pub_key_prefix = 8;
+}
+
+// NetworkParty represents a network party
+message NetworkParty {
+  string id = 1;
+  string address = 2;
+  string public_key = 3;
+  google.protobuf.Timestamp registered_at = 4 [(gogoproto.stdtime) = true];
+  map<string, string> metadata = 5;
+}
+
+// NetworkMessage represents a message between network parties
+message NetworkMessage {
+  string id = 1;
+  string from = 2;
+  string to = 3;
+  bytes data = 4;
+  google.protobuf.Timestamp sent_at = 5 [(gogoproto.stdtime) = true];
+  map<string, string> metadata = 6;
 }

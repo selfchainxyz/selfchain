@@ -1,14 +1,16 @@
 syntax = "proto3";
+
 package selfchain.keyless;
 
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "selfchain/keyless/params.proto";
-import "selfchain/keyless/keygen.proto";
-import "selfchain/keyless/wallet.proto";
-
 option go_package = "selfchain/x/keyless/types";
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+import "selfchain/keyless/audit.proto";
+import "selfchain/keyless/rotation.proto";
+import "selfchain/keyless/wallet.proto";
+import "gogoproto/gogo.proto";
+import "selfchain/keyless/params.proto";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -17,19 +19,29 @@ service Query {
     option (google.api.http).get = "/selfchain/keyless/params";
   }
 
-  // Wallet queries a wallet by address
+  // Queries a wallet by ID.
   rpc Wallet(QueryWalletRequest) returns (QueryWalletResponse) {
-    option (google.api.http).get = "/selfchain/keyless/wallet/{address}";
+    option (google.api.http).get = "/selfchain/keyless/wallet/{id}";
   }
 
-  // Wallets queries all wallets
-  rpc Wallets(QueryWalletsRequest) returns (QueryWalletsResponse) {
+  // Queries a list of Wallets items.
+  rpc ListWallets(QueryListWalletsRequest) returns (QueryListWalletsResponse) {
     option (google.api.http).get = "/selfchain/keyless/wallets";
   }
 
-  // PartyData queries TSS party data for a wallet
-  rpc PartyData(QueryPartyDataRequest) returns (QueryPartyDataResponse) {
-    option (google.api.http).get = "/selfchain/keyless/party_data/{wallet_address}";
+  // Queries a key rotation by wallet ID and version.
+  rpc KeyRotation(QueryKeyRotationRequest) returns (QueryKeyRotationResponse) {
+    option (google.api.http).get = "/selfchain/keyless/key_rotation/{wallet_id}/{version}";
+  }
+
+  // Queries a list of key rotations.
+  rpc KeyRotations(QueryKeyRotationsRequest) returns (QueryKeyRotationsResponse) {
+    option (google.api.http).get = "/selfchain/keyless/key_rotations/{wallet_id}";
+  }
+
+  // Queries a list of AuditEvents items.
+  rpc ListAuditEvents(QueryListAuditEventsRequest) returns (QueryListAuditEventsResponse) {
+    option (google.api.http).get = "/selfchain/keyless/audit_events";
   }
 }
 
@@ -44,32 +56,58 @@ message QueryParamsResponse {
 
 // QueryWalletRequest is request type for the Query/Wallet RPC method.
 message QueryWalletRequest {
-  string address = 1;
+  string id = 1;
 }
 
 // QueryWalletResponse is response type for the Query/Wallet RPC method.
 message QueryWalletResponse {
-  Wallet wallet = 1;
+  Wallet wallet = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryWalletsRequest is request type for the Query/Wallets RPC method.
-message QueryWalletsRequest {
+// QueryListWalletsRequest is request type for the Query/ListWallets method.
+message QueryListWalletsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-// QueryWalletsResponse is response type for the Query/Wallets RPC method.
-message QueryWalletsResponse {
-  repeated Wallet wallets = 1;
+// QueryListWalletsResponse is response type for the Query/ListWallets method.
+message QueryListWalletsResponse {
+  repeated Wallet wallets = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryPartyDataRequest is request type for the Query/PartyData RPC method.
-message QueryPartyDataRequest {
-  string wallet_address = 1;
+// QueryKeyRotationRequest is request type for the Query/KeyRotation RPC method.
+message QueryKeyRotationRequest {
+  string wallet_id = 1;
+  uint64 version = 2;
 }
 
-// QueryPartyDataResponse is response type for the Query/PartyData RPC method.
-message QueryPartyDataResponse {
-  string wallet_address = 1;
-  PartyData party_data = 2;
+// QueryKeyRotationResponse is response type for the Query/KeyRotation RPC method.
+message QueryKeyRotationResponse {
+  KeyRotation rotation = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryKeyRotationsRequest is request type for the Query/KeyRotations RPC method.
+message QueryKeyRotationsRequest {
+  string wallet_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryKeyRotationsResponse is response type for the Query/KeyRotations RPC method.
+message QueryKeyRotationsResponse {
+  repeated KeyRotation rotations = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryListAuditEventsRequest is request type for the Query/ListAuditEvents method.
+message QueryListAuditEventsRequest {
+  string wallet_id = 1;
+  string event_type = 2;
+  bool success = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
+}
+
+// QueryListAuditEventsResponse is response type for the Query/ListAuditEvents method.
+message QueryListAuditEventsResponse {
+  repeated AuditEvent events = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

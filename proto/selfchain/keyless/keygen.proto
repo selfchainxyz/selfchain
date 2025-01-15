@@ -1,66 +1,67 @@
 syntax = "proto3";
+
 package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
-import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
-
-// SecurityLevel defines the security requirements
-enum SecurityLevel {
-  SECURITY_LEVEL_UNSPECIFIED = 0;
-  SECURITY_LEVEL_STANDARD = 1;
-  SECURITY_LEVEL_HIGH = 2;
-  SECURITY_LEVEL_ENTERPRISE = 3;
+// KeygenParams represents parameters for key generation
+message KeygenParams {
+  uint32 security_level = 1;
+  uint32 threshold = 2;
+  uint32 parties = 3;
 }
 
-// BackupStatus represents the current backup state of key shares
-enum BackupStatus {
-  BACKUP_STATUS_UNSPECIFIED = 0;
-  BACKUP_STATUS_NONE = 1;
-  BACKUP_STATUS_PENDING = 2;
-  BACKUP_STATUS_COMPLETED = 3;
-  BACKUP_STATUS_FAILED = 4;
+// KeygenResult represents the result of key generation
+message KeygenResult {
+  bool success = 1;
+  string error = 2;
+  string public_key = 3;
+  map<string, string> metadata = 4;
 }
 
-// KeyMetadata tracks key status and usage
-message KeyMetadata {
-  google.protobuf.Timestamp created_at = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  google.protobuf.Timestamp last_rotated = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  google.protobuf.Timestamp last_used = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-  uint64 usage_count = 4;
-  BackupStatus backup_status = 5;
-  SecurityLevel security_level = 6;
-}
-
-// EncryptedShare represents an encrypted key share with metadata
-message EncryptedShare {
-  string encrypted_data = 1;
-  string key_id = 2;
-  uint32 version = 3;
-  google.protobuf.Timestamp created_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+// KeygenResponse represents a response from a party during key generation
+message KeygenResponse {
+  bool success = 1;
+  string error = 2;
+  map<string, string> metadata = 3;
 }
 
 // PartyData represents TSS party data
 message PartyData {
   string party_id = 1;
-  bytes public_key = 2;
-  bytes party_share = 3;
-  bytes verification_data = 4;
-  string chain_id = 5;
-  string status = 6;
+  uint32 index = 2;
+  bytes data = 3;
+  map<string, string> metadata = 4;
 }
 
-// KeyGenRequest represents a request to generate new key shares
+// KeyGenRequest represents a request to generate a new key
 message KeyGenRequest {
-  string wallet_id = 1;
-  string chain_id = 2;
-  SecurityLevel security_level = 3;
+  string wallet_id = 5;
+  string security_level = 6;
 }
 
-// KeyGenResponse represents the response from key generation
+// KeyGenResponse represents a response from key generation
 message KeyGenResponse {
-  string wallet_id = 1;
-  bytes public_key = 2;
-  KeyMetadata metadata = 3;
+  string wallet_id = 7;
+  uint64 version = 8;
+  bytes public_key = 9;
+  KeyMetadata metadata = 10;
+}
+
+// EncryptedShare represents an encrypted key share
+message EncryptedShare {
+  bytes data = 11;
+  bytes nonce = 12;
+  bytes public_key = 13;
+}
+
+// KeyMetadata represents metadata about a key
+message KeyMetadata {
+  string security_level = 14;
+  uint64 version = 15;
+  uint32 threshold = 16;
+  uint32 total_shares = 17;
+  bytes public_key = 18;
 }

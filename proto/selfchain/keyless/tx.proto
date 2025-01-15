@@ -3,6 +3,9 @@ package selfchain.keyless;
 
 import "gogoproto/gogo.proto";
 import "cosmos/msg/v1/msg.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/keyless/wallet.proto";
+import "selfchain/keyless/rotation.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
@@ -18,6 +21,21 @@ service Msg {
   
   // SignTransaction signs a transaction using the keyless wallet
   rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
+
+  // RotateKey initiates key rotation for a wallet
+  rpc RotateKey(MsgRotateKey) returns (MsgRotateKeyResponse);
+  
+  // BatchSign performs batch signing operation
+  rpc BatchSign(MsgBatchSign) returns (MsgBatchSignResponse);
+  
+  // InitiateKeyRotation initiates key rotation for a wallet
+  rpc InitiateKeyRotation(MsgInitiateKeyRotation) returns (MsgInitiateKeyRotationResponse);
+  
+  // CompleteKeyRotation completes key rotation for a wallet
+  rpc CompleteKeyRotation(MsgCompleteKeyRotation) returns (MsgCompleteKeyRotationResponse);
+  
+  // CancelKeyRotation cancels key rotation for a wallet
+  rpc CancelKeyRotation(MsgCancelKeyRotation) returns (MsgCancelKeyRotationResponse);
 }
 
 // MsgCreateWallet defines the CreateWallet request type
@@ -64,4 +82,73 @@ message MsgSignTransaction {
 // MsgSignTransactionResponse defines the SignTransaction response type
 message MsgSignTransactionResponse {
   string signed_tx = 1;
+}
+
+// MsgRotateKey defines the RotateKey request type
+message MsgRotateKey {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_id = 2;
+}
+
+// MsgRotateKeyResponse defines the RotateKey response type
+message MsgRotateKeyResponse {
+  string wallet_id = 1;
+  uint64 new_version = 2;
+}
+
+// MsgBatchSign defines the BatchSign request type
+message MsgBatchSign {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_id = 2;
+  repeated bytes messages = 3;
+  string chain_id = 4;
+  google.protobuf.Timestamp deadline = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  int32 priority = 6;
+}
+
+// MsgBatchSignResponse defines the BatchSign response type
+message MsgBatchSignResponse {
+  string wallet_id = 1;
+  repeated bytes signatures = 2;
+  repeated string errors = 3;
+  google.protobuf.Timestamp completed_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// MsgInitiateKeyRotation represents a message to initiate a key rotation
+message MsgInitiateKeyRotation {
+  string creator = 1;
+  string wallet_id = 2;
+  string new_key_data = 3;
+}
+
+// MsgInitiateKeyRotationResponse defines the Msg/InitiateKeyRotation response type
+message MsgInitiateKeyRotationResponse {
+  uint64 version = 1;
+}
+
+// MsgCompleteKeyRotation represents a message to complete a key rotation
+message MsgCompleteKeyRotation {
+  string creator = 1;
+  string wallet_id = 2;
+  string key_data = 3;
+}
+
+// MsgCompleteKeyRotationResponse defines the Msg/CompleteKeyRotation response type
+message MsgCompleteKeyRotationResponse {
+  uint64 version = 1;
+}
+
+// MsgCancelKeyRotation represents a message to cancel a key rotation
+message MsgCancelKeyRotation {
+  string creator = 1;
+  string wallet_id = 2;
+}
+
+// MsgCancelKeyRotationResponse defines the Msg/CancelKeyRotation response type
+message MsgCancelKeyRotationResponse {
+  uint64 version = 1;
 }
