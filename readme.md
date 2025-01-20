@@ -383,6 +383,24 @@ selfchaind query wasm contract <contract_address>
 selfchaind query wasm contract-history <contract_address>
 ```
 
+## Running the Chain
+
+### Development Mode
+To start the chain in development mode, use:
+```bash
+CHAIN_ENV=development selfchaind start
+```
+
+### Production Mode
+The chain has undergone a governance proposal that included state changes. When running in production, you'll need to:
+
+1. Use the older binary to sync the chain up to the proposal block
+2. Upgrade to the current binary after reaching the proposal block
+
+This ensures proper state synchronization through the upgrade process.
+
+Note: The specific version requirements and upgrade block height will be provided in the network upgrade documentation.
+
 ## Command Reference
 
 ### Migration Commands
