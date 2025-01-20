@@ -129,6 +129,7 @@ func initRootCmd(
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		config.Cmd(),
+		VersionCmd(), // Add version command
 		// this line is used by starport scaffolding # root/commands
 	)
 
