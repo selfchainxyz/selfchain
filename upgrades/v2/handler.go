@@ -7,6 +7,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
@@ -51,25 +52,29 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(
-	mm *module.Manager,
-	configurator module.Configurator,
-	accountKeeper authkeeper.AccountKeeper,
-) upgradetypes.UpgradeHandler {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v2")
 
-		if err := updateVestingSchedules(ctx, accountKeeper); err != nil {
-			ctx.Logger().Error("Failed to execute v2 upgrade", "error", err)
+		// 1. Run all module migrations first
+		newVM, err := mm.RunMigrations(ctx, configurator, fromVM)
+		if err != nil {
+			ctx.Logger().Error("Failed to run module migrations for v2", "error", err)
+			return nil, err
+		}
+
+		// 2. After all modules are migrated, run your custom logic
+		if err := updateVestingSchedules(ctx, accountKeeper, bankkeeper); err != nil {
+			ctx.Logger().Error("Failed to execute v2 upgrade (vestings)", "error", err)
 			return nil, err
 		}
 
 		ctx.Logger().Info("Completed upgrade v2 successfully")
-		return mm.RunMigrations(ctx, configurator, fromVM)
+		return newVM, nil
 	}
 }
 
-func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
+func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper) error {
 	monthsToAdd := int64(3)
 	for _, addr := range vestingAddresses {
 		if err := updateVestingAccount(ctx, k, addr, monthsToAdd); err != nil {
@@ -86,7 +91,7 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
 	// Then handle address replacements separately
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
 	for oldAddr, newAddr := range addressReplacements {
-		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr); err != nil {
+		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr, bankkeeper); err != nil {
 			if err.Error() == fmt.Sprintf("account not found: %s", oldAddr) {
 				ctx.Logger().Info("Skipping non-existent account for address replacement",
 					"old_address", oldAddr,
@@ -100,7 +105,7 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper) error {
 	return nil
 }
 
-func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddress, newAddress string) error {
+func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddress, newAddress string,  bankKeeper bankkeeper.Keeper) error {
 	// Validate new address doesn't exist
 	newAddr, err := sdk.AccAddressFromBech32(newAddress)
 	if err != nil {
@@ -108,6 +113,11 @@ func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddre
 	}
 	if k.GetAccount(ctx, newAddr) != nil {
 		return fmt.Errorf("new address %s already exists", newAddress)
+	}
+
+	oldAddr, err := sdk.AccAddressFromBech32(oldAddress)
+	if err != nil {
+		return fmt.Errorf("invalid old address %s: %w", oldAddress, err)
 	}
 
 	// Get the old account
@@ -123,6 +133,8 @@ func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddre
 	var vestedPeriods []vestingtypes.Period
 	var unvestedCoins sdk.Coins
 	cumulativeTime := oldAcc.StartTime
+	partialElapsed := int64(0)
+	firstUnVested := true
 
 	// Find unvested periods
 	for i, period := range oldAcc.VestingPeriods {
@@ -131,6 +143,12 @@ func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddre
 			unvestedPeriods = append(unvestedPeriods, oldAcc.VestingPeriods[i:]...)
 			for _, p := range oldAcc.VestingPeriods[i:] {
 				unvestedCoins = unvestedCoins.Add(p.Amount...)
+			}
+
+			if firstUnVested {
+				usedInThisPeriod := currentTime - cumulativeTime
+				partialElapsed = usedInThisPeriod
+				firstUnVested = false
 			}
 			break
 		}
@@ -144,8 +162,21 @@ func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddre
 		return nil
 	}
 
+	if partialElapsed > 0 {
+		if partialElapsed > unvestedPeriods[0].Length {
+			partialElapsed = unvestedPeriods[0].Length
+		}
+
+		unvestedPeriods[0].Length -= partialElapsed
+	}
+
 	// Create new base account with proper account number
 	baseAcc := authtypes.NewBaseAccountWithAddress(newAddr)
+
+	convertVestingToBaseAccount(ctx, k, oldAcc)
+	if err := bankKeeper.SendCoins(ctx, oldAddr, newAddr, unvestedCoins); err != nil {
+		return fmt.Errorf("failed to send coins: %w", err)
+	}
 
 	// Create new account with only unvested amounts
 	newAcc := &vestingtypes.PeriodicVestingAccount{
@@ -177,6 +208,25 @@ func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddre
 		"unvested_coins", unvestedCoins)
 
 	return nil
+}
+
+func convertVestingToBaseAccount(
+	ctx sdk.Context,
+	accountKeeper authkeeper.AccountKeeper,
+	vestAcc *vestingtypes.PeriodicVestingAccount,
+) authtypes.AccountI {
+	oldBaseAcc := vestAcc.BaseVestingAccount.BaseAccount
+	// Construct a fresh BaseAccount with same address, account number, sequence
+	newBase := authtypes.NewBaseAccount(
+		oldBaseAcc.GetAddress(),
+		oldBaseAcc.GetPubKey(),
+		oldBaseAcc.GetAccountNumber(),
+		oldBaseAcc.GetSequence(),
+	)
+
+	// Overwrite the store so that address is now a BaseAccount
+	accountKeeper.SetAccount(ctx, newBase)
+	return newBase
 }
 
 func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string, monthsToAdd int64) error {
