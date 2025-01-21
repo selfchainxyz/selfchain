@@ -1,0 +1,18 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/keyless/types";
+
+// KeyRotation represents a key rotation operation for a wallet
+message KeyRotation {
+  string wallet_id = 1;
+  uint64 version = 2;
+  string new_pub_key = 3;
+  string status = 4;  // "pending", "completed", "cancelled"
+  google.protobuf.Timestamp created_at = 5 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp completed_at = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+  string signature = 7;
+}

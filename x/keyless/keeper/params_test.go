@@ -21,6 +21,15 @@ func TestParams(t *testing.T) {
 	
 	// Test default values
 	params := k.GetParams(ctx)
+
+	// Test wallet limits
+	require.Equal(t, uint32(5), params.MaxParties)
+	require.Equal(t, uint32(3), params.MaxThreshold)
+	require.Equal(t, uint32(3), params.MaxSecurityLevel)
+	require.Equal(t, uint32(100), params.MaxBatchSize)
+	require.Equal(t, uint32(1024), params.MaxMetadataSize)
+
+	// Test recovery settings
 	require.Equal(t, uint32(5), params.MaxWalletsPerDid)
 	require.Equal(t, uint32(3), params.MaxSharesPerWallet)
 	require.Equal(t, uint32(2), params.MinRecoveryThreshold)
@@ -30,10 +39,15 @@ func TestParams(t *testing.T) {
 
 	// Test setting new values
 	newParams := types.NewParams(
-		10,  // MaxWalletsPerDid
-		5,   // MaxSharesPerWallet
-		3,   // MinRecoveryThreshold
-		4,   // MaxRecoveryThreshold
+		10,  // MaxParties
+		5,   // MaxThreshold
+		4,   // MaxSecurityLevel
+		200, // MaxBatchSize
+		2048, // MaxMetadataSize
+		10,   // MaxWalletsPerDid
+		5,    // MaxSharesPerWallet
+		3,    // MinRecoveryThreshold
+		4,    // MaxRecoveryThreshold
 		7200, // RecoveryWindowSeconds (2 hours)
 		5,    // MaxSigningAttempts
 	)
@@ -41,6 +55,15 @@ func TestParams(t *testing.T) {
 
 	// Verify new values
 	params = k.GetParams(ctx)
+
+	// Verify wallet limits
+	require.Equal(t, uint32(10), params.MaxParties)
+	require.Equal(t, uint32(5), params.MaxThreshold)
+	require.Equal(t, uint32(4), params.MaxSecurityLevel)
+	require.Equal(t, uint32(200), params.MaxBatchSize)
+	require.Equal(t, uint32(2048), params.MaxMetadataSize)
+
+	// Verify recovery settings
 	require.Equal(t, uint32(10), params.MaxWalletsPerDid)
 	require.Equal(t, uint32(5), params.MaxSharesPerWallet)
 	require.Equal(t, uint32(3), params.MinRecoveryThreshold)

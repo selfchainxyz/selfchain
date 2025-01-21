@@ -42,9 +42,6 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 		3, // Initial parties
 	)
 
-	// Add creator permission
-	wallet.Permissions = append(wallet.Permissions, "owner")
-
 	k.SetWallet(ctx, wallet)
 
 	return &types.MsgCreateWalletResponse{
@@ -109,50 +106,124 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 	}, nil
 }
 
-// RotateKey initiates key rotation for a wallet
-func (k msgServer) RotateKey(goCtx context.Context, msg *types.MsgRotateKey) (*types.MsgRotateKeyResponse, error) {
+// BatchSign performs batch signing operation
+func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSign) (*types.MsgBatchSignResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Generate wallet ID
+	walletId := fmt.Sprintf("%s-%s", msg.Creator, msg.WalletAddress)
+
 	// Get the wallet
-	wallet, found := k.GetWalletFromStore(ctx, msg.WalletId)
+	wallet, found := k.GetWalletFromStore(ctx, walletId)
 	if !found {
-		return nil, fmt.Errorf("wallet not found: %s", msg.WalletId)
+		return nil, fmt.Errorf("wallet not found: %s", walletId)
 	}
 
 	// Verify permissions
-	if err := k.ValidateWalletAccess(ctx, msg.WalletId, "rotate"); err != nil {
+	if err := k.ValidateWalletAccess(ctx, walletId, "sign"); err != nil {
 		return nil, err
 	}
 
-	// Increment key version
-	newVersion := wallet.KeyVersion + 1
+	// Sign each transaction
+	signedTxs := make([]string, 0, len(msg.UnsignedTxs))
+	for _, unsignedTx := range msg.UnsignedTxs {
+		signedTx, err := k.SignWithTSS(ctx, &wallet, unsignedTx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign transaction: %v", err)
+		}
+		signedTxs = append(signedTxs, string(signedTx))
+	}
 
-	return &types.MsgRotateKeyResponse{
-		WalletId:   msg.WalletId,
-		NewVersion: newVersion,
+	return &types.MsgBatchSignResponse{
+		SignedTxs: signedTxs,
 	}, nil
-}
-
-// BatchSign performs batch signing operation
-func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSign) (*types.MsgBatchSignResponse, error) {
-	// TODO: Implement batch signing
-	return nil, fmt.Errorf("not implemented")
 }
 
 // InitiateKeyRotation initiates key rotation for a wallet
 func (k msgServer) InitiateKeyRotation(goCtx context.Context, msg *types.MsgInitiateKeyRotation) (*types.MsgInitiateKeyRotationResponse, error) {
-	// TODO: Implement key rotation initiation
-	return nil, fmt.Errorf("not implemented")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Generate wallet ID
+	walletId := fmt.Sprintf("%s-%s", msg.Creator, msg.WalletAddress)
+
+	// Get the wallet
+	_, found := k.GetWalletFromStore(ctx, walletId)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", walletId)
+	}
+
+	// Verify permissions
+	if err := k.ValidateWalletAccess(ctx, walletId, "rotate"); err != nil {
+		return nil, err
+	}
+
+	// Create key rotation state
+	rotation, err := k.Keeper.InitKeyRotation(ctx, walletId, msg.NewPubKey, msg.Signature)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate key rotation: %v", err)
+	}
+
+	return &types.MsgInitiateKeyRotationResponse{
+		WalletAddress: msg.WalletAddress,
+		NewVersion:    uint32(rotation.Version),
+	}, nil
 }
 
 // CompleteKeyRotation completes key rotation for a wallet
 func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgCompleteKeyRotation) (*types.MsgCompleteKeyRotationResponse, error) {
-	// TODO: Implement key rotation completion
-	return nil, fmt.Errorf("not implemented")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Generate wallet ID
+	walletId := fmt.Sprintf("%s-%s", msg.Creator, msg.WalletAddress)
+
+	// Get the wallet
+	_, found := k.GetWalletFromStore(ctx, walletId)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", walletId)
+	}
+
+	// Verify permissions
+	if err := k.ValidateWalletAccess(ctx, walletId, "rotate"); err != nil {
+		return nil, err
+	}
+
+	// Complete key rotation
+	rotation, err := k.Keeper.CompleteKeyRotation(ctx, walletId, uint64(msg.Version))
+	if err != nil {
+		return nil, fmt.Errorf("failed to complete key rotation: %v", err)
+	}
+
+	return &types.MsgCompleteKeyRotationResponse{
+		WalletAddress: msg.WalletAddress,
+		Version:       uint32(rotation.Version),
+	}, nil
 }
 
 // CancelKeyRotation cancels key rotation for a wallet
 func (k msgServer) CancelKeyRotation(goCtx context.Context, msg *types.MsgCancelKeyRotation) (*types.MsgCancelKeyRotationResponse, error) {
-	// TODO: Implement key rotation cancellation
-	return nil, fmt.Errorf("not implemented")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Generate wallet ID
+	walletId := fmt.Sprintf("%s-%s", msg.Creator, msg.WalletAddress)
+
+	// Verify wallet exists
+	_, found := k.GetWalletFromStore(ctx, walletId)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", walletId)
+	}
+
+	// Verify permissions
+	if err := k.ValidateWalletAccess(ctx, walletId, "rotate"); err != nil {
+		return nil, err
+	}
+
+	// Cancel key rotation
+	_, err := k.Keeper.CancelKeyRotation(ctx, walletId, uint64(msg.Version))
+	if err != nil {
+		return nil, fmt.Errorf("failed to cancel key rotation: %v", err)
+	}
+
+	return &types.MsgCancelKeyRotationResponse{
+		WalletAddress: msg.WalletAddress,
+	}, nil
 }

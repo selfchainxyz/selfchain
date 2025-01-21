@@ -10,6 +10,7 @@ import (
 	"selfchain/x/keyless/types"
 )
 
+// Ensure Keeper implements QueryServer
 var _ types.QueryServer = Keeper{}
 
 // Params returns the module parameters
@@ -27,13 +28,13 @@ func (k Keeper) Wallet(c context.Context, req *types.QueryWalletRequest) (*types
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet ID cannot be empty")
+	if req.Address == "" {
+		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
-	bz := store.Get([]byte(req.Id))
+	bz := store.Get([]byte(req.Address))
 	if bz == nil {
 		return nil, status.Error(codes.NotFound, "wallet not found")
 	}
@@ -41,12 +42,12 @@ func (k Keeper) Wallet(c context.Context, req *types.QueryWalletRequest) (*types
 	var wallet types.Wallet
 	k.cdc.MustUnmarshal(bz, &wallet)
 	return &types.QueryWalletResponse{
-		Wallet: wallet,
+		Wallet: &wallet,
 	}, nil
 }
 
-// ListWallets returns all wallets with pagination
-func (k Keeper) ListWallets(c context.Context, req *types.QueryListWalletsRequest) (*types.QueryListWalletsResponse, error) {
+// Wallets returns all wallets with pagination
+func (k Keeper) Wallets(c context.Context, req *types.QueryWalletsRequest) (*types.QueryWalletsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -55,14 +56,14 @@ func (k Keeper) ListWallets(c context.Context, req *types.QueryListWalletsReques
 	store := ctx.KVStore(k.storeKey)
 	walletStore := prefix.NewStore(store, types.KeyPrefix(types.WalletKey))
 
-	var wallets []types.Wallet
+	var wallets []*types.Wallet
 	pageRes, err := k.Paginate(walletStore, req.Pagination, func(key []byte, value []byte) error {
 		var wallet types.Wallet
 		if err := k.cdc.Unmarshal(value, &wallet); err != nil {
 			return err
 		}
 
-		wallets = append(wallets, wallet)
+		wallets = append(wallets, &wallet)
 		return nil
 	})
 
@@ -70,9 +71,33 @@ func (k Keeper) ListWallets(c context.Context, req *types.QueryListWalletsReques
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &types.QueryListWalletsResponse{
+	return &types.QueryWalletsResponse{
 		Wallets:    wallets,
 		Pagination: pageRes,
+	}, nil
+}
+
+// PartyData returns TSS party data for a wallet
+func (k Keeper) PartyData(c context.Context, req *types.QueryPartyDataRequest) (*types.QueryPartyDataResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	if req.WalletAddress == "" {
+		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PartyDataKey))
+	bz := store.Get([]byte(req.WalletAddress))
+	if bz == nil {
+		return nil, status.Error(codes.NotFound, "party data not found")
+	}
+
+	var partyData types.PartyData
+	k.cdc.MustUnmarshal(bz, &partyData)
+	return &types.QueryPartyDataResponse{
+		WalletAddress: req.WalletAddress,
+		PartyData:     &partyData,
 	}, nil
 }
 
@@ -96,7 +121,7 @@ func (k Keeper) KeyRotation(c context.Context, req *types.QueryKeyRotationReques
 	var rotation types.KeyRotation
 	k.cdc.MustUnmarshal(bz, &rotation)
 	return &types.QueryKeyRotationResponse{
-		Rotation: rotation,
+		Rotation: &rotation,
 	}, nil
 }
 
@@ -113,14 +138,14 @@ func (k Keeper) KeyRotations(c context.Context, req *types.QueryKeyRotationsRequ
 	store := ctx.KVStore(k.storeKey)
 	rotationStore := prefix.NewStore(store, types.KeyPrefix(types.KeyRotationKey))
 
-	var rotations []types.KeyRotation
+	var rotations []*types.KeyRotation
 	pageRes, err := k.Paginate(rotationStore, req.Pagination, func(key []byte, value []byte) error {
 		var rotation types.KeyRotation
 		if err := k.cdc.Unmarshal(value, &rotation); err != nil {
 			return err
 		}
 
-		rotations = append(rotations, rotation)
+		rotations = append(rotations, &rotation)
 		return nil
 	})
 
@@ -147,7 +172,7 @@ func (k Keeper) ListAuditEvents(c context.Context, req *types.QueryListAuditEven
 	store := ctx.KVStore(k.storeKey)
 	eventStore := prefix.NewStore(store, types.KeyPrefix(types.AuditEventKey))
 
-	var events []types.AuditEvent
+	var events []*types.AuditEvent
 	pageRes, err := k.Paginate(eventStore, req.Pagination, func(key []byte, value []byte) error {
 		var event types.AuditEvent
 		if err := k.cdc.Unmarshal(value, &event); err != nil {
@@ -165,7 +190,7 @@ func (k Keeper) ListAuditEvents(c context.Context, req *types.QueryListAuditEven
 			return nil
 		}
 
-		events = append(events, event)
+		events = append(events, &event)
 		return nil
 	})
 

@@ -11,7 +11,6 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateWallet{}, "keyless/CreateWallet", nil)
 	cdc.RegisterConcrete(&MsgRecoverWallet{}, "keyless/RecoverWallet", nil)
 	cdc.RegisterConcrete(&MsgSignTransaction{}, "keyless/SignTransaction", nil)
-	cdc.RegisterConcrete(&MsgRotateKey{}, "keyless/RotateKey", nil)
 	cdc.RegisterConcrete(&MsgBatchSign{}, "keyless/BatchSign", nil)
 	cdc.RegisterConcrete(&MsgInitiateKeyRotation{}, "keyless/InitiateKeyRotation", nil)
 	cdc.RegisterConcrete(&MsgCompleteKeyRotation{}, "keyless/CompleteKeyRotation", nil)
@@ -23,7 +22,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCreateWallet{},
 		&MsgRecoverWallet{},
 		&MsgSignTransaction{},
-		&MsgRotateKey{},
 		&MsgBatchSign{},
 		&MsgInitiateKeyRotation{},
 		&MsgCompleteKeyRotation{},

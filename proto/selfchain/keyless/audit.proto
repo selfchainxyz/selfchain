@@ -1,0 +1,18 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/keyless/types";
+
+// AuditEvent represents an auditable event in the keyless wallet system
+message AuditEvent {
+  string wallet_id = 1;
+  string event_type = 2;  // "create", "recover", "sign", "rotate"
+  bool success = 3;
+  string details = 4;
+  google.protobuf.Timestamp timestamp = 5 [(gogoproto.stdtime) = true];
+  string creator = 6;
+  string chain_id = 7;
+}

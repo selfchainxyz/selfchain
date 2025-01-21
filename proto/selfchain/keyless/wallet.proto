@@ -2,14 +2,23 @@ syntax = "proto3";
 package selfchain.keyless;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
 // Wallet represents a keyless wallet
 message Wallet {
-  string creator = 1;
+  string id = 1;
   string address = 2;
-  string pub_key = 3;
-  string chain_id = 4;
-  string status = 5;
+  string public_key = 3;
+  uint32 key_version = 4;
+  repeated string permissions = 5;
+  google.protobuf.Timestamp created_at = 6 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp updated_at = 7 [(gogoproto.stdtime) = true];
+  map<string, string> metadata = 8;
+  uint32 security_level = 9;
+  uint32 threshold = 10;
+  uint32 parties = 11;
+  string status = 12;
+  string chain_id = 13;
 }

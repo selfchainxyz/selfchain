@@ -18,6 +18,18 @@ service Msg {
   
   // SignTransaction signs a transaction using the keyless wallet
   rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
+
+  // BatchSign performs batch signing operation
+  rpc BatchSign(MsgBatchSign) returns (MsgBatchSignResponse);
+
+  // InitiateKeyRotation initiates key rotation for a wallet
+  rpc InitiateKeyRotation(MsgInitiateKeyRotation) returns (MsgInitiateKeyRotationResponse);
+
+  // CompleteKeyRotation completes key rotation for a wallet
+  rpc CompleteKeyRotation(MsgCompleteKeyRotation) returns (MsgCompleteKeyRotationResponse);
+
+  // CancelKeyRotation cancels key rotation for a wallet
+  rpc CancelKeyRotation(MsgCancelKeyRotation) returns (MsgCancelKeyRotationResponse);
 }
 
 // MsgCreateWallet defines the CreateWallet request type
@@ -64,4 +76,65 @@ message MsgSignTransaction {
 // MsgSignTransactionResponse defines the SignTransaction response type
 message MsgSignTransactionResponse {
   string signed_tx = 1;
+}
+
+// MsgBatchSign defines the BatchSign request type
+message MsgBatchSign {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  repeated string unsigned_txs = 3;
+  string chain_id = 4;
+}
+
+// MsgBatchSignResponse defines the BatchSign response type
+message MsgBatchSignResponse {
+  repeated string signed_txs = 1;
+}
+
+// MsgInitiateKeyRotation defines the InitiateKeyRotation request type
+message MsgInitiateKeyRotation {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  string new_pub_key = 3;
+  string signature = 4;
+}
+
+// MsgInitiateKeyRotationResponse defines the InitiateKeyRotation response type
+message MsgInitiateKeyRotationResponse {
+  string wallet_address = 1;
+  uint32 new_version = 2;
+}
+
+// MsgCompleteKeyRotation defines the CompleteKeyRotation request type
+message MsgCompleteKeyRotation {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  uint32 version = 3;
+  string signature = 4;
+}
+
+// MsgCompleteKeyRotationResponse defines the CompleteKeyRotation response type
+message MsgCompleteKeyRotationResponse {
+  string wallet_address = 1;
+  uint32 version = 2;
+}
+
+// MsgCancelKeyRotation defines the CancelKeyRotation request type
+message MsgCancelKeyRotation {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  uint32 version = 3;
+}
+
+// MsgCancelKeyRotationResponse defines the CancelKeyRotation response type
+message MsgCancelKeyRotationResponse {
+  string wallet_address = 1;
 }

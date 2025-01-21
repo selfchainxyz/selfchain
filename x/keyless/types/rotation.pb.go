@@ -27,50 +27,15 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// RotationStatus represents the status of a key rotation
-type RotationStatus int32
-
-const (
-	RotationStatus_ROTATION_STATUS_UNSPECIFIED RotationStatus = 0
-	RotationStatus_ROTATION_STATUS_PENDING     RotationStatus = 1
-	RotationStatus_ROTATION_STATUS_IN_PROGRESS RotationStatus = 2
-	RotationStatus_ROTATION_STATUS_COMPLETED   RotationStatus = 3
-	RotationStatus_ROTATION_STATUS_FAILED      RotationStatus = 4
-)
-
-var RotationStatus_name = map[int32]string{
-	0: "ROTATION_STATUS_UNSPECIFIED",
-	1: "ROTATION_STATUS_PENDING",
-	2: "ROTATION_STATUS_IN_PROGRESS",
-	3: "ROTATION_STATUS_COMPLETED",
-	4: "ROTATION_STATUS_FAILED",
-}
-
-var RotationStatus_value = map[string]int32{
-	"ROTATION_STATUS_UNSPECIFIED": 0,
-	"ROTATION_STATUS_PENDING":     1,
-	"ROTATION_STATUS_IN_PROGRESS": 2,
-	"ROTATION_STATUS_COMPLETED":   3,
-	"ROTATION_STATUS_FAILED":      4,
-}
-
-func (x RotationStatus) String() string {
-	return proto.EnumName(RotationStatus_name, int32(x))
-}
-
-func (RotationStatus) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_c82a5763159cea2e, []int{0}
-}
-
-// KeyRotation represents a key rotation record
+// KeyRotation represents a key rotation operation for a wallet
 type KeyRotation struct {
-	WalletId    string            `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	Version     uint64            `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	Status      RotationStatus    `protobuf:"varint,3,opt,name=status,proto3,enum=selfchain.keyless.RotationStatus" json:"status,omitempty"`
-	InitiatedAt *time.Time        `protobuf:"bytes,4,opt,name=initiated_at,json=initiatedAt,proto3,stdtime" json:"initiated_at,omitempty"`
-	CompletedAt *time.Time        `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3,stdtime" json:"completed_at,omitempty"`
-	Error       string            `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
-	Metadata    map[string]string `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	WalletId    string     `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	Version     uint64     `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	NewPubKey   string     `protobuf:"bytes,3,opt,name=new_pub_key,json=newPubKey,proto3" json:"new_pub_key,omitempty"`
+	Status      string     `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedAt   *time.Time `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	CompletedAt *time.Time `protobuf:"bytes,6,opt,name=completed_at,json=completedAt,proto3,stdtime" json:"completed_at,omitempty"`
+	Signature   string     `protobuf:"bytes,7,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 func (m *KeyRotation) Reset()         { *m = KeyRotation{} }
@@ -120,16 +85,23 @@ func (m *KeyRotation) GetVersion() uint64 {
 	return 0
 }
 
-func (m *KeyRotation) GetStatus() RotationStatus {
+func (m *KeyRotation) GetNewPubKey() string {
+	if m != nil {
+		return m.NewPubKey
+	}
+	return ""
+}
+
+func (m *KeyRotation) GetStatus() string {
 	if m != nil {
 		return m.Status
 	}
-	return RotationStatus_ROTATION_STATUS_UNSPECIFIED
+	return ""
 }
 
-func (m *KeyRotation) GetInitiatedAt() *time.Time {
+func (m *KeyRotation) GetCreatedAt() *time.Time {
 	if m != nil {
-		return m.InitiatedAt
+		return m.CreatedAt
 	}
 	return nil
 }
@@ -141,60 +113,42 @@ func (m *KeyRotation) GetCompletedAt() *time.Time {
 	return nil
 }
 
-func (m *KeyRotation) GetError() string {
+func (m *KeyRotation) GetSignature() string {
 	if m != nil {
-		return m.Error
+		return m.Signature
 	}
 	return ""
 }
 
-func (m *KeyRotation) GetMetadata() map[string]string {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
 func init() {
-	proto.RegisterEnum("selfchain.keyless.RotationStatus", RotationStatus_name, RotationStatus_value)
 	proto.RegisterType((*KeyRotation)(nil), "selfchain.keyless.KeyRotation")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.KeyRotation.MetadataEntry")
 }
 
 func init() { proto.RegisterFile("selfchain/keyless/rotation.proto", fileDescriptor_c82a5763159cea2e) }
 
 var fileDescriptor_c82a5763159cea2e = []byte{
-	// 475 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xcd, 0x6e, 0xd3, 0x40,
-	0x14, 0x85, 0x33, 0x71, 0x9a, 0x36, 0x13, 0xa8, 0xcc, 0xa8, 0x02, 0xd7, 0x11, 0x8e, 0x61, 0x65,
-	0x21, 0x64, 0x4b, 0xe9, 0x86, 0x9f, 0x95, 0x9b, 0xb8, 0xc5, 0xa2, 0x75, 0xa2, 0xb1, 0xbb, 0x61,
-	0x63, 0x4d, 0x9b, 0x69, 0xb0, 0xea, 0x78, 0x22, 0xcf, 0xa4, 0xe0, 0xb7, 0xe8, 0x53, 0xb0, 0xe0,
-	0x49, 0x58, 0x76, 0xc9, 0x0e, 0x94, 0xbc, 0x08, 0x8a, 0xed, 0x18, 0x1a, 0xba, 0xe8, 0x6e, 0xae,
-	0xef, 0x77, 0xae, 0xcf, 0x9c, 0xb9, 0x50, 0xe7, 0x34, 0xbe, 0xbc, 0xf8, 0x4c, 0xa2, 0xc4, 0xba,
-	0xa2, 0x59, 0x4c, 0x39, 0xb7, 0x52, 0x26, 0x88, 0x88, 0x58, 0x62, 0xce, 0x52, 0x26, 0x18, 0x7a,
-	0x52, 0x11, 0x66, 0x49, 0xa8, 0x7b, 0x13, 0x36, 0x61, 0x79, 0xd7, 0x5a, 0x9d, 0x0a, 0x50, 0xed,
-	0x4e, 0x18, 0x9b, 0xc4, 0xd4, 0xca, 0xab, 0xf3, 0xf9, 0xa5, 0x25, 0xa2, 0x29, 0xe5, 0x82, 0x4c,
-	0x67, 0x05, 0xf0, 0xf2, 0x9b, 0x04, 0xdb, 0x1f, 0x69, 0x86, 0xcb, 0xf9, 0xa8, 0x03, 0x5b, 0x5f,
-	0x48, 0x1c, 0x53, 0x11, 0x46, 0x63, 0x05, 0xe8, 0xc0, 0x68, 0xe1, 0x9d, 0xe2, 0x83, 0x3b, 0x46,
-	0x0a, 0xdc, 0xbe, 0xa6, 0x29, 0x8f, 0x58, 0xa2, 0xd4, 0x75, 0x60, 0x34, 0xf0, 0xba, 0x44, 0x6f,
-	0x61, 0x93, 0x0b, 0x22, 0xe6, 0x5c, 0x91, 0x74, 0x60, 0xec, 0xf6, 0x5e, 0x98, 0xff, 0x39, 0x34,
-	0xd7, 0xff, 0xf0, 0x73, 0x10, 0x97, 0x02, 0xd4, 0x87, 0x8f, 0xa2, 0x24, 0x12, 0x11, 0x11, 0x74,
-	0x1c, 0x12, 0xa1, 0x34, 0x74, 0x60, 0xb4, 0x7b, 0xaa, 0x59, 0x38, 0x37, 0xd7, 0xce, 0xcd, 0x60,
-	0xed, 0xfc, 0xb0, 0x71, 0xf3, 0xab, 0x0b, 0x70, 0xbb, 0x52, 0xd9, 0x62, 0x35, 0xe4, 0x82, 0x4d,
-	0x67, 0x31, 0x2d, 0x87, 0x6c, 0x3d, 0x74, 0x48, 0xa5, 0xb2, 0x05, 0xda, 0x83, 0x5b, 0x34, 0x4d,
-	0x59, 0xaa, 0x34, 0xf3, 0x7b, 0x17, 0x05, 0xfa, 0x00, 0x77, 0xa6, 0x54, 0x90, 0x31, 0x11, 0x44,
-	0xd9, 0xd6, 0x25, 0xa3, 0xdd, 0x7b, 0x7d, 0xcf, 0xe5, 0xfe, 0xc9, 0xd0, 0x3c, 0x2d, 0x71, 0x27,
-	0x11, 0x69, 0x86, 0x2b, 0xb5, 0xfa, 0x1e, 0x3e, 0xbe, 0xd3, 0x42, 0x32, 0x94, 0xae, 0x68, 0x56,
-	0xc6, 0xbc, 0x3a, 0xae, 0x2c, 0x5c, 0x93, 0x78, 0x4e, 0xf3, 0x7c, 0x5b, 0xb8, 0x28, 0xde, 0xd5,
-	0xdf, 0x80, 0x57, 0xdf, 0x01, 0xdc, 0xbd, 0x9b, 0x20, 0xea, 0xc2, 0x0e, 0x1e, 0x06, 0x76, 0xe0,
-	0x0e, 0xbd, 0xd0, 0x0f, 0xec, 0xe0, 0xcc, 0x0f, 0xcf, 0x3c, 0x7f, 0xe4, 0xf4, 0xdd, 0x23, 0xd7,
-	0x19, 0xc8, 0x35, 0xd4, 0x81, 0xcf, 0x36, 0x81, 0x91, 0xe3, 0x0d, 0x5c, 0xef, 0x58, 0x06, 0xf7,
-	0xa9, 0x5d, 0x2f, 0x1c, 0xe1, 0xe1, 0x31, 0x76, 0x7c, 0x5f, 0xae, 0xa3, 0xe7, 0x70, 0x7f, 0x13,
-	0xe8, 0x0f, 0x4f, 0x47, 0x27, 0x4e, 0xe0, 0x0c, 0x64, 0x09, 0xa9, 0xf0, 0xe9, 0x66, 0xfb, 0xc8,
-	0x76, 0x4f, 0x9c, 0x81, 0xdc, 0x38, 0x3c, 0xf8, 0xb1, 0xd0, 0xc0, 0xed, 0x42, 0x03, 0xbf, 0x17,
-	0x1a, 0xb8, 0x59, 0x6a, 0xb5, 0xdb, 0xa5, 0x56, 0xfb, 0xb9, 0xd4, 0x6a, 0x9f, 0xf6, 0xff, 0xee,
-	0xf6, 0xd7, 0x6a, 0xbb, 0x45, 0x36, 0xa3, 0xfc, 0xbc, 0x99, 0xbf, 0xd2, 0xc1, 0x9f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xe7, 0x90, 0xad, 0x2b, 0xff, 0x02, 0x00, 0x00,
+	// 329 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0xcf, 0x4e, 0xf2, 0x40,
+	0x14, 0xc5, 0x19, 0x3e, 0x3e, 0xa0, 0x53, 0x37, 0x4e, 0x8c, 0x19, 0xd1, 0x0c, 0x8d, 0x2b, 0x56,
+	0x6d, 0x22, 0x0f, 0x60, 0x60, 0x63, 0x0c, 0x1b, 0xd3, 0xb8, 0x72, 0xd3, 0x4c, 0xe1, 0x52, 0x1b,
+	0x4a, 0xa7, 0xe9, 0xdc, 0x8a, 0x7d, 0x0b, 0x1e, 0xc2, 0x87, 0x61, 0xc9, 0xd2, 0x95, 0x1a, 0x78,
+	0x11, 0x63, 0xff, 0xb9, 0x74, 0x37, 0xe7, 0xde, 0x73, 0xce, 0xfc, 0x92, 0x4b, 0x2d, 0x0d, 0xd1,
+	0x72, 0xfe, 0x2c, 0xc3, 0xd8, 0x59, 0x41, 0x1e, 0x81, 0xd6, 0x4e, 0xaa, 0x50, 0x62, 0xa8, 0x62,
+	0x3b, 0x49, 0x15, 0x2a, 0x76, 0xda, 0x38, 0xec, 0xca, 0x31, 0x38, 0x0b, 0x54, 0xa0, 0x8a, 0xad,
+	0xf3, 0xf3, 0x2a, 0x8d, 0x83, 0x61, 0xa0, 0x54, 0x10, 0x81, 0x53, 0x28, 0x3f, 0x5b, 0x3a, 0x18,
+	0xae, 0x41, 0xa3, 0x5c, 0x27, 0xa5, 0xe1, 0xfa, 0xad, 0x4d, 0xcd, 0x19, 0xe4, 0x6e, 0xd5, 0xcf,
+	0x2e, 0xa9, 0xb1, 0x91, 0x51, 0x04, 0xe8, 0x85, 0x0b, 0x4e, 0x2c, 0x32, 0x32, 0xdc, 0x7e, 0x39,
+	0xb8, 0x5f, 0x30, 0x4e, 0x7b, 0x2f, 0x90, 0xea, 0x50, 0xc5, 0xbc, 0x6d, 0x91, 0x51, 0xc7, 0xad,
+	0x25, 0x13, 0xd4, 0x8c, 0x61, 0xe3, 0x25, 0x99, 0xef, 0xad, 0x20, 0xe7, 0xff, 0x8a, 0xa0, 0x11,
+	0xc3, 0xe6, 0x21, 0xf3, 0x67, 0x90, 0xb3, 0x73, 0xda, 0xd5, 0x28, 0x31, 0xd3, 0xbc, 0x53, 0xac,
+	0x2a, 0xc5, 0x6e, 0x29, 0x9d, 0xa7, 0x20, 0x11, 0x16, 0x9e, 0x44, 0xfe, 0xdf, 0x22, 0x23, 0xf3,
+	0x66, 0x60, 0x97, 0xd0, 0x76, 0x0d, 0x6d, 0x3f, 0xd6, 0xd0, 0xd3, 0xce, 0xf6, 0x73, 0x48, 0x5c,
+	0xa3, 0xca, 0x4c, 0x90, 0xdd, 0xd1, 0x93, 0xb9, 0x5a, 0x27, 0x11, 0x54, 0x15, 0xdd, 0x3f, 0x2b,
+	0xfa, 0xbb, 0x8f, 0x21, 0x29, 0x6a, 0xcc, 0x26, 0x39, 0x41, 0x76, 0x45, 0x0d, 0x1d, 0x06, 0xb1,
+	0xc4, 0x2c, 0x05, 0xde, 0x2b, 0xf9, 0x9b, 0xc1, 0x74, 0xbc, 0x3b, 0x08, 0xb2, 0x3f, 0x08, 0xf2,
+	0x75, 0x10, 0x64, 0x7b, 0x14, 0xad, 0xfd, 0x51, 0xb4, 0xde, 0x8f, 0xa2, 0xf5, 0x74, 0xf1, 0x7b,
+	0xac, 0xd7, 0xe6, 0x5c, 0x98, 0x27, 0xa0, 0xfd, 0x6e, 0xf1, 0xfb, 0xf8, 0x3b, 0x00, 0x00, 0xff,
+	0xff, 0xbb, 0xed, 0xec, 0x29, 0xd0, 0x01, 0x00, 0x00,
 }
 
 func (m *KeyRotation) Marshal() (dAtA []byte, err error) {
@@ -217,31 +171,12 @@ func (m *KeyRotation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Metadata) > 0 {
-		for k := range m.Metadata {
-			v := m.Metadata[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintRotation(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintRotation(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintRotation(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x3a
-		}
-	}
-	if len(m.Error) > 0 {
-		i -= len(m.Error)
-		copy(dAtA[i:], m.Error)
-		i = encodeVarintRotation(dAtA, i, uint64(len(m.Error)))
+	if len(m.Signature) > 0 {
+		i -= len(m.Signature)
+		copy(dAtA[i:], m.Signature)
+		i = encodeVarintRotation(dAtA, i, uint64(len(m.Signature)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x3a
 	}
 	if m.CompletedAt != nil {
 		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CompletedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CompletedAt):])
@@ -251,22 +186,31 @@ func (m *KeyRotation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= n1
 		i = encodeVarintRotation(dAtA, i, uint64(n1))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x32
 	}
-	if m.InitiatedAt != nil {
-		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.InitiatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.InitiatedAt):])
+	if m.CreatedAt != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
 		if err2 != nil {
 			return 0, err2
 		}
 		i -= n2
 		i = encodeVarintRotation(dAtA, i, uint64(n2))
 		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Status) > 0 {
+		i -= len(m.Status)
+		copy(dAtA[i:], m.Status)
+		i = encodeVarintRotation(dAtA, i, uint64(len(m.Status)))
+		i--
 		dAtA[i] = 0x22
 	}
-	if m.Status != 0 {
-		i = encodeVarintRotation(dAtA, i, uint64(m.Status))
+	if len(m.NewPubKey) > 0 {
+		i -= len(m.NewPubKey)
+		copy(dAtA[i:], m.NewPubKey)
+		i = encodeVarintRotation(dAtA, i, uint64(len(m.NewPubKey)))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x1a
 	}
 	if m.Version != 0 {
 		i = encodeVarintRotation(dAtA, i, uint64(m.Version))
@@ -307,28 +251,25 @@ func (m *KeyRotation) Size() (n int) {
 	if m.Version != 0 {
 		n += 1 + sovRotation(uint64(m.Version))
 	}
-	if m.Status != 0 {
-		n += 1 + sovRotation(uint64(m.Status))
+	l = len(m.NewPubKey)
+	if l > 0 {
+		n += 1 + l + sovRotation(uint64(l))
 	}
-	if m.InitiatedAt != nil {
-		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.InitiatedAt)
+	l = len(m.Status)
+	if l > 0 {
+		n += 1 + l + sovRotation(uint64(l))
+	}
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
 		n += 1 + l + sovRotation(uint64(l))
 	}
 	if m.CompletedAt != nil {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CompletedAt)
 		n += 1 + l + sovRotation(uint64(l))
 	}
-	l = len(m.Error)
+	l = len(m.Signature)
 	if l > 0 {
 		n += 1 + l + sovRotation(uint64(l))
-	}
-	if len(m.Metadata) > 0 {
-		for k, v := range m.Metadata {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovRotation(uint64(len(k))) + 1 + len(v) + sovRotation(uint64(len(v)))
-			n += mapEntrySize + 1 + sovRotation(uint64(mapEntrySize))
-		}
 	}
 	return n
 }
@@ -420,10 +361,10 @@ func (m *KeyRotation) Unmarshal(dAtA []byte) error {
 				}
 			}
 		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPubKey", wireType)
 			}
-			m.Status = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowRotation
@@ -433,14 +374,59 @@ func (m *KeyRotation) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Status |= RotationStatus(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InitiatedAt", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Status = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -467,14 +453,14 @@ func (m *KeyRotation) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.InitiatedAt == nil {
-				m.InitiatedAt = new(time.Time)
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.InitiatedAt, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CompletedAt", wireType)
 			}
@@ -510,9 +496,9 @@ func (m *KeyRotation) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -540,134 +526,7 @@ func (m *KeyRotation) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Error = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRotation
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthRotation
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthRotation
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metadata == nil {
-				m.Metadata = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowRotation
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowRotation
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthRotation
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthRotation
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowRotation
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthRotation
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthRotation
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipRotation(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthRotation
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Metadata[mapkey] = mapvalue
+			m.Signature = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

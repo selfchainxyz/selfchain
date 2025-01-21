@@ -9,10 +9,18 @@ import "gogoproto/gogo.proto";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   
-  uint32 max_wallets_per_did = 1 [(gogoproto.moretags) = "yaml:\"max_wallets_per_did\""];
-  uint32 max_shares_per_wallet = 2 [(gogoproto.moretags) = "yaml:\"max_shares_per_wallet\""];
-  uint32 min_recovery_threshold = 3 [(gogoproto.moretags) = "yaml:\"min_recovery_threshold\""];
-  uint32 max_recovery_threshold = 4 [(gogoproto.moretags) = "yaml:\"max_recovery_threshold\""];
-  uint32 recovery_window_seconds = 5 [(gogoproto.moretags) = "yaml:\"recovery_window_seconds\""];
-  uint32 max_signing_attempts = 6 [(gogoproto.moretags) = "yaml:\"max_signing_attempts\""];
+  // Wallet limits
+  uint32 max_parties = 1 [(gogoproto.moretags) = "yaml:\"max_parties\""];
+  uint32 max_threshold = 2 [(gogoproto.moretags) = "yaml:\"max_threshold\""];
+  uint32 max_security_level = 3 [(gogoproto.moretags) = "yaml:\"max_security_level\""];
+  uint32 max_batch_size = 4 [(gogoproto.moretags) = "yaml:\"max_batch_size\""];
+  uint32 max_metadata_size = 5 [(gogoproto.moretags) = "yaml:\"max_metadata_size\""];
+  
+  // Recovery settings
+  uint32 max_wallets_per_did = 6 [(gogoproto.moretags) = "yaml:\"max_wallets_per_did\""];
+  uint32 max_shares_per_wallet = 7 [(gogoproto.moretags) = "yaml:\"max_shares_per_wallet\""];
+  uint32 min_recovery_threshold = 8 [(gogoproto.moretags) = "yaml:\"min_recovery_threshold\""];
+  uint32 max_recovery_threshold = 9 [(gogoproto.moretags) = "yaml:\"max_recovery_threshold\""];
+  uint32 recovery_window_seconds = 10 [(gogoproto.moretags) = "yaml:\"recovery_window_seconds\""];
+  uint32 max_signing_attempts = 11 [(gogoproto.moretags) = "yaml:\"max_signing_attempts\""];
 }

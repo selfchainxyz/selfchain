@@ -5,7 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
@@ -28,16 +27,15 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// AuditEvent represents an audit event
+// AuditEvent represents an auditable event in the keyless wallet system
 type AuditEvent struct {
-	Id         string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	WalletId   string            `protobuf:"bytes,2,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	EventType  string            `protobuf:"bytes,3,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
-	KeyVersion uint64            `protobuf:"varint,4,opt,name=key_version,json=keyVersion,proto3" json:"key_version,omitempty"`
-	Success    bool              `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
-	Error      string            `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
-	Timestamp  *time.Time        `protobuf:"bytes,7,opt,name=timestamp,proto3,stdtime" json:"timestamp,omitempty"`
-	Metadata   map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	WalletId  string     `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	EventType string     `protobuf:"bytes,2,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	Success   bool       `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
+	Details   string     `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
+	Timestamp *time.Time `protobuf:"bytes,5,opt,name=timestamp,proto3,stdtime" json:"timestamp,omitempty"`
+	Creator   string     `protobuf:"bytes,6,opt,name=creator,proto3" json:"creator,omitempty"`
+	ChainId   string     `protobuf:"bytes,7,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
 
 func (m *AuditEvent) Reset()         { *m = AuditEvent{} }
@@ -73,13 +71,6 @@ func (m *AuditEvent) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AuditEvent proto.InternalMessageInfo
 
-func (m *AuditEvent) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 func (m *AuditEvent) GetWalletId() string {
 	if m != nil {
 		return m.WalletId
@@ -94,13 +85,6 @@ func (m *AuditEvent) GetEventType() string {
 	return ""
 }
 
-func (m *AuditEvent) GetKeyVersion() uint64 {
-	if m != nil {
-		return m.KeyVersion
-	}
-	return 0
-}
-
 func (m *AuditEvent) GetSuccess() bool {
 	if m != nil {
 		return m.Success
@@ -108,9 +92,9 @@ func (m *AuditEvent) GetSuccess() bool {
 	return false
 }
 
-func (m *AuditEvent) GetError() string {
+func (m *AuditEvent) GetDetails() string {
 	if m != nil {
-		return m.Error
+		return m.Details
 	}
 	return ""
 }
@@ -122,179 +106,47 @@ func (m *AuditEvent) GetTimestamp() *time.Time {
 	return nil
 }
 
-func (m *AuditEvent) GetMetadata() map[string]string {
+func (m *AuditEvent) GetCreator() string {
 	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-// QueryAuditEventsRequest is the request type for the Query/AuditEvents RPC method
-type QueryAuditEventsRequest struct {
-	WalletId   string             `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	EventType  string             `protobuf:"bytes,2,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
-	Success    bool               `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
-	Pagination *query.PageRequest `protobuf:"bytes,4,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryAuditEventsRequest) Reset()         { *m = QueryAuditEventsRequest{} }
-func (m *QueryAuditEventsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryAuditEventsRequest) ProtoMessage()    {}
-func (*QueryAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a66d085beba2eb5, []int{1}
-}
-func (m *QueryAuditEventsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryAuditEventsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryAuditEventsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryAuditEventsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAuditEventsRequest.Merge(m, src)
-}
-func (m *QueryAuditEventsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryAuditEventsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAuditEventsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryAuditEventsRequest proto.InternalMessageInfo
-
-func (m *QueryAuditEventsRequest) GetWalletId() string {
-	if m != nil {
-		return m.WalletId
+		return m.Creator
 	}
 	return ""
 }
 
-func (m *QueryAuditEventsRequest) GetEventType() string {
+func (m *AuditEvent) GetChainId() string {
 	if m != nil {
-		return m.EventType
+		return m.ChainId
 	}
 	return ""
-}
-
-func (m *QueryAuditEventsRequest) GetSuccess() bool {
-	if m != nil {
-		return m.Success
-	}
-	return false
-}
-
-func (m *QueryAuditEventsRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryAuditEventsResponse is the response type for the Query/AuditEvents RPC method
-type QueryAuditEventsResponse struct {
-	Events     []*AuditEvent       `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
-	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryAuditEventsResponse) Reset()         { *m = QueryAuditEventsResponse{} }
-func (m *QueryAuditEventsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryAuditEventsResponse) ProtoMessage()    {}
-func (*QueryAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a66d085beba2eb5, []int{2}
-}
-func (m *QueryAuditEventsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryAuditEventsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryAuditEventsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryAuditEventsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAuditEventsResponse.Merge(m, src)
-}
-func (m *QueryAuditEventsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryAuditEventsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAuditEventsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryAuditEventsResponse proto.InternalMessageInfo
-
-func (m *QueryAuditEventsResponse) GetEvents() []*AuditEvent {
-	if m != nil {
-		return m.Events
-	}
-	return nil
-}
-
-func (m *QueryAuditEventsResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
 }
 
 func init() {
 	proto.RegisterType((*AuditEvent)(nil), "selfchain.keyless.AuditEvent")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.AuditEvent.MetadataEntry")
-	proto.RegisterType((*QueryAuditEventsRequest)(nil), "selfchain.keyless.QueryAuditEventsRequest")
-	proto.RegisterType((*QueryAuditEventsResponse)(nil), "selfchain.keyless.QueryAuditEventsResponse")
 }
 
 func init() { proto.RegisterFile("selfchain/keyless/audit.proto", fileDescriptor_1a66d085beba2eb5) }
 
 var fileDescriptor_1a66d085beba2eb5 = []byte{
-	// 513 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xcf, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0xb3, 0x4e, 0x9a, 0x26, 0x13, 0x81, 0x60, 0x55, 0x89, 0x25, 0x28, 0x4e, 0x94, 0x03,
-	0x44, 0x20, 0xad, 0xd5, 0x54, 0x48, 0x08, 0x24, 0x24, 0x2a, 0x95, 0x8a, 0x03, 0x12, 0x58, 0x15,
-	0x07, 0x2e, 0xd1, 0x26, 0x9e, 0x1a, 0x2b, 0x8e, 0xd7, 0xf5, 0xae, 0x03, 0x7e, 0x8b, 0x9e, 0x79,
-	0x11, 0x5e, 0x81, 0x63, 0x8f, 0xdc, 0x40, 0xc9, 0x03, 0xf0, 0x0a, 0xc8, 0x6b, 0xe7, 0x1f, 0x95,
-	0xda, 0x9b, 0x67, 0xe6, 0x1b, 0xef, 0xb7, 0xbf, 0x99, 0x85, 0x8e, 0xc2, 0xf0, 0x7c, 0xf2, 0x45,
-	0x04, 0x91, 0x33, 0xc5, 0x2c, 0x44, 0xa5, 0x1c, 0x91, 0x7a, 0x81, 0xe6, 0x71, 0x22, 0xb5, 0xa4,
-	0xf7, 0xd7, 0x65, 0x5e, 0x96, 0xdb, 0x07, 0xbe, 0xf4, 0xa5, 0xa9, 0x3a, 0xf9, 0x57, 0x21, 0x6c,
-	0x77, 0x7d, 0x29, 0xfd, 0x10, 0x1d, 0x13, 0x8d, 0xd3, 0x73, 0x47, 0x07, 0x33, 0x54, 0x5a, 0xcc,
-	0xe2, 0x52, 0xf0, 0x74, 0x22, 0xd5, 0x4c, 0x2a, 0x67, 0x2c, 0x14, 0x3a, 0x17, 0x29, 0x26, 0x99,
-	0x33, 0x3f, 0x1c, 0xa3, 0x16, 0x87, 0x4e, 0x2c, 0xfc, 0x20, 0x12, 0x3a, 0x90, 0x51, 0xa1, 0xed,
-	0xff, 0xb5, 0x00, 0xde, 0xe4, 0x2e, 0x4e, 0xe6, 0x18, 0x69, 0x7a, 0x17, 0xac, 0xc0, 0x63, 0xa4,
-	0x47, 0x06, 0x4d, 0xd7, 0x0a, 0x3c, 0xfa, 0x08, 0x9a, 0x5f, 0x45, 0x18, 0xa2, 0x1e, 0x05, 0x1e,
-	0xb3, 0x4c, 0xba, 0x51, 0x24, 0xde, 0x79, 0xb4, 0x03, 0x80, 0x79, 0xd7, 0x48, 0x67, 0x31, 0xb2,
-	0xaa, 0xa9, 0x36, 0x4d, 0xe6, 0x2c, 0x8b, 0x91, 0x76, 0xa1, 0x35, 0xc5, 0x6c, 0x34, 0xc7, 0x44,
-	0x05, 0x32, 0x62, 0xb5, 0x1e, 0x19, 0xd4, 0x5c, 0x98, 0x62, 0xf6, 0xa9, 0xc8, 0x50, 0x06, 0xfb,
-	0x2a, 0x9d, 0x4c, 0x50, 0x29, 0xb6, 0xd7, 0x23, 0x83, 0x86, 0xbb, 0x0a, 0xe9, 0x01, 0xec, 0x61,
-	0x92, 0xc8, 0x84, 0xd5, 0xcd, 0x4f, 0x8b, 0x80, 0xbe, 0x86, 0xe6, 0xfa, 0xaa, 0x6c, 0xbf, 0x47,
-	0x06, 0xad, 0x61, 0x9b, 0x17, 0x30, 0xf8, 0x0a, 0x06, 0x3f, 0x5b, 0x29, 0x8e, 0x6b, 0x97, 0xbf,
-	0xbb, 0xc4, 0xdd, 0xb4, 0xd0, 0x53, 0x68, 0xcc, 0x50, 0x0b, 0x4f, 0x68, 0xc1, 0x1a, 0xbd, 0xea,
-	0xa0, 0x35, 0x7c, 0xc6, 0xaf, 0x41, 0xe7, 0x1b, 0x1a, 0xfc, 0x7d, 0xa9, 0x3e, 0x89, 0x74, 0x92,
-	0xb9, 0xeb, 0xe6, 0xf6, 0x2b, 0xb8, 0xb3, 0x53, 0xa2, 0xf7, 0xa0, 0x3a, 0xc5, 0xac, 0xe4, 0x96,
-	0x7f, 0xe6, 0x37, 0x98, 0x8b, 0x30, 0xc5, 0x12, 0x5a, 0x11, 0xbc, 0xb4, 0x5e, 0x90, 0xfe, 0x0f,
-	0x02, 0x0f, 0x3e, 0xe6, 0x43, 0xd9, 0x1c, 0xa4, 0x5c, 0xbc, 0x48, 0x51, 0xe9, 0x5d, 0xdc, 0xe4,
-	0x46, 0xdc, 0xd6, 0xff, 0xb8, 0xb7, 0x68, 0x56, 0x77, 0x69, 0xbe, 0x05, 0xd8, 0xcc, 0xdd, 0xcc,
-	0xa1, 0x35, 0x7c, 0xcc, 0x8b, 0x25, 0xe1, 0xf9, 0x92, 0x70, 0xb3, 0x24, 0xbc, 0x5c, 0x12, 0xfe,
-	0x41, 0xf8, 0x58, 0x3a, 0x72, 0xb7, 0x3a, 0xfb, 0xdf, 0x09, 0xb0, 0xeb, 0xce, 0x55, 0x2c, 0x23,
-	0x85, 0xf4, 0x39, 0xd4, 0x8d, 0x17, 0xc5, 0x88, 0x41, 0xdb, 0xb9, 0x11, 0xad, 0x5b, 0x8a, 0xe9,
-	0xe9, 0x8e, 0x37, 0xcb, 0x78, 0x7b, 0x72, 0xab, 0xb7, 0xe2, 0xcc, 0x6d, 0x73, 0xc7, 0x47, 0x3f,
-	0x17, 0x36, 0xb9, 0x5a, 0xd8, 0xe4, 0xcf, 0xc2, 0x26, 0x97, 0x4b, 0xbb, 0x72, 0xb5, 0xb4, 0x2b,
-	0xbf, 0x96, 0x76, 0xe5, 0xf3, 0xc3, 0xcd, 0xbb, 0xfb, 0xb6, 0x7e, 0x79, 0x39, 0x43, 0x35, 0xae,
-	0x9b, 0xb5, 0x39, 0xfa, 0x17, 0x00, 0x00, 0xff, 0xff, 0xd7, 0x8f, 0xf9, 0x6a, 0x9b, 0x03, 0x00,
-	0x00,
+	// 296 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x90, 0xbd, 0x4e, 0xc3, 0x30,
+	0x14, 0x85, 0x6b, 0x28, 0x6d, 0x63, 0x26, 0x2c, 0x06, 0xb7, 0xa8, 0x6e, 0xc5, 0x94, 0x29, 0x91,
+	0xe8, 0x8e, 0x44, 0x25, 0x86, 0xae, 0x51, 0x27, 0x96, 0xca, 0x4d, 0x6e, 0x43, 0x84, 0x5b, 0x47,
+	0xb1, 0x03, 0xe4, 0x2d, 0xfa, 0x58, 0x8c, 0x1d, 0xd9, 0x40, 0xc9, 0x13, 0xf0, 0x06, 0xc8, 0xce,
+	0x4f, 0x37, 0x1f, 0x7f, 0xe7, 0x5e, 0x9d, 0x7b, 0xf0, 0x54, 0x81, 0xd8, 0x85, 0xaf, 0x3c, 0x39,
+	0xf8, 0x6f, 0x50, 0x08, 0x50, 0xca, 0xe7, 0x79, 0x94, 0x68, 0x2f, 0xcd, 0xa4, 0x96, 0xe4, 0xa6,
+	0xc3, 0x5e, 0x83, 0x27, 0xb7, 0xb1, 0x8c, 0xa5, 0xa5, 0xbe, 0x79, 0xd5, 0xc6, 0xc9, 0x2c, 0x96,
+	0x32, 0x16, 0xe0, 0x5b, 0xb5, 0xcd, 0x77, 0xbe, 0x4e, 0xf6, 0xa0, 0x34, 0xdf, 0xa7, 0xb5, 0xe1,
+	0xfe, 0x0f, 0x61, 0xfc, 0x64, 0x36, 0x3f, 0xbf, 0xc3, 0x41, 0x93, 0x3b, 0xec, 0x7c, 0x70, 0x21,
+	0x40, 0x6f, 0x92, 0x88, 0xa2, 0x39, 0x72, 0x9d, 0x60, 0x54, 0x7f, 0xac, 0x22, 0x32, 0xc5, 0x18,
+	0x8c, 0x6b, 0xa3, 0x8b, 0x14, 0xe8, 0x85, 0xa5, 0x8e, 0xfd, 0x59, 0x17, 0x29, 0x10, 0x8a, 0x87,
+	0x2a, 0x0f, 0x43, 0x50, 0x8a, 0x5e, 0xce, 0x91, 0x3b, 0x0a, 0x5a, 0x69, 0x48, 0x04, 0x9a, 0x27,
+	0x42, 0xd1, 0xbe, 0x9d, 0x6a, 0x25, 0x79, 0xc4, 0x4e, 0x97, 0x88, 0x5e, 0xcd, 0x91, 0x7b, 0xfd,
+	0x30, 0xf1, 0xea, 0xcc, 0x5e, 0x9b, 0xd9, 0x5b, 0xb7, 0x8e, 0x65, 0xff, 0xf8, 0x33, 0x43, 0xc1,
+	0x79, 0xc4, 0x6c, 0x0e, 0x33, 0xe0, 0x5a, 0x66, 0x74, 0x50, 0x6f, 0x6e, 0x24, 0x19, 0xe3, 0x91,
+	0x2d, 0xc8, 0x1c, 0x32, 0x6c, 0x90, 0xd1, 0xab, 0x68, 0xb9, 0xf8, 0x2a, 0x19, 0x3a, 0x95, 0x0c,
+	0xfd, 0x96, 0x0c, 0x1d, 0x2b, 0xd6, 0x3b, 0x55, 0xac, 0xf7, 0x5d, 0xb1, 0xde, 0xcb, 0xf8, 0x5c,
+	0xfb, 0x67, 0x57, 0xbc, 0xb9, 0x56, 0x6d, 0x07, 0x36, 0xce, 0xe2, 0x3f, 0x00, 0x00, 0xff, 0xff,
+	0x57, 0xa3, 0xb7, 0xc1, 0x9a, 0x01, 0x00, 0x00,
 }
 
 func (m *AuditEvent) Marshal() (dAtA []byte, err error) {
@@ -317,24 +169,19 @@ func (m *AuditEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Metadata) > 0 {
-		for k := range m.Metadata {
-			v := m.Metadata[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintAudit(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintAudit(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintAudit(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x42
-		}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintAudit(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintAudit(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0x32
 	}
 	if m.Timestamp != nil {
 		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Timestamp, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Timestamp):])
@@ -344,83 +191,12 @@ func (m *AuditEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= n1
 		i = encodeVarintAudit(dAtA, i, uint64(n1))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x2a
 	}
-	if len(m.Error) > 0 {
-		i -= len(m.Error)
-		copy(dAtA[i:], m.Error)
-		i = encodeVarintAudit(dAtA, i, uint64(len(m.Error)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if m.Success {
-		i--
-		if m.Success {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x28
-	}
-	if m.KeyVersion != 0 {
-		i = encodeVarintAudit(dAtA, i, uint64(m.KeyVersion))
-		i--
-		dAtA[i] = 0x20
-	}
-	if len(m.EventType) > 0 {
-		i -= len(m.EventType)
-		copy(dAtA[i:], m.EventType)
-		i = encodeVarintAudit(dAtA, i, uint64(len(m.EventType)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.WalletId) > 0 {
-		i -= len(m.WalletId)
-		copy(dAtA[i:], m.WalletId)
-		i = encodeVarintAudit(dAtA, i, uint64(len(m.WalletId)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintAudit(dAtA, i, uint64(len(m.Id)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryAuditEventsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryAuditEventsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryAuditEventsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAudit(dAtA, i, uint64(size))
-		}
+	if len(m.Details) > 0 {
+		i -= len(m.Details)
+		copy(dAtA[i:], m.Details)
+		i = encodeVarintAudit(dAtA, i, uint64(len(m.Details)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -451,55 +227,6 @@ func (m *QueryAuditEventsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAuditEventsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryAuditEventsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryAuditEventsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAudit(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Events) > 0 {
-		for iNdEx := len(m.Events) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Events[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintAudit(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintAudit(dAtA []byte, offset int, v uint64) int {
 	offset -= sovAudit(v)
 	base := offset
@@ -517,10 +244,6 @@ func (m *AuditEvent) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovAudit(uint64(l))
-	}
 	l = len(m.WalletId)
 	if l > 0 {
 		n += 1 + l + sovAudit(uint64(l))
@@ -529,13 +252,10 @@ func (m *AuditEvent) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAudit(uint64(l))
 	}
-	if m.KeyVersion != 0 {
-		n += 1 + sovAudit(uint64(m.KeyVersion))
-	}
 	if m.Success {
 		n += 2
 	}
-	l = len(m.Error)
+	l = len(m.Details)
 	if l > 0 {
 		n += 1 + l + sovAudit(uint64(l))
 	}
@@ -543,55 +263,12 @@ func (m *AuditEvent) Size() (n int) {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Timestamp)
 		n += 1 + l + sovAudit(uint64(l))
 	}
-	if len(m.Metadata) > 0 {
-		for k, v := range m.Metadata {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovAudit(uint64(len(k))) + 1 + len(v) + sovAudit(uint64(len(v)))
-			n += mapEntrySize + 1 + sovAudit(uint64(mapEntrySize))
-		}
-	}
-	return n
-}
-
-func (m *QueryAuditEventsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.WalletId)
+	l = len(m.Creator)
 	if l > 0 {
 		n += 1 + l + sovAudit(uint64(l))
 	}
-	l = len(m.EventType)
+	l = len(m.ChainId)
 	if l > 0 {
-		n += 1 + l + sovAudit(uint64(l))
-	}
-	if m.Success {
-		n += 2
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovAudit(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryAuditEventsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Events) > 0 {
-		for _, e := range m.Events {
-			l = e.Size()
-			n += 1 + l + sovAudit(uint64(l))
-		}
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
 		n += 1 + l + sovAudit(uint64(l))
 	}
 	return n
@@ -634,38 +311,6 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAudit
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
 			}
 			var stringLen uint64
@@ -696,7 +341,7 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 			}
 			m.WalletId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EventType", wireType)
 			}
@@ -728,26 +373,7 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 			}
 			m.EventType = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyVersion", wireType)
-			}
-			m.KeyVersion = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.KeyVersion |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
 			}
@@ -767,9 +393,9 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 				}
 			}
 			m.Success = bool(v != 0)
-		case 6:
+		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Details", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -797,9 +423,9 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Error = string(dAtA[iNdEx:postIndex])
+			m.Details = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 7:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
 			}
@@ -835,186 +461,9 @@ func (m *AuditEvent) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 8:
+		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAudit
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metadata == nil {
-				m.Metadata = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowAudit
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowAudit
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthAudit
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthAudit
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowAudit
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthAudit
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthAudit
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipAudit(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthAudit
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Metadata[mapkey] = mapvalue
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAudit(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryAuditEventsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAudit
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAuditEventsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAuditEventsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1042,11 +491,11 @@ func (m *QueryAuditEventsRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WalletId = string(dAtA[iNdEx:postIndex])
+			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EventType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1074,183 +523,7 @@ func (m *QueryAuditEventsRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EventType = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Success = bool(v != 0)
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAudit
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAudit(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryAuditEventsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAudit
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAuditEventsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAuditEventsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Events", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAudit
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Events = append(m.Events, &AuditEvent{})
-			if err := m.Events[len(m.Events)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAudit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAudit
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAudit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
