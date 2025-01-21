@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"github.com/spf13/cobra"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,8 +23,10 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryParams(),
 		CmdQueryWallet(),
-		CmdQueryWallets(),
-		CmdQueryPartyData(),
+		CmdListWallets(),
+		CmdQueryKeyRotation(),
+		CmdQueryKeyRotations(),
+		CmdListAuditEvents(),
 	)
 
 	return cmd
@@ -31,8 +34,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 func CmdQueryWallet() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "wallet [address]",
-		Short: "Query a wallet by address",
+		Use:   "wallet [id]",
+		Short: "Query a wallet by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -42,7 +45,7 @@ func CmdQueryWallet() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.Wallet(cmd.Context(), &types.QueryWalletRequest{
-				Address: args[0],
+				Id: args[0],
 			})
 			if err != nil {
 				return err
@@ -56,9 +59,9 @@ func CmdQueryWallet() *cobra.Command {
 	return cmd
 }
 
-func CmdQueryWallets() *cobra.Command {
+func CmdListWallets() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "wallets",
+		Use:   "list-wallets",
 		Short: "Query all wallets",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +76,7 @@ func CmdQueryWallets() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.Wallets(cmd.Context(), &types.QueryWalletsRequest{
+			res, err := queryClient.ListWallets(cmd.Context(), &types.QueryListWalletsRequest{
 				Pagination: pageReq,
 			})
 			if err != nil {
@@ -89,20 +92,26 @@ func CmdQueryWallets() *cobra.Command {
 	return cmd
 }
 
-func CmdQueryPartyData() *cobra.Command {
+func CmdQueryKeyRotation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "party-data [wallet-address]",
-		Short: "Query TSS party data for a wallet",
-		Args:  cobra.ExactArgs(1),
+		Use:   "key-rotation [wallet-id] [version]",
+		Short: "Query a key rotation by wallet ID and version",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
+			version, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("version must be a positive integer: %w", err)
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.PartyData(cmd.Context(), &types.QueryPartyDataRequest{
-				WalletAddress: args[0],
+			res, err := queryClient.KeyRotation(cmd.Context(), &types.QueryKeyRotationRequest{
+				WalletId: args[0],
+				Version:  version,
 			})
 			if err != nil {
 				return err
@@ -113,5 +122,80 @@ func CmdQueryPartyData() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryKeyRotations() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "key-rotations [wallet-id]",
+		Short: "Query all key rotations for a wallet",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.KeyRotations(cmd.Context(), &types.QueryKeyRotationsRequest{
+				WalletId:   args[0],
+				Pagination: pageReq,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "key-rotations")
+	return cmd
+}
+
+func CmdListAuditEvents() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "audit-events [wallet-id] [event-type] [success]",
+		Short: "Query audit events for a wallet",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			success, err := strconv.ParseBool(args[2])
+			if err != nil {
+				return fmt.Errorf("success must be true or false: %w", err)
+			}
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ListAuditEvents(cmd.Context(), &types.QueryListAuditEventsRequest{
+				WalletId:   args[0],
+				EventType:  args[1],
+				Success:    success,
+				Pagination: pageReq,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "audit-events")
 	return cmd
 }

@@ -14,6 +14,7 @@ var (
 	ErrInvalidDIDDocument = sdkerrors.Register(ModuleName, 5, "invalid DID document")
 	ErrUnauthorized       = sdkerrors.Register(ModuleName, 6, "unauthorized")
 	ErrRateLimitExceeded  = sdkerrors.Register(ModuleName, 7, "rate limit exceeded")
+	ErrDIDInactive        = sdkerrors.Register(ModuleName, 8, "DID is inactive")
 
 	// Credential errors (100-199)
 	ErrInvalidCredential        = sdkerrors.Register(ModuleName, 100, "invalid credential")
@@ -42,6 +43,8 @@ var (
 	ErrMFAChallengeExpired   = sdkerrors.Register(ModuleName, 204, "MFA challenge expired")
 	ErrInvalidMFAConfig      = sdkerrors.Register(ModuleName, 205, "invalid MFA configuration")
 	ErrMFAVerificationFailed = sdkerrors.Register(ModuleName, 206, "MFA verification failed")
+	ErrInvalidMFACode        = sdkerrors.Register(ModuleName, 207, "invalid MFA code")
+	ErrMFAMethodAlreadyExists = sdkerrors.Register(ModuleName, 208, "MFA method already exists")
 
 	// OAuth/Social errors (300-399)
 	ErrInvalidSocialIdentity = sdkerrors.Register(ModuleName, 300, "invalid social identity")

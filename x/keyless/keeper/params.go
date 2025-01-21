@@ -24,32 +24,27 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	store.Set([]byte(types.ParamsKey), bz)
 }
 
-// GetMaxWalletsPerDID returns the maximum number of wallets allowed per DID
-func (k Keeper) GetMaxWalletsPerDID(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MaxWalletsPerDid
+// GetMaxParties returns the maximum number of parties allowed
+func (k Keeper) GetMaxParties(ctx sdk.Context) uint32 {
+	return k.GetParams(ctx).MaxParties
 }
 
-// GetMaxSharesPerWallet returns the maximum number of shares allowed per wallet
-func (k Keeper) GetMaxSharesPerWallet(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MaxSharesPerWallet
+// GetMaxThreshold returns the maximum threshold allowed
+func (k Keeper) GetMaxThreshold(ctx sdk.Context) uint32 {
+	return k.GetParams(ctx).MaxThreshold
 }
 
-// GetMinRecoveryThreshold returns the minimum number of shares required for recovery
-func (k Keeper) GetMinRecoveryThreshold(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MinRecoveryThreshold
+// GetMaxSecurityLevel returns the maximum security level allowed
+func (k Keeper) GetMaxSecurityLevel(ctx sdk.Context) uint32 {
+	return k.GetParams(ctx).MaxSecurityLevel
 }
 
-// GetMaxRecoveryThreshold returns the maximum number of shares allowed for recovery
-func (k Keeper) GetMaxRecoveryThreshold(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MaxRecoveryThreshold
+// GetMaxBatchSize returns the maximum batch size allowed
+func (k Keeper) GetMaxBatchSize(ctx sdk.Context) uint32 {
+	return k.GetParams(ctx).MaxBatchSize
 }
 
-// GetRecoveryWindowSeconds returns the time window in seconds for recovery
-func (k Keeper) GetRecoveryWindowSeconds(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).RecoveryWindowSeconds
-}
-
-// GetMaxSigningAttempts returns the maximum number of signing attempts allowed
-func (k Keeper) GetMaxSigningAttempts(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MaxSigningAttempts
+// GetMaxMetadataSize returns the maximum metadata size allowed
+func (k Keeper) GetMaxMetadataSize(ctx sdk.Context) uint32 {
+	return k.GetParams(ctx).MaxMetadataSize
 }

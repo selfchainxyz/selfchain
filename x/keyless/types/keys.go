@@ -18,6 +18,8 @@ const (
 	KeyShareKey  = "keyshare"
 	ParamsKey    = "params"
 	PartyDataKey = "PartyData-"
+	KeyRotationKey = "key_rotation"
+	AuditEventKey = "audit_event"
 )
 
 // KeyPrefix returns the KVStore key prefix for the given key type

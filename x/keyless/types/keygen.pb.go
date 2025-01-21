@@ -7,19 +7,15 @@ import (
 	fmt "fmt"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
-	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
-var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -27,95 +23,25 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// SecurityLevel defines the security requirements
-type SecurityLevel int32
-
-const (
-	SecurityLevel_SECURITY_LEVEL_UNSPECIFIED SecurityLevel = 0
-	SecurityLevel_SECURITY_LEVEL_STANDARD    SecurityLevel = 1
-	SecurityLevel_SECURITY_LEVEL_HIGH        SecurityLevel = 2
-	SecurityLevel_SECURITY_LEVEL_ENTERPRISE  SecurityLevel = 3
-)
-
-var SecurityLevel_name = map[int32]string{
-	0: "SECURITY_LEVEL_UNSPECIFIED",
-	1: "SECURITY_LEVEL_STANDARD",
-	2: "SECURITY_LEVEL_HIGH",
-	3: "SECURITY_LEVEL_ENTERPRISE",
+// KeygenParams represents parameters for key generation
+type KeygenParams struct {
+	SecurityLevel uint32 `protobuf:"varint,1,opt,name=security_level,json=securityLevel,proto3" json:"security_level,omitempty"`
+	Threshold     uint32 `protobuf:"varint,2,opt,name=threshold,proto3" json:"threshold,omitempty"`
+	Parties       uint32 `protobuf:"varint,3,opt,name=parties,proto3" json:"parties,omitempty"`
 }
 
-var SecurityLevel_value = map[string]int32{
-	"SECURITY_LEVEL_UNSPECIFIED": 0,
-	"SECURITY_LEVEL_STANDARD":    1,
-	"SECURITY_LEVEL_HIGH":        2,
-	"SECURITY_LEVEL_ENTERPRISE":  3,
-}
-
-func (x SecurityLevel) String() string {
-	return proto.EnumName(SecurityLevel_name, int32(x))
-}
-
-func (SecurityLevel) EnumDescriptor() ([]byte, []int) {
+func (m *KeygenParams) Reset()         { *m = KeygenParams{} }
+func (m *KeygenParams) String() string { return proto.CompactTextString(m) }
+func (*KeygenParams) ProtoMessage()    {}
+func (*KeygenParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_855858f207a4fe63, []int{0}
 }
-
-// BackupStatus represents the current backup state of key shares
-type BackupStatus int32
-
-const (
-	BackupStatus_BACKUP_STATUS_UNSPECIFIED BackupStatus = 0
-	BackupStatus_BACKUP_STATUS_NONE        BackupStatus = 1
-	BackupStatus_BACKUP_STATUS_PENDING     BackupStatus = 2
-	BackupStatus_BACKUP_STATUS_COMPLETED   BackupStatus = 3
-	BackupStatus_BACKUP_STATUS_FAILED      BackupStatus = 4
-)
-
-var BackupStatus_name = map[int32]string{
-	0: "BACKUP_STATUS_UNSPECIFIED",
-	1: "BACKUP_STATUS_NONE",
-	2: "BACKUP_STATUS_PENDING",
-	3: "BACKUP_STATUS_COMPLETED",
-	4: "BACKUP_STATUS_FAILED",
-}
-
-var BackupStatus_value = map[string]int32{
-	"BACKUP_STATUS_UNSPECIFIED": 0,
-	"BACKUP_STATUS_NONE":        1,
-	"BACKUP_STATUS_PENDING":     2,
-	"BACKUP_STATUS_COMPLETED":   3,
-	"BACKUP_STATUS_FAILED":      4,
-}
-
-func (x BackupStatus) String() string {
-	return proto.EnumName(BackupStatus_name, int32(x))
-}
-
-func (BackupStatus) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_855858f207a4fe63, []int{1}
-}
-
-// KeyMetadata tracks key status and usage
-type KeyMetadata struct {
-	CreatedAt     time.Time     `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at"`
-	LastRotated   time.Time     `protobuf:"bytes,2,opt,name=last_rotated,json=lastRotated,proto3,stdtime" json:"last_rotated"`
-	LastUsed      time.Time     `protobuf:"bytes,3,opt,name=last_used,json=lastUsed,proto3,stdtime" json:"last_used"`
-	UsageCount    uint64        `protobuf:"varint,4,opt,name=usage_count,json=usageCount,proto3" json:"usage_count,omitempty"`
-	BackupStatus  BackupStatus  `protobuf:"varint,5,opt,name=backup_status,json=backupStatus,proto3,enum=selfchain.keyless.BackupStatus" json:"backup_status,omitempty"`
-	SecurityLevel SecurityLevel `protobuf:"varint,6,opt,name=security_level,json=securityLevel,proto3,enum=selfchain.keyless.SecurityLevel" json:"security_level,omitempty"`
-}
-
-func (m *KeyMetadata) Reset()         { *m = KeyMetadata{} }
-func (m *KeyMetadata) String() string { return proto.CompactTextString(m) }
-func (*KeyMetadata) ProtoMessage()    {}
-func (*KeyMetadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_855858f207a4fe63, []int{0}
-}
-func (m *KeyMetadata) XXX_Unmarshal(b []byte) error {
+func (m *KeygenParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *KeyMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *KeygenParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_KeyMetadata.Marshal(b, m, deterministic)
+		return xxx_messageInfo_KeygenParams.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -125,80 +51,59 @@ func (m *KeyMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *KeyMetadata) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyMetadata.Merge(m, src)
+func (m *KeygenParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeygenParams.Merge(m, src)
 }
-func (m *KeyMetadata) XXX_Size() int {
+func (m *KeygenParams) XXX_Size() int {
 	return m.Size()
 }
-func (m *KeyMetadata) XXX_DiscardUnknown() {
-	xxx_messageInfo_KeyMetadata.DiscardUnknown(m)
+func (m *KeygenParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeygenParams.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KeyMetadata proto.InternalMessageInfo
+var xxx_messageInfo_KeygenParams proto.InternalMessageInfo
 
-func (m *KeyMetadata) GetCreatedAt() time.Time {
-	if m != nil {
-		return m.CreatedAt
-	}
-	return time.Time{}
-}
-
-func (m *KeyMetadata) GetLastRotated() time.Time {
-	if m != nil {
-		return m.LastRotated
-	}
-	return time.Time{}
-}
-
-func (m *KeyMetadata) GetLastUsed() time.Time {
-	if m != nil {
-		return m.LastUsed
-	}
-	return time.Time{}
-}
-
-func (m *KeyMetadata) GetUsageCount() uint64 {
-	if m != nil {
-		return m.UsageCount
-	}
-	return 0
-}
-
-func (m *KeyMetadata) GetBackupStatus() BackupStatus {
-	if m != nil {
-		return m.BackupStatus
-	}
-	return BackupStatus_BACKUP_STATUS_UNSPECIFIED
-}
-
-func (m *KeyMetadata) GetSecurityLevel() SecurityLevel {
+func (m *KeygenParams) GetSecurityLevel() uint32 {
 	if m != nil {
 		return m.SecurityLevel
 	}
-	return SecurityLevel_SECURITY_LEVEL_UNSPECIFIED
+	return 0
 }
 
-// EncryptedShare represents an encrypted key share with metadata
-type EncryptedShare struct {
-	EncryptedData string    `protobuf:"bytes,1,opt,name=encrypted_data,json=encryptedData,proto3" json:"encrypted_data,omitempty"`
-	KeyId         string    `protobuf:"bytes,2,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
-	Version       uint32    `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
-	CreatedAt     time.Time `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at"`
+func (m *KeygenParams) GetThreshold() uint32 {
+	if m != nil {
+		return m.Threshold
+	}
+	return 0
 }
 
-func (m *EncryptedShare) Reset()         { *m = EncryptedShare{} }
-func (m *EncryptedShare) String() string { return proto.CompactTextString(m) }
-func (*EncryptedShare) ProtoMessage()    {}
-func (*EncryptedShare) Descriptor() ([]byte, []int) {
+func (m *KeygenParams) GetParties() uint32 {
+	if m != nil {
+		return m.Parties
+	}
+	return 0
+}
+
+// KeygenResult represents the result of key generation
+type KeygenResult struct {
+	Success   bool              `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error     string            `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	PublicKey string            `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Metadata  map[string]string `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (m *KeygenResult) Reset()         { *m = KeygenResult{} }
+func (m *KeygenResult) String() string { return proto.CompactTextString(m) }
+func (*KeygenResult) ProtoMessage()    {}
+func (*KeygenResult) Descriptor() ([]byte, []int) {
 	return fileDescriptor_855858f207a4fe63, []int{1}
 }
-func (m *EncryptedShare) XXX_Unmarshal(b []byte) error {
+func (m *KeygenResult) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EncryptedShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *KeygenResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EncryptedShare.Marshal(b, m, deterministic)
+		return xxx_messageInfo_KeygenResult.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -208,61 +113,120 @@ func (m *EncryptedShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *EncryptedShare) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptedShare.Merge(m, src)
+func (m *KeygenResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeygenResult.Merge(m, src)
 }
-func (m *EncryptedShare) XXX_Size() int {
+func (m *KeygenResult) XXX_Size() int {
 	return m.Size()
 }
-func (m *EncryptedShare) XXX_DiscardUnknown() {
-	xxx_messageInfo_EncryptedShare.DiscardUnknown(m)
+func (m *KeygenResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeygenResult.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EncryptedShare proto.InternalMessageInfo
+var xxx_messageInfo_KeygenResult proto.InternalMessageInfo
 
-func (m *EncryptedShare) GetEncryptedData() string {
+func (m *KeygenResult) GetSuccess() bool {
 	if m != nil {
-		return m.EncryptedData
+		return m.Success
+	}
+	return false
+}
+
+func (m *KeygenResult) GetError() string {
+	if m != nil {
+		return m.Error
 	}
 	return ""
 }
 
-func (m *EncryptedShare) GetKeyId() string {
+func (m *KeygenResult) GetPublicKey() string {
 	if m != nil {
-		return m.KeyId
+		return m.PublicKey
 	}
 	return ""
 }
 
-func (m *EncryptedShare) GetVersion() uint32 {
+func (m *KeygenResult) GetMetadata() map[string]string {
 	if m != nil {
-		return m.Version
+		return m.Metadata
 	}
-	return 0
+	return nil
 }
 
-func (m *EncryptedShare) GetCreatedAt() time.Time {
-	if m != nil {
-		return m.CreatedAt
+// KeygenResponse represents a response from a party during key generation
+type KeygenResponse struct {
+	Success  bool              `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error    string            `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	Metadata map[string]string `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (m *KeygenResponse) Reset()         { *m = KeygenResponse{} }
+func (m *KeygenResponse) String() string { return proto.CompactTextString(m) }
+func (*KeygenResponse) ProtoMessage()    {}
+func (*KeygenResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_855858f207a4fe63, []int{2}
+}
+func (m *KeygenResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeygenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeygenResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
 	}
-	return time.Time{}
+}
+func (m *KeygenResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeygenResponse.Merge(m, src)
+}
+func (m *KeygenResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeygenResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeygenResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeygenResponse proto.InternalMessageInfo
+
+func (m *KeygenResponse) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *KeygenResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+func (m *KeygenResponse) GetMetadata() map[string]string {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
 }
 
 // PartyData represents TSS party data
 type PartyData struct {
-	PartyId          string `protobuf:"bytes,1,opt,name=party_id,json=partyId,proto3" json:"party_id,omitempty"`
-	PublicKey        []byte `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	PartyShare       []byte `protobuf:"bytes,3,opt,name=party_share,json=partyShare,proto3" json:"party_share,omitempty"`
-	VerificationData []byte `protobuf:"bytes,4,opt,name=verification_data,json=verificationData,proto3" json:"verification_data,omitempty"`
-	ChainId          string `protobuf:"bytes,5,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	Status           string `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	PartyId  string            `protobuf:"bytes,1,opt,name=party_id,json=partyId,proto3" json:"party_id,omitempty"`
+	Index    uint32            `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Data     []byte            `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Metadata map[string]string `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *PartyData) Reset()         { *m = PartyData{} }
 func (m *PartyData) String() string { return proto.CompactTextString(m) }
 func (*PartyData) ProtoMessage()    {}
 func (*PartyData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_855858f207a4fe63, []int{2}
+	return fileDescriptor_855858f207a4fe63, []int{3}
 }
 func (m *PartyData) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -298,53 +262,38 @@ func (m *PartyData) GetPartyId() string {
 	return ""
 }
 
-func (m *PartyData) GetPublicKey() []byte {
+func (m *PartyData) GetIndex() uint32 {
 	if m != nil {
-		return m.PublicKey
+		return m.Index
+	}
+	return 0
+}
+
+func (m *PartyData) GetData() []byte {
+	if m != nil {
+		return m.Data
 	}
 	return nil
 }
 
-func (m *PartyData) GetPartyShare() []byte {
+func (m *PartyData) GetMetadata() map[string]string {
 	if m != nil {
-		return m.PartyShare
+		return m.Metadata
 	}
 	return nil
 }
 
-func (m *PartyData) GetVerificationData() []byte {
-	if m != nil {
-		return m.VerificationData
-	}
-	return nil
-}
-
-func (m *PartyData) GetChainId() string {
-	if m != nil {
-		return m.ChainId
-	}
-	return ""
-}
-
-func (m *PartyData) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-// KeyGenRequest represents a request to generate new key shares
+// KeyGenRequest represents a request to generate a new key
 type KeyGenRequest struct {
-	WalletId      string        `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	ChainId       string        `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	SecurityLevel SecurityLevel `protobuf:"varint,3,opt,name=security_level,json=securityLevel,proto3,enum=selfchain.keyless.SecurityLevel" json:"security_level,omitempty"`
+	WalletId      string `protobuf:"bytes,5,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	SecurityLevel string `protobuf:"bytes,6,opt,name=security_level,json=securityLevel,proto3" json:"security_level,omitempty"`
 }
 
 func (m *KeyGenRequest) Reset()         { *m = KeyGenRequest{} }
 func (m *KeyGenRequest) String() string { return proto.CompactTextString(m) }
 func (*KeyGenRequest) ProtoMessage()    {}
 func (*KeyGenRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_855858f207a4fe63, []int{3}
+	return fileDescriptor_855858f207a4fe63, []int{4}
 }
 func (m *KeyGenRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -380,32 +329,26 @@ func (m *KeyGenRequest) GetWalletId() string {
 	return ""
 }
 
-func (m *KeyGenRequest) GetChainId() string {
+func (m *KeyGenRequest) GetSecurityLevel() string {
 	if m != nil {
-		return m.ChainId
+		return m.SecurityLevel
 	}
 	return ""
 }
 
-func (m *KeyGenRequest) GetSecurityLevel() SecurityLevel {
-	if m != nil {
-		return m.SecurityLevel
-	}
-	return SecurityLevel_SECURITY_LEVEL_UNSPECIFIED
-}
-
-// KeyGenResponse represents the response from key generation
+// KeyGenResponse represents a response from key generation
 type KeyGenResponse struct {
-	WalletId  string       `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
-	PublicKey []byte       `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Metadata  *KeyMetadata `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	WalletId  string       `protobuf:"bytes,7,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	Version   uint64       `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
+	PublicKey []byte       `protobuf:"bytes,9,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Metadata  *KeyMetadata `protobuf:"bytes,10,opt,name=metadata,proto3" json:"metadata,omitempty"`
 }
 
 func (m *KeyGenResponse) Reset()         { *m = KeyGenResponse{} }
 func (m *KeyGenResponse) String() string { return proto.CompactTextString(m) }
 func (*KeyGenResponse) ProtoMessage()    {}
 func (*KeyGenResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_855858f207a4fe63, []int{4}
+	return fileDescriptor_855858f207a4fe63, []int{5}
 }
 func (m *KeyGenResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -441,6 +384,13 @@ func (m *KeyGenResponse) GetWalletId() string {
 	return ""
 }
 
+func (m *KeyGenResponse) GetVersion() uint64 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
+
 func (m *KeyGenResponse) GetPublicKey() []byte {
 	if m != nil {
 		return m.PublicKey
@@ -455,70 +405,203 @@ func (m *KeyGenResponse) GetMetadata() *KeyMetadata {
 	return nil
 }
 
+// EncryptedShare represents an encrypted key share
+type EncryptedShare struct {
+	Data      []byte `protobuf:"bytes,11,opt,name=data,proto3" json:"data,omitempty"`
+	Nonce     []byte `protobuf:"bytes,12,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	PublicKey []byte `protobuf:"bytes,13,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+}
+
+func (m *EncryptedShare) Reset()         { *m = EncryptedShare{} }
+func (m *EncryptedShare) String() string { return proto.CompactTextString(m) }
+func (*EncryptedShare) ProtoMessage()    {}
+func (*EncryptedShare) Descriptor() ([]byte, []int) {
+	return fileDescriptor_855858f207a4fe63, []int{6}
+}
+func (m *EncryptedShare) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EncryptedShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EncryptedShare.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EncryptedShare) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncryptedShare.Merge(m, src)
+}
+func (m *EncryptedShare) XXX_Size() int {
+	return m.Size()
+}
+func (m *EncryptedShare) XXX_DiscardUnknown() {
+	xxx_messageInfo_EncryptedShare.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EncryptedShare proto.InternalMessageInfo
+
+func (m *EncryptedShare) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+func (m *EncryptedShare) GetNonce() []byte {
+	if m != nil {
+		return m.Nonce
+	}
+	return nil
+}
+
+func (m *EncryptedShare) GetPublicKey() []byte {
+	if m != nil {
+		return m.PublicKey
+	}
+	return nil
+}
+
+// KeyMetadata represents metadata about a key
+type KeyMetadata struct {
+	SecurityLevel string `protobuf:"bytes,14,opt,name=security_level,json=securityLevel,proto3" json:"security_level,omitempty"`
+	Version       uint64 `protobuf:"varint,15,opt,name=version,proto3" json:"version,omitempty"`
+	Threshold     uint32 `protobuf:"varint,16,opt,name=threshold,proto3" json:"threshold,omitempty"`
+	TotalShares   uint32 `protobuf:"varint,17,opt,name=total_shares,json=totalShares,proto3" json:"total_shares,omitempty"`
+	PublicKey     []byte `protobuf:"bytes,18,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+}
+
+func (m *KeyMetadata) Reset()         { *m = KeyMetadata{} }
+func (m *KeyMetadata) String() string { return proto.CompactTextString(m) }
+func (*KeyMetadata) ProtoMessage()    {}
+func (*KeyMetadata) Descriptor() ([]byte, []int) {
+	return fileDescriptor_855858f207a4fe63, []int{7}
+}
+func (m *KeyMetadata) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeyMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeyMetadata.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KeyMetadata) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyMetadata.Merge(m, src)
+}
+func (m *KeyMetadata) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeyMetadata) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeyMetadata.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeyMetadata proto.InternalMessageInfo
+
+func (m *KeyMetadata) GetSecurityLevel() string {
+	if m != nil {
+		return m.SecurityLevel
+	}
+	return ""
+}
+
+func (m *KeyMetadata) GetVersion() uint64 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
+
+func (m *KeyMetadata) GetThreshold() uint32 {
+	if m != nil {
+		return m.Threshold
+	}
+	return 0
+}
+
+func (m *KeyMetadata) GetTotalShares() uint32 {
+	if m != nil {
+		return m.TotalShares
+	}
+	return 0
+}
+
+func (m *KeyMetadata) GetPublicKey() []byte {
+	if m != nil {
+		return m.PublicKey
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterEnum("selfchain.keyless.SecurityLevel", SecurityLevel_name, SecurityLevel_value)
-	proto.RegisterEnum("selfchain.keyless.BackupStatus", BackupStatus_name, BackupStatus_value)
-	proto.RegisterType((*KeyMetadata)(nil), "selfchain.keyless.KeyMetadata")
-	proto.RegisterType((*EncryptedShare)(nil), "selfchain.keyless.EncryptedShare")
+	proto.RegisterType((*KeygenParams)(nil), "selfchain.keyless.KeygenParams")
+	proto.RegisterType((*KeygenResult)(nil), "selfchain.keyless.KeygenResult")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.KeygenResult.MetadataEntry")
+	proto.RegisterType((*KeygenResponse)(nil), "selfchain.keyless.KeygenResponse")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.KeygenResponse.MetadataEntry")
 	proto.RegisterType((*PartyData)(nil), "selfchain.keyless.PartyData")
+	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.PartyData.MetadataEntry")
 	proto.RegisterType((*KeyGenRequest)(nil), "selfchain.keyless.KeyGenRequest")
 	proto.RegisterType((*KeyGenResponse)(nil), "selfchain.keyless.KeyGenResponse")
+	proto.RegisterType((*EncryptedShare)(nil), "selfchain.keyless.EncryptedShare")
+	proto.RegisterType((*KeyMetadata)(nil), "selfchain.keyless.KeyMetadata")
 }
 
 func init() { proto.RegisterFile("selfchain/keyless/keygen.proto", fileDescriptor_855858f207a4fe63) }
 
 var fileDescriptor_855858f207a4fe63 = []byte{
-	// 749 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x4d, 0x6f, 0xdb, 0x46,
-	0x10, 0xd5, 0x5a, 0xb2, 0x22, 0x8d, 0x25, 0x81, 0xd9, 0xe6, 0x43, 0x76, 0x10, 0xca, 0x30, 0x50,
-	0xc0, 0x48, 0x01, 0x19, 0x48, 0x6e, 0xbd, 0xc9, 0x22, 0xa3, 0x10, 0x56, 0x14, 0x61, 0x29, 0x15,
-	0x68, 0x2f, 0x04, 0x45, 0x8e, 0x15, 0x42, 0x34, 0xc9, 0x72, 0x97, 0x6e, 0x79, 0xef, 0xa1, 0xa7,
-	0xc2, 0xb7, 0xfe, 0x8a, 0xfe, 0x8d, 0x22, 0xc7, 0x1c, 0x7b, 0x6a, 0x0b, 0xfb, 0x8f, 0x14, 0xbb,
-	0x94, 0x1c, 0x49, 0x09, 0x1a, 0xc4, 0x27, 0x69, 0xde, 0x7b, 0xf3, 0xf8, 0x38, 0xc3, 0x5d, 0xd0,
-	0x39, 0x86, 0xe7, 0xde, 0x5b, 0x37, 0x88, 0x4e, 0x16, 0x98, 0x87, 0xc8, 0xb9, 0xfc, 0x9d, 0x63,
-	0xd4, 0x4d, 0xd2, 0x58, 0xc4, 0xf4, 0xfe, 0x2d, 0xdf, 0x5d, 0xf2, 0x07, 0x0f, 0xe6, 0xf1, 0x3c,
-	0x56, 0xec, 0x89, 0xfc, 0x57, 0x08, 0x0f, 0x3a, 0xf3, 0x38, 0x9e, 0x87, 0x78, 0xa2, 0xaa, 0x59,
-	0x76, 0x7e, 0x22, 0x82, 0x0b, 0xe4, 0xc2, 0xbd, 0x48, 0x0a, 0xc1, 0xd1, 0x6f, 0x65, 0xd8, 0x3b,
-	0xc3, 0xfc, 0x35, 0x0a, 0xd7, 0x77, 0x85, 0x4b, 0xfb, 0x00, 0x5e, 0x8a, 0xae, 0x40, 0xdf, 0x71,
-	0x45, 0x9b, 0x1c, 0x92, 0xe3, 0xbd, 0xe7, 0x07, 0xdd, 0xc2, 0xa5, 0xbb, 0x72, 0xe9, 0x4e, 0x56,
-	0x2e, 0xa7, 0xb5, 0x77, 0x7f, 0x77, 0x4a, 0x57, 0xff, 0x74, 0x08, 0xab, 0x2f, 0xfb, 0x7a, 0x82,
-	0x0e, 0xa0, 0x11, 0xba, 0x5c, 0x38, 0x69, 0x2c, 0x24, 0xd2, 0xde, 0xf9, 0x02, 0x9b, 0x3d, 0xd9,
-	0xc9, 0x8a, 0x46, 0xda, 0x83, 0xba, 0x32, 0xca, 0x38, 0xfa, 0xed, 0xf2, 0x17, 0xb8, 0xd4, 0x64,
-	0xdb, 0x94, 0xa3, 0x4f, 0x3b, 0xb0, 0x97, 0x71, 0x77, 0x8e, 0x8e, 0x17, 0x67, 0x91, 0x68, 0x57,
-	0x0e, 0xc9, 0x71, 0x85, 0x81, 0x82, 0xfa, 0x12, 0xa1, 0x06, 0x34, 0x67, 0xae, 0xb7, 0xc8, 0x12,
-	0x87, 0x0b, 0x57, 0x64, 0xbc, 0xbd, 0x7b, 0x48, 0x8e, 0x5b, 0xcf, 0x3b, 0xdd, 0x8f, 0x66, 0xdc,
-	0x3d, 0x55, 0x3a, 0x5b, 0xc9, 0x58, 0x63, 0xb6, 0x56, 0xd1, 0x01, 0xb4, 0x38, 0x7a, 0x59, 0x1a,
-	0x88, 0xdc, 0x09, 0xf1, 0x12, 0xc3, 0x76, 0x55, 0xd9, 0x1c, 0x7e, 0xc2, 0xc6, 0x5e, 0x0a, 0x87,
-	0x52, 0xc7, 0x9a, 0x7c, 0xbd, 0x3c, 0xfa, 0x83, 0x40, 0xcb, 0x8c, 0xbc, 0x34, 0x4f, 0x04, 0xfa,
-	0xf6, 0x5b, 0x37, 0x45, 0xfa, 0x35, 0xb4, 0x70, 0x85, 0x38, 0x72, 0x4b, 0x6a, 0x2f, 0x75, 0xd6,
-	0xbc, 0x45, 0x0d, 0xb9, 0xba, 0x87, 0x50, 0x5d, 0x60, 0xee, 0x04, 0xc5, 0xbc, 0xeb, 0x6c, 0x77,
-	0x81, 0xb9, 0xe5, 0xd3, 0x36, 0xdc, 0xbb, 0xc4, 0x94, 0x07, 0x71, 0xa4, 0x26, 0xd8, 0x64, 0xab,
-	0x72, 0x6b, 0xd7, 0x95, 0x3b, 0xed, 0xfa, 0xe8, 0x4f, 0x02, 0xf5, 0xb1, 0x9b, 0x8a, 0x5c, 0x65,
-	0xd8, 0x87, 0x5a, 0x22, 0x0b, 0x99, 0xa2, 0x08, 0x79, 0x4f, 0xd5, 0x96, 0x4f, 0x9f, 0x02, 0x24,
-	0xd9, 0x2c, 0x0c, 0x3c, 0x67, 0x81, 0xb9, 0x8a, 0xd8, 0x60, 0xf5, 0x02, 0x39, 0xc3, 0x5c, 0xee,
-	0xa9, 0xe8, 0xe4, 0xf2, 0x9d, 0x55, 0xd4, 0x06, 0x03, 0x05, 0x15, 0x53, 0xf8, 0x06, 0xee, 0x5f,
-	0x62, 0x1a, 0x9c, 0x07, 0x9e, 0x2b, 0x82, 0x38, 0x2a, 0x06, 0x51, 0x51, 0x32, 0x6d, 0x9d, 0x58,
-	0xe5, 0x50, 0x33, 0x97, 0x39, 0x76, 0x8b, 0x1c, 0xaa, 0xb6, 0x7c, 0xfa, 0x08, 0xaa, 0xcb, 0x45,
-	0x57, 0x15, 0xb1, 0xac, 0x8e, 0xae, 0x08, 0x34, 0xcf, 0x30, 0x1f, 0x60, 0xc4, 0xf0, 0xc7, 0x0c,
-	0xb9, 0xa0, 0x4f, 0xa0, 0xfe, 0x93, 0x1b, 0x86, 0x28, 0x3e, 0xbc, 0x4d, 0xad, 0x00, 0x2c, 0x7f,
-	0xe3, 0x09, 0x3b, 0x9b, 0x4f, 0xf8, 0xf8, 0x5b, 0x28, 0xdf, 0xed, 0x5b, 0xf8, 0x95, 0x40, 0x6b,
-	0x15, 0x89, 0x27, 0x71, 0xc4, 0xf1, 0xff, 0x33, 0x7d, 0x66, 0xc4, 0xdf, 0x42, 0xed, 0x62, 0x79,
-	0xce, 0x97, 0x87, 0x49, 0xff, 0x44, 0xa2, 0xb5, 0xdb, 0x80, 0xdd, 0xea, 0x9f, 0xfd, 0x42, 0xa0,
-	0xb9, 0x91, 0x95, 0xea, 0x70, 0x60, 0x9b, 0xfd, 0x29, 0xb3, 0x26, 0xdf, 0x3b, 0x43, 0xf3, 0x3b,
-	0x73, 0xe8, 0x4c, 0x47, 0xf6, 0xd8, 0xec, 0x5b, 0x2f, 0x2d, 0xd3, 0xd0, 0x4a, 0xf4, 0x09, 0x3c,
-	0xde, 0xe2, 0xed, 0x49, 0x6f, 0x64, 0xf4, 0x98, 0xa1, 0x11, 0xfa, 0x18, 0xbe, 0xda, 0x22, 0x5f,
-	0x59, 0x83, 0x57, 0xda, 0x0e, 0x7d, 0x0a, 0xfb, 0x5b, 0x84, 0x39, 0x9a, 0x98, 0x6c, 0xcc, 0x2c,
-	0xdb, 0xd4, 0xca, 0xcf, 0x7e, 0x27, 0xd0, 0x58, 0x3f, 0x85, 0x52, 0x7f, 0xda, 0xeb, 0x9f, 0x4d,
-	0xc7, 0xd2, 0x7d, 0x32, 0xb5, 0xb7, 0x42, 0x3c, 0x02, 0xba, 0x49, 0x8f, 0xde, 0x8c, 0x4c, 0x8d,
-	0xd0, 0x7d, 0x78, 0xb8, 0x89, 0x8f, 0xcd, 0x91, 0x61, 0x8d, 0x06, 0xda, 0x8e, 0xcc, 0xbd, 0x49,
-	0xf5, 0xdf, 0xbc, 0x1e, 0x0f, 0xcd, 0x89, 0x69, 0x68, 0x65, 0xda, 0x86, 0x07, 0x9b, 0xe4, 0xcb,
-	0x9e, 0x35, 0x34, 0x0d, 0xad, 0x72, 0xfa, 0xe2, 0xdd, 0xb5, 0x4e, 0xde, 0x5f, 0xeb, 0xe4, 0xdf,
-	0x6b, 0x9d, 0x5c, 0xdd, 0xe8, 0xa5, 0xf7, 0x37, 0x7a, 0xe9, 0xaf, 0x1b, 0xbd, 0xf4, 0xc3, 0xfe,
-	0x87, 0xcb, 0xfc, 0xe7, 0xdb, 0xeb, 0x5c, 0xe4, 0x09, 0xf2, 0x59, 0x55, 0x9d, 0xb2, 0x17, 0xff,
-	0x05, 0x00, 0x00, 0xff, 0xff, 0xb0, 0xd5, 0x24, 0x19, 0xf0, 0x05, 0x00, 0x00,
+	// 594 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xee, 0x36, 0xfd, 0x89, 0x27, 0x3f, 0xb4, 0xab, 0x1e, 0xdc, 0x02, 0x56, 0xb0, 0x84, 0x14,
+	0x21, 0x91, 0x4a, 0xed, 0x05, 0x95, 0x1b, 0xa2, 0x54, 0x55, 0x40, 0xaa, 0xdc, 0x13, 0x5c, 0xa2,
+	0xad, 0x3d, 0x24, 0x56, 0x1d, 0xdb, 0xec, 0xae, 0x43, 0xfd, 0x16, 0x3c, 0x03, 0x0f, 0xc0, 0x73,
+	0x20, 0x4e, 0xbd, 0x20, 0x71, 0x44, 0x89, 0x78, 0x0f, 0xb4, 0xeb, 0xd8, 0x71, 0xdc, 0x08, 0x89,
+	0x43, 0x4f, 0xde, 0xf9, 0xd9, 0xf9, 0xe6, 0xfb, 0x66, 0x3d, 0x60, 0x09, 0x0c, 0x3e, 0xba, 0x23,
+	0xe6, 0x87, 0x87, 0xd7, 0x98, 0x06, 0x28, 0x84, 0xfa, 0x0e, 0x31, 0xec, 0xc5, 0x3c, 0x92, 0x11,
+	0xdd, 0x2d, 0xe2, 0xbd, 0x79, 0xfc, 0x60, 0x6f, 0x18, 0x0d, 0x23, 0x1d, 0x3d, 0x54, 0xa7, 0x2c,
+	0xd1, 0x1e, 0x43, 0xb3, 0xaf, 0x2f, 0x5e, 0x30, 0xce, 0xc6, 0x82, 0x3e, 0x85, 0xb6, 0x40, 0x37,
+	0xe1, 0xbe, 0x4c, 0x07, 0x01, 0x4e, 0x30, 0x30, 0x49, 0x87, 0x74, 0x5b, 0x4e, 0x2b, 0xf7, 0xbe,
+	0x55, 0x4e, 0xfa, 0x08, 0x0c, 0x39, 0xe2, 0x28, 0x46, 0x51, 0xe0, 0x99, 0xeb, 0x3a, 0x63, 0xe1,
+	0xa0, 0x26, 0x6c, 0xc7, 0x8c, 0x4b, 0x1f, 0x85, 0x59, 0xd3, 0xb1, 0xdc, 0xb4, 0xff, 0x90, 0x1c,
+	0xcf, 0x41, 0x91, 0x04, 0x52, 0xa5, 0x8a, 0xc4, 0x75, 0x51, 0x08, 0x0d, 0x54, 0x77, 0x72, 0x93,
+	0xee, 0xc1, 0x26, 0x72, 0x1e, 0x71, 0x5d, 0xde, 0x70, 0x32, 0x83, 0x3e, 0x06, 0x88, 0x93, 0xab,
+	0xc0, 0x77, 0x07, 0xd7, 0x98, 0xea, 0xea, 0x86, 0x63, 0x64, 0x9e, 0x3e, 0xa6, 0xf4, 0x1c, 0xea,
+	0x63, 0x94, 0xcc, 0x63, 0x92, 0x99, 0x1b, 0x9d, 0x5a, 0xb7, 0x71, 0xf4, 0xbc, 0x77, 0x47, 0x8a,
+	0x5e, 0xb9, 0x83, 0xde, 0xbb, 0x79, 0xfe, 0x69, 0x28, 0x79, 0xea, 0x14, 0xd7, 0x0f, 0x5e, 0x42,
+	0x6b, 0x29, 0x44, 0x77, 0xa0, 0xa6, 0x30, 0x89, 0xc6, 0x54, 0x47, 0xd5, 0xe2, 0x84, 0x05, 0x09,
+	0xe6, 0x2d, 0x6a, 0xe3, 0x64, 0xfd, 0x05, 0xb1, 0x7f, 0x10, 0x68, 0x17, 0x28, 0x71, 0x14, 0x0a,
+	0xfc, 0x6f, 0xa6, 0xfd, 0x12, 0x95, 0x9a, 0xa6, 0x72, 0xf8, 0x2f, 0x2a, 0x1a, 0xe4, 0x7e, 0xc8,
+	0xfc, 0x24, 0x60, 0x5c, 0x30, 0x2e, 0xd3, 0xd7, 0x4c, 0x32, 0xba, 0x0f, 0x75, 0x35, 0xcd, 0x74,
+	0xe0, 0x7b, 0xf3, 0xeb, 0x7a, 0xba, 0xe9, 0xb9, 0xa7, 0x4a, 0xf8, 0xa1, 0x87, 0x37, 0xf3, 0x17,
+	0x91, 0x19, 0x94, 0xc2, 0xc6, 0x9c, 0x04, 0xe9, 0x36, 0x1d, 0x7d, 0xa6, 0x6f, 0xee, 0xcc, 0xe9,
+	0xd9, 0x0a, 0x72, 0x05, 0xe8, 0xfd, 0xf0, 0xba, 0x84, 0x56, 0x1f, 0xd3, 0x33, 0x25, 0xdf, 0xa7,
+	0x04, 0x85, 0xa4, 0x0f, 0xc1, 0xf8, 0xcc, 0x82, 0x00, 0xa5, 0xe2, 0xb6, 0xa9, 0xd3, 0xeb, 0x99,
+	0xe3, 0xdc, 0x5b, 0xf1, 0x67, 0x6c, 0xe9, 0x8c, 0xe5, 0x3f, 0xc3, 0xfe, 0x9a, 0x4d, 0xfe, 0xac,
+	0x34, 0xf9, 0xa5, 0xb2, 0xdb, 0x95, 0xb2, 0x26, 0x6c, 0x4f, 0x90, 0x0b, 0x3f, 0x0a, 0xcd, 0x7a,
+	0x87, 0x74, 0x37, 0x9c, 0xdc, 0xac, 0x3c, 0x75, 0x43, 0xab, 0x57, 0x7a, 0xea, 0x27, 0x25, 0x09,
+	0xa1, 0x43, 0xba, 0x8d, 0x23, 0x6b, 0xf5, 0xfb, 0xc8, 0x05, 0x5a, 0xc8, 0x66, 0xbf, 0x87, 0xf6,
+	0x69, 0xe8, 0xf2, 0x34, 0x96, 0xe8, 0x5d, 0x8e, 0x18, 0xc7, 0x62, 0x48, 0x8d, 0xd2, 0x90, 0xf6,
+	0x60, 0x33, 0x8c, 0x42, 0x17, 0xcd, 0xa6, 0x76, 0x66, 0x46, 0xa5, 0xad, 0x56, 0xa5, 0x2d, 0xfb,
+	0x1b, 0x81, 0x46, 0x09, 0x74, 0x85, 0x6c, 0xed, 0x15, 0xb2, 0x95, 0x65, 0x78, 0xb0, 0x2c, 0xc3,
+	0xd2, 0xaa, 0xd9, 0xa9, 0xae, 0x9a, 0x27, 0xd0, 0x94, 0x91, 0x64, 0xc1, 0x40, 0x28, 0x1a, 0xc2,
+	0xdc, 0xd5, 0x09, 0x0d, 0xed, 0xd3, 0xcc, 0x44, 0xa5, 0x61, 0x5a, 0x69, 0xf8, 0xd5, 0xf1, 0xf7,
+	0xa9, 0x45, 0x6e, 0xa7, 0x16, 0xf9, 0x3d, 0xb5, 0xc8, 0x97, 0x99, 0xb5, 0x76, 0x3b, 0xb3, 0xd6,
+	0x7e, 0xcd, 0xac, 0xb5, 0x0f, 0xfb, 0x8b, 0x25, 0x7b, 0x53, 0xac, 0x59, 0x99, 0xc6, 0x28, 0xae,
+	0xb6, 0xf4, 0xf6, 0x3c, 0xfe, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x31, 0xbb, 0xfd, 0x06, 0x88, 0x05,
+	0x00, 0x00,
 }
 
-func (m *KeyMetadata) Marshal() (dAtA []byte, err error) {
+func (m *KeygenParams) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -528,104 +611,155 @@ func (m *KeyMetadata) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *KeyMetadata) MarshalTo(dAtA []byte) (int, error) {
+func (m *KeygenParams) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *KeyMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *KeygenParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.SecurityLevel != 0 {
-		i = encodeVarintKeygen(dAtA, i, uint64(m.SecurityLevel))
-		i--
-		dAtA[i] = 0x30
-	}
-	if m.BackupStatus != 0 {
-		i = encodeVarintKeygen(dAtA, i, uint64(m.BackupStatus))
-		i--
-		dAtA[i] = 0x28
-	}
-	if m.UsageCount != 0 {
-		i = encodeVarintKeygen(dAtA, i, uint64(m.UsageCount))
-		i--
-		dAtA[i] = 0x20
-	}
-	n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.LastUsed, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.LastUsed):])
-	if err1 != nil {
-		return 0, err1
-	}
-	i -= n1
-	i = encodeVarintKeygen(dAtA, i, uint64(n1))
-	i--
-	dAtA[i] = 0x1a
-	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.LastRotated, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.LastRotated):])
-	if err2 != nil {
-		return 0, err2
-	}
-	i -= n2
-	i = encodeVarintKeygen(dAtA, i, uint64(n2))
-	i--
-	dAtA[i] = 0x12
-	n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt):])
-	if err3 != nil {
-		return 0, err3
-	}
-	i -= n3
-	i = encodeVarintKeygen(dAtA, i, uint64(n3))
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *EncryptedShare) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EncryptedShare) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EncryptedShare) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt):])
-	if err4 != nil {
-		return 0, err4
-	}
-	i -= n4
-	i = encodeVarintKeygen(dAtA, i, uint64(n4))
-	i--
-	dAtA[i] = 0x22
-	if m.Version != 0 {
-		i = encodeVarintKeygen(dAtA, i, uint64(m.Version))
+	if m.Parties != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Parties))
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.KeyId) > 0 {
-		i -= len(m.KeyId)
-		copy(dAtA[i:], m.KeyId)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.KeyId)))
+	if m.Threshold != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Threshold))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.SecurityLevel != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.SecurityLevel))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *KeygenResult) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeygenResult) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeygenResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Metadata) > 0 {
+		for k := range m.Metadata {
+			v := m.Metadata[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintKeygen(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Error)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.EncryptedData) > 0 {
-		i -= len(m.EncryptedData)
-		copy(dAtA[i:], m.EncryptedData)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.EncryptedData)))
+	if m.Success {
 		i--
-		dAtA[i] = 0xa
+		if m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *KeygenResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeygenResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeygenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Metadata) > 0 {
+		for k := range m.Metadata {
+			v := m.Metadata[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintKeygen(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Success {
+		i--
+		if m.Success {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -650,40 +784,36 @@ func (m *PartyData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Status) > 0 {
-		i -= len(m.Status)
-		copy(dAtA[i:], m.Status)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Status)))
-		i--
-		dAtA[i] = 0x32
+	if len(m.Metadata) > 0 {
+		for k := range m.Metadata {
+			v := m.Metadata[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintKeygen(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintKeygen(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x22
+		}
 	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.ChainId)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.VerificationData) > 0 {
-		i -= len(m.VerificationData)
-		copy(dAtA[i:], m.VerificationData)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.VerificationData)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.PartyShare) > 0 {
-		i -= len(m.PartyShare)
-		copy(dAtA[i:], m.PartyShare)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PartyShare)))
+	if len(m.Data) > 0 {
+		i -= len(m.Data)
+		copy(dAtA[i:], m.Data)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Data)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.PublicKey) > 0 {
-		i -= len(m.PublicKey)
-		copy(dAtA[i:], m.PublicKey)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PublicKey)))
+	if m.Index != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Index))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x10
 	}
 	if len(m.PartyId) > 0 {
 		i -= len(m.PartyId)
@@ -715,24 +845,19 @@ func (m *KeyGenRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.SecurityLevel != 0 {
-		i = encodeVarintKeygen(dAtA, i, uint64(m.SecurityLevel))
+	if len(m.SecurityLevel) > 0 {
+		i -= len(m.SecurityLevel)
+		copy(dAtA[i:], m.SecurityLevel)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.SecurityLevel)))
 		i--
-		dAtA[i] = 0x18
-	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintKeygen(dAtA, i, uint64(len(m.ChainId)))
-		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x32
 	}
 	if len(m.WalletId) > 0 {
 		i -= len(m.WalletId)
 		copy(dAtA[i:], m.WalletId)
 		i = encodeVarintKeygen(dAtA, i, uint64(len(m.WalletId)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x2a
 	}
 	return len(dAtA) - i, nil
 }
@@ -767,21 +892,128 @@ func (m *KeyGenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i = encodeVarintKeygen(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x52
 	}
 	if len(m.PublicKey) > 0 {
 		i -= len(m.PublicKey)
 		copy(dAtA[i:], m.PublicKey)
 		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PublicKey)))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x4a
+	}
+	if m.Version != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x40
 	}
 	if len(m.WalletId) > 0 {
 		i -= len(m.WalletId)
 		copy(dAtA[i:], m.WalletId)
 		i = encodeVarintKeygen(dAtA, i, uint64(len(m.WalletId)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x3a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EncryptedShare) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EncryptedShare) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EncryptedShare) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x6a
+	}
+	if len(m.Nonce) > 0 {
+		i -= len(m.Nonce)
+		copy(dAtA[i:], m.Nonce)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Nonce)))
+		i--
+		dAtA[i] = 0x62
+	}
+	if len(m.Data) > 0 {
+		i -= len(m.Data)
+		copy(dAtA[i:], m.Data)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.Data)))
+		i--
+		dAtA[i] = 0x5a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *KeyMetadata) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeyMetadata) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeyMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x92
+	}
+	if m.TotalShares != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.TotalShares))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x88
+	}
+	if m.Threshold != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Threshold))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x80
+	}
+	if m.Version != 0 {
+		i = encodeVarintKeygen(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x78
+	}
+	if len(m.SecurityLevel) > 0 {
+		i -= len(m.SecurityLevel)
+		copy(dAtA[i:], m.SecurityLevel)
+		i = encodeVarintKeygen(dAtA, i, uint64(len(m.SecurityLevel)))
+		i--
+		dAtA[i] = 0x72
 	}
 	return len(dAtA) - i, nil
 }
@@ -797,49 +1029,73 @@ func encodeVarintKeygen(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *KeyMetadata) Size() (n int) {
+func (m *KeygenParams) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt)
-	n += 1 + l + sovKeygen(uint64(l))
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.LastRotated)
-	n += 1 + l + sovKeygen(uint64(l))
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.LastUsed)
-	n += 1 + l + sovKeygen(uint64(l))
-	if m.UsageCount != 0 {
-		n += 1 + sovKeygen(uint64(m.UsageCount))
-	}
-	if m.BackupStatus != 0 {
-		n += 1 + sovKeygen(uint64(m.BackupStatus))
-	}
 	if m.SecurityLevel != 0 {
 		n += 1 + sovKeygen(uint64(m.SecurityLevel))
+	}
+	if m.Threshold != 0 {
+		n += 1 + sovKeygen(uint64(m.Threshold))
+	}
+	if m.Parties != 0 {
+		n += 1 + sovKeygen(uint64(m.Parties))
 	}
 	return n
 }
 
-func (m *EncryptedShare) Size() (n int) {
+func (m *KeygenResult) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.EncryptedData)
+	if m.Success {
+		n += 2
+	}
+	l = len(m.Error)
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
-	l = len(m.KeyId)
+	l = len(m.PublicKey)
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
-	if m.Version != 0 {
-		n += 1 + sovKeygen(uint64(m.Version))
+	if len(m.Metadata) > 0 {
+		for k, v := range m.Metadata {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovKeygen(uint64(len(k))) + 1 + len(v) + sovKeygen(uint64(len(v)))
+			n += mapEntrySize + 1 + sovKeygen(uint64(mapEntrySize))
+		}
 	}
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt)
-	n += 1 + l + sovKeygen(uint64(l))
+	return n
+}
+
+func (m *KeygenResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Success {
+		n += 2
+	}
+	l = len(m.Error)
+	if l > 0 {
+		n += 1 + l + sovKeygen(uint64(l))
+	}
+	if len(m.Metadata) > 0 {
+		for k, v := range m.Metadata {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovKeygen(uint64(len(k))) + 1 + len(v) + sovKeygen(uint64(len(v)))
+			n += mapEntrySize + 1 + sovKeygen(uint64(mapEntrySize))
+		}
+	}
 	return n
 }
 
@@ -853,25 +1109,20 @@ func (m *PartyData) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
-	l = len(m.PublicKey)
+	if m.Index != 0 {
+		n += 1 + sovKeygen(uint64(m.Index))
+	}
+	l = len(m.Data)
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
-	l = len(m.PartyShare)
-	if l > 0 {
-		n += 1 + l + sovKeygen(uint64(l))
-	}
-	l = len(m.VerificationData)
-	if l > 0 {
-		n += 1 + l + sovKeygen(uint64(l))
-	}
-	l = len(m.ChainId)
-	if l > 0 {
-		n += 1 + l + sovKeygen(uint64(l))
-	}
-	l = len(m.Status)
-	if l > 0 {
-		n += 1 + l + sovKeygen(uint64(l))
+	if len(m.Metadata) > 0 {
+		for k, v := range m.Metadata {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovKeygen(uint64(len(k))) + 1 + len(v) + sovKeygen(uint64(len(v)))
+			n += mapEntrySize + 1 + sovKeygen(uint64(mapEntrySize))
+		}
 	}
 	return n
 }
@@ -886,12 +1137,9 @@ func (m *KeyGenRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
-	l = len(m.ChainId)
+	l = len(m.SecurityLevel)
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
-	}
-	if m.SecurityLevel != 0 {
-		n += 1 + sovKeygen(uint64(m.SecurityLevel))
 	}
 	return n
 }
@@ -906,6 +1154,9 @@ func (m *KeyGenResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
 	}
+	if m.Version != 0 {
+		n += 1 + sovKeygen(uint64(m.Version))
+	}
 	l = len(m.PublicKey)
 	if l > 0 {
 		n += 1 + l + sovKeygen(uint64(l))
@@ -917,13 +1168,60 @@ func (m *KeyGenResponse) Size() (n int) {
 	return n
 }
 
+func (m *EncryptedShare) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Data)
+	if l > 0 {
+		n += 1 + l + sovKeygen(uint64(l))
+	}
+	l = len(m.Nonce)
+	if l > 0 {
+		n += 1 + l + sovKeygen(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovKeygen(uint64(l))
+	}
+	return n
+}
+
+func (m *KeyMetadata) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SecurityLevel)
+	if l > 0 {
+		n += 1 + l + sovKeygen(uint64(l))
+	}
+	if m.Version != 0 {
+		n += 1 + sovKeygen(uint64(m.Version))
+	}
+	if m.Threshold != 0 {
+		n += 2 + sovKeygen(uint64(m.Threshold))
+	}
+	if m.TotalShares != 0 {
+		n += 2 + sovKeygen(uint64(m.TotalShares))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 2 + l + sovKeygen(uint64(l))
+	}
+	return n
+}
+
 func sovKeygen(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozKeygen(x uint64) (n int) {
 	return sovKeygen(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *KeyMetadata) Unmarshal(dAtA []byte) error {
+func (m *KeygenParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -946,150 +1244,13 @@ func (m *KeyMetadata) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: KeyMetadata: wiretype end group for non-group")
+			return fmt.Errorf("proto: KeygenParams: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: KeyMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: KeygenParams: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastRotated", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.LastRotated, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastUsed", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.LastUsed, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UsageCount", wireType)
-			}
-			m.UsageCount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.UsageCount |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BackupStatus", wireType)
-			}
-			m.BackupStatus = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.BackupStatus |= BackupStatus(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SecurityLevel", wireType)
 			}
@@ -1103,7 +1264,45 @@ func (m *KeyMetadata) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SecurityLevel |= SecurityLevel(b&0x7F) << shift
+				m.SecurityLevel |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Threshold", wireType)
+			}
+			m.Threshold = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Threshold |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Parties", wireType)
+			}
+			m.Parties = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Parties |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1129,7 +1328,7 @@ func (m *KeyMetadata) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
+func (m *KeygenResult) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1152,17 +1351,17 @@ func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EncryptedShare: wiretype end group for non-group")
+			return fmt.Errorf("proto: KeygenResult: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EncryptedShare: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: KeygenResult: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EncryptedData", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
 			}
-			var stringLen uint64
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowKeygen
@@ -1172,27 +1371,15 @@ func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EncryptedData = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
+			m.Success = bool(v != 0)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1220,13 +1407,13 @@ func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.KeyId = string(dAtA[iNdEx:postIndex])
+			m.Error = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
 			}
-			m.Version = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowKeygen
@@ -1236,14 +1423,27 @@ func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Version |= uint32(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1270,9 +1470,332 @@ func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+			if m.Metadata == nil {
+				m.Metadata = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowKeygen
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipKeygen(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Metadata[mapkey] = mapvalue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeygen(dAtA[iNdEx:])
+			if err != nil {
 				return err
 			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *KeygenResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeygen
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KeygenResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KeygenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Success = bool(v != 0)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Error = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Metadata == nil {
+				m.Metadata = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowKeygen
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipKeygen(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Metadata[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1357,10 +1880,10 @@ func (m *PartyData) Unmarshal(dAtA []byte) error {
 			m.PartyId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
 			}
-			var byteLen int
+			m.Index = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowKeygen
@@ -1370,29 +1893,14 @@ func (m *PartyData) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				m.Index |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PublicKey = append(m.PublicKey[:0], dAtA[iNdEx:postIndex]...)
-			if m.PublicKey == nil {
-				m.PublicKey = []byte{}
-			}
-			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PartyShare", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1419,16 +1927,16 @@ func (m *PartyData) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PartyShare = append(m.PartyShare[:0], dAtA[iNdEx:postIndex]...)
-			if m.PartyShare == nil {
-				m.PartyShare = []byte{}
+			m.Data = append(m.Data[:0], dAtA[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
 			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VerificationData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowKeygen
@@ -1438,89 +1946,118 @@ func (m *PartyData) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthKeygen
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthKeygen
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.VerificationData = append(m.VerificationData[:0], dAtA[iNdEx:postIndex]...)
-			if m.VerificationData == nil {
-				m.VerificationData = []byte{}
+			if m.Metadata == nil {
+				m.Metadata = make(map[string]string)
 			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowKeygen
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
 				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowKeygen
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipKeygen(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthKeygen
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
 				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKeygen
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Status = string(dAtA[iNdEx:postIndex])
+			m.Metadata[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1572,7 +2109,7 @@ func (m *KeyGenRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: KeyGenRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
 			}
@@ -1604,9 +2141,9 @@ func (m *KeyGenRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.WalletId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SecurityLevel", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1634,27 +2171,8 @@ func (m *KeyGenRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.SecurityLevel = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SecurityLevel", wireType)
-			}
-			m.SecurityLevel = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeygen
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.SecurityLevel |= SecurityLevel(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipKeygen(dAtA[iNdEx:])
@@ -1705,7 +2223,7 @@ func (m *KeyGenResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: KeyGenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
 			}
@@ -1737,7 +2255,26 @@ func (m *KeyGenResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.WalletId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
 			}
@@ -1771,7 +2308,7 @@ func (m *KeyGenResponse) Unmarshal(dAtA []byte) error {
 				m.PublicKey = []byte{}
 			}
 			iNdEx = postIndex
-		case 3:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
@@ -1805,6 +2342,331 @@ func (m *KeyGenResponse) Unmarshal(dAtA []byte) error {
 			}
 			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeygen(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EncryptedShare) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeygen
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EncryptedShare: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EncryptedShare: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Data = append(m.Data[:0], dAtA[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
+			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Nonce = append(m.Nonce[:0], dAtA[iNdEx:postIndex]...)
+			if m.Nonce == nil {
+				m.Nonce = []byte{}
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = append(m.PublicKey[:0], dAtA[iNdEx:postIndex]...)
+			if m.PublicKey == nil {
+				m.PublicKey = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeygen(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *KeyMetadata) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeygen
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KeyMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KeyMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SecurityLevel", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SecurityLevel = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 15:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 16:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Threshold", wireType)
+			}
+			m.Threshold = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Threshold |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 17:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalShares", wireType)
+			}
+			m.TotalShares = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TotalShares |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 18:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeygen
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeygen
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = append(m.PublicKey[:0], dAtA[iNdEx:postIndex]...)
+			if m.PublicKey == nil {
+				m.PublicKey = []byte{}
 			}
 			iNdEx = postIndex
 		default:

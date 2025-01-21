@@ -52857,6 +52857,391 @@ paths:
           type: string
       tags:
         - Query
+  /selfchain/keyless/audit_events:
+    get:
+      summary: Queries a list of AuditEvents items.
+      operationId: SelfchainKeylessListAuditEvents
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              events:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    wallet_id:
+                      type: string
+                    event_type:
+                      type: string
+                    key_version:
+                      type: string
+                      format: uint64
+                    success:
+                      type: boolean
+                    error:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                    metadata:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  title: AuditEvent represents an audit event
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            description: >-
+              QueryListAuditEventsResponse is response type for the
+              Query/ListAuditEvents method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: query
+          required: false
+          type: string
+        - name: event_type
+          in: query
+          required: false
+          type: string
+        - name: success
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  /selfchain/keyless/key_rotation/{wallet_id}/{version}:
+    get:
+      summary: Queries a key rotation by wallet ID and version.
+      operationId: SelfchainKeylessKeyRotation
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rotation:
+                type: object
+                properties:
+                  wallet_id:
+                    type: string
+                  version:
+                    type: string
+                    format: uint64
+                  status:
+                    type: string
+                    enum:
+                      - ROTATION_STATUS_UNSPECIFIED
+                      - ROTATION_STATUS_PENDING
+                      - ROTATION_STATUS_IN_PROGRESS
+                      - ROTATION_STATUS_COMPLETED
+                      - ROTATION_STATUS_FAILED
+                    default: ROTATION_STATUS_UNSPECIFIED
+                    title: RotationStatus represents the status of a key rotation
+                  initiated_at:
+                    type: string
+                    format: date-time
+                  completed_at:
+                    type: string
+                    format: date-time
+                  error:
+                    type: string
+                  metadata:
+                    type: object
+                    additionalProperties:
+                      type: string
+                title: KeyRotation represents a key rotation record
+            description: >-
+              QueryKeyRotationResponse is response type for the
+              Query/KeyRotation RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+        - name: version
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /selfchain/keyless/key_rotations/{wallet_id}:
+    get:
+      summary: Queries a list of key rotations.
+      operationId: SelfchainKeylessKeyRotations
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rotations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    wallet_id:
+                      type: string
+                    version:
+                      type: string
+                      format: uint64
+                    status:
+                      type: string
+                      enum:
+                        - ROTATION_STATUS_UNSPECIFIED
+                        - ROTATION_STATUS_PENDING
+                        - ROTATION_STATUS_IN_PROGRESS
+                        - ROTATION_STATUS_COMPLETED
+                        - ROTATION_STATUS_FAILED
+                      default: ROTATION_STATUS_UNSPECIFIED
+                      title: RotationStatus represents the status of a key rotation
+                    initiated_at:
+                      type: string
+                      format: date-time
+                    completed_at:
+                      type: string
+                      format: date-time
+                    error:
+                      type: string
+                    metadata:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  title: KeyRotation represents a key rotation record
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            description: >-
+              QueryKeyRotationsResponse is response type for the
+              Query/KeyRotations RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   /selfchain/keyless/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -52871,22 +53256,19 @@ paths:
                 description: params holds all the parameters of this module.
                 type: object
                 properties:
-                  max_wallets_per_did:
+                  max_parties:
                     type: integer
                     format: int64
-                  max_shares_per_wallet:
+                  max_threshold:
                     type: integer
                     format: int64
-                  min_recovery_threshold:
+                  max_security_level:
                     type: integer
                     format: int64
-                  max_recovery_threshold:
+                  max_batch_size:
                     type: integer
                     format: int64
-                  recovery_window_seconds:
-                    type: integer
-                    format: int64
-                  max_signing_attempts:
+                  max_metadata_size:
                     type: integer
                     format: int64
             description: >-
@@ -52912,68 +53294,9 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /selfchain/keyless/party_data/{wallet_address}:
+  /selfchain/keyless/wallet/{id}:
     get:
-      summary: PartyData queries TSS party data for a wallet
-      operationId: SelfchainKeylessPartyData
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              wallet_address:
-                type: string
-              party_data:
-                type: object
-                properties:
-                  party_id:
-                    type: string
-                  public_key:
-                    type: string
-                    format: byte
-                  party_share:
-                    type: string
-                    format: byte
-                  verification_data:
-                    type: string
-                    format: byte
-                  chain_id:
-                    type: string
-                  status:
-                    type: string
-                title: PartyData represents TSS party data
-            description: >-
-              QueryPartyDataResponse is response type for the Query/PartyData
-              RPC method.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: wallet_address
-          in: path
-          required: true
-          type: string
-      tags:
-        - Query
-  /selfchain/keyless/wallet/{address}:
-    get:
-      summary: Wallet queries a wallet by address
+      summary: Queries a wallet by ID.
       operationId: SelfchainKeylessWallet
       responses:
         '200':
@@ -52984,16 +53307,36 @@ paths:
               wallet:
                 type: object
                 properties:
-                  creator:
+                  id:
                     type: string
-                  address:
+                  public_key:
                     type: string
-                  pub_key:
+                  key_version:
                     type: string
-                  chain_id:
+                    format: uint64
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                  created_at:
                     type: string
-                  status:
+                    format: date-time
+                  updated_at:
                     type: string
+                    format: date-time
+                  metadata:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  security_level:
+                    type: integer
+                    format: int64
+                  threshold:
+                    type: integer
+                    format: int64
+                  parties:
+                    type: integer
+                    format: int64
                 title: Wallet represents a keyless wallet
             description: >-
               QueryWalletResponse is response type for the Query/Wallet RPC
@@ -53017,7 +53360,7 @@ paths:
                       type: string
                   additionalProperties: {}
       parameters:
-        - name: address
+        - name: id
           in: path
           required: true
           type: string
@@ -53025,8 +53368,8 @@ paths:
         - Query
   /selfchain/keyless/wallets:
     get:
-      summary: Wallets queries all wallets
-      operationId: SelfchainKeylessWallets
+      summary: Queries a list of Wallets items.
+      operationId: SelfchainKeylessListWallets
       responses:
         '200':
           description: A successful response.
@@ -53038,16 +53381,36 @@ paths:
                 items:
                   type: object
                   properties:
-                    creator:
+                    id:
                       type: string
-                    address:
+                    public_key:
                       type: string
-                    pub_key:
+                    key_version:
                       type: string
-                    chain_id:
+                      format: uint64
+                    permissions:
+                      type: array
+                      items:
+                        type: string
+                    created_at:
                       type: string
-                    status:
+                      format: date-time
+                    updated_at:
                       type: string
+                      format: date-time
+                    metadata:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    security_level:
+                      type: integer
+                      format: int64
+                    threshold:
+                      type: integer
+                      format: int64
+                    parties:
+                      type: integer
+                      format: int64
                   title: Wallet represents a keyless wallet
               pagination:
                 type: object
@@ -53078,8 +53441,8 @@ paths:
                            PageResponse page = 2;
                    }
             description: >-
-              QueryWalletsResponse is response type for the Query/Wallets RPC
-              method.
+              QueryListWalletsResponse is response type for the
+              Query/ListWallets method.
         default:
           description: An unexpected error response.
           schema:
@@ -84963,18 +85326,127 @@ definitions:
         type: string
       public_key_base58:
         type: string
+  selfchain.keyless.AuditEvent:
+    type: object
+    properties:
+      id:
+        type: string
+      wallet_id:
+        type: string
+      event_type:
+        type: string
+      key_version:
+        type: string
+        format: uint64
+      success:
+        type: boolean
+      error:
+        type: string
+      timestamp:
+        type: string
+        format: date-time
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+    title: AuditEvent represents an audit event
+  selfchain.keyless.KeyRotation:
+    type: object
+    properties:
+      wallet_id:
+        type: string
+      version:
+        type: string
+        format: uint64
+      status:
+        type: string
+        enum:
+          - ROTATION_STATUS_UNSPECIFIED
+          - ROTATION_STATUS_PENDING
+          - ROTATION_STATUS_IN_PROGRESS
+          - ROTATION_STATUS_COMPLETED
+          - ROTATION_STATUS_FAILED
+        default: ROTATION_STATUS_UNSPECIFIED
+        title: RotationStatus represents the status of a key rotation
+      initiated_at:
+        type: string
+        format: date-time
+      completed_at:
+        type: string
+        format: date-time
+      error:
+        type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+    title: KeyRotation represents a key rotation record
+  selfchain.keyless.MsgBatchSignResponse:
+    type: object
+    properties:
+      wallet_id:
+        type: string
+      signatures:
+        type: array
+        items:
+          type: string
+          format: byte
+      errors:
+        type: array
+        items:
+          type: string
+      completed_at:
+        type: string
+        format: date-time
+    title: MsgBatchSignResponse defines the BatchSign response type
+  selfchain.keyless.MsgCancelKeyRotationResponse:
+    type: object
+    properties:
+      version:
+        type: string
+        format: uint64
+    title: >-
+      MsgCancelKeyRotationResponse defines the Msg/CancelKeyRotation response
+      type
+  selfchain.keyless.MsgCompleteKeyRotationResponse:
+    type: object
+    properties:
+      version:
+        type: string
+        format: uint64
+    title: >-
+      MsgCompleteKeyRotationResponse defines the Msg/CompleteKeyRotation
+      response type
   selfchain.keyless.MsgCreateWalletResponse:
     type: object
     properties:
       wallet_address:
         type: string
     title: MsgCreateWalletResponse defines the CreateWallet response type
+  selfchain.keyless.MsgInitiateKeyRotationResponse:
+    type: object
+    properties:
+      version:
+        type: string
+        format: uint64
+    title: >-
+      MsgInitiateKeyRotationResponse defines the Msg/InitiateKeyRotation
+      response type
   selfchain.keyless.MsgRecoverWalletResponse:
     type: object
     properties:
       wallet_address:
         type: string
     title: MsgRecoverWalletResponse defines the RecoverWallet response type
+  selfchain.keyless.MsgRotateKeyResponse:
+    type: object
+    properties:
+      wallet_id:
+        type: string
+      new_version:
+        type: string
+        format: uint64
+    title: MsgRotateKeyResponse defines the RotateKey response type
   selfchain.keyless.MsgSignTransactionResponse:
     type: object
     properties:
@@ -84984,116 +85456,183 @@ definitions:
   selfchain.keyless.Params:
     type: object
     properties:
-      max_wallets_per_did:
+      max_parties:
         type: integer
         format: int64
-      max_shares_per_wallet:
+      max_threshold:
         type: integer
         format: int64
-      min_recovery_threshold:
+      max_security_level:
         type: integer
         format: int64
-      max_recovery_threshold:
+      max_batch_size:
         type: integer
         format: int64
-      recovery_window_seconds:
-        type: integer
-        format: int64
-      max_signing_attempts:
+      max_metadata_size:
         type: integer
         format: int64
     description: Params defines the parameters for the module.
-  selfchain.keyless.PartyData:
+  selfchain.keyless.QueryKeyRotationResponse:
     type: object
     properties:
-      party_id:
-        type: string
-      public_key:
-        type: string
-        format: byte
-      party_share:
-        type: string
-        format: byte
-      verification_data:
-        type: string
-        format: byte
-      chain_id:
-        type: string
-      status:
-        type: string
-    title: PartyData represents TSS party data
-  selfchain.keyless.QueryParamsResponse:
-    type: object
-    properties:
-      params:
-        description: params holds all the parameters of this module.
+      rotation:
         type: object
         properties:
-          max_wallets_per_did:
-            type: integer
-            format: int64
-          max_shares_per_wallet:
-            type: integer
-            format: int64
-          min_recovery_threshold:
-            type: integer
-            format: int64
-          max_recovery_threshold:
-            type: integer
-            format: int64
-          recovery_window_seconds:
-            type: integer
-            format: int64
-          max_signing_attempts:
-            type: integer
-            format: int64
-    description: QueryParamsResponse is response type for the Query/Params RPC method.
-  selfchain.keyless.QueryPartyDataResponse:
-    type: object
-    properties:
-      wallet_address:
-        type: string
-      party_data:
-        type: object
-        properties:
-          party_id:
+          wallet_id:
             type: string
-          public_key:
+          version:
             type: string
-            format: byte
-          party_share:
-            type: string
-            format: byte
-          verification_data:
-            type: string
-            format: byte
-          chain_id:
-            type: string
+            format: uint64
           status:
             type: string
-        title: PartyData represents TSS party data
+            enum:
+              - ROTATION_STATUS_UNSPECIFIED
+              - ROTATION_STATUS_PENDING
+              - ROTATION_STATUS_IN_PROGRESS
+              - ROTATION_STATUS_COMPLETED
+              - ROTATION_STATUS_FAILED
+            default: ROTATION_STATUS_UNSPECIFIED
+            title: RotationStatus represents the status of a key rotation
+          initiated_at:
+            type: string
+            format: date-time
+          completed_at:
+            type: string
+            format: date-time
+          error:
+            type: string
+          metadata:
+            type: object
+            additionalProperties:
+              type: string
+        title: KeyRotation represents a key rotation record
     description: >-
-      QueryPartyDataResponse is response type for the Query/PartyData RPC
+      QueryKeyRotationResponse is response type for the Query/KeyRotation RPC
       method.
-  selfchain.keyless.QueryWalletResponse:
+  selfchain.keyless.QueryKeyRotationsResponse:
     type: object
     properties:
-      wallet:
+      rotations:
+        type: array
+        items:
+          type: object
+          properties:
+            wallet_id:
+              type: string
+            version:
+              type: string
+              format: uint64
+            status:
+              type: string
+              enum:
+                - ROTATION_STATUS_UNSPECIFIED
+                - ROTATION_STATUS_PENDING
+                - ROTATION_STATUS_IN_PROGRESS
+                - ROTATION_STATUS_COMPLETED
+                - ROTATION_STATUS_FAILED
+              default: ROTATION_STATUS_UNSPECIFIED
+              title: RotationStatus represents the status of a key rotation
+            initiated_at:
+              type: string
+              format: date-time
+            completed_at:
+              type: string
+              format: date-time
+            error:
+              type: string
+            metadata:
+              type: object
+              additionalProperties:
+                type: string
+          title: KeyRotation represents a key rotation record
+      pagination:
         type: object
         properties:
-          creator:
+          next_key:
             type: string
-          address:
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
             type: string
-          pub_key:
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    description: >-
+      QueryKeyRotationsResponse is response type for the Query/KeyRotations RPC
+      method.
+  selfchain.keyless.QueryListAuditEventsResponse:
+    type: object
+    properties:
+      events:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            wallet_id:
+              type: string
+            event_type:
+              type: string
+            key_version:
+              type: string
+              format: uint64
+            success:
+              type: boolean
+            error:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            metadata:
+              type: object
+              additionalProperties:
+                type: string
+          title: AuditEvent represents an audit event
+      pagination:
+        type: object
+        properties:
+          next_key:
             type: string
-          chain_id:
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
             type: string
-          status:
-            type: string
-        title: Wallet represents a keyless wallet
-    description: QueryWalletResponse is response type for the Query/Wallet RPC method.
-  selfchain.keyless.QueryWalletsResponse:
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    description: >-
+      QueryListAuditEventsResponse is response type for the
+      Query/ListAuditEvents method.
+  selfchain.keyless.QueryListWalletsResponse:
     type: object
     properties:
       wallets:
@@ -85101,16 +85640,36 @@ definitions:
         items:
           type: object
           properties:
-            creator:
+            id:
               type: string
-            address:
+            public_key:
               type: string
-            pub_key:
+            key_version:
               type: string
-            chain_id:
+              format: uint64
+            permissions:
+              type: array
+              items:
+                type: string
+            created_at:
               type: string
-            status:
+              format: date-time
+            updated_at:
               type: string
+              format: date-time
+            metadata:
+              type: object
+              additionalProperties:
+                type: string
+            security_level:
+              type: integer
+              format: int64
+            threshold:
+              type: integer
+              format: int64
+            parties:
+              type: integer
+              format: int64
           title: Wallet represents a keyless wallet
       pagination:
         type: object
@@ -85138,20 +85697,113 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    description: QueryWalletsResponse is response type for the Query/Wallets RPC method.
+    description: >-
+      QueryListWalletsResponse is response type for the Query/ListWallets
+      method.
+  selfchain.keyless.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          max_parties:
+            type: integer
+            format: int64
+          max_threshold:
+            type: integer
+            format: int64
+          max_security_level:
+            type: integer
+            format: int64
+          max_batch_size:
+            type: integer
+            format: int64
+          max_metadata_size:
+            type: integer
+            format: int64
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  selfchain.keyless.QueryWalletResponse:
+    type: object
+    properties:
+      wallet:
+        type: object
+        properties:
+          id:
+            type: string
+          public_key:
+            type: string
+          key_version:
+            type: string
+            format: uint64
+          permissions:
+            type: array
+            items:
+              type: string
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
+          metadata:
+            type: object
+            additionalProperties:
+              type: string
+          security_level:
+            type: integer
+            format: int64
+          threshold:
+            type: integer
+            format: int64
+          parties:
+            type: integer
+            format: int64
+        title: Wallet represents a keyless wallet
+    description: QueryWalletResponse is response type for the Query/Wallet RPC method.
+  selfchain.keyless.RotationStatus:
+    type: string
+    enum:
+      - ROTATION_STATUS_UNSPECIFIED
+      - ROTATION_STATUS_PENDING
+      - ROTATION_STATUS_IN_PROGRESS
+      - ROTATION_STATUS_COMPLETED
+      - ROTATION_STATUS_FAILED
+    default: ROTATION_STATUS_UNSPECIFIED
+    title: RotationStatus represents the status of a key rotation
   selfchain.keyless.Wallet:
     type: object
     properties:
-      creator:
+      id:
         type: string
-      address:
+      public_key:
         type: string
-      pub_key:
+      key_version:
         type: string
-      chain_id:
+        format: uint64
+      permissions:
+        type: array
+        items:
+          type: string
+      created_at:
         type: string
-      status:
+        format: date-time
+      updated_at:
         type: string
+        format: date-time
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+      security_level:
+        type: integer
+        format: int64
+      threshold:
+        type: integer
+        format: int64
+      parties:
+        type: integer
+        format: int64
     title: Wallet represents a keyless wallet
   selfchain.migration.Acl:
     type: object

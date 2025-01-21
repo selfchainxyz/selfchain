@@ -22,6 +22,7 @@ var (
 	ErrRecoveryInProgress = sdkerrors.Register(ModuleName, 14, "recovery already in progress")
 	ErrRecoveryNotAllowed = sdkerrors.Register(ModuleName, 15, "recovery not allowed")
 	ErrInvalidRecoveryProof = sdkerrors.Register(ModuleName, 16, "invalid recovery proof")
+	ErrInvalidParam = sdkerrors.Register(ModuleName, 17, "invalid parameter")
 	ErrInvalidRequest   = sdkerrors.Register(ModuleName, 1100, "invalid request")
 	ErrInvalidResponse  = sdkerrors.Register(ModuleName, 1101, "invalid response")
 	ErrKeyGenFailed     = sdkerrors.Register(ModuleName, 1102, "key generation failed")

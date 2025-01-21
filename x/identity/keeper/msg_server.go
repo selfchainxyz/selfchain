@@ -233,54 +233,64 @@ func (k msgServer) UnlinkSocialIdentity(goCtx context.Context, msg *types.MsgUnl
 	return &types.MsgUnlinkSocialIdentityResponse{}, nil
 }
 
-func (k msgServer) ConfigureMFA(goCtx context.Context, msg *types.MsgConfigureMFA) (*types.MsgConfigureMFAResponse, error) {
+func (k msgServer) AddMFA(goCtx context.Context, msg *types.MsgAddMFA) (*types.MsgAddMFAResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if DID exists
-	didDoc, found := k.GetDIDDocument(ctx, msg.Did)
-	if !found {
+	if !k.HasDIDDocument(ctx, msg.Did) {
 		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
-	// Check if the sender is the DID controller
-	isController := false
-	for _, controller := range didDoc.Controller {
-		if controller == msg.Creator {
-			isController = true
-			break
-		}
-	}
-	if !isController {
-		return nil, sdkerrors.Wrap(types.ErrUnauthorized, "not the DID controller")
+	// Verify ownership
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+		return nil, sdkerrors.Wrap(err, "unauthorized")
 	}
 
-	// Convert string array to MFAMethod array
-	methods := make([]*types.MFAMethod, len(msg.Methods))
-	for i, method := range msg.Methods {
-		methods[i] = &types.MFAMethod{
-			Type: method,
-		}
+	// Add MFA method
+	if err := k.SetMFAMethod(ctx, msg.Did, msg.Method, msg.Secret); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to add MFA method")
 	}
 
-	mfaConfig := types.MFAConfig{
-		Did:     msg.Did,
-		Methods: methods,
+	return &types.MsgAddMFAResponse{}, nil
+}
+
+func (k msgServer) RemoveMFA(goCtx context.Context, msg *types.MsgRemoveMFA) (*types.MsgRemoveMFAResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Check if DID exists
+	if !k.HasDIDDocument(ctx, msg.Did) {
+		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
-	// Store MFA config
-	if err := k.StoreMFAConfig(ctx, mfaConfig); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to store MFA config")
+	// Verify ownership
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+		return nil, sdkerrors.Wrap(err, "unauthorized")
 	}
 
-	return &types.MsgConfigureMFAResponse{}, nil
+	// Remove MFA method
+	if err := k.RemoveMFAMethod(ctx, msg.Did, msg.Method); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to remove MFA method")
+	}
+
+	return &types.MsgRemoveMFAResponse{}, nil
 }
 
 func (k msgServer) VerifyMFA(goCtx context.Context, msg *types.MsgVerifyMFA) (*types.MsgVerifyMFAResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Verify MFA challenge
-	if err := k.Keeper.VerifyMFAChallenge(ctx, msg.Did, msg.Method, msg.Code); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to verify MFA challenge")
+	// Check if DID exists
+	if !k.HasDIDDocument(ctx, msg.Did) {
+		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
+	}
+
+	// Verify ownership
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+		return nil, sdkerrors.Wrap(err, "unauthorized")
+	}
+
+	// Verify MFA code
+	if err := k.VerifyMFACode(ctx, msg.Did, msg.Method, msg.Code); err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MFA code")
 	}
 
 	return &types.MsgVerifyMFAResponse{}, nil
@@ -323,27 +333,6 @@ func (k msgServer) IssueCredential(goCtx context.Context, msg *types.MsgCreateCr
 	}, nil
 }
 
-func (k msgServer) RemoveMFA(goCtx context.Context, msg *types.MsgRemoveMFA) (*types.MsgRemoveMFAResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Check if DID exists
-	_, found := k.GetDIDDocument(ctx, msg.Did)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, msg.Did)
-	}
-
-	// Verify ownership
-	if msg.Creator != msg.Did {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "not the DID owner")
-	}
-
-	if err := k.RemoveMFAMethod(ctx, msg.Did, msg.Method); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to remove MFA method")
-	}
-
-	return &types.MsgRemoveMFAResponse{}, nil
-}
-
 func (k msgServer) UpdateDID(goCtx context.Context, msg *types.MsgUpdateDID) (*types.MsgUpdateDIDResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -369,35 +358,4 @@ func (k msgServer) UpdateDID(goCtx context.Context, msg *types.MsgUpdateDID) (*t
 	return &types.MsgUpdateDIDResponse{
 		Success: true,
 	}, nil
-}
-
-func (k msgServer) AddMFA(goCtx context.Context, msg *types.MsgAddMFA) (*types.MsgAddMFAResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Check if DID exists
-	_, found := k.GetDIDDocument(ctx, msg.Did)
-	if !found {
-		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, msg.Did)
-	}
-
-	// Verify ownership
-	if msg.Creator != msg.Did {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "not the DID owner")
-	}
-
-	// Create new MFA method
-	now := ctx.BlockTime()
-	method := &types.MFAMethod{
-		Type:      msg.Method,
-		Secret:    msg.Secret,
-		CreatedAt: &now,
-		Status:    types.MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE,
-	}
-
-	// Add method to config
-	if err := k.Keeper.AddMFAMethod(ctx, msg.Did, *method); err != nil {
-		return nil, err
-	}
-
-	return &types.MsgAddMFAResponse{}, nil
 }

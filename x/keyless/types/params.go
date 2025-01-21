@@ -9,12 +9,11 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 
 const (
 	// Default values
-	DefaultMaxWalletsPerDID     = uint32(5)
-	DefaultMaxSharesPerWallet   = uint32(3)
-	DefaultMinRecoveryThreshold = uint32(2)
-	DefaultMaxRecoveryThreshold = uint32(3)
-	DefaultRecoveryWindowSecs   = uint32(86400) // 24 hours
-	DefaultMaxSigningAttempts   = uint32(3)
+	DefaultMaxParties       = uint32(5)
+	DefaultMaxThreshold     = uint32(3)
+	DefaultMaxSecurityLevel = uint32(3)
+	DefaultMaxBatchSize     = uint32(100)
+	DefaultMaxMetadataSize  = uint32(1024) // 1KB
 )
 
 // ParamKeyTable the param key table for launch module
@@ -25,58 +24,52 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		MaxWalletsPerDid:     DefaultMaxWalletsPerDID,
-		MaxSharesPerWallet:   DefaultMaxSharesPerWallet,
-		MinRecoveryThreshold: DefaultMinRecoveryThreshold,
-		MaxRecoveryThreshold: DefaultMaxRecoveryThreshold,
-		RecoveryWindowSeconds: DefaultRecoveryWindowSecs,
-		MaxSigningAttempts:   DefaultMaxSigningAttempts,
+		MaxParties:       DefaultMaxParties,
+		MaxThreshold:     DefaultMaxThreshold,
+		MaxSecurityLevel: DefaultMaxSecurityLevel,
+		MaxBatchSize:     DefaultMaxBatchSize,
+		MaxMetadataSize:  DefaultMaxMetadataSize,
 	}
 }
 
 // NewParams creates a new Params instance
 func NewParams(
-	maxWallets uint32,
-	maxShares uint32,
-	minThreshold uint32,
+	maxParties uint32,
 	maxThreshold uint32,
-	windowSecs uint32,
-	maxAttempts uint32,
+	maxSecurityLevel uint32,
+	maxBatchSize uint32,
+	maxMetadataSize uint32,
 ) Params {
 	return Params{
-		MaxWalletsPerDid:     maxWallets,
-		MaxSharesPerWallet:   maxShares,
-		MinRecoveryThreshold: minThreshold,
-		MaxRecoveryThreshold: maxThreshold,
-		RecoveryWindowSeconds: windowSecs,
-		MaxSigningAttempts:   maxAttempts,
+		MaxParties:       maxParties,
+		MaxThreshold:     maxThreshold,
+		MaxSecurityLevel: maxSecurityLevel,
+		MaxBatchSize:     maxBatchSize,
+		MaxMetadataSize:  maxMetadataSize,
 	}
 }
 
-// ParamSetPairs get the params.ParamSet
+// ParamSetPairs implements params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{}
 }
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if p.MaxWalletsPerDid == 0 {
-		return ErrInvalidMaxWallets
+	if p.MaxParties == 0 {
+		return ErrInvalidParam.Wrap("MaxParties must be greater than 0")
 	}
-	if p.MaxSharesPerWallet == 0 {
-		return ErrInvalidMaxShares
+	if p.MaxThreshold == 0 || p.MaxThreshold > p.MaxParties {
+		return ErrInvalidParam.Wrap("MaxThreshold must be greater than 0 and less than or equal to MaxParties")
 	}
-	if p.MinRecoveryThreshold == 0 || p.MinRecoveryThreshold > p.MaxRecoveryThreshold {
-		return ErrInvalidRecoveryThreshold
+	if p.MaxSecurityLevel == 0 {
+		return ErrInvalidParam.Wrap("MaxSecurityLevel must be greater than 0")
 	}
-	if p.MaxRecoveryThreshold > p.MaxSharesPerWallet {
-		return ErrInvalidRecoveryThreshold
+	if p.MaxBatchSize == 0 {
+		return ErrInvalidParam.Wrap("MaxBatchSize must be greater than 0")
 	}
-	if p.RecoveryWindowSeconds == 0 {
-		return ErrInvalidRecoveryWindow
-	}
-	if p.MaxSigningAttempts == 0 {
-		return ErrInvalidMaxAttempts
+	if p.MaxMetadataSize == 0 {
+		return ErrInvalidParam.Wrap("MaxMetadataSize must be greater than 0")
 	}
 	return nil
 }

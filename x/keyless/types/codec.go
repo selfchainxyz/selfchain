@@ -3,16 +3,32 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	// this line is used by starport scaffolding # 1
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	// this line is used by starport scaffolding # 2
+	cdc.RegisterConcrete(&MsgCreateWallet{}, "keyless/CreateWallet", nil)
+	cdc.RegisterConcrete(&MsgRecoverWallet{}, "keyless/RecoverWallet", nil)
+	cdc.RegisterConcrete(&MsgSignTransaction{}, "keyless/SignTransaction", nil)
+	cdc.RegisterConcrete(&MsgRotateKey{}, "keyless/RotateKey", nil)
+	cdc.RegisterConcrete(&MsgBatchSign{}, "keyless/BatchSign", nil)
+	cdc.RegisterConcrete(&MsgInitiateKeyRotation{}, "keyless/InitiateKeyRotation", nil)
+	cdc.RegisterConcrete(&MsgCompleteKeyRotation{}, "keyless/CompleteKeyRotation", nil)
+	cdc.RegisterConcrete(&MsgCancelKeyRotation{}, "keyless/CancelKeyRotation", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// this line is used by starport scaffolding # 3
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgCreateWallet{},
+		&MsgRecoverWallet{},
+		&MsgSignTransaction{},
+		&MsgRotateKey{},
+		&MsgBatchSign{},
+		&MsgInitiateKeyRotation{},
+		&MsgCompleteKeyRotation{},
+		&MsgCancelKeyRotation{},
+	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

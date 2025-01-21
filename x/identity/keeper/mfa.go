@@ -1,12 +1,12 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
-
-	"selfchain/x/identity/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"selfchain/x/identity/types"
 )
 
 const (
@@ -81,11 +81,11 @@ func (k Keeper) AddMFAMethod(ctx sdk.Context, did string, method types.MFAMethod
 	}
 
 	// Create new MFA method
-	now := ctx.BlockTime()
+	blockTime := ctx.BlockTime()
 	mfaMethod := types.MFAMethod{
 		Type:      method.Type,
 		Secret:    method.Secret,
-		CreatedAt: &now,
+		CreatedAt: &blockTime,
 		Status:    types.MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE,
 	}
 
@@ -141,13 +141,13 @@ func (k Keeper) CreateMFAChallenge(ctx sdk.Context, did string, methodType strin
 	}
 
 	// Create challenge
-	now := ctx.BlockTime()
-	expiry := now.Add(MFAChallengeExpiry)
+	blockTime := ctx.BlockTime()
+	expiry := blockTime.Add(MFAChallengeExpiry)
 	challenge := types.MFAChallenge{
 		Id:        fmt.Sprintf("%s:%s", did, methodType),
 		Did:       did,
 		Method:    methodType,
-		CreatedAt: &now,
+		CreatedAt: &blockTime,
 		ExpiresAt: &expiry,
 	}
 
@@ -203,9 +203,9 @@ func (k Keeper) VerifyMFAMethod(ctx sdk.Context, did string, methodType string, 
 	}
 
 	// Update method status
-	now := ctx.BlockTime()
+	blockTime := ctx.BlockTime()
 	method.Status = types.MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE
-	method.CreatedAt = &now
+	method.CreatedAt = &blockTime
 
 	// TODO: Implement actual OTP verification using method.Secret and code
 	// For now, just update the method status
@@ -275,4 +275,64 @@ func (k Keeper) GetAllMFAConfigs(ctx sdk.Context) []types.MFAConfig {
 		configs = append(configs, config)
 	}
 	return configs
+}
+
+// SetMFAMethod stores an MFA method for a DID
+func (k Keeper) SetMFAMethod(ctx sdk.Context, did string, method string, secret string) error {
+	store := ctx.KVStore(k.storeKey)
+	key := append([]byte(types.MFAMethodPrefix), []byte(did+":"+method)...)
+
+	blockTime := ctx.BlockTime()
+	mfaMethod := types.MFAMethod{
+		Type:      method,
+		Secret:    secret,
+		CreatedAt: &blockTime,
+		Status:    types.MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE,
+	}
+
+	bz, err := json.Marshal(mfaMethod)
+	if err != nil {
+		return sdkerrors.Wrap(err, "failed to marshal MFA method")
+	}
+
+	store.Set(key, bz)
+	return nil
+}
+
+// VerifyMFACode verifies an MFA code for a given method
+func (k Keeper) VerifyMFACode(ctx sdk.Context, did string, method string, code string) error {
+	mfaMethod, err := k.GetMFAMethod(ctx, did, method)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Implement actual MFA code verification logic based on the method type
+	// For now, we'll just check if the code matches the secret (for testing)
+	if code != mfaMethod.Secret {
+		return sdkerrors.Wrap(types.ErrInvalidMFACode, "invalid MFA code")
+	}
+
+	return nil
+}
+
+// VerifyDIDOwnership verifies if the creator is the owner of the DID
+func (k Keeper) VerifyDIDOwnership(ctx sdk.Context, did string, creator string) error {
+	didDoc, found := k.GetDIDDocument(ctx, did)
+	if !found {
+		return sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
+	}
+
+	isOwner := false
+	for _, controller := range didDoc.Controller {
+		if controller == creator {
+			isOwner = true
+			break
+		}
+	}
+
+	if !isOwner {
+		return sdkerrors.Wrap(types.ErrUnauthorized, "not the DID owner")
+	}
+
+	return nil
 }

@@ -72,7 +72,6 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
@@ -198,8 +197,8 @@ var (
 		wasm.AppModuleBasic{},
 		migrationmodule.AppModuleBasic{},
 		selfvestingmodule.AppModuleBasic{},
-		identitymodule.AppModuleBasic{},
 		keylessmodule.AppModuleBasic{},
+		identitymodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -572,6 +571,14 @@ func New(
 		),
 	)
 
+	app.KeylessKeeper = *keylessmodulekeeper.NewKeeper(
+		appCodec,
+		keys[keylessmoduletypes.StoreKey],
+		keys[keylessmoduletypes.MemStoreKey],
+		app.GetSubspace(keylessmoduletypes.ModuleName),
+	)
+	keylessModule := keylessmodule.NewAppModule(appCodec, app.KeylessKeeper, app.AccountKeeper, app.BankKeeper)
+
 	app.SelfvestingKeeper = *selfvestingmodulekeeper.NewKeeper(
 		appCodec,
 		keys[selfvestingmoduletypes.StoreKey],
@@ -592,6 +599,21 @@ func New(
 		app.BankKeeper,
 	)
 	migrationModule := migrationmodule.NewAppModule(appCodec, app.MigrationKeeper, app.AccountKeeper, app.BankKeeper)
+
+	identityKeeper := identitymodulekeeper.NewKeeper(
+		appCodec,
+		keys[identitymoduletypes.StoreKey],
+		keys[identitymoduletypes.MemStoreKey],
+		app.GetSubspace(identitymoduletypes.ModuleName),
+		&app.KeylessKeeper,
+	)
+	app.IdentityKeeper = *identityKeeper
+	identityModule := identitymodule.NewAppModule(
+		appCodec,
+		app.IdentityKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -622,32 +644,6 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
-
-	mockKeylessKeeper := identitymodulekeeper.NewMockKeylessKeeper()
-	identityKeeper := identitymodulekeeper.NewKeeper(
-		appCodec,
-		keys[identitymoduletypes.StoreKey],
-		keys[identitymoduletypes.MemStoreKey],
-		app.ParamsKeeper.Subspace(identitymoduletypes.ModuleName),
-		mockKeylessKeeper,
-	)
-	app.IdentityKeeper = *identityKeeper
-	identityModule := identitymodule.NewAppModule(
-		appCodec,
-		app.IdentityKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-	)
-
-	app.KeylessKeeper = *keylessmodulekeeper.NewKeeper(
-		appCodec,
-		keys[keylessmoduletypes.StoreKey],
-		keys[keylessmoduletypes.MemStoreKey],
-		app.GetSubspace(keylessmoduletypes.ModuleName),
-	)
-	keylessModule := keylessmodule.NewAppModule(appCodec, app.KeylessKeeper, app.AccountKeeper, app.BankKeeper)
-
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	/**** IBC Routing ****/
 
@@ -728,8 +724,8 @@ func New(
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, app.GetSubspace(minttypes.ModuleName)),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -741,9 +737,8 @@ func New(
 		transfer.NewAppModule(app.TransferKeeper),
 		migrationModule,
 		selfvestingModule,
-
-		identityModule,
 		keylessModule,
+		identityModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -779,9 +774,8 @@ func New(
 		consensusparamtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
-
-		identitymoduletypes.ModuleName,
 		keylessmoduletypes.ModuleName,
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -811,9 +805,8 @@ func New(
 		consensusparamtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
-
-		identitymoduletypes.ModuleName,
 		keylessmoduletypes.ModuleName,
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -822,22 +815,22 @@ func New(
 	// NOTE: Capability module must occur first so that it can initialize any capabilities
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
+	// NOTE: Distribution module must occur after bank and staking modules to properly initialize the fee pool
 	genesisModuleOrder := []string{
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
-		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
-		slashingtypes.ModuleName,
-		govtypes.ModuleName,
+		distrtypes.ModuleName,
 		minttypes.ModuleName,
+		slashingtypes.ModuleName,
 		crisistypes.ModuleName,
+		govtypes.ModuleName,
 		genutiltypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		// wasm after ibc transfer
 		wasmtypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
@@ -849,12 +842,10 @@ func New(
 		consensusparamtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
 		selfvestingmoduletypes.ModuleName,
-
-		identitymoduletypes.ModuleName,
 		keylessmoduletypes.ModuleName,
+		identitymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}
-
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
 
@@ -1135,7 +1126,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(minttypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable()) //nolint:staticcheck
+	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)

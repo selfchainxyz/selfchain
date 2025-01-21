@@ -9,13 +9,23 @@ var (
 	_ sdk.Msg = &MsgCreateWallet{}
 	_ sdk.Msg = &MsgRecoverWallet{}
 	_ sdk.Msg = &MsgSignTransaction{}
+	_ sdk.Msg = &MsgRotateKey{}
+	_ sdk.Msg = &MsgBatchSign{}
+	_ sdk.Msg = &MsgInitiateKeyRotation{}
+	_ sdk.Msg = &MsgCompleteKeyRotation{}
+	_ sdk.Msg = &MsgCancelKeyRotation{}
 )
 
 // Message type constants
 const (
-	TypeMsgCreateWallet     = "create_wallet"
-	TypeMsgRecoverWallet    = "recover_wallet"
-	TypeMsgSignTransaction = "sign_transaction"
+	TypeMsgCreateWallet          = "create_wallet"
+	TypeMsgRecoverWallet         = "recover_wallet"
+	TypeMsgSignTransaction       = "sign_transaction"
+	TypeMsgRotateKey            = "rotate_key"
+	TypeMsgBatchSign            = "batch_sign"
+	TypeMsgInitiateKeyRotation  = "initiate_key_rotation"
+	TypeMsgCompleteKeyRotation  = "complete_key_rotation"
+	TypeMsgCancelKeyRotation    = "cancel_key_rotation"
 )
 
 // GetSigners returns the expected signers for MsgCreateWallet
@@ -95,6 +105,123 @@ func (msg *MsgSignTransaction) ValidateBasic() error {
 	}
 	if msg.ChainId == "" {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "chain ID cannot be empty")
+	}
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgRotateKey
+func (msg *MsgRotateKey) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+// ValidateBasic performs stateless validation on MsgRotateKey
+func (msg *MsgRotateKey) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.WalletId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wallet ID cannot be empty")
+	}
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgBatchSign
+func (msg *MsgBatchSign) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+// ValidateBasic performs stateless validation on MsgBatchSign
+func (msg *MsgBatchSign) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.WalletId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wallet ID cannot be empty")
+	}
+	if len(msg.Messages) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "messages cannot be empty")
+	}
+	if msg.ChainId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "chain ID cannot be empty")
+	}
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgInitiateKeyRotation
+func (msg *MsgInitiateKeyRotation) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+// ValidateBasic performs stateless validation on MsgInitiateKeyRotation
+func (msg *MsgInitiateKeyRotation) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.WalletId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wallet ID cannot be empty")
+	}
+	if msg.NewKeyData == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "new key data cannot be empty")
+	}
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgCompleteKeyRotation
+func (msg *MsgCompleteKeyRotation) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+// ValidateBasic performs stateless validation on MsgCompleteKeyRotation
+func (msg *MsgCompleteKeyRotation) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.WalletId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wallet ID cannot be empty")
+	}
+	if msg.KeyData == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "key data cannot be empty")
+	}
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgCancelKeyRotation
+func (msg *MsgCancelKeyRotation) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+// ValidateBasic performs stateless validation on MsgCancelKeyRotation
+func (msg *MsgCancelKeyRotation) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if msg.WalletId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wallet ID cannot be empty")
 	}
 	return nil
 }
