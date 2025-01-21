@@ -3,6 +3,8 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -94,6 +96,65 @@ func TestEncryptDecrypt(t *testing.T) {
 				t.Errorf("Decrypt() = %v, want %v", decrypted, tt.plaintext)
 			}
 		})
+	}
+}
+
+func TestEncryptDecryptShare(t *testing.T) {
+	// Generate a test data structure
+	type TestShareData struct {
+		ShareID string
+		Data    []byte
+		Meta    map[string]string
+	}
+
+	testData := &TestShareData{
+		ShareID: "test-share-1",
+		Data:    []byte("test share data"),
+		Meta: map[string]string{
+			"key1": "value1",
+			"key2": "value2",
+		},
+	}
+
+	// Generate encryption key
+	key, err := NewEncryptionKey()
+	if err != nil {
+		t.Fatalf("Failed to generate encryption key: %v", err)
+	}
+
+	// Marshal test data to JSON
+	jsonData, err := json.Marshal(testData)
+	if err != nil {
+		t.Fatalf("Failed to marshal test data: %v", err)
+	}
+
+	// Encrypt the data
+	encrypted, err := Encrypt(key, jsonData)
+	if err != nil {
+		t.Fatalf("Failed to encrypt data: %v", err)
+	}
+
+	// Decrypt the data
+	decrypted, err := Decrypt(key, encrypted)
+	if err != nil {
+		t.Fatalf("Failed to decrypt data: %v", err)
+	}
+
+	// Unmarshal and verify
+	var decryptedData TestShareData
+	if err := json.Unmarshal(decrypted, &decryptedData); err != nil {
+		t.Fatalf("Failed to unmarshal decrypted data: %v", err)
+	}
+
+	// Verify the decrypted data matches original
+	if decryptedData.ShareID != testData.ShareID {
+		t.Errorf("ShareID mismatch: got %v, want %v", decryptedData.ShareID, testData.ShareID)
+	}
+	if !bytes.Equal(decryptedData.Data, testData.Data) {
+		t.Errorf("Data mismatch: got %v, want %v", decryptedData.Data, testData.Data)
+	}
+	if !reflect.DeepEqual(decryptedData.Meta, testData.Meta) {
+		t.Errorf("Meta mismatch: got %v, want %v", decryptedData.Meta, testData.Meta)
 	}
 }
 
