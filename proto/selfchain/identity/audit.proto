@@ -1,0 +1,48 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// SecuritySeverity represents the severity level of security events
+enum SecuritySeverity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_WARNING = 2;
+  SEVERITY_ERROR = 3;
+  SEVERITY_CRITICAL = 4;
+}
+
+// AuditLogType represents the type of audit log entry
+enum AuditLogType {
+  AUDIT_LOG_TYPE_UNSPECIFIED = 0;
+  AUDIT_LOG_TYPE_CREDENTIAL_CREATED = 1;
+  AUDIT_LOG_TYPE_CREDENTIAL_UPDATED = 2;
+  AUDIT_LOG_TYPE_CREDENTIAL_DELETED = 3;
+  AUDIT_LOG_TYPE_CREDENTIAL_REVOKED = 4;
+  AUDIT_LOG_TYPE_CREDENTIAL_VERIFIED = 5;
+  AUDIT_LOG_TYPE_DID_CREATED = 6;
+  AUDIT_LOG_TYPE_DID_UPDATED = 7;
+  AUDIT_LOG_TYPE_DID_DELETED = 8;
+  AUDIT_LOG_TYPE_MFA_CONFIGURED = 9;
+  AUDIT_LOG_TYPE_MFA_UPDATED = 10;
+  AUDIT_LOG_TYPE_MFA_DISABLED = 11;
+  AUDIT_LOG_TYPE_SOCIAL_IDENTITY_LINKED = 12;
+  AUDIT_LOG_TYPE_SOCIAL_IDENTITY_UNLINKED = 13;
+}
+
+// AuditLogEntry represents an audit log entry
+message AuditLogEntry {
+  string id = 1;
+  AuditLogType type = 2;
+  string did = 3;
+  string action = 4;
+  string actor = 5;
+  map<string, string> metadata = 6;
+  int64 timestamp = 7;
+  SecuritySeverity severity = 8;
+  string IP = 9 [(gogoproto.jsontag) = "ip"];
+  string user_agent = 10;
+}

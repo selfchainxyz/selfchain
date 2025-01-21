@@ -1,0 +1,50 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// UserInfo represents user information from an OAuth provider
+message UserInfo {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+// SocialIdentity represents a social identity linked to a DID
+message SocialIdentity {
+  string id = 1;
+  string did = 2;
+  string provider = 3;
+  string provider_id = 4;
+  map<string, string> profile = 5;
+  google.protobuf.Timestamp created_at = 6 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp verified_at = 7 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp last_used = 8 [(gogoproto.stdtime) = true];
+}
+
+// OAuthProvider represents an OAuth provider configuration
+message OAuthProvider {
+  string id = 1;
+  string name = 2;
+  string client_id = 3;
+  string client_secret = 4;
+  string auth_url = 5;
+  string token_url = 6;
+  string profile_url = 7;
+  repeated string scopes = 8;
+  map<string, string> config = 9;
+}
+
+// OAuthSession represents an OAuth session
+message OAuthSession {
+  string id = 1;
+  string did = 2;
+  string provider = 3;
+  string state = 4;
+  string code_verifier = 5;
+  google.protobuf.Timestamp created_at = 6 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp expires_at = 7 [(gogoproto.stdtime) = true];
+}

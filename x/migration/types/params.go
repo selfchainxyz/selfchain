@@ -36,7 +36,7 @@ func DefaultParams() Params {
 	)
 }
 
-func validateHotcrossRatio(i interface {}) error {
+func validateHotcrossRatio(i interface{}) error {
 	v, ok := i.(uint64)
 
 	if !ok {

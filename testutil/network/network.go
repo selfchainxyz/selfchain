@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	tmdb "github.com/cometbft/cometbft-db"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -53,6 +54,7 @@ func DefaultConfig() network.Config {
 		encoding = app.MakeEncodingConfig()
 		chainID  = "chain-" + tmrand.NewRand().Str(6)
 	)
+
 	return network.Config{
 		Codec:             encoding.Marshaler,
 		TxConfig:          encoding.TxConfig,
@@ -60,6 +62,7 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
+			wasmOpts := []keeper.Option{}
 			return app.New(
 				val.GetCtx().Logger,
 				tmdb.NewMemDB(),
@@ -70,6 +73,7 @@ func DefaultConfig() network.Config {
 				0,
 				encoding,
 				simtestutil.EmptyAppOptions{},
+				wasmOpts,
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
 				baseapp.SetChainID(chainID),

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+enum RecoveryStatus {
+  PENDING = 0;
+  COMPLETED = 1;
+  FAILED = 2;
+}
+
+message RecoveryInfo {
+  string did = 1;
+  string recovery_token = 2;
+  string recovery_address = 3;
+  RecoveryStatus status = 4;
+  int64 created_at = 5;
+}

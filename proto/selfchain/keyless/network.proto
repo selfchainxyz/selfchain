@@ -1,0 +1,30 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// NetworkParams defines the parameters for network-specific signing operations
+message NetworkParams {
+  string network_type = 1;
+  string chain_id = 2;
+  string signing_algorithm = 3;
+  string curve_type = 4;
+  string address_prefix = 5;
+  uint32 coin_type = 6;
+  uint32 decimals = 7;
+  string symbol_name = 8;
+  string display_name = 9;
+  SigningConfig signing_config = 10;
+}
+
+// SigningConfig contains network-specific signing configuration
+message SigningConfig {
+  uint32 p2pkh_prefix = 1;
+  uint32 p2sh_prefix = 2;
+  string hrp = 3;
+  string base58_hasher = 4;
+  string chain_id = 5;
+  string gas_token = 6;
+  string address_prefix = 7;
+  string pub_key_prefix = 8;
+}

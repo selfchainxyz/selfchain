@@ -1,0 +1,34 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// RecoverySession represents an active wallet recovery session
+message RecoverySession {
+  string id = 1;
+  string did = 2;
+  string social_provider = 3;
+  string social_id = 4;
+  bool mfa_verified = 5;
+  bool identity_verified = 6;
+  bytes recovery_data = 7; // encrypted recovery data
+  google.protobuf.Timestamp expires_at = 8 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  google.protobuf.Timestamp created_at = 9 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// MsgInitiateRecovery represents the message to start wallet recovery
+message MsgInitiateRecovery {
+  string creator = 1;
+  string social_provider = 2;
+  string oauth_token = 3;
+}
+
+// MsgCompleteRecovery represents the message to complete wallet recovery
+message MsgCompleteRecovery {
+  string creator = 1;
+  string session_id = 2;
+  string mfa_code = 3;
+}

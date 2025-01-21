@@ -1,0 +1,140 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/identity/did.proto";
+import "selfchain/identity/credential.proto";
+import "selfchain/identity/mfa.proto";
+import "selfchain/identity/oauth.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // DID operations
+  rpc CreateDID(MsgCreateDID) returns (MsgCreateDIDResponse);
+  rpc UpdateDID(MsgUpdateDID) returns (MsgUpdateDIDResponse);
+  rpc DeleteDID(MsgDeleteDID) returns (MsgDeleteDIDResponse);
+
+  // Credential operations
+  rpc CreateCredential(MsgCreateCredential) returns (MsgCreateCredentialResponse);
+  rpc UpdateCredential(MsgUpdateCredential) returns (MsgUpdateCredentialResponse);
+  rpc RevokeCredential(MsgRevokeCredential) returns (MsgRevokeCredentialResponse);
+
+  // Social Identity operations
+  rpc LinkSocialIdentity(MsgLinkSocialIdentity) returns (MsgLinkSocialIdentityResponse);
+  rpc UnlinkSocialIdentity(MsgUnlinkSocialIdentity) returns (MsgUnlinkSocialIdentityResponse);
+
+  // OAuth operations
+  rpc VerifyOAuthToken(MsgVerifyOAuthToken) returns (MsgVerifyOAuthTokenResponse);
+
+  // MFA operations
+  rpc AddMFA(MsgAddMFA) returns (MsgAddMFAResponse);
+  rpc RemoveMFA(MsgRemoveMFA) returns (MsgRemoveMFAResponse);
+  rpc VerifyMFA(MsgVerifyMFA) returns (MsgVerifyMFAResponse);
+}
+
+// DID Messages
+message MsgCreateDID {
+  string creator = 1;
+  string id = 2;
+  repeated string controller = 3;
+  repeated VerificationMethod verification_method = 4;
+  repeated Service service = 5;
+}
+
+message MsgCreateDIDResponse {
+  bool success = 1;
+}
+
+message MsgUpdateDID {
+  string creator = 1;
+  string id = 2;
+  repeated string controller = 3;
+  repeated VerificationMethod verification_method = 4;
+  repeated Service service = 5;
+}
+
+message MsgUpdateDIDResponse {
+  bool success = 1;
+}
+
+message MsgDeleteDID {
+  string creator = 1;
+  string id = 2;
+}
+
+message MsgDeleteDIDResponse {
+  bool success = 1;
+}
+
+// Credential Messages
+message MsgCreateCredential {
+  string creator = 1;
+  string id = 2;
+  string type = 3;
+  string issuer = 4;
+  string subject = 5;
+  map<string, string> claims = 6;
+  google.protobuf.Timestamp expiry_date = 7 [(gogoproto.stdtime) = true];
+}
+
+message MsgCreateCredentialResponse {
+  bool success = 1;
+}
+
+message MsgUpdateCredential {
+  string creator = 1;
+  string id = 2;
+  map<string, string> claims = 3;
+  string status = 4;
+  google.protobuf.Timestamp expiry_date = 5 [(gogoproto.stdtime) = true];
+}
+
+message MsgUpdateCredentialResponse {
+  bool success = 1;
+}
+
+message MsgRevokeCredential {
+  string creator = 1;
+  string id = 2;
+  string reason = 3;
+}
+
+message MsgRevokeCredentialResponse {
+  bool success = 1;
+}
+
+// Social Identity Messages
+message MsgLinkSocialIdentity {
+  string creator = 1;
+  string provider = 2;
+  string token = 3;
+}
+
+message MsgLinkSocialIdentityResponse {
+  bool success = 1;
+  string social_id = 2;
+}
+
+message MsgUnlinkSocialIdentity {
+  string creator = 1;
+  string provider = 2;
+}
+
+message MsgUnlinkSocialIdentityResponse {
+  bool success = 1;
+}
+
+// OAuth Messages
+message MsgVerifyOAuthToken {
+  string creator = 1;
+  string provider = 2;
+  string token = 3;
+}
+
+message MsgVerifyOAuthTokenResponse {
+  bool success = 1;
+  string id = 2;
+}

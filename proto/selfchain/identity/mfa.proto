@@ -1,0 +1,65 @@
+syntax = "proto3";
+package selfchain.identity;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "selfchain/x/identity/types";
+
+// MFAConfig represents the MFA configuration for a DID
+message MFAConfig {
+  string did = 1;
+  repeated MFAMethod methods = 2;
+}
+
+// MFAMethod represents an MFA method
+message MFAMethod {
+  string type = 1;
+  string secret = 2;
+  google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true];
+  MFAMethodStatus status = 4;
+}
+
+// MFAMethodStatus represents the status of an MFA method
+enum MFAMethodStatus {
+  MFA_METHOD_STATUS_UNSPECIFIED = 0;
+  MFA_METHOD_STATUS_ACTIVE = 1;
+  MFA_METHOD_STATUS_PENDING = 2;
+  MFA_METHOD_STATUS_DISABLED = 3;
+}
+
+// MFAChallenge represents an MFA challenge
+message MFAChallenge {
+  string id = 1;
+  string did = 2;
+  string method = 3;
+  google.protobuf.Timestamp created_at = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
+}
+
+// Messages
+message MsgAddMFA {
+  string creator = 1;
+  string did = 2;
+  string method = 3;
+  string secret = 4;
+}
+
+message MsgAddMFAResponse {}
+
+message MsgRemoveMFA {
+  string creator = 1;
+  string did = 2;
+  string method = 3;
+}
+
+message MsgRemoveMFAResponse {}
+
+message MsgVerifyMFA {
+  string creator = 1;
+  string did = 2;
+  string method = 3;
+  string code = 4;
+}
+
+message MsgVerifyMFAResponse {}

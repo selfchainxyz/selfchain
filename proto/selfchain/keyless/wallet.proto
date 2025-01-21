@@ -1,0 +1,15 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "selfchain/x/keyless/types";
+
+// Wallet represents a keyless wallet
+message Wallet {
+  string creator = 1;
+  string address = 2;
+  string pub_key = 3;
+  string chain_id = 4;
+  string status = 5;
+}

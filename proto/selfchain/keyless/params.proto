@@ -1,0 +1,18 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+  uint32 max_wallets_per_did = 1 [(gogoproto.moretags) = "yaml:\"max_wallets_per_did\""];
+  uint32 max_shares_per_wallet = 2 [(gogoproto.moretags) = "yaml:\"max_shares_per_wallet\""];
+  uint32 min_recovery_threshold = 3 [(gogoproto.moretags) = "yaml:\"min_recovery_threshold\""];
+  uint32 max_recovery_threshold = 4 [(gogoproto.moretags) = "yaml:\"max_recovery_threshold\""];
+  uint32 recovery_window_seconds = 5 [(gogoproto.moretags) = "yaml:\"recovery_window_seconds\""];
+  uint32 max_signing_attempts = 6 [(gogoproto.moretags) = "yaml:\"max_signing_attempts\""];
+}
