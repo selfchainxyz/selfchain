@@ -1,28 +1,28 @@
 package signing
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
 	"math/big"
 	"sync"
-	"bytes"
 
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
 	"github.com/btcsuite/btcd/btcec/v2"
 
 	"selfchain/x/keyless/networks"
 	"selfchain/x/keyless/types"
-	"selfchain/x/keyless/tss"
 )
 
 // SigningContext contains the context for signing operations
 type SigningContext struct {
 	NetworkParams *types.NetworkParams
-	Message     []byte
-	Party1Data  interface{}
-	Party2Data  interface{}
-	Metadata    map[string]interface{} // Network-specific metadata
+	Message       []byte
+	Party1Data    interface{}
+	Party2Data    interface{}
+	Metadata      map[string]interface{} // Network-specific metadata
 }
 
 // SignRequest contains the parameters for a signing request
@@ -43,13 +43,13 @@ type SignerFactory struct {
 // NewSignerFactory creates a new signer factory
 func NewSignerFactory(registry *networks.NetworkRegistry) *SignerFactory {
 	return &SignerFactory{
-		signer:   &UniversalSigner{},
+		signer:   NewUniversalSigner(nil, nil),
 		registry: registry,
 	}
 }
 
 // Sign signs a message for the specified network
-func (f *SignerFactory) Sign(ctx context.Context, networkID string, message []byte, metadata map[string]interface{}, signResult *tss.SignResult) ([]byte, error) {
+func (f *SignerFactory) Sign(ctx context.Context, networkID string, message []byte, metadata map[string]interface{}, signResult *SignatureResult) ([]byte, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
@@ -203,146 +203,170 @@ type Signer interface {
 // UniversalSigner implements Signer for all networks
 type UniversalSigner struct {
 	networkParams *types.NetworkParams
+	ecdsaSigner   *ECDSASigner
+	eddsaSigner   *EdDSASigner
+}
+
+func NewUniversalSigner(party1Data, party2Data *keygen.LocalPartySaveData) *UniversalSigner {
+	return &UniversalSigner{
+		ecdsaSigner: NewECDSASigner(party1Data, party2Data),
+		eddsaSigner: NewEdDSASigner(party1Data, party2Data),
+	}
 }
 
 func (s *UniversalSigner) Sign(ctx context.Context, signingCtx *SigningContext) ([]byte, error) {
 	// Implementation for signing
 	networkType := networks.NetworkType(s.networkParams.NetworkType)
+
+	var signResult *SignatureResult
+	var err error
+
 	switch networkType {
-	case networks.Bitcoin:
-		// Bitcoin signing logic
-		return nil, fmt.Errorf("bitcoin signing not implemented")
-	case networks.Ethereum:
-		// Ethereum signing logic
-		return nil, fmt.Errorf("ethereum signing not implemented with chain ID %s", s.networkParams.SigningConfig.ChainId)
+	case networks.Bitcoin, networks.Ethereum:
+		signResult, err = s.ecdsaSigner.Sign(ctx, signingCtx.Message, ECDSA)
+		if err != nil {
+			return nil, fmt.Errorf("ECDSA signing failed: %w", err)
+		}
+
+		if networkType == networks.Bitcoin {
+			return formatBitcoinSignature(signResult)
+		}
+		return formatEthereumSignature(signResult, s.networkParams.SigningConfig.ChainId)
+
 	case networks.Cosmos:
-		// Cosmos signing logic
-		return nil, fmt.Errorf("cosmos signing not implemented")
-	case networks.Solana:
-		// Solana signing logic
-		return nil, fmt.Errorf("solana signing not implemented")
-	case networks.Cardano:
-		// Cardano signing logic
-		return nil, fmt.Errorf("cardano signing not implemented")
-	case networks.Aptos:
-		// Aptos signing logic
-		return nil, fmt.Errorf("aptos signing not implemented")
-	case networks.Sui:
-		// Sui signing logic
-		return nil, fmt.Errorf("sui signing not implemented")
+		signResult, err = s.ecdsaSigner.Sign(ctx, signingCtx.Message, ECDSA)
+		if err != nil {
+			return nil, fmt.Errorf("ECDSA signing failed: %w", err)
+		}
+		return formatCosmosSignature(signResult)
+
+	case networks.Solana, networks.Cardano:
+		signResult, err = s.eddsaSigner.Sign(ctx, signingCtx.Message, EdDSA)
+		if err != nil {
+			return nil, fmt.Errorf("EdDSA signing failed: %w", err)
+		}
+		return signResult.Bytes, nil
+
 	default:
 		return nil, fmt.Errorf("unsupported network type: %s", networkType)
 	}
 }
 
 func (s *UniversalSigner) Verify(pubKey []byte, msg []byte, signature []byte) (bool, error) {
-	// Implement verification logic based on network parameters
-	return false, fmt.Errorf("verification not implemented")
+	networkType := networks.NetworkType(s.networkParams.NetworkType)
+
+	switch networkType {
+	case networks.Bitcoin, networks.Ethereum, networks.Cosmos:
+		// Parse DER signature for ECDSA networks
+		rVal, sVal, err := UnmarshalDERSignature(signature)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse DER signature: %w", err)
+		}
+
+		// Parse public key
+		pubKeyObj, err := btcec.ParsePubKey(pubKey)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse public key: %w", err)
+		}
+
+		sig := &SignatureResult{R: rVal, S: sVal}
+		return s.ecdsaSigner.Verify(context.Background(), msg, sig, pubKeyObj)
+
+	case networks.Solana, networks.Cardano:
+		// For EdDSA networks, use raw signature bytes
+		sig := &SignatureResult{Bytes: signature}
+
+		// Parse public key
+		pubKeyObj, err := btcec.ParsePubKey(pubKey)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse public key: %w", err)
+		}
+
+		return s.eddsaSigner.Verify(context.Background(), msg, sig, pubKeyObj)
+
+	default:
+		return false, fmt.Errorf("unsupported network type: %s", networkType)
+	}
 }
 
 // Helper functions for signature formatting
-func formatBitcoinSignature(result *tss.SignResult) ([]byte, error) {
-	if result == nil {
-		return nil, fmt.Errorf("sign result is nil")
+func formatBitcoinSignature(result *SignatureResult) ([]byte, error) {
+	// For Bitcoin, we need DER encoding
+	var b bytes.Buffer
+
+	// Write sequence marker
+	b.WriteByte(0x30)
+
+	// Leave a byte for the total length
+	b.WriteByte(0x00)
+
+	// Write R value
+	b.WriteByte(0x02)
+	rb := result.R.Bytes()
+	if rb[0]&0x80 == 0x80 {
+		b.WriteByte(byte(len(rb) + 1))
+		b.WriteByte(0x00)
+	} else {
+		b.WriteByte(byte(len(rb)))
 	}
+	b.Write(rb)
 
-	// Convert R and S to bytes with 32-byte padding
-	rBytes := make([]byte, 32)
-	sBytes := make([]byte, 32)
-	result.R.FillBytes(rBytes)
-	result.S.FillBytes(sBytes)
+	// Write S value
+	b.WriteByte(0x02)
+	sb := result.S.Bytes()
+	if sb[0]&0x80 == 0x80 {
+		b.WriteByte(byte(len(sb) + 1))
+		b.WriteByte(0x00)
+	} else {
+		b.WriteByte(byte(len(sb)))
+	}
+	b.Write(sb)
 
-	// DER encoding:
-	// 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S]
-	
-	// Remove leading zeros from R and S
-	rLen := len(bytes.TrimLeft(rBytes, "\x00"))
-	sLen := len(bytes.TrimLeft(sBytes, "\x00"))
-	
-	// Total length is:
-	// 2 bytes for type and length of R
-	// rLen bytes for R
-	// 2 bytes for type and length of S
-	// sLen bytes for S
-	totalLen := 2 + rLen + 2 + sLen
-	
-	// Create the DER signature
-	der := make([]byte, 2+totalLen)
-	der[0] = 0x30 // Sequence tag
-	der[1] = byte(totalLen)
-	
-	// Encode R
-	der[2] = 0x02 // Integer tag
-	der[3] = byte(rLen)
-	copy(der[4:], bytes.TrimLeft(rBytes, "\x00"))
-	
-	// Encode S
-	der[4+rLen] = 0x02 // Integer tag
-	der[5+rLen] = byte(sLen)
-	copy(der[6+rLen:], bytes.TrimLeft(sBytes, "\x00"))
-	
+	// Fill in total length
+	der := b.Bytes()
+	der[1] = byte(len(der) - 2)
+
 	return der, nil
 }
 
-func formatEthereumSignature(result *tss.SignResult, chainID string) ([]byte, error) {
-	if result == nil {
-		return nil, fmt.Errorf("sign result is nil")
-	}
+func formatEthereumSignature(result *SignatureResult, chainID string) ([]byte, error) {
+	// For Ethereum, we need [R || S || V] format
+	// R and S are padded to 32 bytes
+	rBytes := padTo32(result.R.Bytes())
+	sBytes := padTo32(result.S.Bytes())
 
-	// Ethereum signatures are 65 bytes: R (32 bytes) + S (32 bytes) + V (1 byte)
-	signature := make([]byte, 65)
+	// V is recovery ID + 27 + (chainID * 2 + 35) if EIP-155 is used
+	var v byte = result.Recovery + 27
 
-	// Convert R and S to bytes with 32-byte padding
-	rBytes := make([]byte, 32)
-	sBytes := make([]byte, 32)
-	result.R.FillBytes(rBytes)
-	result.S.FillBytes(sBytes)
-
-	// Copy R and S
-	copy(signature[:32], rBytes)
-	copy(signature[32:64], sBytes)
-
-	// Calculate V based on chainID
-	// For EIP-155, V = 27 + chainID * 2 + 35
-	v := byte(27) // Default V value
+	// If chainID is provided, apply EIP-155
 	if chainID != "" {
 		chainIDInt := new(big.Int)
-		chainIDInt, ok := chainIDInt.SetString(chainID, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid chainID: %s", chainID)
+		chainIDInt.SetString(chainID, 10)
+		if chainIDInt.Sign() > 0 {
+			v = result.Recovery + 35 + byte(chainIDInt.Uint64()*2)
 		}
-		
-		vBig := new(big.Int).Add(big.NewInt(27), new(big.Int).Mul(chainIDInt, big.NewInt(2)))
-		vBig.Add(vBig, big.NewInt(35))
-		
-		if !vBig.IsUint64() {
-			return nil, fmt.Errorf("V value overflow")
-		}
-		v = byte(vBig.Uint64())
 	}
-	
+
+	// Combine [R || S || V]
+	signature := make([]byte, 65)
+	copy(signature[0:32], rBytes)
+	copy(signature[32:64], sBytes)
 	signature[64] = v
 
 	return signature, nil
 }
 
-func formatCosmosSignature(result *tss.SignResult) ([]byte, error) {
-	if result == nil {
-		return nil, fmt.Errorf("sign result is nil")
+func formatCosmosSignature(result *SignatureResult) ([]byte, error) {
+	// For Cosmos, we use DER encoding similar to Bitcoin
+	return formatBitcoinSignature(result)
+}
+
+// Helper function to pad a byte slice to 32 bytes
+func padTo32(b []byte) []byte {
+	if len(b) > 32 {
+		return b[:32]
 	}
-
-	// Cosmos signatures are just R || S concatenated (64 bytes)
-	signature := make([]byte, 64)
-
-	// Convert R and S to bytes with 32-byte padding
-	rBytes := make([]byte, 32)
-	sBytes := make([]byte, 32)
-	result.R.FillBytes(rBytes)
-	result.S.FillBytes(sBytes)
-
-	// Copy R and S
-	copy(signature[:32], rBytes)
-	copy(signature[32:], sBytes)
-
-	return signature, nil
+	result := make([]byte, 32)
+	copy(result[32-len(b):], b)
+	return result
 }

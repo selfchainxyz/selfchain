@@ -117,8 +117,14 @@ func TestMultiChainSigning(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, signResult)
 
+			// Convert TSS SignResult to SignatureResult
+			sigResult := &SignatureResult{
+				R: signResult.R,
+				S: signResult.S,
+			}
+
 			// Format the signature according to the network
-			signature, err := signerFactory.Sign(ctx, tt.networkID, messageHash[:], metadata, signResult)
+			signature, err := signerFactory.Sign(ctx, tt.networkID, messageHash[:], metadata, sigResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -207,8 +213,14 @@ func TestMultiChainConcurrentSigning(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, signResult)
 
+			// Convert TSS SignResult to SignatureResult
+			sigResult := &SignatureResult{
+				R: signResult.R,
+				S: signResult.S,
+			}
+
 			// Format the signature according to the network
-			signature, err := signerFactory.Sign(testCtx, tt.networkID, messageHash[:], metadata, signResult)
+			signature, err := signerFactory.Sign(testCtx, tt.networkID, messageHash[:], metadata, sigResult)
 			require.NoError(t, err)
 			require.NotNil(t, signature)
 
