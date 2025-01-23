@@ -36,14 +36,14 @@ var (
 	ErrInvalidCredentialIssuer  = sdkerrors.Register(ModuleName, 116, "invalid credential issuer")
 
 	// MFA errors (200-299)
-	ErrInvalidMFAMethod      = sdkerrors.Register(ModuleName, 200, "invalid MFA method")
-	ErrMFAMethodNotFound     = sdkerrors.Register(ModuleName, 201, "MFA method not found")
-	ErrMFAMethodInactive     = sdkerrors.Register(ModuleName, 202, "MFA method is not active")
-	ErrInvalidMFAChallenge   = sdkerrors.Register(ModuleName, 203, "invalid MFA challenge")
-	ErrMFAChallengeExpired   = sdkerrors.Register(ModuleName, 204, "MFA challenge expired")
-	ErrInvalidMFAConfig      = sdkerrors.Register(ModuleName, 205, "invalid MFA configuration")
-	ErrMFAVerificationFailed = sdkerrors.Register(ModuleName, 206, "MFA verification failed")
-	ErrInvalidMFACode        = sdkerrors.Register(ModuleName, 207, "invalid MFA code")
+	ErrInvalidMFAMethod       = sdkerrors.Register(ModuleName, 200, "invalid MFA method")
+	ErrMFAMethodNotFound      = sdkerrors.Register(ModuleName, 201, "MFA method not found")
+	ErrMFAMethodInactive      = sdkerrors.Register(ModuleName, 202, "MFA method is not active")
+	ErrInvalidMFAChallenge    = sdkerrors.Register(ModuleName, 203, "invalid MFA challenge")
+	ErrMFAChallengeExpired    = sdkerrors.Register(ModuleName, 204, "MFA challenge expired")
+	ErrInvalidMFAConfig       = sdkerrors.Register(ModuleName, 205, "invalid MFA configuration")
+	ErrMFAVerificationFailed  = sdkerrors.Register(ModuleName, 206, "MFA verification failed")
+	ErrInvalidMFACode         = sdkerrors.Register(ModuleName, 207, "invalid MFA code")
 	ErrMFAMethodAlreadyExists = sdkerrors.Register(ModuleName, 208, "MFA method already exists")
 
 	// OAuth/Social errors (300-399)
@@ -56,4 +56,10 @@ var (
 	ErrInvalidActor      = sdkerrors.Register(ModuleName, 402, "invalid actor")
 	ErrInvalidController = sdkerrors.Register(ModuleName, 403, "invalid controller")
 	ErrInvalidService    = sdkerrors.Register(ModuleName, 404, "invalid service")
+
+	// Recovery errors (400-499)
+	ErrInvalidRecoverySession = sdkerrors.Register(ModuleName, 400, "invalid recovery session")
+
+	// Rate limit errors (500-599)
+	ErrInvalidRateLimit = sdkerrors.Register(ModuleName, 500, "invalid rate limit configuration")
 )

@@ -33,6 +33,23 @@ enum AuditLogType {
   AUDIT_LOG_TYPE_SOCIAL_IDENTITY_UNLINKED = 13;
 }
 
+// AuditEvent represents a security-related event in the system
+message AuditEvent {
+  string did = 1;
+  string event_type = 2;
+  bool success = 3;
+  string details = 4;
+  int64 block_height = 5;
+  int64 timestamp = 6;
+}
+
+// EventAuditLog is emitted when an audit event is logged
+message EventAuditLog {
+  string did = 1;
+  string event_type = 2;
+  bool success = 3;
+}
+
 // AuditLogEntry represents an audit log entry
 message AuditLogEntry {
   string id = 1;

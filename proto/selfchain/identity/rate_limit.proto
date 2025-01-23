@@ -4,7 +4,20 @@ package selfchain.identity;
 option go_package = "selfchain/x/identity/types";
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
+// RateLimit represents a rate limit configuration for an operation
+message RateLimit {
+  string did = 1;
+  string operation = 2;
+  uint64 max_requests = 3;
+  uint64 time_window = 4;
+  uint64 burst_limit = 5;
+  uint64 current_count = 6;
+  google.protobuf.Timestamp last_reset = 7 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+// RateLimitData represents rate limit data for an operation
 message RateLimitData {
   int64 last_request_time = 1;
   int32 requests_in_last_minute = 2;

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,81 +14,89 @@ const (
 	RateLimitPrefix = "rate_limit/"
 
 	// Default rate limits
-	DefaultMaxRequestsPerMinute = 30
-	DefaultMaxRequestsPerHour   = 100
-	DefaultMaxRequestsPerDay    = 1000
+	DefaultMaxRequests = 100  // Default max requests per time window
+	DefaultTimeWindow  = 3600 // Default time window in seconds (1 hour)
+	DefaultBurstLimit = 10   // Default burst limit
 )
 
-// RateLimitData stores rate limiting information
-type RateLimitData struct {
-	LastRequestTime      int64
-	RequestsInLastMinute int32
-	RequestsInLastHour   int32
-	RequestsInLastDay    int32
-}
-
-// CheckRateLimit checks if a request should be rate limited
-func (k Keeper) CheckRateLimit(ctx sdk.Context, identifier string) error {
+// CheckRateLimit checks if an operation is rate limited
+func (k Keeper) CheckRateLimit(ctx sdk.Context, did string, operation string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RateLimitPrefix))
-	key := []byte(identifier)
+	key := []byte(fmt.Sprintf("%s/%s", did, operation))
 
-	var data types.RateLimitData
-	dataBytes := store.Get(key)
-	if dataBytes != nil {
-		k.cdc.MustUnmarshal(dataBytes, &data)
+	var rateLimit types.RateLimit
+	limitBytes := store.Get(key)
+	if limitBytes != nil {
+		k.cdc.MustUnmarshal(limitBytes, &rateLimit)
+	} else {
+		// Initialize new rate limit with defaults
+		rateLimit = types.RateLimit{
+			Did:          did,
+			Operation:    operation,
+			MaxRequests:  DefaultMaxRequests,
+			TimeWindow:   DefaultTimeWindow,
+			BurstLimit:   DefaultBurstLimit,
+			CurrentCount: 0,
+			LastReset:    ctx.BlockTime(),
+		}
 	}
 
-	currentTime := ctx.BlockTime().Unix()
+	currentTime := ctx.BlockTime()
 
-	// Reset counters if time windows have passed
-	if currentTime-data.LastRequestTime >= 86400 { // 24 hours
-		data.RequestsInLastDay = 0
-		data.RequestsInLastHour = 0
-		data.RequestsInLastMinute = 0
-	} else if currentTime-data.LastRequestTime >= 3600 { // 1 hour
-		data.RequestsInLastHour = 0
-		data.RequestsInLastMinute = 0
-	} else if currentTime-data.LastRequestTime >= 60 { // 1 minute
-		data.RequestsInLastMinute = 0
+	// Reset if time window has passed
+	if currentTime.Sub(rateLimit.LastReset) >= time.Duration(rateLimit.TimeWindow)*time.Second {
+		rateLimit.LastReset = currentTime
+		rateLimit.CurrentCount = 0
 	}
 
-	// Check rate limits
-	if data.RequestsInLastMinute >= DefaultMaxRequestsPerMinute {
-		return fmt.Errorf("rate limit exceeded: too many requests per minute")
-	}
-	if data.RequestsInLastHour >= DefaultMaxRequestsPerHour {
-		return fmt.Errorf("rate limit exceeded: too many requests per hour")
-	}
-	if data.RequestsInLastDay >= DefaultMaxRequestsPerDay {
-		return fmt.Errorf("rate limit exceeded: too many requests per day")
+	// Check if we're within burst limit
+	if rateLimit.CurrentCount <= rateLimit.BurstLimit {
+		rateLimit.CurrentCount++
+		store.Set(key, k.cdc.MustMarshal(&rateLimit))
+		return nil
 	}
 
-	// Update counters
-	data.RequestsInLastMinute++
-	data.RequestsInLastHour++
-	data.RequestsInLastDay++
-	data.LastRequestTime = currentTime
+	// Check if we're within max requests for the time window
+	if rateLimit.CurrentCount >= rateLimit.MaxRequests {
+		return types.ErrRateLimitExceeded
+	}
 
-	// Store updated data
-	store.Set(key, k.cdc.MustMarshal(&data))
-
+	// Increment counter and update
+	rateLimit.CurrentCount++
+	store.Set(key, k.cdc.MustMarshal(&rateLimit))
 	return nil
 }
 
-// ResetRateLimit resets rate limit data for an identifier
-func (k Keeper) ResetRateLimit(ctx sdk.Context, identifier string) {
+// ResetRateLimit resets rate limit data for a DID and operation
+func (k Keeper) ResetRateLimit(ctx sdk.Context, did string, operation string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RateLimitPrefix))
-	store.Delete([]byte(identifier))
+	key := []byte(fmt.Sprintf("%s/%s", did, operation))
+	store.Delete(key)
 }
 
-// GetRateLimitData gets rate limit data for an identifier
-func (k Keeper) GetRateLimitData(ctx sdk.Context, identifier string) types.RateLimitData {
+// GetRateLimit gets rate limit data for a DID and operation
+func (k Keeper) GetRateLimit(ctx sdk.Context, did string, operation string) *types.RateLimit {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RateLimitPrefix))
-	dataBytes := store.Get([]byte(identifier))
+	key := []byte(fmt.Sprintf("%s/%s", did, operation))
 
-	var data types.RateLimitData
-	if dataBytes != nil {
-		k.cdc.MustUnmarshal(dataBytes, &data)
+	limitBytes := store.Get(key)
+	if limitBytes == nil {
+		return nil
 	}
-	return data
+
+	var rateLimit types.RateLimit
+	k.cdc.MustUnmarshal(limitBytes, &rateLimit)
+	return &rateLimit
+}
+
+// SetRateLimit sets a custom rate limit for a DID and operation
+func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) error {
+	if err := rateLimit.ValidateBasic(); err != nil {
+		return err
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RateLimitPrefix))
+	key := []byte(fmt.Sprintf("%s/%s", rateLimit.Did, rateLimit.Operation))
+	store.Set(key, k.cdc.MustMarshal(&rateLimit))
+	return nil
 }

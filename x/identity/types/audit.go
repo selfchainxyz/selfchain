@@ -9,7 +9,6 @@ import (
 // Security-related constants
 const (
 	SecurityEventPrefix = "security_event/"
-	RateLimitPrefix     = "rate_limit/"
 )
 
 var (
@@ -18,6 +17,31 @@ var (
 	ErrInvalidAuditActor   = sdkerrors.Register(ModuleName, 1403, "invalid audit actor")
 	ErrInvalidAuditDID     = sdkerrors.Register(ModuleName, 1404, "invalid audit DID")
 )
+
+// NewAuditEvent creates a new audit event
+func NewAuditEvent(did string, eventType string, success bool, details string) *AuditEvent {
+	return &AuditEvent{
+		Did:       did,
+		EventType: eventType,
+		Success:   success,
+		Details:   details,
+		Timestamp: time.Now().Unix(),
+	}
+}
+
+// ValidateBasic performs basic validation of the audit event
+func (a *AuditEvent) ValidateBasic() error {
+	if a.Did == "" {
+		return ErrInvalidAuditDID
+	}
+	if a.EventType == "" {
+		return ErrInvalidAuditLogType
+	}
+	if a.Timestamp == 0 {
+		return sdkerrors.Register(ModuleName, 1405, "audit event timestamp cannot be zero")
+	}
+	return nil
+}
 
 // ValidateBasic performs basic validation of the audit log entry
 func (a *AuditLogEntry) ValidateBasic() error {

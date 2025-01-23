@@ -14,6 +14,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/require"
+	"selfchain/testutil/mock"
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
 )
@@ -39,11 +40,14 @@ func KeylessKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"KeylessParams",
 	)
 
+	identityKeeper := mock.NewMockIdentityKeeper()
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
+		identityKeeper,
 	)
 
 	header := tmproto.Header{

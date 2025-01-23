@@ -577,8 +577,15 @@ func New(
 		keys[keylessmoduletypes.StoreKey],
 		keys[keylessmoduletypes.MemStoreKey],
 		app.GetSubspace(keylessmoduletypes.ModuleName),
+		app.IdentityKeeper,
 	)
-	keylessModule := keylessmodule.NewAppModule(appCodec, app.KeylessKeeper, app.AccountKeeper, app.BankKeeper)
+	keylessModule := keylessmodule.NewAppModule(
+		appCodec,
+		app.KeylessKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.IdentityKeeper,
+	)
 
 	app.SelfvestingKeeper = *selfvestingmodulekeeper.NewKeeper(
 		appCodec,

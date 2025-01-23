@@ -241,8 +241,14 @@ func (k msgServer) AddMFA(goCtx context.Context, msg *types.MsgAddMFA) (*types.M
 		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
+	// Convert creator address string to AccAddress
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid creator address")
+	}
+
 	// Verify ownership
-	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, creator); err != nil {
 		return nil, sdkerrors.Wrap(err, "unauthorized")
 	}
 
@@ -262,8 +268,14 @@ func (k msgServer) RemoveMFA(goCtx context.Context, msg *types.MsgRemoveMFA) (*t
 		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
+	// Convert creator address string to AccAddress
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid creator address")
+	}
+
 	// Verify ownership
-	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, creator); err != nil {
 		return nil, sdkerrors.Wrap(err, "unauthorized")
 	}
 
@@ -283,14 +295,20 @@ func (k msgServer) VerifyMFA(goCtx context.Context, msg *types.MsgVerifyMFA) (*t
 		return nil, sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
 	}
 
+	// Convert creator address string to AccAddress
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid creator address")
+	}
+
 	// Verify ownership
-	if err := k.VerifyDIDOwnership(ctx, msg.Did, msg.Creator); err != nil {
+	if err := k.VerifyDIDOwnership(ctx, msg.Did, creator); err != nil {
 		return nil, sdkerrors.Wrap(err, "unauthorized")
 	}
 
 	// Verify MFA code
 	if err := k.VerifyMFACode(ctx, msg.Did, msg.Method, msg.Code); err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid MFA code")
+		return nil, sdkerrors.Wrap(err, "failed to verify MFA code")
 	}
 
 	return &types.MsgVerifyMFAResponse{}, nil

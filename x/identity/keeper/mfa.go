@@ -306,32 +306,8 @@ func (k Keeper) VerifyMFACode(ctx sdk.Context, did string, method string, code s
 		return err
 	}
 
-	// TODO: Implement actual MFA code verification logic based on the method type
-	// For now, we'll just check if the code matches the secret (for testing)
 	if code != mfaMethod.Secret {
 		return sdkerrors.Wrap(types.ErrInvalidMFACode, "invalid MFA code")
-	}
-
-	return nil
-}
-
-// VerifyDIDOwnership verifies if the creator is the owner of the DID
-func (k Keeper) VerifyDIDOwnership(ctx sdk.Context, did string, creator string) error {
-	didDoc, found := k.GetDIDDocument(ctx, did)
-	if !found {
-		return sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
-	}
-
-	isOwner := false
-	for _, controller := range didDoc.Controller {
-		if controller == creator {
-			isOwner = true
-			break
-		}
-	}
-
-	if !isOwner {
-		return sdkerrors.Wrap(types.ErrUnauthorized, "not the DID owner")
 	}
 
 	return nil

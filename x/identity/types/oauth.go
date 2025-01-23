@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var (
@@ -14,6 +15,18 @@ var (
 	ErrOAuthSessionNotFound   = sdkerrors.Register(ModuleName, 1305, "OAuth session not found")
 	ErrSocialIdentityNotFound = sdkerrors.Register(ModuleName, 1306, "social identity not found")
 )
+
+// OAuthClaims represents the claims in an OAuth2 JWT token
+type OAuthClaims struct {
+	jwt.RegisteredClaims
+	Issuer    string `json:"iss"`
+	Subject   string `json:"sub"`
+	Audience  string `json:"aud"`
+	ExpiresAt int64  `json:"exp"`
+	IssuedAt  int64  `json:"iat"`
+	Nonce     string `json:"nonce,omitempty"`
+	Provider  string `json:"provider"`
+}
 
 // ValidateBasic performs basic validation of social identity
 func (s *SocialIdentity) ValidateBasic() error {

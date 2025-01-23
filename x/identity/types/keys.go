@@ -20,21 +20,25 @@ const (
 	// ParamsKey is the store key for module parameters
 	ParamsKey = "params"
 
-	// DIDDocumentPrefix is the prefix for storing DID documents
-	DIDDocumentPrefix = "did_document/"
-
-	// DIDPrefix                = "did/"
-	DIDPrefix                = DIDDocumentPrefix
-	CredentialPrefix         = "credential/"
-	SocialIdentityPrefix     = "social_identity/"
+	// Store prefixes
+	DIDDocumentPrefix     = "did_document/"
+	DIDPrefix             = DIDDocumentPrefix
+	CredentialPrefix      = "credential/"
+	SocialIdentityPrefix  = "social_identity/"
 	SocialIdentityByIDPrefix = "social_identity_by_id/"
-	MFAConfigPrefix          = "mfa_config/"
-	AuditLogPrefix           = "audit_log/"
-	CredentialByDIDPrefix    = "credential_by_did/"
-	MFAMethodPrefix          = "mfa_method/"
-	MFAChallengePrefix       = "mfa_challenge:"
-	OAuthProviderPrefix      = "oauth_provider/"
-	MFAChallengeExpiry       = 5 * time.Minute // MFA challenge expiry time
+	MFAConfigPrefix       = "mfa_config/"
+	AuditLogPrefix        = "audit_log/"
+	CredentialByDIDPrefix = "credential_by_did/"
+	MFAMethodPrefix       = "mfa_method/"
+	MFAChallengePrefix    = "mfa_challenge:"
+	OAuthProviderPrefix   = "oauth_provider/"
+	OAuthSessionPrefix    = "oauth_session/"
+	MFASessionPrefix      = "mfa_session/"
+	RecoverySessionPrefix = "recovery_session/"
+	KeySharePrefix        = "key_share/"
+	RateLimitPrefix       = "rate_limit/"
+	AuditEventPrefix      = "audit_event/"
+	MFAChallengeExpiry    = 5 * time.Minute // MFA challenge expiry time
 )
 
 // KeyPrefix returns the prefix for a given key type

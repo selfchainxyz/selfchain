@@ -28,12 +28,6 @@ func (k Keeper) GetWalletFromStore(ctx sdk.Context, id string) (types.Wallet, bo
 	return wallet, true
 }
 
-// DeleteWallet removes a wallet from the store
-func (k Keeper) DeleteWallet(ctx sdk.Context, id string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
-	store.Delete([]byte(id))
-}
-
 // ValidateWalletAccess validates if the permission exists in the wallet's permissions list
 func (k Keeper) ValidateWalletAccess(ctx sdk.Context, id string, permission string) error {
 	wallet, found := k.GetWalletFromStore(ctx, id)

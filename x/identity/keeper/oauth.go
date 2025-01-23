@@ -72,6 +72,39 @@ func (k Keeper) UnlinkSocialIdentity(ctx sdk.Context, did string, socialID strin
 	return nil
 }
 
+// GetOAuthPublicKey retrieves the public key for verifying OAuth2 tokens
+func (k Keeper) GetOAuthPublicKey(ctx sdk.Context, did string) (interface{}, error) {
+	// Get social identities for the DID
+	socialIdentities, err := k.GetSocialIdentities(ctx, did)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get social identities: %w", err)
+	}
+	if len(socialIdentities) == 0 {
+		return nil, fmt.Errorf("no social identity found for DID: %s", did)
+	}
+
+	// Use the first social identity's provider
+	provider := socialIdentities[0].Provider
+
+	// Get OAuth provider configuration
+	providerStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.OAuthProviderPrefix))
+	providerBytes := providerStore.Get([]byte(provider))
+	if providerBytes == nil {
+		return nil, fmt.Errorf("OAuth provider not found: %s", provider)
+	}
+
+	var oauthProvider types.OAuthProvider
+	k.cdc.MustUnmarshal(providerBytes, &oauthProvider)
+
+	// Get public key from provider config
+	publicKey, ok := oauthProvider.Config["public_key"]
+	if !ok {
+		return nil, fmt.Errorf("public key not found in provider config")
+	}
+
+	return []byte(publicKey), nil
+}
+
 // verifySocialToken verifies a social identity token with the provider
 func (k Keeper) verifySocialToken(ctx sdk.Context, provider string, token string) (string, error) {
 	// TODO: Implement actual token verification with providers

@@ -28,6 +28,23 @@ enum MFAMethodStatus {
   MFA_METHOD_STATUS_DISABLED = 3;
 }
 
+// MFASession represents an active MFA verification session
+message MFASession {
+  string did = 1;
+  string token = 2;
+  google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp expires_at = 4 [(gogoproto.stdtime) = true];
+  MFASessionStatus status = 5;
+}
+
+// MFASessionStatus represents the status of an MFA session
+enum MFASessionStatus {
+  MFA_SESSION_STATUS_UNSPECIFIED = 0;
+  MFA_SESSION_STATUS_PENDING = 1;
+  MFA_SESSION_STATUS_VERIFIED = 2;
+  MFA_SESSION_STATUS_EXPIRED = 3;
+}
+
 // MFAChallenge represents an MFA challenge
 message MFAChallenge {
   string id = 1;

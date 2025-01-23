@@ -59,6 +59,38 @@ func (MFAMethodStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_6f98fdf45cff8027, []int{0}
 }
 
+// MFASessionStatus represents the status of an MFA session
+type MFASessionStatus int32
+
+const (
+	MFASessionStatus_MFA_SESSION_STATUS_UNSPECIFIED MFASessionStatus = 0
+	MFASessionStatus_MFA_SESSION_STATUS_PENDING     MFASessionStatus = 1
+	MFASessionStatus_MFA_SESSION_STATUS_VERIFIED    MFASessionStatus = 2
+	MFASessionStatus_MFA_SESSION_STATUS_EXPIRED     MFASessionStatus = 3
+)
+
+var MFASessionStatus_name = map[int32]string{
+	0: "MFA_SESSION_STATUS_UNSPECIFIED",
+	1: "MFA_SESSION_STATUS_PENDING",
+	2: "MFA_SESSION_STATUS_VERIFIED",
+	3: "MFA_SESSION_STATUS_EXPIRED",
+}
+
+var MFASessionStatus_value = map[string]int32{
+	"MFA_SESSION_STATUS_UNSPECIFIED": 0,
+	"MFA_SESSION_STATUS_PENDING":     1,
+	"MFA_SESSION_STATUS_VERIFIED":    2,
+	"MFA_SESSION_STATUS_EXPIRED":     3,
+}
+
+func (x MFASessionStatus) String() string {
+	return proto.EnumName(MFASessionStatus_name, int32(x))
+}
+
+func (MFASessionStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{1}
+}
+
 // MFAConfig represents the MFA configuration for a DID
 type MFAConfig struct {
 	Did     string       `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
@@ -181,6 +213,83 @@ func (m *MFAMethod) GetStatus() MFAMethodStatus {
 	return MFAMethodStatus_MFA_METHOD_STATUS_UNSPECIFIED
 }
 
+// MFASession represents an active MFA verification session
+type MFASession struct {
+	Did       string           `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
+	Token     string           `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	CreatedAt *time.Time       `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	ExpiresAt *time.Time       `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3,stdtime" json:"expires_at,omitempty"`
+	Status    MFASessionStatus `protobuf:"varint,5,opt,name=status,proto3,enum=selfchain.identity.MFASessionStatus" json:"status,omitempty"`
+}
+
+func (m *MFASession) Reset()         { *m = MFASession{} }
+func (m *MFASession) String() string { return proto.CompactTextString(m) }
+func (*MFASession) ProtoMessage()    {}
+func (*MFASession) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6f98fdf45cff8027, []int{2}
+}
+func (m *MFASession) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MFASession) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MFASession.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MFASession) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MFASession.Merge(m, src)
+}
+func (m *MFASession) XXX_Size() int {
+	return m.Size()
+}
+func (m *MFASession) XXX_DiscardUnknown() {
+	xxx_messageInfo_MFASession.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MFASession proto.InternalMessageInfo
+
+func (m *MFASession) GetDid() string {
+	if m != nil {
+		return m.Did
+	}
+	return ""
+}
+
+func (m *MFASession) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+func (m *MFASession) GetCreatedAt() *time.Time {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return nil
+}
+
+func (m *MFASession) GetExpiresAt() *time.Time {
+	if m != nil {
+		return m.ExpiresAt
+	}
+	return nil
+}
+
+func (m *MFASession) GetStatus() MFASessionStatus {
+	if m != nil {
+		return m.Status
+	}
+	return MFASessionStatus_MFA_SESSION_STATUS_UNSPECIFIED
+}
+
 // MFAChallenge represents an MFA challenge
 type MFAChallenge struct {
 	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -194,7 +303,7 @@ func (m *MFAChallenge) Reset()         { *m = MFAChallenge{} }
 func (m *MFAChallenge) String() string { return proto.CompactTextString(m) }
 func (*MFAChallenge) ProtoMessage()    {}
 func (*MFAChallenge) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{2}
+	return fileDescriptor_6f98fdf45cff8027, []int{3}
 }
 func (m *MFAChallenge) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -270,7 +379,7 @@ func (m *MsgAddMFA) Reset()         { *m = MsgAddMFA{} }
 func (m *MsgAddMFA) String() string { return proto.CompactTextString(m) }
 func (*MsgAddMFA) ProtoMessage()    {}
 func (*MsgAddMFA) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{3}
+	return fileDescriptor_6f98fdf45cff8027, []int{4}
 }
 func (m *MsgAddMFA) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -334,7 +443,7 @@ func (m *MsgAddMFAResponse) Reset()         { *m = MsgAddMFAResponse{} }
 func (m *MsgAddMFAResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgAddMFAResponse) ProtoMessage()    {}
 func (*MsgAddMFAResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{4}
+	return fileDescriptor_6f98fdf45cff8027, []int{5}
 }
 func (m *MsgAddMFAResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -373,7 +482,7 @@ func (m *MsgRemoveMFA) Reset()         { *m = MsgRemoveMFA{} }
 func (m *MsgRemoveMFA) String() string { return proto.CompactTextString(m) }
 func (*MsgRemoveMFA) ProtoMessage()    {}
 func (*MsgRemoveMFA) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{5}
+	return fileDescriptor_6f98fdf45cff8027, []int{6}
 }
 func (m *MsgRemoveMFA) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -430,7 +539,7 @@ func (m *MsgRemoveMFAResponse) Reset()         { *m = MsgRemoveMFAResponse{} }
 func (m *MsgRemoveMFAResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRemoveMFAResponse) ProtoMessage()    {}
 func (*MsgRemoveMFAResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{6}
+	return fileDescriptor_6f98fdf45cff8027, []int{7}
 }
 func (m *MsgRemoveMFAResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -470,7 +579,7 @@ func (m *MsgVerifyMFA) Reset()         { *m = MsgVerifyMFA{} }
 func (m *MsgVerifyMFA) String() string { return proto.CompactTextString(m) }
 func (*MsgVerifyMFA) ProtoMessage()    {}
 func (*MsgVerifyMFA) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{7}
+	return fileDescriptor_6f98fdf45cff8027, []int{8}
 }
 func (m *MsgVerifyMFA) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -534,7 +643,7 @@ func (m *MsgVerifyMFAResponse) Reset()         { *m = MsgVerifyMFAResponse{} }
 func (m *MsgVerifyMFAResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgVerifyMFAResponse) ProtoMessage()    {}
 func (*MsgVerifyMFAResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6f98fdf45cff8027, []int{8}
+	return fileDescriptor_6f98fdf45cff8027, []int{9}
 }
 func (m *MsgVerifyMFAResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -565,8 +674,10 @@ var xxx_messageInfo_MsgVerifyMFAResponse proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterEnum("selfchain.identity.MFAMethodStatus", MFAMethodStatus_name, MFAMethodStatus_value)
+	proto.RegisterEnum("selfchain.identity.MFASessionStatus", MFASessionStatus_name, MFASessionStatus_value)
 	proto.RegisterType((*MFAConfig)(nil), "selfchain.identity.MFAConfig")
 	proto.RegisterType((*MFAMethod)(nil), "selfchain.identity.MFAMethod")
+	proto.RegisterType((*MFASession)(nil), "selfchain.identity.MFASession")
 	proto.RegisterType((*MFAChallenge)(nil), "selfchain.identity.MFAChallenge")
 	proto.RegisterType((*MsgAddMFA)(nil), "selfchain.identity.MsgAddMFA")
 	proto.RegisterType((*MsgAddMFAResponse)(nil), "selfchain.identity.MsgAddMFAResponse")
@@ -579,41 +690,47 @@ func init() {
 func init() { proto.RegisterFile("selfchain/identity/mfa.proto", fileDescriptor_6f98fdf45cff8027) }
 
 var fileDescriptor_6f98fdf45cff8027 = []byte{
-	// 541 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xc1, 0x6e, 0xda, 0x40,
-	0x10, 0x65, 0x8d, 0x4b, 0xc4, 0x24, 0x4a, 0xe9, 0x36, 0x8a, 0x5c, 0x14, 0x1c, 0xea, 0x5e, 0x50,
-	0x0f, 0x46, 0xa2, 0x95, 0x7a, 0xe8, 0x21, 0x32, 0x60, 0x5a, 0xa4, 0x9a, 0x46, 0x86, 0x70, 0xe8,
-	0x05, 0x39, 0x78, 0x6c, 0x2c, 0x01, 0x8b, 0xbc, 0x9b, 0x2a, 0xfc, 0x45, 0xfa, 0x31, 0xfd, 0x87,
-	0xaa, 0xa7, 0x1c, 0x7b, 0x6b, 0x05, 0x3f, 0x52, 0xb1, 0xd8, 0x10, 0x05, 0xa9, 0x6a, 0xa4, 0xdc,
-	0x66, 0x3c, 0x6f, 0xde, 0x9b, 0x37, 0xbb, 0x5e, 0x38, 0xe1, 0x38, 0x0e, 0x86, 0x23, 0x2f, 0x9a,
-	0x56, 0x23, 0x1f, 0xa7, 0x22, 0x12, 0xf3, 0xea, 0x24, 0xf0, 0xcc, 0x59, 0xcc, 0x04, 0xa3, 0x74,
-	0x53, 0x35, 0xd3, 0x6a, 0xf1, 0x28, 0x64, 0x21, 0x93, 0xe5, 0xea, 0x2a, 0x5a, 0x23, 0x8b, 0xa7,
-	0x21, 0x63, 0xe1, 0x18, 0xab, 0x32, 0xbb, 0xbc, 0x0a, 0xaa, 0x22, 0x9a, 0x20, 0x17, 0xde, 0x64,
-	0xb6, 0x06, 0x18, 0x7d, 0xc8, 0x3b, 0x2d, 0xab, 0xc1, 0xa6, 0x41, 0x14, 0xd2, 0x02, 0x64, 0xfd,
-	0xc8, 0xd7, 0x48, 0x99, 0x54, 0xf2, 0xee, 0x2a, 0xa4, 0xef, 0x60, 0x6f, 0x82, 0x62, 0xc4, 0x7c,
-	0xae, 0x29, 0xe5, 0x6c, 0x65, 0xbf, 0x56, 0x32, 0x77, 0xb5, 0x4d, 0xa7, 0x65, 0x39, 0x12, 0xe5,
-	0xa6, 0x68, 0xe3, 0x3b, 0x91, 0xc4, 0xeb, 0xcf, 0x94, 0x82, 0x2a, 0xe6, 0x33, 0x4c, 0x98, 0x65,
-	0x4c, 0x8f, 0x21, 0xc7, 0x71, 0x18, 0xa3, 0xd0, 0x14, 0xf9, 0x35, 0xc9, 0xe8, 0x19, 0xc0, 0x30,
-	0x46, 0x4f, 0xa0, 0x3f, 0xf0, 0x84, 0x96, 0x2d, 0x93, 0xca, 0x7e, 0xad, 0x68, 0xae, 0x7d, 0x98,
-	0xa9, 0x0f, 0xb3, 0x97, 0xfa, 0xa8, 0xab, 0x37, 0xbf, 0x4f, 0x89, 0x9b, 0x4f, 0x7a, 0x2c, 0x41,
-	0xdf, 0x43, 0x8e, 0x0b, 0x4f, 0x5c, 0x71, 0x4d, 0x2d, 0x93, 0xca, 0x61, 0xed, 0xd5, 0x3f, 0x47,
-	0xee, 0x4a, 0xa8, 0x9b, 0xb4, 0x18, 0x3f, 0x09, 0x1c, 0xac, 0x16, 0x32, 0xf2, 0xc6, 0x63, 0x9c,
-	0x86, 0x48, 0x0f, 0x41, 0xd9, 0xac, 0x44, 0x89, 0xfc, 0x74, 0x47, 0xca, 0x76, 0x47, 0xc7, 0x90,
-	0x5b, 0xbb, 0x96, 0xc3, 0xe6, 0xdd, 0x24, 0xbb, 0x67, 0x44, 0x7d, 0xb8, 0x91, 0x33, 0x00, 0xbc,
-	0x9e, 0x45, 0x31, 0xf2, 0x15, 0xc1, 0x93, 0xff, 0x25, 0x48, 0x7a, 0x2c, 0x61, 0x84, 0x90, 0x77,
-	0x78, 0x68, 0xf9, 0xbe, 0xd3, 0xb2, 0xa8, 0x06, 0x7b, 0x92, 0x9a, 0xc5, 0x89, 0x9b, 0x34, 0x7d,
-	0x80, 0xa5, 0xed, 0x99, 0xa9, 0x77, 0xcf, 0xcc, 0x78, 0x0e, 0xcf, 0x36, 0x42, 0x2e, 0xf2, 0x19,
-	0x9b, 0x72, 0x34, 0x5c, 0x38, 0x70, 0x78, 0xe8, 0xe2, 0x84, 0x7d, 0xc5, 0x47, 0x1a, 0xc0, 0x38,
-	0x86, 0xa3, 0xbb, 0x9c, 0x1b, 0xad, 0x40, 0x6a, 0xf5, 0x31, 0x8e, 0x82, 0xf9, 0x63, 0x99, 0xa5,
-	0xa0, 0x0e, 0x99, 0x8f, 0x89, 0x55, 0x19, 0x27, 0xfa, 0x1b, 0x9d, 0x54, 0xff, 0xf5, 0x37, 0x02,
-	0x4f, 0xef, 0x5d, 0x29, 0xfa, 0x12, 0x4a, 0x4e, 0xcb, 0x1a, 0x38, 0x76, 0xef, 0xe3, 0xe7, 0xe6,
-	0xa0, 0xdb, 0xb3, 0x7a, 0x17, 0xdd, 0xc1, 0x45, 0xa7, 0x7b, 0x6e, 0x37, 0xda, 0xad, 0xb6, 0xdd,
-	0x2c, 0x64, 0xe8, 0x09, 0x68, 0xbb, 0x10, 0xab, 0xd1, 0x6b, 0xf7, 0xed, 0x02, 0xa1, 0x25, 0x78,
-	0xb1, 0x5b, 0x3d, 0xb7, 0x3b, 0xcd, 0x76, 0xe7, 0x43, 0x41, 0xa1, 0x3a, 0x14, 0x77, 0xcb, 0xcd,
-	0x76, 0xd7, 0xaa, 0x7f, 0xb2, 0x9b, 0x85, 0x6c, 0xfd, 0xed, 0x8f, 0x85, 0x4e, 0x6e, 0x17, 0x3a,
-	0xf9, 0xb3, 0xd0, 0xc9, 0xcd, 0x52, 0xcf, 0xdc, 0x2e, 0xf5, 0xcc, 0xaf, 0xa5, 0x9e, 0xf9, 0x52,
-	0xdc, 0xbe, 0x2e, 0xd7, 0xdb, 0xf7, 0x65, 0xf5, 0x57, 0xf2, 0xcb, 0x9c, 0xbc, 0x58, 0x6f, 0xfe,
-	0x06, 0x00, 0x00, 0xff, 0xff, 0xb1, 0x50, 0x71, 0xae, 0x82, 0x04, 0x00, 0x00,
+	// 636 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0xcd, 0x3a, 0x6e, 0xaa, 0x4c, 0xab, 0x12, 0x96, 0xaa, 0x32, 0xa1, 0x75, 0x83, 0xe1, 0x10,
+	0xf5, 0xe0, 0x48, 0x05, 0x89, 0x03, 0x48, 0x95, 0xdb, 0x38, 0x60, 0x09, 0xa7, 0x95, 0x9d, 0x46,
+	0x88, 0x4b, 0xe4, 0xc6, 0x1b, 0xd7, 0x22, 0xf1, 0x46, 0xd9, 0x2d, 0x6a, 0xff, 0xa2, 0x9c, 0xf8,
+	0x12, 0xfe, 0x01, 0x71, 0xea, 0x91, 0x1b, 0xa8, 0xfd, 0x05, 0x3e, 0x00, 0x79, 0x6d, 0x27, 0x55,
+	0x92, 0x22, 0xaa, 0xf6, 0x36, 0xe3, 0x79, 0xf3, 0xde, 0xbc, 0xc9, 0x64, 0x61, 0x9d, 0x91, 0x7e,
+	0xaf, 0x7b, 0xec, 0x85, 0x51, 0x2d, 0xf4, 0x49, 0xc4, 0x43, 0x7e, 0x56, 0x1b, 0xf4, 0x3c, 0x7d,
+	0x38, 0xa2, 0x9c, 0x62, 0x3c, 0xae, 0xea, 0x59, 0xb5, 0xbc, 0x1a, 0xd0, 0x80, 0x8a, 0x72, 0x2d,
+	0x8e, 0x12, 0x64, 0x79, 0x33, 0xa0, 0x34, 0xe8, 0x93, 0x9a, 0xc8, 0x8e, 0x4e, 0x7a, 0x35, 0x1e,
+	0x0e, 0x08, 0xe3, 0xde, 0x60, 0x98, 0x00, 0xb4, 0x36, 0x14, 0xed, 0x86, 0xb1, 0x47, 0xa3, 0x5e,
+	0x18, 0xe0, 0x12, 0xe4, 0xfd, 0xd0, 0x57, 0x50, 0x05, 0x55, 0x8b, 0x4e, 0x1c, 0xe2, 0x57, 0xb0,
+	0x38, 0x20, 0xfc, 0x98, 0xfa, 0x4c, 0x91, 0x2a, 0xf9, 0xea, 0xd2, 0xf6, 0x86, 0x3e, 0xab, 0xad,
+	0xdb, 0x0d, 0xc3, 0x16, 0x28, 0x27, 0x43, 0x6b, 0xdf, 0x90, 0x20, 0x4e, 0x3e, 0x63, 0x0c, 0x32,
+	0x3f, 0x1b, 0x92, 0x94, 0x59, 0xc4, 0x78, 0x0d, 0x0a, 0x8c, 0x74, 0x47, 0x84, 0x2b, 0x92, 0xf8,
+	0x9a, 0x66, 0x78, 0x07, 0xa0, 0x3b, 0x22, 0x1e, 0x27, 0x7e, 0xc7, 0xe3, 0x4a, 0xbe, 0x82, 0xaa,
+	0x4b, 0xdb, 0x65, 0x3d, 0xf1, 0xa1, 0x67, 0x3e, 0xf4, 0x56, 0xe6, 0x63, 0x57, 0x3e, 0xff, 0xb5,
+	0x89, 0x9c, 0x62, 0xda, 0x63, 0x70, 0xfc, 0x1a, 0x0a, 0x8c, 0x7b, 0xfc, 0x84, 0x29, 0x72, 0x05,
+	0x55, 0x57, 0xb6, 0x9f, 0xfd, 0x73, 0x64, 0x57, 0x40, 0x9d, 0xb4, 0x45, 0xfb, 0x83, 0x00, 0xec,
+	0x86, 0xe1, 0x12, 0xc6, 0x42, 0x1a, 0xcd, 0xd9, 0xc8, 0x2a, 0x2c, 0x70, 0xfa, 0x89, 0x44, 0xe9,
+	0xd4, 0x49, 0x72, 0xf7, 0xa1, 0x77, 0x00, 0xc8, 0xe9, 0x30, 0x1c, 0x11, 0x16, 0x13, 0xc8, 0xff,
+	0x4b, 0x90, 0xf6, 0x18, 0x1c, 0xbf, 0x19, 0xbb, 0x5e, 0x10, 0xae, 0x9f, 0xdf, 0xe0, 0x3a, 0x75,
+	0x36, 0x65, 0xfb, 0x07, 0x82, 0xe5, 0xf8, 0x0e, 0x8e, 0xbd, 0x7e, 0x9f, 0x44, 0x01, 0xc1, 0x2b,
+	0x20, 0x8d, 0x7d, 0x4b, 0xa1, 0x9f, 0x2d, 0x42, 0x9a, 0x2c, 0x62, 0x0d, 0x0a, 0xc9, 0x8f, 0x2d,
+	0xec, 0x16, 0x9d, 0x34, 0x9b, 0x5a, 0x85, 0x7c, 0xd7, 0x55, 0x2c, 0xdc, 0x7a, 0x15, 0x5a, 0x00,
+	0x45, 0x9b, 0x05, 0x86, 0xef, 0xdb, 0x0d, 0x03, 0x2b, 0xb0, 0x28, 0xa8, 0xe9, 0x28, 0x75, 0x93,
+	0xa5, 0xb7, 0xb0, 0x34, 0x39, 0x55, 0xf9, 0xfa, 0xa9, 0x6a, 0x8f, 0xe0, 0xe1, 0x58, 0xc8, 0x21,
+	0x6c, 0x48, 0x23, 0x46, 0x34, 0x07, 0x96, 0x6d, 0x16, 0x38, 0x64, 0x40, 0x3f, 0x93, 0x7b, 0x1a,
+	0x40, 0x5b, 0x83, 0xd5, 0xeb, 0x9c, 0x63, 0xad, 0x9e, 0xd0, 0x6a, 0x93, 0x51, 0xd8, 0x3b, 0xbb,
+	0x2f, 0xb3, 0x18, 0xe4, 0x2e, 0xf5, 0x49, 0x6a, 0x55, 0xc4, 0xa9, 0xfe, 0x58, 0x27, 0xd3, 0xdf,
+	0xfa, 0x82, 0xe0, 0xc1, 0xd4, 0x3f, 0x09, 0x3f, 0x85, 0x0d, 0xbb, 0x61, 0x74, 0x6c, 0xb3, 0xf5,
+	0x6e, 0xbf, 0xde, 0x71, 0x5b, 0x46, 0xeb, 0xd0, 0xed, 0x1c, 0x36, 0xdd, 0x03, 0x73, 0xcf, 0x6a,
+	0x58, 0x66, 0xbd, 0x94, 0xc3, 0xeb, 0xa0, 0xcc, 0x42, 0x8c, 0xbd, 0x96, 0xd5, 0x36, 0x4b, 0x08,
+	0x6f, 0xc0, 0xe3, 0xd9, 0xea, 0x81, 0xd9, 0xac, 0x5b, 0xcd, 0xb7, 0x25, 0x09, 0xab, 0x50, 0x9e,
+	0x2d, 0xd7, 0x2d, 0xd7, 0xd8, 0x7d, 0x6f, 0xd6, 0x4b, 0xf9, 0xad, 0xaf, 0x08, 0x4a, 0xd3, 0x77,
+	0x8e, 0x35, 0x50, 0xe3, 0x26, 0xd7, 0x74, 0x5d, 0x6b, 0xbf, 0x39, 0x7f, 0xaa, 0x94, 0x78, 0x0a,
+	0x93, 0x09, 0x23, 0xbc, 0x09, 0x4f, 0xe6, 0xd4, 0xdb, 0xa6, 0x93, 0x10, 0x48, 0x37, 0x10, 0x98,
+	0x1f, 0x0e, 0x2c, 0x27, 0x9e, 0x6c, 0xf7, 0xe5, 0xf7, 0x4b, 0x15, 0x5d, 0x5c, 0xaa, 0xe8, 0xf7,
+	0xa5, 0x8a, 0xce, 0xaf, 0xd4, 0xdc, 0xc5, 0x95, 0x9a, 0xfb, 0x79, 0xa5, 0xe6, 0x3e, 0x96, 0x27,
+	0xcf, 0xfd, 0xe9, 0xe4, 0xc1, 0x8f, 0x9f, 0x49, 0x76, 0x54, 0x10, 0x27, 0xff, 0xe2, 0x6f, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0x97, 0x07, 0x48, 0x02, 0x13, 0x06, 0x00, 0x00,
 }
 
 func (m *MFAConfig) Marshal() (dAtA []byte, err error) {
@@ -712,6 +829,68 @@ func (m *MFAMethod) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MFASession) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MFASession) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MFASession) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Status != 0 {
+		i = encodeVarintMfa(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.ExpiresAt != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
+		if err2 != nil {
+			return 0, err2
+		}
+		i -= n2
+		i = encodeVarintMfa(dAtA, i, uint64(n2))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.CreatedAt != nil {
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err3 != nil {
+			return 0, err3
+		}
+		i -= n3
+		i = encodeVarintMfa(dAtA, i, uint64(n3))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Token) > 0 {
+		i -= len(m.Token)
+		copy(dAtA[i:], m.Token)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Token)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Did) > 0 {
+		i -= len(m.Did)
+		copy(dAtA[i:], m.Did)
+		i = encodeVarintMfa(dAtA, i, uint64(len(m.Did)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *MFAChallenge) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -733,22 +912,22 @@ func (m *MFAChallenge) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.ExpiresAt != nil {
-		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
-		if err2 != nil {
-			return 0, err2
+		n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.ExpiresAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt):])
+		if err4 != nil {
+			return 0, err4
 		}
-		i -= n2
-		i = encodeVarintMfa(dAtA, i, uint64(n2))
+		i -= n4
+		i = encodeVarintMfa(dAtA, i, uint64(n4))
 		i--
 		dAtA[i] = 0x2a
 	}
 	if m.CreatedAt != nil {
-		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
-		if err3 != nil {
-			return 0, err3
+		n5, err5 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err5 != nil {
+			return 0, err5
 		}
-		i -= n3
-		i = encodeVarintMfa(dAtA, i, uint64(n3))
+		i -= n5
+		i = encodeVarintMfa(dAtA, i, uint64(n5))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -1037,6 +1216,34 @@ func (m *MFAMethod) Size() (n int) {
 	}
 	if m.CreatedAt != nil {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovMfa(uint64(m.Status))
+	}
+	return n
+}
+
+func (m *MFASession) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Did)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	l = len(m.Token)
+	if l > 0 {
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	if m.CreatedAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
+		n += 1 + l + sovMfa(uint64(l))
+	}
+	if m.ExpiresAt != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.ExpiresAt)
 		n += 1 + l + sovMfa(uint64(l))
 	}
 	if m.Status != 0 {
@@ -1438,6 +1645,211 @@ func (m *MFAMethod) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.Status |= MFAMethodStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMfa(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MFASession) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMfa
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MFASession: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MFASession: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Did", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Did = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Token", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Token = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CreatedAt == nil {
+				m.CreatedAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpiresAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMfa
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthMfa
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ExpiresAt == nil {
+				m.ExpiresAt = new(time.Time)
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.ExpiresAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMfa
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= MFASessionStatus(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
