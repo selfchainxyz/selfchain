@@ -50,15 +50,15 @@ var (
 	ErrInvalidSocialIdentity = sdkerrors.Register(ModuleName, 300, "invalid social identity")
 	ErrInvalidToken          = sdkerrors.Register(ModuleName, 301, "invalid token")
 
-	// Audit log errors (400-499)
+	// Audit log errors (400-449)
 	ErrInvalidAuditLogID = sdkerrors.Register(ModuleName, 400, "invalid audit log ID")
 	ErrInvalidAction     = sdkerrors.Register(ModuleName, 401, "invalid action")
 	ErrInvalidActor      = sdkerrors.Register(ModuleName, 402, "invalid actor")
 	ErrInvalidController = sdkerrors.Register(ModuleName, 403, "invalid controller")
 	ErrInvalidService    = sdkerrors.Register(ModuleName, 404, "invalid service")
 
-	// Recovery errors (400-499)
-	ErrInvalidRecoverySession = sdkerrors.Register(ModuleName, 400, "invalid recovery session")
+	// Recovery errors (450-499)
+	ErrInvalidRecoverySession = sdkerrors.Register(ModuleName, 450, "invalid recovery session")
 
 	// Rate limit errors (500-599)
 	ErrInvalidRateLimit = sdkerrors.Register(ModuleName, 500, "invalid rate limit configuration")

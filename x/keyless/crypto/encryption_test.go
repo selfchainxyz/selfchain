@@ -37,6 +37,11 @@ func TestNewEncryptionKey(t *testing.T) {
 }
 
 func TestEncryptDecrypt(t *testing.T) {
+	key, err := NewEncryptionKey()
+	if err != nil {
+		t.Fatalf("Failed to generate key: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		plaintext []byte
@@ -66,17 +71,10 @@ func TestEncryptDecrypt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Generate a new key for each test
-			key, err := NewEncryptionKey()
-			if err != nil {
-				t.Fatalf("Failed to generate key: %v", err)
-			}
-
 			// Encrypt the plaintext
 			encrypted, err := Encrypt(key, tt.plaintext)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Encrypt() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if err != nil {
+				t.Fatalf("Failed to encrypt: %v", err)
 			}
 
 			// Verify the encrypted text is base64 encoded
@@ -86,75 +84,65 @@ func TestEncryptDecrypt(t *testing.T) {
 
 			// Decrypt the ciphertext
 			decrypted, err := Decrypt(key, encrypted)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Decrypt() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if err != nil {
+				t.Fatalf("Failed to decrypt: %v", err)
 			}
 
 			// Compare the decrypted text with original plaintext
 			if !bytes.Equal(decrypted, tt.plaintext) {
-				t.Errorf("Decrypt() = %v, want %v", decrypted, tt.plaintext)
+				t.Errorf("Decrypted text does not match original\nGot: %v\nWant: %v", decrypted, tt.plaintext)
 			}
 		})
 	}
 }
 
 func TestEncryptDecryptShare(t *testing.T) {
-	// Generate a test data structure
-	type TestShareData struct {
-		ShareID string
-		Data    []byte
-		Meta    map[string]string
-	}
-
-	testData := &TestShareData{
-		ShareID: "test-share-1",
-		Data:    []byte("test share data"),
-		Meta: map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-		},
-	}
-
-	// Generate encryption key
 	key, err := NewEncryptionKey()
 	if err != nil {
-		t.Fatalf("Failed to generate encryption key: %v", err)
+		t.Fatal("Failed to generate key:", err)
 	}
 
-	// Marshal test data to JSON
-	jsonData, err := json.Marshal(testData)
+	type Share struct {
+		Index     int      `json:"index"`
+		Value     []byte   `json:"value"`
+		Threshold int      `json:"threshold"`
+		Parties   []string `json:"parties"`
+	}
+
+	share := Share{
+		Index:     1,
+		Value:     []byte("test share value"),
+		Threshold: 2,
+		Parties:   []string{"party1", "party2", "party3"},
+	}
+
+	// Serialize share to JSON
+	shareBytes, err := json.Marshal(share)
 	if err != nil {
-		t.Fatalf("Failed to marshal test data: %v", err)
+		t.Fatal("Failed to marshal share:", err)
 	}
 
-	// Encrypt the data
-	encrypted, err := Encrypt(key, jsonData)
+	// Encrypt share
+	encrypted, err := Encrypt(key, shareBytes)
 	if err != nil {
-		t.Fatalf("Failed to encrypt data: %v", err)
+		t.Fatal("Failed to encrypt share:", err)
 	}
 
-	// Decrypt the data
+	// Decrypt share
 	decrypted, err := Decrypt(key, encrypted)
 	if err != nil {
-		t.Fatalf("Failed to decrypt data: %v", err)
+		t.Fatal("Failed to decrypt share:", err)
 	}
 
-	// Unmarshal and verify
-	var decryptedData TestShareData
-	if err := json.Unmarshal(decrypted, &decryptedData); err != nil {
-		t.Fatalf("Failed to unmarshal decrypted data: %v", err)
+	// Unmarshal decrypted data
+	var decryptedShare Share
+	if err := json.Unmarshal(decrypted, &decryptedShare); err != nil {
+		t.Fatal("Failed to unmarshal decrypted share:", err)
 	}
 
-	// Verify the decrypted data matches original
-	if decryptedData.ShareID != testData.ShareID {
-		t.Errorf("ShareID mismatch: got %v, want %v", decryptedData.ShareID, testData.ShareID)
-	}
-	if !bytes.Equal(decryptedData.Data, testData.Data) {
-		t.Errorf("Data mismatch: got %v, want %v", decryptedData.Data, testData.Data)
-	}
-	if !reflect.DeepEqual(decryptedData.Meta, testData.Meta) {
-		t.Errorf("Meta mismatch: got %v, want %v", decryptedData.Meta, testData.Meta)
+	// Compare original and decrypted shares
+	if !reflect.DeepEqual(share, decryptedShare) {
+		t.Errorf("Decrypted share does not match original\nOriginal: %+v\nDecrypted: %+v", share, decryptedShare)
 	}
 }
 
@@ -163,34 +151,35 @@ func TestEncryptionErrors(t *testing.T) {
 		name        string
 		key         EncryptionKey
 		ciphertext  string
-		shouldError bool
+		expectError string
 	}{
 		{
 			name:        "Invalid key length",
-			key:         make([]byte, 16), // Too short for AES-256
-			ciphertext:  "",
-			shouldError: true,
+			key:         make([]byte, 31),
+			ciphertext:  "test",
+			expectError: "invalid key size: must be 32 bytes",
 		},
 		{
 			name:        "Invalid base64 ciphertext",
 			key:         make([]byte, 32),
-			ciphertext:  "invalid base64!@#$",
-			shouldError: true,
+			ciphertext:  "invalid base64",
+			expectError: "failed to decode base64",
 		},
 		{
 			name:        "Ciphertext too short",
 			key:         make([]byte, 32),
-			ciphertext:  base64.StdEncoding.EncodeToString([]byte("too short")),
-			shouldError: true,
+			ciphertext:  base64.StdEncoding.EncodeToString([]byte("short")),
+			expectError: "malformed ciphertext: too short",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Try to decrypt with invalid input
 			_, err := Decrypt(tt.key, tt.ciphertext)
-			if (err != nil) != tt.shouldError {
-				t.Errorf("Decrypt() error = %v, wantErr %v", err, tt.shouldError)
+			if err == nil {
+				t.Error("Expected error but got nil")
+			} else if !strings.Contains(err.Error(), tt.expectError) {
+				t.Errorf("Expected error containing %q but got %q", tt.expectError, err.Error())
 			}
 		})
 	}
@@ -199,31 +188,33 @@ func TestEncryptionErrors(t *testing.T) {
 func TestEncryptionKeyReuse(t *testing.T) {
 	key, err := NewEncryptionKey()
 	if err != nil {
-		t.Fatalf("Failed to generate key: %v", err)
+		t.Fatal("Failed to generate key:", err)
 	}
 
-	// Test multiple encryptions with the same key
 	plaintexts := [][]byte{
-		[]byte("First message"),
-		[]byte("Second message"),
-		[]byte("Third message"),
+		[]byte("message 1"),
+		[]byte("message 2"),
+		[]byte("message 3"),
 	}
 
-	for i, plaintext := range plaintexts {
-		encrypted, err := Encrypt(key, plaintext)
+	// Encrypt multiple messages with the same key
+	var ciphertexts []string
+	for _, plaintext := range plaintexts {
+		ciphertext, err := Encrypt(key, plaintext)
 		if err != nil {
-			t.Errorf("Encryption %d failed: %v", i, err)
-			continue
+			t.Fatalf("Failed to encrypt: %v", err)
 		}
+		ciphertexts = append(ciphertexts, ciphertext)
+	}
 
-		decrypted, err := Decrypt(key, encrypted)
+	// Decrypt and verify each message
+	for i, ciphertext := range ciphertexts {
+		decrypted, err := Decrypt(key, ciphertext)
 		if err != nil {
-			t.Errorf("Decryption %d failed: %v", i, err)
-			continue
+			t.Fatalf("Decryption %d failed: %v", i, err)
 		}
-
-		if !bytes.Equal(decrypted, plaintext) {
-			t.Errorf("Test %d: got %v, want %v", i, decrypted, plaintext)
+		if !bytes.Equal(decrypted, plaintexts[i]) {
+			t.Errorf("Decrypted text %d does not match original\nGot: %v\nWant: %v", i, decrypted, plaintexts[i])
 		}
 	}
 }

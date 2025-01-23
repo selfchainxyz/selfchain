@@ -18,12 +18,12 @@ func NewIdentityKeeper(t mock.TestingT) *IdentityKeeper {
 	return mock
 }
 
-func (m *IdentityKeeper) GetDIDDocument(ctx sdk.Context, did string) (*types.DIDDocument, error) {
+func (m *IdentityKeeper) GetDIDDocument(ctx sdk.Context, did string) (types.DIDDocument, bool) {
 	args := m.Called(ctx, did)
 	if doc := args.Get(0); doc != nil {
-		return doc.(*types.DIDDocument), args.Error(1)
+		return doc.(types.DIDDocument), args.Bool(1)
 	}
-	return nil, args.Error(1)
+	return types.DIDDocument{}, args.Bool(1)
 }
 
 func (m *IdentityKeeper) VerifyDIDOwnership(ctx sdk.Context, did string, owner sdk.AccAddress) error {

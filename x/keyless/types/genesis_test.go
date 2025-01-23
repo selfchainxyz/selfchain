@@ -19,14 +19,62 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state",
+			desc: "valid genesis state",
 			genState: &types.GenesisState{
-
-				// this line is used by starport scaffolding # types/genesis/validField
+				Params: types.Params{
+					MaxParties:           5,
+					MaxThreshold:         3,
+					MaxSecurityLevel:     3,
+					MaxBatchSize:         100,
+					MaxMetadataSize:      1024,
+					MaxWalletsPerDid:     5,
+					MaxSharesPerWallet:   3,
+					MinRecoveryThreshold: 2,
+					MaxRecoveryThreshold: 3,
+					RecoveryWindowSeconds: 86400,
+					MaxSigningAttempts:    3,
+				},
 			},
 			valid: true,
 		},
-		// this line is used by starport scaffolding # types/genesis/testcase
+		{
+			desc: "invalid params - zero MaxParties",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					MaxParties:           0, // Invalid
+					MaxThreshold:         3,
+					MaxSecurityLevel:     3,
+					MaxBatchSize:         100,
+					MaxMetadataSize:      1024,
+					MaxWalletsPerDid:     5,
+					MaxSharesPerWallet:   3,
+					MinRecoveryThreshold: 2,
+					MaxRecoveryThreshold: 3,
+					RecoveryWindowSeconds: 86400,
+					MaxSigningAttempts:    3,
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid params - MaxThreshold > MaxParties",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					MaxParties:           3,
+					MaxThreshold:         5, // Invalid
+					MaxSecurityLevel:     3,
+					MaxBatchSize:         100,
+					MaxMetadataSize:      1024,
+					MaxWalletsPerDid:     5,
+					MaxSharesPerWallet:   3,
+					MinRecoveryThreshold: 2,
+					MaxRecoveryThreshold: 3,
+					RecoveryWindowSeconds: 86400,
+					MaxSigningAttempts:    3,
+				},
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
