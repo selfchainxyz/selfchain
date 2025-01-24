@@ -1,0 +1,28 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// AuditLog represents a single audit log entry
+message AuditLog {
+  string operation = 1;
+  string wallet_id = 2;
+  string user = 3;
+  google.protobuf.Timestamp timestamp = 4 [(gogoproto.stdtime) = true];
+  int64 block_height = 5;
+  bool success = 6;
+}
+
+// RateLimitData represents rate limit tracking data
+message RateLimitData {
+  uint32 count = 1;
+  google.protobuf.Timestamp last_reset = 2 [(gogoproto.stdtime) = true];
+}
+
+// AccessData represents wallet access grant data
+message AccessData {
+  google.protobuf.Timestamp granted_at = 1 [(gogoproto.stdtime) = true];
+}

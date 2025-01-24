@@ -3,57 +3,87 @@ package testutil
 import (
 	"testing"
 
+	identitytypes "selfchain/x/identity/types"
+	"selfchain/x/keyless/keeper"
+	"selfchain/x/keyless/types"
+
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/require"
-	"selfchain/x/keyless/keeper"
-	"selfchain/x/keyless/types"
-	identitytypes "selfchain/x/identity/types"
 )
 
-// MockIdentityKeeper is a mock implementation of IdentityKeeper for testing
-type MockIdentityKeeper struct{}
-
-func (m MockIdentityKeeper) GetDIDDocument(ctx sdk.Context, did string) (identitytypes.DIDDocument, bool) {
-	return identitytypes.DIDDocument{}, true
+// MockIdentityKeeper is a mock implementation of the identity keeper for testing
+type MockIdentityKeeper struct {
+	didDocs map[string]*identitytypes.DIDDocument
 }
 
-func (m MockIdentityKeeper) VerifyDIDOwnership(ctx sdk.Context, did string, owner sdk.AccAddress) error {
+// NewMockIdentityKeeper creates a new instance of MockIdentityKeeper
+func NewMockIdentityKeeper() *MockIdentityKeeper {
+	return &MockIdentityKeeper{
+		didDocs: make(map[string]*identitytypes.DIDDocument),
+	}
+}
+
+// SetDIDDocument sets a DID document in the mock keeper
+func (m *MockIdentityKeeper) SetDIDDocument(doc *identitytypes.DIDDocument) {
+	m.didDocs[doc.Id] = doc
+}
+
+// GetDIDDocument returns a mock DID document
+func (m *MockIdentityKeeper) GetDIDDocument(ctx sdk.Context, did string) (identitytypes.DIDDocument, bool) {
+	if doc, ok := m.didDocs[did]; ok {
+		return *doc, true
+	}
+	return identitytypes.DIDDocument{}, false
+}
+
+// VerifyDIDOwnership returns nil for mock DID ownership verification
+func (m *MockIdentityKeeper) VerifyDIDOwnership(ctx sdk.Context, did string, owner sdk.AccAddress) error {
 	return nil
 }
 
-func (m MockIdentityKeeper) VerifyOAuth2Token(ctx sdk.Context, did string, token string) error {
+// VerifyOAuth2Token returns nil for mock OAuth2 token verification
+func (m *MockIdentityKeeper) VerifyOAuth2Token(ctx sdk.Context, did string, token string) error {
 	return nil
 }
 
-func (m MockIdentityKeeper) VerifyMFA(ctx sdk.Context, did string) error {
+// VerifyMFA returns nil for mock MFA verification
+func (m *MockIdentityKeeper) VerifyMFA(ctx sdk.Context, did string) error {
 	return nil
 }
 
-func (m MockIdentityKeeper) VerifyRecoveryToken(ctx sdk.Context, did string, token string) error {
+// VerifyRecoveryToken returns nil for mock recovery token verification
+func (m *MockIdentityKeeper) VerifyRecoveryToken(ctx sdk.Context, did string, token string) error {
 	return nil
 }
 
-func (m MockIdentityKeeper) GetKeyShare(ctx sdk.Context, did string) ([]byte, bool) {
-	return []byte{}, true
+// GetKeyShare returns a mock key share if DID document exists
+func (m *MockIdentityKeeper) GetKeyShare(ctx sdk.Context, did string) ([]byte, bool) {
+	if doc, ok := m.didDocs[did]; ok {
+		return []byte("mock_key_share_for_" + doc.Id), true
+	}
+	return nil, false
 }
 
-func (m MockIdentityKeeper) ReconstructWallet(ctx sdk.Context, didDoc identitytypes.DIDDocument) (interface{}, error) {
-	return []byte{}, nil
+// ReconstructWallet returns a mock reconstructed wallet
+func (m *MockIdentityKeeper) ReconstructWallet(ctx sdk.Context, didDoc identitytypes.DIDDocument) (interface{}, error) {
+	return []byte("mock_reconstructed_wallet_for_" + didDoc.Id), nil
 }
 
-func (m MockIdentityKeeper) CheckRateLimit(ctx sdk.Context, did string, operation string) error {
+// CheckRateLimit returns nil for mock rate limit check
+func (m *MockIdentityKeeper) CheckRateLimit(ctx sdk.Context, did string, operation string) error {
 	return nil
 }
 
-func (m MockIdentityKeeper) LogAuditEvent(ctx sdk.Context, event *identitytypes.AuditEvent) error {
+// LogAuditEvent returns nil for mock audit event logging
+func (m *MockIdentityKeeper) LogAuditEvent(ctx sdk.Context, event *identitytypes.AuditEvent) error {
 	return nil
 }
 
@@ -79,7 +109,7 @@ func NewTestKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"KeylessParams",
 	)
 
-	identityKeeper := MockIdentityKeeper{}
+	identityKeeper := NewMockIdentityKeeper()
 
 	k := keeper.NewKeeper(
 		cdc,

@@ -107,3 +107,8 @@ func (k Keeper) InitiateRecovery(ctx sdk.Context, did string, recoveryToken stri
 	store.Set([]byte(did), bz)
 	return nil
 }
+
+// GetIdentityKeeper returns the identity keeper
+func (k Keeper) GetIdentityKeeper() types.IdentityKeeper {
+	return k.identityKeeper
+}

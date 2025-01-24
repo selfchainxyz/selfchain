@@ -24,6 +24,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdQueryWallet(),
 		CmdListWallets(),
 		CmdQueryPartyData(),
+		CmdQueryKeyRotationStatus(),
+		CmdQueryBatchSignStatus(),
 	)
 
 	flags.AddQueryFlagsToCmd(cmd)
@@ -105,6 +107,61 @@ func CmdQueryPartyData() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.PartyData(cmd.Context(), &types.QueryPartyDataRequest{
 				WalletAddress: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryKeyRotationStatus() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "key-rotation-status [wallet-id]",
+		Short: "Query key rotation status for a wallet",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.KeyRotationStatus(cmd.Context(), &types.QueryKeyRotationStatusRequest{
+				WalletId: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryBatchSignStatus() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "batch-sign-status [wallet-id] [batch-id]",
+		Short: "Query batch signing status for a wallet",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.BatchSignStatus(cmd.Context(), &types.QueryBatchSignStatusRequest{
+				WalletId: args[0],
+				BatchId:  args[1],
 			})
 			if err != nil {
 				return err

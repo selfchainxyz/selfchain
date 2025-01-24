@@ -603,6 +603,258 @@ func (m *QueryKeyRotationsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryKeyRotationStatusRequest is request type for the Query/KeyRotationStatus RPC method.
+type QueryKeyRotationStatusRequest struct {
+	WalletId string `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+}
+
+func (m *QueryKeyRotationStatusRequest) Reset()         { *m = QueryKeyRotationStatusRequest{} }
+func (m *QueryKeyRotationStatusRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryKeyRotationStatusRequest) ProtoMessage()    {}
+func (*QueryKeyRotationStatusRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_055fc6244ffb94fc, []int{12}
+}
+func (m *QueryKeyRotationStatusRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryKeyRotationStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryKeyRotationStatusRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryKeyRotationStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryKeyRotationStatusRequest.Merge(m, src)
+}
+func (m *QueryKeyRotationStatusRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryKeyRotationStatusRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryKeyRotationStatusRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryKeyRotationStatusRequest proto.InternalMessageInfo
+
+func (m *QueryKeyRotationStatusRequest) GetWalletId() string {
+	if m != nil {
+		return m.WalletId
+	}
+	return ""
+}
+
+// QueryKeyRotationStatusResponse is response type for the Query/KeyRotationStatus RPC method.
+type QueryKeyRotationStatusResponse struct {
+	WalletId  string `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	Status    string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Version   uint64 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	NewPubKey string `protobuf:"bytes,4,opt,name=new_pub_key,json=newPubKey,proto3" json:"new_pub_key,omitempty"`
+	Error     string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+}
+
+func (m *QueryKeyRotationStatusResponse) Reset()         { *m = QueryKeyRotationStatusResponse{} }
+func (m *QueryKeyRotationStatusResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryKeyRotationStatusResponse) ProtoMessage()    {}
+func (*QueryKeyRotationStatusResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_055fc6244ffb94fc, []int{13}
+}
+func (m *QueryKeyRotationStatusResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryKeyRotationStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryKeyRotationStatusResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryKeyRotationStatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryKeyRotationStatusResponse.Merge(m, src)
+}
+func (m *QueryKeyRotationStatusResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryKeyRotationStatusResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryKeyRotationStatusResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryKeyRotationStatusResponse proto.InternalMessageInfo
+
+func (m *QueryKeyRotationStatusResponse) GetWalletId() string {
+	if m != nil {
+		return m.WalletId
+	}
+	return ""
+}
+
+func (m *QueryKeyRotationStatusResponse) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *QueryKeyRotationStatusResponse) GetVersion() uint64 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
+
+func (m *QueryKeyRotationStatusResponse) GetNewPubKey() string {
+	if m != nil {
+		return m.NewPubKey
+	}
+	return ""
+}
+
+func (m *QueryKeyRotationStatusResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+// QueryBatchSignStatusRequest is request type for the Query/BatchSignStatus RPC method.
+type QueryBatchSignStatusRequest struct {
+	WalletId string `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	BatchId  string `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+}
+
+func (m *QueryBatchSignStatusRequest) Reset()         { *m = QueryBatchSignStatusRequest{} }
+func (m *QueryBatchSignStatusRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryBatchSignStatusRequest) ProtoMessage()    {}
+func (*QueryBatchSignStatusRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_055fc6244ffb94fc, []int{14}
+}
+func (m *QueryBatchSignStatusRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryBatchSignStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryBatchSignStatusRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryBatchSignStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBatchSignStatusRequest.Merge(m, src)
+}
+func (m *QueryBatchSignStatusRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryBatchSignStatusRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBatchSignStatusRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryBatchSignStatusRequest proto.InternalMessageInfo
+
+func (m *QueryBatchSignStatusRequest) GetWalletId() string {
+	if m != nil {
+		return m.WalletId
+	}
+	return ""
+}
+
+func (m *QueryBatchSignStatusRequest) GetBatchId() string {
+	if m != nil {
+		return m.BatchId
+	}
+	return ""
+}
+
+// QueryBatchSignStatusResponse is response type for the Query/BatchSignStatus RPC method.
+type QueryBatchSignStatusResponse struct {
+	WalletId   string   `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	BatchId    string   `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	Status     string   `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	Signatures []string `protobuf:"bytes,4,rep,name=signatures,proto3" json:"signatures,omitempty"`
+	Error      string   `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+}
+
+func (m *QueryBatchSignStatusResponse) Reset()         { *m = QueryBatchSignStatusResponse{} }
+func (m *QueryBatchSignStatusResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryBatchSignStatusResponse) ProtoMessage()    {}
+func (*QueryBatchSignStatusResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_055fc6244ffb94fc, []int{15}
+}
+func (m *QueryBatchSignStatusResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryBatchSignStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryBatchSignStatusResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryBatchSignStatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBatchSignStatusResponse.Merge(m, src)
+}
+func (m *QueryBatchSignStatusResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryBatchSignStatusResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBatchSignStatusResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryBatchSignStatusResponse proto.InternalMessageInfo
+
+func (m *QueryBatchSignStatusResponse) GetWalletId() string {
+	if m != nil {
+		return m.WalletId
+	}
+	return ""
+}
+
+func (m *QueryBatchSignStatusResponse) GetBatchId() string {
+	if m != nil {
+		return m.BatchId
+	}
+	return ""
+}
+
+func (m *QueryBatchSignStatusResponse) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *QueryBatchSignStatusResponse) GetSignatures() []string {
+	if m != nil {
+		return m.Signatures
+	}
+	return nil
+}
+
+func (m *QueryBatchSignStatusResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
 // QueryListAuditEventsRequest is request type for the Query/ListAuditEvents RPC method.
 type QueryListAuditEventsRequest struct {
 	WalletId   string             `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
@@ -615,7 +867,7 @@ func (m *QueryListAuditEventsRequest) Reset()         { *m = QueryListAuditEvent
 func (m *QueryListAuditEventsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryListAuditEventsRequest) ProtoMessage()    {}
 func (*QueryListAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_055fc6244ffb94fc, []int{12}
+	return fileDescriptor_055fc6244ffb94fc, []int{16}
 }
 func (m *QueryListAuditEventsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -682,7 +934,7 @@ func (m *QueryListAuditEventsResponse) Reset()         { *m = QueryListAuditEven
 func (m *QueryListAuditEventsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryListAuditEventsResponse) ProtoMessage()    {}
 func (*QueryListAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_055fc6244ffb94fc, []int{13}
+	return fileDescriptor_055fc6244ffb94fc, []int{17}
 }
 func (m *QueryListAuditEventsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -738,6 +990,10 @@ func init() {
 	proto.RegisterType((*QueryKeyRotationResponse)(nil), "selfchain.keyless.QueryKeyRotationResponse")
 	proto.RegisterType((*QueryKeyRotationsRequest)(nil), "selfchain.keyless.QueryKeyRotationsRequest")
 	proto.RegisterType((*QueryKeyRotationsResponse)(nil), "selfchain.keyless.QueryKeyRotationsResponse")
+	proto.RegisterType((*QueryKeyRotationStatusRequest)(nil), "selfchain.keyless.QueryKeyRotationStatusRequest")
+	proto.RegisterType((*QueryKeyRotationStatusResponse)(nil), "selfchain.keyless.QueryKeyRotationStatusResponse")
+	proto.RegisterType((*QueryBatchSignStatusRequest)(nil), "selfchain.keyless.QueryBatchSignStatusRequest")
+	proto.RegisterType((*QueryBatchSignStatusResponse)(nil), "selfchain.keyless.QueryBatchSignStatusResponse")
 	proto.RegisterType((*QueryListAuditEventsRequest)(nil), "selfchain.keyless.QueryListAuditEventsRequest")
 	proto.RegisterType((*QueryListAuditEventsResponse)(nil), "selfchain.keyless.QueryListAuditEventsResponse")
 }
@@ -745,62 +1001,76 @@ func init() {
 func init() { proto.RegisterFile("selfchain/keyless/query.proto", fileDescriptor_055fc6244ffb94fc) }
 
 var fileDescriptor_055fc6244ffb94fc = []byte{
-	// 879 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0x4d, 0x6f, 0xe3, 0x44,
-	0x18, 0xc7, 0x33, 0xbb, 0x25, 0x4d, 0x9e, 0xe5, 0x45, 0x0c, 0x05, 0x9a, 0x34, 0x35, 0xc5, 0xa8,
-	0xbb, 0x65, 0xbb, 0x78, 0xe8, 0x06, 0xe8, 0xa1, 0x02, 0xd1, 0x0a, 0x0a, 0x08, 0x84, 0x8a, 0x85,
-	0x84, 0x84, 0x40, 0xd1, 0x34, 0x19, 0x82, 0xd5, 0x34, 0x76, 0x33, 0x4e, 0xc1, 0x94, 0x80, 0x84,
-	0xf8, 0x00, 0x48, 0x70, 0x80, 0x13, 0x17, 0x10, 0x7c, 0x07, 0xbe, 0x40, 0x8f, 0x95, 0xb8, 0x70,
-	0x42, 0xa8, 0xe5, 0x83, 0xac, 0x3c, 0xf3, 0x4c, 0x12, 0x37, 0x76, 0x62, 0x55, 0xbd, 0xc5, 0x9e,
-	0xe7, 0xe5, 0xf7, 0xbc, 0xe4, 0x3f, 0x86, 0x65, 0x29, 0x3a, 0x9f, 0x35, 0x3f, 0xe7, 0x5e, 0x97,
-	0x1d, 0x88, 0xa8, 0x23, 0xa4, 0x64, 0x47, 0x7d, 0xd1, 0x8b, 0x9c, 0xa0, 0xe7, 0x87, 0x3e, 0x7d,
-	0x7c, 0x78, 0xec, 0xe0, 0x71, 0x75, 0xa1, 0xed, 0xb7, 0x7d, 0x75, 0xca, 0xe2, 0x5f, 0xda, 0xb0,
-	0x5a, 0x6b, 0xfb, 0x7e, 0xbb, 0x23, 0x18, 0x0f, 0x3c, 0xc6, 0xbb, 0x5d, 0x3f, 0xe4, 0xa1, 0xe7,
-	0x77, 0x25, 0x9e, 0xde, 0x6d, 0xfa, 0xf2, 0xd0, 0x97, 0x6c, 0x9f, 0x4b, 0xa1, 0xe3, 0xb3, 0xe3,
-	0x8d, 0x7d, 0x11, 0xf2, 0x0d, 0x16, 0xf0, 0xb6, 0xd7, 0x55, 0xc6, 0x68, 0x6b, 0x4d, 0x12, 0x05,
-	0xbc, 0xc7, 0x0f, 0x65, 0xf6, 0xf9, 0x81, 0x88, 0xda, 0x62, 0x8a, 0xff, 0x17, 0xbc, 0xd3, 0x11,
-	0x21, 0x9e, 0xaf, 0x4c, 0x9e, 0xf7, 0x10, 0x17, 0x2d, 0x52, 0x7a, 0xc2, 0xfb, 0x2d, 0x0f, 0x03,
-	0xd8, 0x0b, 0x40, 0x3f, 0x88, 0x4b, 0xd8, 0x53, 0x54, 0xae, 0x38, 0xea, 0x0b, 0x19, 0xda, 0xef,
-	0xc3, 0x13, 0x89, 0xb7, 0x32, 0xf0, 0xbb, 0x52, 0xd0, 0x4d, 0x28, 0x6a, 0xfa, 0x45, 0xb2, 0x42,
-	0xd6, 0x6e, 0xdd, 0xaf, 0x38, 0x13, 0x1d, 0x75, 0xb4, 0xcb, 0xce, 0xdc, 0xe9, 0xbf, 0xcf, 0x14,
-	0x5c, 0x34, 0xb7, 0x1d, 0xcc, 0xf2, 0x91, 0x62, 0xc7, 0x2c, 0x74, 0x11, 0xe6, 0x79, 0xab, 0xd5,
-	0x13, 0x52, 0xc7, 0x2b, 0xbb, 0xe6, 0xd1, 0x7e, 0x1b, 0xf3, 0x1b, 0x7b, 0xcc, 0xbf, 0x01, 0x45,
-	0x5d, 0xfd, 0x94, 0xfc, 0xe8, 0x82, 0x86, 0xf6, 0xa7, 0x89, 0x48, 0xa6, 0x40, 0xba, 0x0b, 0x30,
-	0x9a, 0x15, 0x46, 0xbb, 0xed, 0xe8, 0xc1, 0x3a, 0xf1, 0x60, 0x1d, 0xbd, 0x38, 0x38, 0x58, 0x67,
-	0x8f, 0xb7, 0x05, 0xfa, 0xba, 0x63, 0x9e, 0xf6, 0x4f, 0x04, 0x16, 0x92, 0xf1, 0x11, 0xb5, 0x0e,
-	0xf3, 0x9a, 0x20, 0xae, 0xed, 0xe6, 0x74, 0x56, 0x63, 0x49, 0xdf, 0x4a, 0x50, 0xdd, 0x50, 0x54,
-	0x77, 0x66, 0x52, 0xe9, 0x8c, 0x09, 0xac, 0xd7, 0xe0, 0x49, 0x33, 0xbf, 0x30, 0x7a, 0x83, 0x87,
-	0xdc, 0xd4, 0xbd, 0x0a, 0x8f, 0xea, 0x64, 0x8d, 0x64, 0xe7, 0x1f, 0xd1, 0x6f, 0xb7, 0xb1, 0xff,
-	0x5f, 0xc3, 0x53, 0x97, 0xfd, 0xb1, 0xae, 0x7c, 0x01, 0xe8, 0x56, 0x5c, 0x49, 0x2f, 0x8c, 0x1a,
-	0x2d, 0x1e, 0x72, 0xac, 0xa4, 0x96, 0xbe, 0x2d, 0x98, 0xa0, 0x1c, 0x98, 0x9f, 0xf6, 0x1e, 0x3c,
-	0xad, 0xb2, 0xbf, 0x2b, 0x22, 0x17, 0x97, 0xd9, 0xf0, 0x2f, 0x41, 0x19, 0xd3, 0x7b, 0x2d, 0xcc,
-	0x5c, 0xd2, 0x2f, 0xde, 0x69, 0xc5, 0xfb, 0x74, 0x2c, 0x7a, 0xd2, 0xf4, 0x6e, 0xce, 0x35, 0x8f,
-	0xf6, 0x27, 0xb0, 0x38, 0x19, 0x11, 0x2b, 0x7a, 0x1d, 0x4a, 0xe6, 0x2f, 0x83, 0x8b, 0x60, 0xa5,
-	0x80, 0x8e, 0x79, 0xaa, 0xdd, 0x26, 0xee, 0xd0, 0xcb, 0xfe, 0x76, 0x32, 0xba, 0xcc, 0x05, 0xbc,
-	0x9b, 0x32, 0xef, 0xab, 0x6c, 0xe1, 0x9f, 0x04, 0x2a, 0x29, 0x04, 0x58, 0xe0, 0x0e, 0x94, 0x0d,
-	0xaa, 0x59, 0xc6, 0x7c, 0x15, 0x8e, 0xdc, 0xae, 0x6f, 0x33, 0xff, 0x22, 0xb0, 0xa4, 0x50, 0xdf,
-	0xf3, 0x64, 0xb8, 0x1d, 0x0b, 0xd1, 0x9b, 0xc7, 0xa2, 0x1b, 0xe6, 0xeb, 0xd7, 0x32, 0x80, 0x88,
-	0xad, 0x1b, 0x61, 0x14, 0x08, 0x45, 0x51, 0x76, 0xcb, 0xea, 0xcd, 0x87, 0x51, 0x20, 0xe2, 0xf9,
-	0xcb, 0x7e, 0xb3, 0x19, 0x2f, 0xe5, 0xcd, 0x15, 0xb2, 0x56, 0x72, 0xcd, 0xe3, 0xa5, 0x46, 0xcf,
-	0x5d, 0xb9, 0xd1, 0xbf, 0x11, 0xa8, 0xa5, 0xd3, 0x63, 0xaf, 0xb7, 0xa0, 0xa8, 0x78, 0x4c, 0xa3,
-	0x97, 0x53, 0x1a, 0x3d, 0xf2, 0xc3, 0x3e, 0xa3, 0xcb, 0xb5, 0x35, 0xf9, 0xfe, 0x2f, 0x25, 0x78,
-	0x48, 0x61, 0xd2, 0xaf, 0xa0, 0xa8, 0x05, 0x99, 0xae, 0xa6, 0x90, 0x4c, 0x2a, 0x7f, 0xf5, 0xf6,
-	0x2c, 0x33, 0x9d, 0xce, 0x7e, 0xf6, 0xbb, 0xbf, 0xff, 0xff, 0xf1, 0xc6, 0x12, 0xad, 0xb0, 0xac,
-	0x1b, 0x8e, 0x7e, 0x4f, 0xa0, 0xa8, 0x15, 0x2e, 0x3b, 0x79, 0xe2, 0x42, 0xc8, 0x4e, 0x9e, 0xbc,
-	0x07, 0xec, 0x75, 0x95, 0x7c, 0x95, 0x3e, 0xc7, 0xb2, 0xae, 0x47, 0x76, 0x82, 0xf2, 0x34, 0xa0,
-	0xdf, 0xc0, 0x3c, 0x8a, 0x33, 0x9d, 0x11, 0x7f, 0xd8, 0x84, 0x3b, 0x33, 0xed, 0x10, 0xc4, 0x56,
-	0x20, 0x35, 0x5a, 0xcd, 0x04, 0x91, 0xf4, 0x67, 0x02, 0xe5, 0xa1, 0xcc, 0xd1, 0xb5, 0x29, 0xfd,
-	0x4d, 0x48, 0x75, 0xf5, 0xf9, 0x1c, 0x96, 0x88, 0xf1, 0x8a, 0xc2, 0x78, 0x91, 0x3a, 0xe9, 0xc3,
-	0x40, 0x19, 0x66, 0x27, 0x49, 0xe5, 0x1e, 0xd0, 0xdf, 0x09, 0xdc, 0x1a, 0xfb, 0xdb, 0xd3, 0xbb,
-	0x59, 0x29, 0x27, 0x95, 0xb8, 0xba, 0x9e, 0xcb, 0x16, 0x01, 0x5f, 0x55, 0x80, 0x9b, 0xf4, 0x65,
-	0x96, 0xfa, 0xbd, 0xd3, 0x30, 0x42, 0x33, 0x44, 0xf4, 0x5a, 0x03, 0x76, 0x82, 0xea, 0x3d, 0xa0,
-	0xbf, 0x12, 0x78, 0x78, 0x5c, 0xda, 0x68, 0x9e, 0xe4, 0xc3, 0x69, 0xde, 0xcb, 0x67, 0x8c, 0xa8,
-	0x2f, 0x29, 0x54, 0x87, 0xde, 0x9b, 0x81, 0x2a, 0xc7, 0x59, 0xe9, 0x1f, 0x04, 0x1e, 0xbb, 0xa4,
-	0x09, 0xd4, 0xc9, 0xca, 0x9b, 0x2e, 0x7d, 0x55, 0x96, 0xdb, 0x1e, 0x51, 0xeb, 0x0a, 0xf5, 0x05,
-	0xba, 0xce, 0x32, 0xbe, 0xf1, 0x1a, 0x5a, 0x58, 0xc6, 0x49, 0x77, 0xea, 0xa7, 0xe7, 0x16, 0x39,
-	0x3b, 0xb7, 0xc8, 0x7f, 0xe7, 0x16, 0xf9, 0xe1, 0xc2, 0x2a, 0x9c, 0x5d, 0x58, 0x85, 0x7f, 0x2e,
-	0xac, 0xc2, 0xc7, 0x95, 0x51, 0x94, 0x2f, 0x87, 0x71, 0x62, 0xa5, 0x95, 0xfb, 0x45, 0xf5, 0xb1,
-	0x58, 0x7f, 0x10, 0x00, 0x00, 0xff, 0xff, 0x9a, 0xf1, 0x65, 0x79, 0x61, 0x0b, 0x00, 0x00,
+	// 1090 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x97, 0x5f, 0x6f, 0xdb, 0xd4,
+	0x1b, 0xc7, 0x7b, 0xd6, 0x34, 0x6d, 0x9e, 0xfe, 0x7e, 0x4c, 0x3b, 0x94, 0x91, 0xa4, 0xad, 0x29,
+	0x46, 0xdd, 0xca, 0x3a, 0xec, 0xb5, 0x1d, 0x4c, 0xa2, 0x0c, 0xb1, 0x02, 0x83, 0x69, 0x08, 0x15,
+	0x0f, 0x84, 0x84, 0x40, 0xd1, 0x49, 0x72, 0xc8, 0xac, 0x66, 0x76, 0xe6, 0xe3, 0xb4, 0x98, 0x12,
+	0x90, 0x10, 0x57, 0x5c, 0x21, 0xc1, 0x05, 0x77, 0xdc, 0x30, 0xc1, 0x0b, 0x40, 0xe2, 0x82, 0x37,
+	0xb0, 0xcb, 0x49, 0xdc, 0x70, 0x85, 0x50, 0xcb, 0x0b, 0x41, 0x3e, 0xe7, 0x71, 0x6a, 0xc7, 0x76,
+	0xe2, 0x4d, 0xbb, 0x8b, 0x7d, 0x9e, 0x3f, 0x9f, 0xe7, 0x39, 0xcf, 0x39, 0x5f, 0x07, 0x96, 0x05,
+	0xef, 0x7e, 0xda, 0xba, 0xcd, 0x6c, 0xc7, 0xdc, 0xe3, 0x41, 0x97, 0x0b, 0x61, 0xde, 0xed, 0x73,
+	0x2f, 0x30, 0x7a, 0x9e, 0xeb, 0xbb, 0xf4, 0xcc, 0x70, 0xd9, 0xc0, 0xe5, 0xfa, 0x42, 0xc7, 0xed,
+	0xb8, 0x72, 0xd5, 0x0c, 0x7f, 0x29, 0xc3, 0xfa, 0x52, 0xc7, 0x75, 0x3b, 0x5d, 0x6e, 0xb2, 0x9e,
+	0x6d, 0x32, 0xc7, 0x71, 0x7d, 0xe6, 0xdb, 0xae, 0x23, 0x70, 0xf5, 0x42, 0xcb, 0x15, 0x77, 0x5c,
+	0x61, 0x36, 0x99, 0xe0, 0x2a, 0xbe, 0xb9, 0xbf, 0xd1, 0xe4, 0x3e, 0xdb, 0x30, 0x7b, 0xac, 0x63,
+	0x3b, 0xd2, 0x18, 0x6d, 0xb5, 0x34, 0x51, 0x8f, 0x79, 0xec, 0x8e, 0xc8, 0x5f, 0xdf, 0xe3, 0x41,
+	0x87, 0x8f, 0xf1, 0x3f, 0x60, 0xdd, 0x2e, 0xf7, 0x71, 0x7d, 0x25, 0xbd, 0xee, 0x21, 0x2e, 0x5a,
+	0x64, 0xf4, 0x84, 0xf5, 0xdb, 0x36, 0x06, 0xd0, 0x17, 0x80, 0xbe, 0x17, 0x96, 0xb0, 0x2b, 0xa9,
+	0x2c, 0x7e, 0xb7, 0xcf, 0x85, 0xaf, 0xbf, 0x0b, 0x4f, 0x26, 0xde, 0x8a, 0x9e, 0xeb, 0x08, 0x4e,
+	0xaf, 0x40, 0x59, 0xd1, 0x57, 0xc9, 0x0a, 0x59, 0x9b, 0xdf, 0xac, 0x19, 0xa9, 0x8e, 0x1a, 0xca,
+	0x65, 0xa7, 0x74, 0xff, 0xef, 0x67, 0xa6, 0x2c, 0x34, 0xd7, 0x0d, 0xcc, 0xf2, 0xa1, 0x64, 0xc7,
+	0x2c, 0xb4, 0x0a, 0xb3, 0xac, 0xdd, 0xf6, 0xb8, 0x50, 0xf1, 0x2a, 0x56, 0xf4, 0xa8, 0xbf, 0x8d,
+	0xf9, 0x23, 0x7b, 0xcc, 0xbf, 0x01, 0x65, 0x55, 0xfd, 0x98, 0xfc, 0xe8, 0x82, 0x86, 0xfa, 0x27,
+	0x89, 0x48, 0x51, 0x81, 0xf4, 0x3a, 0xc0, 0xc9, 0x5e, 0x61, 0xb4, 0x73, 0x86, 0xda, 0x58, 0x23,
+	0xdc, 0x58, 0x43, 0x0d, 0x0e, 0x6e, 0xac, 0xb1, 0xcb, 0x3a, 0x1c, 0x7d, 0xad, 0x98, 0xa7, 0xfe,
+	0x03, 0x81, 0x85, 0x64, 0x7c, 0x44, 0xdd, 0x82, 0x59, 0x45, 0x10, 0xd6, 0x36, 0x3d, 0x9e, 0x35,
+	0xb2, 0xa4, 0x6f, 0x25, 0xa8, 0x4e, 0x49, 0xaa, 0xf3, 0x13, 0xa9, 0x54, 0xc6, 0x04, 0xd6, 0xab,
+	0xf0, 0x54, 0xb4, 0x7f, 0x7e, 0xf0, 0x06, 0xf3, 0x59, 0x54, 0xf7, 0x2a, 0x3c, 0xa1, 0x92, 0x35,
+	0x92, 0x9d, 0xff, 0xbf, 0x7a, 0x7b, 0x0d, 0xfb, 0xff, 0x05, 0x9c, 0x1d, 0xf5, 0xc7, 0xba, 0x8a,
+	0x05, 0xa0, 0xdb, 0x61, 0x25, 0x9e, 0x1f, 0x34, 0xda, 0xcc, 0x67, 0x58, 0xc9, 0x52, 0xf6, 0xb4,
+	0x60, 0x82, 0x4a, 0x2f, 0xfa, 0xa9, 0xef, 0xc2, 0xd3, 0x32, 0xfb, 0x4d, 0x1e, 0x58, 0x38, 0xcc,
+	0x11, 0xff, 0x22, 0x54, 0x30, 0xbd, 0xdd, 0xc6, 0xcc, 0x73, 0xea, 0xc5, 0x8d, 0x76, 0x38, 0x4f,
+	0xfb, 0xdc, 0x13, 0x51, 0xef, 0x4a, 0x56, 0xf4, 0xa8, 0x7f, 0x0c, 0xd5, 0x74, 0x44, 0xac, 0xe8,
+	0x35, 0x98, 0x8b, 0x8e, 0x0c, 0x0e, 0x82, 0x96, 0x01, 0x1a, 0xf3, 0x94, 0xb3, 0x4d, 0xac, 0xa1,
+	0x97, 0xfe, 0x55, 0x3a, 0xba, 0x28, 0x04, 0x7c, 0x3d, 0x63, 0xbf, 0x1f, 0x65, 0x0a, 0x7f, 0x25,
+	0x50, 0xcb, 0x20, 0xc0, 0x02, 0x77, 0xa0, 0x12, 0xa1, 0x46, 0xc3, 0x58, 0xac, 0xc2, 0x13, 0xb7,
+	0xc7, 0x37, 0x99, 0xaf, 0xc0, 0xf2, 0x28, 0xe9, 0x2d, 0x9f, 0xf9, 0xfd, 0x42, 0x0d, 0xd3, 0xef,
+	0x11, 0xd0, 0xf2, 0xdc, 0xb1, 0xda, 0xb1, 0x0d, 0x3f, 0x0b, 0x65, 0x21, 0xcd, 0x65, 0x09, 0x15,
+	0x0b, 0x9f, 0xe2, 0x93, 0x33, 0x9d, 0x98, 0x1c, 0xaa, 0xc1, 0xbc, 0xc3, 0x0f, 0x1a, 0xbd, 0x7e,
+	0xb3, 0xb1, 0xc7, 0x83, 0x6a, 0x49, 0xba, 0x55, 0x1c, 0x7e, 0xb0, 0xdb, 0x6f, 0xde, 0xe4, 0x01,
+	0x5d, 0x80, 0x19, 0xee, 0x79, 0xae, 0x57, 0x9d, 0x91, 0x2b, 0xea, 0x41, 0xff, 0x00, 0x16, 0x25,
+	0xe6, 0x0e, 0xf3, 0x5b, 0xb7, 0x6f, 0xd9, 0x9d, 0x87, 0xa8, 0x91, 0xd6, 0x60, 0xae, 0x19, 0xba,
+	0x85, 0x6b, 0x8a, 0x72, 0x56, 0x3e, 0xdf, 0x68, 0xeb, 0x3f, 0x13, 0x58, 0xca, 0x8e, 0x5b, 0xa4,
+	0xf8, 0xfc, 0xc0, 0xb1, 0xbe, 0x4c, 0x27, 0xfa, 0xa2, 0x01, 0x08, 0xbb, 0xe3, 0x30, 0xbf, 0xef,
+	0x71, 0x51, 0x2d, 0xad, 0x4c, 0xaf, 0x55, 0xac, 0xd8, 0x9b, 0x9c, 0xea, 0xff, 0x20, 0x58, 0xfe,
+	0x3b, 0xb6, 0xf0, 0xaf, 0x85, 0x62, 0xf3, 0xe6, 0x3e, 0x77, 0xfc, 0x62, 0xe5, 0x2f, 0x03, 0xf0,
+	0xd0, 0xba, 0xe1, 0x07, 0x3d, 0x8e, 0x9c, 0x15, 0xf9, 0xe6, 0xfd, 0xa0, 0xc7, 0xc3, 0x9d, 0x12,
+	0xfd, 0x56, 0x2b, 0xbc, 0x78, 0x42, 0xd4, 0x39, 0x2b, 0x7a, 0x1c, 0x39, 0x4c, 0xa5, 0x47, 0x3e,
+	0x4c, 0xc3, 0x26, 0xa7, 0xe8, 0xb1, 0xc9, 0xdb, 0x50, 0x96, 0x3c, 0xd1, 0x61, 0x5a, 0xce, 0x38,
+	0x4c, 0x27, 0x7e, 0x78, 0x96, 0xd0, 0xe5, 0xb1, 0x1d, 0xa4, 0xcd, 0x6f, 0xe7, 0x61, 0x46, 0x62,
+	0xd2, 0xcf, 0xa1, 0xac, 0x44, 0x97, 0xae, 0x66, 0x90, 0xa4, 0xd5, 0xbd, 0x7e, 0x6e, 0x92, 0x99,
+	0x4a, 0xa7, 0x3f, 0xfb, 0xf5, 0x9f, 0xff, 0x7e, 0x7f, 0x6a, 0x91, 0xd6, 0xcc, 0xbc, 0xaf, 0x18,
+	0xfa, 0x0d, 0x81, 0xb2, 0x52, 0xb1, 0xfc, 0xe4, 0x09, 0xd1, 0xcf, 0x4f, 0x9e, 0xd4, 0x7a, 0x7d,
+	0x5d, 0x26, 0x5f, 0xa5, 0xcf, 0x99, 0x79, 0x9f, 0x40, 0xe6, 0x21, 0x4a, 0xd0, 0x80, 0x7e, 0x09,
+	0xb3, 0x28, 0xc0, 0x74, 0x42, 0xfc, 0x61, 0x13, 0xce, 0x4f, 0xb4, 0x43, 0x10, 0x5d, 0x82, 0x2c,
+	0xd1, 0x7a, 0x2e, 0x88, 0xa0, 0x3f, 0x12, 0xa8, 0x0c, 0xa5, 0x8c, 0xae, 0x8d, 0xe9, 0x6f, 0x42,
+	0x8e, 0xeb, 0xcf, 0x17, 0xb0, 0x44, 0x8c, 0x97, 0x24, 0xc6, 0x25, 0x6a, 0x64, 0x6f, 0x06, 0x4a,
+	0xad, 0x79, 0x98, 0x54, 0xe7, 0x01, 0xbd, 0x47, 0x60, 0x3e, 0x76, 0x5b, 0xd2, 0x0b, 0x79, 0x29,
+	0xd3, 0x6a, 0x5b, 0x5f, 0x2f, 0x64, 0x8b, 0x80, 0x57, 0x25, 0xe0, 0x15, 0xfa, 0xa2, 0x99, 0xf9,
+	0x4d, 0xdb, 0x88, 0xc4, 0x64, 0x88, 0x68, 0xb7, 0x07, 0xe6, 0x21, 0xde, 0xb3, 0x03, 0xfa, 0x13,
+	0x81, 0xff, 0xc5, 0xe5, 0x8b, 0x16, 0x49, 0x3e, 0xdc, 0xcd, 0x8b, 0xc5, 0x8c, 0x11, 0xf5, 0xb2,
+	0x44, 0x35, 0xe8, 0xc5, 0x09, 0xa8, 0x22, 0xce, 0x4a, 0x7f, 0x23, 0x70, 0x26, 0xa5, 0x3b, 0xf4,
+	0x52, 0x81, 0xcc, 0x89, 0xdb, 0xbf, 0xbe, 0xf1, 0x10, 0x1e, 0x08, 0xfc, 0xb2, 0x04, 0xbe, 0x4c,
+	0x37, 0x27, 0x00, 0x37, 0xd4, 0xbd, 0x9d, 0xc0, 0xfe, 0x9d, 0xc0, 0xe9, 0x11, 0xbd, 0xa0, 0x46,
+	0x1e, 0x42, 0xb6, 0x60, 0xd5, 0xcd, 0xc2, 0xf6, 0x08, 0xfc, 0xba, 0x04, 0xbe, 0x4a, 0xb7, 0x33,
+	0x80, 0x95, 0x08, 0x85, 0x2a, 0x92, 0x81, 0x6b, 0x1e, 0x46, 0x1a, 0x35, 0xa0, 0xbf, 0x10, 0x38,
+	0x3d, 0x72, 0x09, 0xe7, 0x93, 0x67, 0x6b, 0x4d, 0x3e, 0x79, 0xce, 0xed, 0xae, 0x6f, 0x49, 0xf2,
+	0x17, 0xe8, 0xba, 0x99, 0xf3, 0xc7, 0xa9, 0xa1, 0x6e, 0xf2, 0x38, 0xf4, 0xce, 0xd6, 0xfd, 0x23,
+	0x8d, 0x3c, 0x38, 0xd2, 0xc8, 0x3f, 0x47, 0x1a, 0xf9, 0xee, 0x58, 0x9b, 0x7a, 0x70, 0xac, 0x4d,
+	0xfd, 0x75, 0xac, 0x4d, 0x7d, 0x54, 0x3b, 0x89, 0xf2, 0xd9, 0x30, 0x4e, 0x28, 0x6d, 0xa2, 0x59,
+	0x96, 0xff, 0xc0, 0xb6, 0xfe, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x18, 0x0d, 0x73, 0x7c, 0xb6, 0x0e,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -827,6 +1097,10 @@ type QueryClient interface {
 	KeyRotation(ctx context.Context, in *QueryKeyRotationRequest, opts ...grpc.CallOption) (*QueryKeyRotationResponse, error)
 	// KeyRotations queries all key rotations for a wallet
 	KeyRotations(ctx context.Context, in *QueryKeyRotationsRequest, opts ...grpc.CallOption) (*QueryKeyRotationsResponse, error)
+	// KeyRotationStatus queries the status of an ongoing key rotation
+	KeyRotationStatus(ctx context.Context, in *QueryKeyRotationStatusRequest, opts ...grpc.CallOption) (*QueryKeyRotationStatusResponse, error)
+	// BatchSignStatus queries the status of a batch signing operation
+	BatchSignStatus(ctx context.Context, in *QueryBatchSignStatusRequest, opts ...grpc.CallOption) (*QueryBatchSignStatusResponse, error)
 	// ListAuditEvents queries audit events for a wallet with filtering
 	ListAuditEvents(ctx context.Context, in *QueryListAuditEventsRequest, opts ...grpc.CallOption) (*QueryListAuditEventsResponse, error)
 }
@@ -893,6 +1167,24 @@ func (c *queryClient) KeyRotations(ctx context.Context, in *QueryKeyRotationsReq
 	return out, nil
 }
 
+func (c *queryClient) KeyRotationStatus(ctx context.Context, in *QueryKeyRotationStatusRequest, opts ...grpc.CallOption) (*QueryKeyRotationStatusResponse, error) {
+	out := new(QueryKeyRotationStatusResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.keyless.Query/KeyRotationStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) BatchSignStatus(ctx context.Context, in *QueryBatchSignStatusRequest, opts ...grpc.CallOption) (*QueryBatchSignStatusResponse, error) {
+	out := new(QueryBatchSignStatusResponse)
+	err := c.cc.Invoke(ctx, "/selfchain.keyless.Query/BatchSignStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) ListAuditEvents(ctx context.Context, in *QueryListAuditEventsRequest, opts ...grpc.CallOption) (*QueryListAuditEventsResponse, error) {
 	out := new(QueryListAuditEventsResponse)
 	err := c.cc.Invoke(ctx, "/selfchain.keyless.Query/ListAuditEvents", in, out, opts...)
@@ -916,6 +1208,10 @@ type QueryServer interface {
 	KeyRotation(context.Context, *QueryKeyRotationRequest) (*QueryKeyRotationResponse, error)
 	// KeyRotations queries all key rotations for a wallet
 	KeyRotations(context.Context, *QueryKeyRotationsRequest) (*QueryKeyRotationsResponse, error)
+	// KeyRotationStatus queries the status of an ongoing key rotation
+	KeyRotationStatus(context.Context, *QueryKeyRotationStatusRequest) (*QueryKeyRotationStatusResponse, error)
+	// BatchSignStatus queries the status of a batch signing operation
+	BatchSignStatus(context.Context, *QueryBatchSignStatusRequest) (*QueryBatchSignStatusResponse, error)
 	// ListAuditEvents queries audit events for a wallet with filtering
 	ListAuditEvents(context.Context, *QueryListAuditEventsRequest) (*QueryListAuditEventsResponse, error)
 }
@@ -941,6 +1237,12 @@ func (*UnimplementedQueryServer) KeyRotation(ctx context.Context, req *QueryKeyR
 }
 func (*UnimplementedQueryServer) KeyRotations(ctx context.Context, req *QueryKeyRotationsRequest) (*QueryKeyRotationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KeyRotations not implemented")
+}
+func (*UnimplementedQueryServer) KeyRotationStatus(ctx context.Context, req *QueryKeyRotationStatusRequest) (*QueryKeyRotationStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KeyRotationStatus not implemented")
+}
+func (*UnimplementedQueryServer) BatchSignStatus(ctx context.Context, req *QueryBatchSignStatusRequest) (*QueryBatchSignStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchSignStatus not implemented")
 }
 func (*UnimplementedQueryServer) ListAuditEvents(ctx context.Context, req *QueryListAuditEventsRequest) (*QueryListAuditEventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAuditEvents not implemented")
@@ -1058,6 +1360,42 @@ func _Query_KeyRotations_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_KeyRotationStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryKeyRotationStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).KeyRotationStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/selfchain.keyless.Query/KeyRotationStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).KeyRotationStatus(ctx, req.(*QueryKeyRotationStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_BatchSignStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBatchSignStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).BatchSignStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/selfchain.keyless.Query/BatchSignStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).BatchSignStatus(ctx, req.(*QueryBatchSignStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_ListAuditEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryListAuditEventsRequest)
 	if err := dec(in); err != nil {
@@ -1103,6 +1441,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KeyRotations",
 			Handler:    _Query_KeyRotations_Handler,
+		},
+		{
+			MethodName: "KeyRotationStatus",
+			Handler:    _Query_KeyRotationStatus_Handler,
+		},
+		{
+			MethodName: "BatchSignStatus",
+			Handler:    _Query_BatchSignStatus_Handler,
 		},
 		{
 			MethodName: "ListAuditEvents",
@@ -1551,6 +1897,189 @@ func (m *QueryKeyRotationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryKeyRotationStatusRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryKeyRotationStatusRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryKeyRotationStatusRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WalletId) > 0 {
+		i -= len(m.WalletId)
+		copy(dAtA[i:], m.WalletId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.WalletId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryKeyRotationStatusResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryKeyRotationStatusResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryKeyRotationStatusResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.NewPubKey) > 0 {
+		i -= len(m.NewPubKey)
+		copy(dAtA[i:], m.NewPubKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.NewPubKey)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Version != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Status) > 0 {
+		i -= len(m.Status)
+		copy(dAtA[i:], m.Status)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Status)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletId) > 0 {
+		i -= len(m.WalletId)
+		copy(dAtA[i:], m.WalletId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.WalletId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBatchSignStatusRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBatchSignStatusRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBatchSignStatusRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BatchId) > 0 {
+		i -= len(m.BatchId)
+		copy(dAtA[i:], m.BatchId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BatchId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletId) > 0 {
+		i -= len(m.WalletId)
+		copy(dAtA[i:], m.WalletId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.WalletId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBatchSignStatusResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBatchSignStatusResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBatchSignStatusResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Signatures) > 0 {
+		for iNdEx := len(m.Signatures) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Signatures[iNdEx])
+			copy(dAtA[i:], m.Signatures[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.Signatures[iNdEx])))
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.Status) > 0 {
+		i -= len(m.Status)
+		copy(dAtA[i:], m.Status)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Status)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.BatchId) > 0 {
+		i -= len(m.BatchId)
+		copy(dAtA[i:], m.BatchId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BatchId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletId) > 0 {
+		i -= len(m.WalletId)
+		copy(dAtA[i:], m.WalletId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.WalletId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryListAuditEventsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1838,6 +2367,95 @@ func (m *QueryKeyRotationsResponse) Size() (n int) {
 	}
 	if m.Pagination != nil {
 		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryKeyRotationStatusRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryKeyRotationStatusResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Status)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Version != 0 {
+		n += 1 + sovQuery(uint64(m.Version))
+	}
+	l = len(m.NewPubKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Error)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryBatchSignStatusRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.BatchId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryBatchSignStatusResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.BatchId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Status)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if len(m.Signatures) > 0 {
+		for _, s := range m.Signatures {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	l = len(m.Error)
+	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -3002,6 +3620,609 @@ func (m *QueryKeyRotationsResponse) Unmarshal(dAtA []byte) error {
 			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryKeyRotationStatusRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryKeyRotationStatusRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryKeyRotationStatusRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryKeyRotationStatusResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryKeyRotationStatusResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryKeyRotationStatusResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Status = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Error = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryBatchSignStatusRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBatchSignStatusRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBatchSignStatusRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BatchId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BatchId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryBatchSignStatusResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBatchSignStatusResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBatchSignStatusResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BatchId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BatchId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Status = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signatures", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signatures = append(m.Signatures, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Error = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

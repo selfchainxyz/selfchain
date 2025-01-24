@@ -1,0 +1,20 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// KeyRotationStatus represents the status of a key rotation operation
+enum KeyRotationStatus {
+  // Default unspecified status
+  KEY_ROTATION_STATUS_UNSPECIFIED = 0;
+  // Key rotation has been initiated
+  KEY_ROTATION_STATUS_INITIATED = 1;
+  // Key rotation is in progress
+  KEY_ROTATION_STATUS_IN_PROGRESS = 2;
+  // Key rotation has completed successfully
+  KEY_ROTATION_STATUS_COMPLETED = 3;
+  // Key rotation has failed
+  KEY_ROTATION_STATUS_FAILED = 4;
+  // Key rotation has been cancelled
+  KEY_ROTATION_STATUS_CANCELLED = 5;
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/keyless/keygen.proto";
+
+// ShareMetadata contains metadata about a stored share
+message ShareMetadata {
+  uint64 version = 1;
+  google.protobuf.Timestamp created_at = 2 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp updated_at = 3 [(gogoproto.stdtime) = true];
+  BackupStatus backup_state = 4;
+}

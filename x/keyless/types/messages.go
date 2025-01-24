@@ -26,6 +26,34 @@ const (
 	TypeMsgCancelKeyRotation    = "cancel_key_rotation"
 )
 
+// NewMsgBatchSign creates a new MsgBatchSign instance
+func NewMsgBatchSign(creator string, walletAddress string, unsignedTxs []string) *MsgBatchSign {
+	return &MsgBatchSign{
+		Creator:       creator,
+		WalletAddress: walletAddress,
+		UnsignedTxs:   unsignedTxs,
+	}
+}
+
+// NewMsgInitiateKeyRotation creates a new MsgInitiateKeyRotation instance
+func NewMsgInitiateKeyRotation(creator string, walletAddress string, newPubKey string) *MsgInitiateKeyRotation {
+	return &MsgInitiateKeyRotation{
+		Creator:       creator,
+		WalletAddress: walletAddress,
+		NewPubKey:     newPubKey,
+	}
+}
+
+// NewMsgCompleteKeyRotation creates a new MsgCompleteKeyRotation instance
+func NewMsgCompleteKeyRotation(creator string, walletAddress string, version string, signature string) *MsgCompleteKeyRotation {
+	return &MsgCompleteKeyRotation{
+		Creator:       creator,
+		WalletAddress: walletAddress,
+		Version:       version,
+		Signature:     signature,
+	}
+}
+
 // GetSigners returns the expected signers for MsgCreateWallet
 func (msg *MsgCreateWallet) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)

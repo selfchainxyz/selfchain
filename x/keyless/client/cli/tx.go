@@ -2,13 +2,15 @@ package cli
 
 import (
 	"fmt"
-	"time"
 	"encoding/hex"
+	"strings"
+	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/spf13/cobra"
+
 	"selfchain/x/keyless/types"
 )
 
@@ -35,6 +37,9 @@ func GetTxCmd() *cobra.Command {
 		CmdCreateWallet(),
 		CmdRecoverWallet(),
 		CmdSignTransaction(),
+		CmdBatchSign(),
+		CmdInitiateKeyRotation(),
+		CmdCompleteKeyRotation(),
 	)
 
 	return cmd
@@ -115,6 +120,90 @@ func CmdSignTransaction() *cobra.Command {
 				args[0], // wallet address
 				unsignedTx,
 				args[2], // chain id
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdBatchSign() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "batch-sign [wallet-address] [chain-id] [unsigned-tx-1,unsigned-tx-2,...]",
+		Short: "Sign multiple transactions in a batch using the keyless wallet",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Split comma-separated transactions
+			unsignedTxs := strings.Split(args[2], listSeparator)
+			for _, tx := range unsignedTxs {
+				if _, err := hex.DecodeString(tx); err != nil {
+					return fmt.Errorf("invalid unsigned transaction hex: %w", err)
+				}
+			}
+
+			msg := types.NewMsgBatchSign(
+				clientCtx.GetFromAddress().String(),
+				args[0], // wallet address
+				unsignedTxs,
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdInitiateKeyRotation() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "init-key-rotation [wallet-address] [new-pub-key]",
+		Short: "Initiate key rotation for a wallet",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgInitiateKeyRotation(
+				clientCtx.GetFromAddress().String(),
+				args[0], // wallet address
+				args[1], // new public key
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdCompleteKeyRotation() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "complete-key-rotation [wallet-address] [version] [signature]",
+		Short: "Complete key rotation for a wallet",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgCompleteKeyRotation(
+				clientCtx.GetFromAddress().String(),
+				args[0], // wallet address
+				args[1], // version
+				args[2], // signature
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

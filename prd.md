@@ -251,3 +251,64 @@ graph LR;
     x_identity -->|Issue Credential| ThirdParty;
 ```
 
+## Keyless Wallet Creation Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant KeylessModule
+    participant IdentityModule
+    participant Storage
+    
+    User->>App: Request wallet creation
+    App->>IdentityModule: Verify user via OAuth2
+    IdentityModule->>IdentityModule: Generate DID
+    IdentityModule->>KeylessModule: Create wallet with DID
+    KeylessModule->>KeylessModule: Generate key shares via TSS
+    KeylessModule->>Storage: Store Remote Share (encrypted)
+    KeylessModule->>App: Return Personal Share
+    App->>User: Return wallet address & encrypted Personal Share
+```
+
+## Transaction Signing Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant KeylessModule
+    participant Networks
+    participant Crypto
+    participant TSS
+    
+    User->>App: Initiate transaction
+    App->>KeylessModule: Request signing
+    KeylessModule->>Networks: Get network config
+    Networks->>Crypto: Select signing algorithm
+    KeylessModule->>Storage: Fetch Remote Share
+    KeylessModule->>TSS: Perform distributed signing
+    TSS->>KeylessModule: Return signature
+    KeylessModule->>App: Return signed transaction
+    App->>User: Confirm transaction
+```
+
+## Wallet Recovery Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant KeylessModule
+    participant IdentityModule
+    participant Storage
+    
+    User->>App: Initiate recovery
+    App->>IdentityModule: Verify via OAuth2
+    IdentityModule->>IdentityModule: Verify DID
+    IdentityModule->>KeylessModule: Authorize recovery
+    KeylessModule->>Storage: Fetch Remote Share
+    KeylessModule->>KeylessModule: Reconstruct wallet
+    KeylessModule->>App: Return new Personal Share
+    App->>User: Recovery complete
+```

@@ -115,14 +115,14 @@ message MsgCompleteKeyRotation {
   
   string creator = 1;
   string wallet_address = 2;
-  uint32 version = 3;
+  string version = 3;
   string signature = 4;
 }
 
 // MsgCompleteKeyRotationResponse defines the CompleteKeyRotation response type
 message MsgCompleteKeyRotationResponse {
   string wallet_address = 1;
-  uint32 version = 2;
+  string version = 2;
 }
 
 // MsgCancelKeyRotation defines the CancelKeyRotation request type

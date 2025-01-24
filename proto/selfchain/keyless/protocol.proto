@@ -1,0 +1,63 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/keyless/keygen.proto";
+
+// SigningRequest represents a request to sign data
+message SigningRequest {
+  string wallet_id = 1;
+  bytes message = 2;
+  string chain_id = 3;
+  SignatureType sign_type = 4;
+  RequestMetadata metadata = 5;
+}
+
+// SigningResponse represents the response from signing
+message SigningResponse {
+  string wallet_id = 1;
+  bytes signature = 2;
+  SignatureMetadata metadata = 3;
+}
+
+// RequestMetadata contains metadata about a signing request
+message RequestMetadata {
+  google.protobuf.Timestamp timestamp = 1 [(gogoproto.stdtime) = true];
+  string chain_id = 2;
+  uint64 nonce = 3;
+}
+
+// SignatureMetadata contains metadata about a signature
+message SignatureMetadata {
+  google.protobuf.Timestamp timestamp = 1 [(gogoproto.stdtime) = true];
+  string chain_id = 2;
+  SignatureType sign_type = 3;
+}
+
+// SessionType represents the type of TSS session
+enum SessionType {
+  SESSION_TYPE_UNSPECIFIED = 0;
+  SESSION_TYPE_KEYGEN = 1;
+  SESSION_TYPE_SIGNING = 2;
+}
+
+// SessionStatus represents the status of a TSS session
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_PENDING = 1;
+  SESSION_STATUS_ACTIVE = 2;
+  SESSION_STATUS_COMPLETED = 3;
+  SESSION_STATUS_FAILED = 4;
+}
+
+// SignatureType represents the type of signature
+enum SignatureType {
+  SIGNATURE_TYPE_UNSPECIFIED = 0;
+  SIGNATURE_TYPE_ECDSA = 1;
+  SIGNATURE_TYPE_EDDSA = 2;
+  SIGNATURE_TYPE_BLS = 3;
+  SIGNATURE_TYPE_SCHNORR = 4;
+}

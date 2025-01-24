@@ -44,6 +44,16 @@ service Query {
     option (google.api.http).get = "/selfchain/keyless/key_rotations/{wallet_id}";
   }
 
+  // KeyRotationStatus queries the status of an ongoing key rotation
+  rpc KeyRotationStatus(QueryKeyRotationStatusRequest) returns (QueryKeyRotationStatusResponse) {
+    option (google.api.http).get = "/selfchain/keyless/key_rotation_status/{wallet_id}";
+  }
+
+  // BatchSignStatus queries the status of a batch signing operation
+  rpc BatchSignStatus(QueryBatchSignStatusRequest) returns (QueryBatchSignStatusResponse) {
+    option (google.api.http).get = "/selfchain/keyless/batch_sign_status/{wallet_id}/{batch_id}";
+  }
+
   // ListAuditEvents queries audit events for a wallet with filtering
   rpc ListAuditEvents(QueryListAuditEventsRequest) returns (QueryListAuditEventsResponse) {
     option (google.api.http).get = "/selfchain/keyless/audit_events/{wallet_id}";
@@ -112,6 +122,35 @@ message QueryKeyRotationsRequest {
 message QueryKeyRotationsResponse {
   repeated KeyRotation rotations = 1 [(gogoproto.nullable) = true];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryKeyRotationStatusRequest is request type for the Query/KeyRotationStatus RPC method.
+message QueryKeyRotationStatusRequest {
+  string wallet_id = 1;
+}
+
+// QueryKeyRotationStatusResponse is response type for the Query/KeyRotationStatus RPC method.
+message QueryKeyRotationStatusResponse {
+  string wallet_id = 1;
+  string status = 2;
+  uint64 version = 3;
+  string new_pub_key = 4;
+  string error = 5;
+}
+
+// QueryBatchSignStatusRequest is request type for the Query/BatchSignStatus RPC method.
+message QueryBatchSignStatusRequest {
+  string wallet_id = 1;
+  string batch_id = 2;
+}
+
+// QueryBatchSignStatusResponse is response type for the Query/BatchSignStatus RPC method.
+message QueryBatchSignStatusResponse {
+  string wallet_id = 1;
+  string batch_id = 2;
+  string status = 3;
+  repeated string signatures = 4;
+  string error = 5;
 }
 
 // QueryListAuditEventsRequest is request type for the Query/ListAuditEvents RPC method.

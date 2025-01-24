@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/keyless/types"
@@ -187,15 +188,21 @@ func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgComp
 		return nil, err
 	}
 
+	// Convert version string to uint64
+	version, err := strconv.ParseUint(msg.Version, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid version number: %v", err)
+	}
+
 	// Complete key rotation
-	rotation, err := k.Keeper.CompleteKeyRotation(ctx, walletId, uint64(msg.Version))
+	rotation, err := k.Keeper.CompleteKeyRotation(ctx, walletId, version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to complete key rotation: %v", err)
 	}
 
 	return &types.MsgCompleteKeyRotationResponse{
 		WalletAddress: msg.WalletAddress,
-		Version:       uint32(rotation.Version),
+		Version:       strconv.FormatUint(rotation.Version, 10),
 	}, nil
 }
 

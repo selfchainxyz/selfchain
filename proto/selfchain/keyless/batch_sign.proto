@@ -1,0 +1,18 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// BatchSignStatus represents the status of a batch signing operation
+enum BatchSignStatus {
+  // Default unspecified status
+  BATCH_SIGN_STATUS_UNSPECIFIED = 0;
+  // Batch signing is in progress
+  BATCH_SIGN_STATUS_IN_PROGRESS = 1;
+  // Batch signing has completed successfully
+  BATCH_SIGN_STATUS_COMPLETED = 2;
+  // Batch signing has failed
+  BATCH_SIGN_STATUS_FAILED = 3;
+  // Batch signing has been cancelled
+  BATCH_SIGN_STATUS_CANCELLED = 4;
+}
