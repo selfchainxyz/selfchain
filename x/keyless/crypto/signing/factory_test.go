@@ -10,7 +10,6 @@ import (
 )
 
 func TestSignerFactory(t *testing.T) {
-	// Create a new signer factory
 	factory := NewSignerFactory()
 	require.NotNil(t, factory)
 
@@ -37,7 +36,7 @@ func TestSignerFactory(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, valid)
 
-		// Test invalid signature
+		// Test invalid message
 		invalidMessage := []byte("wrong message")
 		valid, err = signer.Verify(context.Background(), invalidMessage, sig, privKey.PubKey().SerializeCompressed())
 		require.NoError(t, err)
@@ -50,11 +49,13 @@ func TestSignerFactory(t *testing.T) {
 
 	t.Run("Test_InvalidKeys", func(t *testing.T) {
 		// Test with invalid private key
-		_, err := factory.CreateSigner(context.Background(), types.ECDSA, []byte("invalid"), nil)
+		invalidPrivKey := []byte("invalid private key")
+		_, err := factory.CreateSigner(context.Background(), types.ECDSA, invalidPrivKey, nil)
 		require.Error(t, err)
 
 		// Test with invalid public key
-		_, err = factory.CreateSigner(context.Background(), types.ECDSA, nil, []byte("invalid"))
+		invalidPubKey := []byte("invalid public key")
+		_, err = factory.CreateSigner(context.Background(), types.ECDSA, nil, invalidPubKey)
 		require.Error(t, err)
 
 		// Test with no keys

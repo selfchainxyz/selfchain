@@ -3,7 +3,6 @@ package signing
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -27,10 +26,10 @@ func setupTSSKeyPair(t *testing.T) (*btcec.PrivateKey, *btcec.PublicKey) {
 	// Generate a test private key
 	privKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
-	
+
 	// Get the corresponding public key
 	pubKey := privKey.PubKey()
-	
+
 	return privKey, pubKey
 }
 
