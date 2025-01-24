@@ -4,139 +4,113 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
+
+	ecdsa_signer "selfchain/x/keyless/crypto/signing/ecdsa"
+	"selfchain/x/keyless/crypto/signing/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"selfchain/x/keyless/networks"
-	"selfchain/x/keyless/types"
-	"selfchain/x/keyless/crypto/signing/ecdsa"
-	"selfchain/x/keyless/crypto/signing/format"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 )
 
-// SigningContext contains the context for signing operations
-type SigningContext struct {
-	NetworkParams *types.NetworkParams
-	Message       []byte
-	Party1Data    interface{}
-	Party2Data    interface{}
-	Metadata      map[string]interface{} // Network-specific metadata
-}
-
-// SignRequest contains the parameters for a signing request
-type SignRequest struct {
-	NetworkID string
-	Params    *types.NetworkParams
-	Message   []byte
-	MetaData  map[string]interface{}
-}
-
-// SignerFactory creates and manages signers for different networks
-type SignerFactory struct {
-	registry *networks.NetworkRegistry
-	signer   *ecdsa.ECDSASigner
-}
+// SignerFactory is responsible for creating signing service instances
+type SignerFactory struct{}
 
 // NewSignerFactory creates a new signer factory
-func NewSignerFactory(registry *networks.NetworkRegistry) *SignerFactory {
-	return &SignerFactory{
-		registry: registry,
-		signer:   ecdsa.NewECDSASigner(nil, nil), // Default to ECDSA signer
-	}
+func NewSignerFactory() *SignerFactory {
+	return &SignerFactory{}
 }
 
-// Sign signs a message for a specific network
-func (f *SignerFactory) Sign(ctx context.Context, networkID string, message []byte, metadata map[string]interface{}, signResult *format.SignatureResult) ([]byte, error) {
-	// Parse network ID
-	networkType, _, err := networks.ParseNetworkID(networkID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse network ID: %w", err)
-	}
-
-	// Get network parameters
-	params := networks.GetDefaultNetworkParams(networkID)
-	if params == nil {
-		return nil, fmt.Errorf("network parameters not found for: %s", networkID)
-	}
-
-	// Use network parameters for signing
-	signingCtx := &SigningContext{
-		NetworkParams: params,
-		Message:       message,
-		Metadata:      metadata,
-	}
-
-	// Sign the message using the ECDSA signer
-	signResult, err = f.signer.Sign(ctx, signingCtx.Message, ecdsa.ECDSA)
-	if err != nil {
-		return nil, err
-	}
-
-	// Format signature based on network type
-	var formattedSig []byte
-	switch networkType {
-	case networks.Bitcoin:
-		formattedSig, err = format.FormatBitcoinSignature(signResult)
-	case networks.Ethereum:
-		formattedSig, err = format.FormatEthereumSignature(signResult)
-	case networks.Cosmos:
-		formattedSig, err = format.FormatCosmosSignature(signResult)
+// CreateSigner creates a new signing service based on the algorithm and key pair
+func (f *SignerFactory) CreateSigner(ctx context.Context, algorithm types.SigningAlgorithm, privKeyBytes []byte, pubKeyBytes []byte) (types.SigningService, error) {
+	switch algorithm {
+	case types.ECDSA:
+		return f.createECDSASigner(privKeyBytes, pubKeyBytes)
 	default:
-		return nil, fmt.Errorf("unsupported network type: %s", networkType)
+		return nil, fmt.Errorf("unsupported algorithm: %v", algorithm)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	// Store formatted signature in SignatureResult
-	signResult.Bytes = formattedSig
-	return formattedSig, nil
 }
 
-// Verify verifies a signature for a specific network
-func (f *SignerFactory) Verify(networkID string, pubKeyBytes []byte, message []byte, signature []byte) (bool, error) {
-	// Parse network ID
-	networkType, _, err := networks.ParseNetworkID(networkID)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse network ID: %w", err)
+// createECDSASigner creates a new ECDSA signing service
+func (f *SignerFactory) createECDSASigner(privKeyBytes []byte, pubKeyBytes []byte) (types.SigningService, error) {
+	// Parse private key if provided
+	var privKey *btcec.PrivateKey
+	var pubKey *btcec.PublicKey
+	var err error
+	if len(privKeyBytes) > 0 {
+		privKey, _ = btcec.PrivKeyFromBytes(privKeyBytes)
+		if privKey == nil {
+			return nil, fmt.Errorf("failed to parse private key")
+		}
 	}
 
-	// Get network parameters
-	params := networks.GetDefaultNetworkParams(networkID)
-	if params == nil {
-		return false, fmt.Errorf("network parameters not found for: %s", networkID)
-	}
-
-	// Parse signature based on network type
-	var signatureResult *format.SignatureResult
-	switch networkType {
-	case networks.Bitcoin:
-		signatureResult, err = format.ParseBitcoinSignature(signature)
-	case networks.Ethereum:
-		signatureResult, err = format.ParseEthereumSignature(signature)
+	// Parse public key if provided
+	if len(pubKeyBytes) > 0 {
+		pubKey, err = btcec.ParsePubKey(pubKeyBytes)
 		if err != nil {
-			return false, err
+			return nil, fmt.Errorf("failed to parse public key: %w", err)
 		}
-
-		// For Ethereum, we need the raw public key (64 bytes)
-		if len(pubKeyBytes) == 33 {
-			pubKey, err := btcec.ParsePubKey(pubKeyBytes)
-			if err != nil {
-				return false, fmt.Errorf("failed to parse public key: %w", err)
-			}
-			pubKeyBytes = pubKey.SerializeUncompressed()[1:] // Remove prefix and use raw 64 bytes
-		} else if len(pubKeyBytes) == 65 {
-			pubKeyBytes = pubKeyBytes[1:] // Remove prefix and use raw 64 bytes
-		}
-
-	case networks.Cosmos:
-		signatureResult, err = format.ParseCosmosSignature(signature)
-	default:
-		return false, fmt.Errorf("unsupported network type: %s", networkType)
+	} else if privKey != nil {
+		// If public key is not provided but private key is, derive public key from private key
+		pubKey = privKey.PubKey()
 	}
 
+	if privKey == nil && pubKey == nil {
+		return nil, errors.New("either private key or public key must be provided")
+	}
+
+	return ecdsa_signer.NewECDSASigner(privKey, pubKey), nil
+}
+
+// Sign signs a message using the specified algorithm
+func (f *SignerFactory) Sign(ctx context.Context, message []byte, algorithm types.SigningAlgorithm, signer types.SigningService) (*types.SignatureResult, error) {
+	if signer == nil {
+		return nil, errors.New("signer is nil")
+	}
+
+	// Sign the message
+	return signer.Sign(ctx, message, algorithm)
+}
+
+// Verify verifies a signature using the specified algorithm
+func (f *SignerFactory) Verify(ctx context.Context, message []byte, signature *types.SignatureResult, pubKey []byte, algorithm types.SigningAlgorithm, signer types.SigningService) (bool, error) {
+	if signer == nil {
+		return false, errors.New("signer is nil")
+	}
+
+	// Verify the signature
+	return signer.Verify(ctx, message, signature, pubKey)
+}
+
+// FormatSignature formats a signature according to the specified algorithm
+func (f *SignerFactory) FormatSignature(ctx context.Context, sig *types.SignatureResult, algorithm types.SigningAlgorithm) ([]byte, error) {
+	if sig == nil {
+		return nil, errors.New("signature is nil")
+	}
+
+	// Return the DER encoded signature
+	return sig.Bytes, nil
+}
+
+// UnformatSignature unformats a signature according to the specified algorithm
+func (f *SignerFactory) UnformatSignature(ctx context.Context, sigBytes []byte, algorithm types.SigningAlgorithm) (*types.SignatureResult, error) {
+	if len(sigBytes) == 0 {
+		return nil, errors.New("signature bytes are empty")
+	}
+
+	// Parse the DER signature
+	parsedSig, err := ecdsa.ParseDERSignature(sigBytes)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse signature: %w", err)
+		return nil, fmt.Errorf("failed to parse signature: %w", err)
 	}
 
-	// Verify the signature using the ECDSA signer
-	return f.signer.Verify(context.Background(), message, signatureResult, pubKeyBytes)
+	// Get the serialized signature
+	serialized := parsedSig.Serialize()
+
+	// Convert to SignatureResult
+	return &types.SignatureResult{
+		R:     new(big.Int).SetBytes(serialized[:32]),
+		S:     new(big.Int).SetBytes(serialized[32:]),
+		Bytes: sigBytes,
+	}, nil
 }

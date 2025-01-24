@@ -2,6 +2,7 @@ package signing
 
 import (
 	"context"
+	"math/big"
 	"selfchain/x/keyless/crypto/signing/types"
 )
 

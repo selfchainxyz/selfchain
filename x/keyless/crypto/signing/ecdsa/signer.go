@@ -7,38 +7,23 @@ import (
 	"fmt"
 	"math/big"
 
+	"selfchain/x/keyless/crypto/signing/types"
+
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"selfchain/x/keyless/crypto/signing/types"
 )
 
-// SigningService defines the interface for signing operations
-type SigningService interface {
-	Sign(ctx context.Context, message []byte, algorithm types.SigningAlgorithm) (*types.SignatureResult, error)
-	Verify(ctx context.Context, message []byte, signature *types.SignatureResult, pubKeyBytes []byte) (bool, error)
-	GetPublicKey(ctx context.Context, algorithm types.SigningAlgorithm) ([]byte, error)
-}
-
-// ECDSASigner implements the SigningService interface for ECDSA signatures
+// ECDSASigner implements the types.SigningService interface for ECDSA signatures
 type ECDSASigner struct {
-	party1Data interface{}
-	party2Data interface{}
-	privKey    *btcec.PrivateKey // For testing only
-	pubKey     *btcec.PublicKey  // For testing only
+	privKey *btcec.PrivateKey
+	pubKey  *btcec.PublicKey
 }
 
-// NewECDSASigner creates a new ECDSA signer with party data
-func NewECDSASigner(party1Data, party2Data interface{}) *ECDSASigner {
-	// For testing, generate a dummy key pair
-	privKey, err := btcec.NewPrivateKey()
-	if err != nil {
-		return nil
-	}
+// NewECDSASigner creates a new ECDSA signer
+func NewECDSASigner(privKey *btcec.PrivateKey, pubKey *btcec.PublicKey) *ECDSASigner {
 	return &ECDSASigner{
-		party1Data: party1Data,
-		party2Data: party2Data,
-		privKey:    privKey,
-		pubKey:     privKey.PubKey(),
+		privKey: privKey,
+		pubKey:  pubKey,
 	}
 }
 
@@ -48,23 +33,70 @@ func (s *ECDSASigner) Sign(ctx context.Context, message []byte, algorithm types.
 		return nil, errors.New("unsupported algorithm")
 	}
 
+	if s.privKey == nil {
+		return nil, errors.New("private key not initialized")
+	}
+
 	// Hash the message
 	hash := sha256.Sum256(message)
 
-	// Sign the hash (for testing only)
-	signature := ecdsa.Sign(s.privKey, hash[:])
+	// Create a deterministic nonce
+	nonce := sha256.Sum256(append(hash[:], s.privKey.Serialize()...))
+	k := new(btcec.ModNScalar)
+	k.SetBytes(&nonce)
 
-	// Get signature components
-	rBytes := signature.Serialize()[4:36]  // Skip DER header and length
-	sBytes := signature.Serialize()[38:70] // Skip DER header and length
+	// Get the curve parameters
+	curve := btcec.S256()
+	n := curve.N
 
-	rInt := new(big.Int).SetBytes(rBytes)
-	sInt := new(big.Int).SetBytes(sBytes)
+	// Calculate R = k*G
+	kBytes := k.Bytes()
+	x, _ := curve.ScalarBaseMult(kBytes[:])
+	r := new(big.Int).Set(x)
+	r.Mod(r, n)
 
+	// Calculate s = k^-1(hash + r*privKey) mod n
+	rInt := new(big.Int).Set(r)
+	privInt := new(big.Int).SetBytes(s.privKey.Serialize())
+	hashInt := new(big.Int).SetBytes(hash[:])
+
+	// k^-1
+	kBytes = k.Bytes()
+	kInt := new(big.Int).SetBytes(kBytes[:])
+	kInv := new(big.Int).ModInverse(kInt, n)
+	if kInv == nil {
+		return nil, errors.New("failed to calculate k inverse")
+	}
+
+	// r*privKey
+	rPriv := new(big.Int).Mul(rInt, privInt)
+	rPriv.Mod(rPriv, n)
+
+	// hash + r*privKey
+	sInt := new(big.Int).Add(hashInt, rPriv)
+	sInt.Mod(sInt, n)
+
+	// k^-1 * (hash + r*privKey)
+	sInt.Mul(sInt, kInv)
+	sInt.Mod(sInt, n)
+
+	// Convert to ModNScalar for signature creation
+	rScalar := new(btcec.ModNScalar)
+	sScalar := new(btcec.ModNScalar)
+	rScalar.SetByteSlice(r.Bytes())
+	sScalar.SetByteSlice(sInt.Bytes())
+
+	// Create ECDSA signature
+	signature := ecdsa.NewSignature(rScalar, sScalar)
+
+	// Get the serialized signature
+	der := signature.Serialize()
+
+	// Return signature result
 	return &types.SignatureResult{
-		R:     rInt,
+		R:     r,
 		S:     sInt,
-		Bytes: signature.Serialize(),
+		Bytes: der,
 	}, nil
 }
 
@@ -74,37 +106,23 @@ func (s *ECDSASigner) Verify(ctx context.Context, message []byte, signature *typ
 		return false, errors.New("signature is nil")
 	}
 
-	// Hash the message
-	hash := sha256.Sum256(message)
-
-	// Parse public key based on format
-	var pubKey *btcec.PublicKey
-	var err error
-
-	switch len(pubKeyBytes) {
-	case 33: // Compressed public key
-		pubKey, err = btcec.ParsePubKey(pubKeyBytes)
-	case 65: // Uncompressed public key
-		pubKey, err = btcec.ParsePubKey(pubKeyBytes)
-	case 64: // Raw public key (x||y)
-		// Add the uncompressed point marker
-		fullPubKey := make([]byte, 65)
-		fullPubKey[0] = 0x04
-		copy(fullPubKey[1:], pubKeyBytes)
-		pubKey, err = btcec.ParsePubKey(fullPubKey)
-	default:
-		return false, fmt.Errorf("invalid public key length: %d", len(pubKeyBytes))
-	}
-
+	// Parse public key
+	pubKey, err := btcec.ParsePubKey(pubKeyBytes)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse public key: %w", err)
 	}
 
-	// Parse signature
-	sig, err := ecdsa.ParseDERSignature(signature.Bytes)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse signature: %w", err)
-	}
+	// Hash the message
+	hash := sha256.Sum256(message)
+
+	// Convert big.Int to ModNScalar
+	rScalar := new(btcec.ModNScalar)
+	sScalar := new(btcec.ModNScalar)
+	rScalar.SetByteSlice(signature.R.Bytes())
+	sScalar.SetByteSlice(signature.S.Bytes())
+
+	// Create ECDSA signature
+	sig := ecdsa.NewSignature(rScalar, sScalar)
 
 	// Verify the signature
 	return sig.Verify(hash[:], pubKey), nil
@@ -120,6 +138,5 @@ func (s *ECDSASigner) GetPublicKey(ctx context.Context, algorithm types.SigningA
 		return nil, errors.New("public key not initialized")
 	}
 
-	// Return the serialized public key
 	return s.pubKey.SerializeCompressed(), nil
 }

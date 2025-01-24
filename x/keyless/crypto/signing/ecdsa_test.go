@@ -4,105 +4,68 @@ import (
 	"context"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
+	"selfchain/x/keyless/crypto/signing/ecdsa"
+	"selfchain/x/keyless/crypto/signing/types"
 )
 
 func TestECDSASigner(t *testing.T) {
-	// Create test party data
-	party1Data := &struct{ Key string }{"party1"}
-	party2Data := &struct{ Key string }{"party2"}
+	// Generate test keys
+	privKey, err := btcec.NewPrivateKey()
+	require.NoError(t, err)
+	pubKey := privKey.PubKey()
 
 	t.Run("Test NewECDSASigner", func(t *testing.T) {
-		signer := NewECDSASigner(party1Data, party2Data)
+		signer := ecdsa.NewECDSASigner(privKey, pubKey)
 		require.NotNil(t, signer)
-		require.Equal(t, party1Data, signer.party1Data)
-		require.Equal(t, party2Data, signer.party2Data)
+		
+		// Test public key retrieval
+		retrievedPubKey, err := signer.GetPublicKey(context.Background(), types.ECDSA)
+		require.NoError(t, err)
+		require.Equal(t, pubKey.SerializeCompressed(), retrievedPubKey)
 	})
 
-	t.Run("Test Sign", func(t *testing.T) {
-		ctx := context.Background()
-		signer := NewECDSASigner(party1Data, party2Data)
+	t.Run("Test Sign and Verify", func(t *testing.T) {
+		signer := ecdsa.NewECDSASigner(privKey, pubKey)
+		require.NotNil(t, signer)
+
+		// Test signing
 		message := []byte("test message")
-
-		// Test ECDSA signing
-		signature, err := signer.Sign(ctx, message, ECDSA)
+		sig, err := signer.Sign(context.Background(), message, types.ECDSA)
 		require.NoError(t, err)
-		require.NotNil(t, signature)
-		require.NotNil(t, signature.R)
-		require.NotNil(t, signature.S)
+		require.NotNil(t, sig)
 
-		// Test unsupported algorithm
-		signature, err = signer.Sign(ctx, message, "unsupported")
-		require.Error(t, err)
-		require.Nil(t, signature)
+		// Test verification
+		valid, err := signer.Verify(context.Background(), message, sig, pubKey.SerializeCompressed())
+		require.NoError(t, err)
+		require.True(t, valid)
+
+		// Test invalid message
+		invalidMessage := []byte("wrong message")
+		valid, err = signer.Verify(context.Background(), invalidMessage, sig, pubKey.SerializeCompressed())
+		require.NoError(t, err)
+		require.False(t, valid)
 	})
 
-	t.Run("Test Verify", func(t *testing.T) {
-		ctx := context.Background()
-		signer := NewECDSASigner(party1Data, party2Data)
+	t.Run("Test Invalid Keys", func(t *testing.T) {
+		// Test with nil private key
+		signer := ecdsa.NewECDSASigner(nil, pubKey)
+		require.NotNil(t, signer)
+
+		// Should fail to sign without private key
 		message := []byte("test message")
-
-		// Generate a test signature first
-		signature, err := signer.Sign(ctx, message, ECDSA)
-		require.NoError(t, err)
-		require.NotNil(t, signature)
-
-		// Get the public key
-		pubKey, err := signer.GetPublicKey(ctx, ECDSA)
-		require.NoError(t, err)
-		require.NotNil(t, pubKey)
-
-		// Test signature verification
-		valid, err := signer.Verify(ctx, message, signature, pubKey)
-		require.NoError(t, err)
-		require.True(t, valid) // Should be valid since we're using our own signature
-
-		// Test with modified message
-		modifiedMsg := append([]byte(nil), message...)
-		modifiedMsg[0] ^= 0xFF // Flip some bits
-		valid, err = signer.Verify(ctx, modifiedMsg, signature, pubKey)
-		require.NoError(t, err)
-		require.False(t, valid)
-
-		// Test with nil signature
-		valid, err = signer.Verify(ctx, message, nil, pubKey)
+		_, err := signer.Sign(context.Background(), message, types.ECDSA)
 		require.Error(t, err)
-		require.False(t, valid)
 
 		// Test with nil public key
-		valid, err = signer.Verify(ctx, message, signature, nil)
-		require.Error(t, err)
-		require.False(t, valid)
-	})
+		signer = ecdsa.NewECDSASigner(privKey, nil)
+		require.NotNil(t, signer)
 
-	t.Run("Test GetPublicKey", func(t *testing.T) {
-		ctx := context.Background()
-		signer := NewECDSASigner(party1Data, party2Data)
-
-		// Test ECDSA public key retrieval
-		pubKey, err := signer.GetPublicKey(ctx, ECDSA)
+		// Should fail to verify without public key
+		sig, err := signer.Sign(context.Background(), message, types.ECDSA)
 		require.NoError(t, err)
-		require.NotNil(t, pubKey)
-
-		// Test unsupported algorithm
-		pubKey, err = signer.GetPublicKey(ctx, "unsupported")
+		_, err = signer.Verify(context.Background(), message, sig, nil)
 		require.Error(t, err)
-		require.Nil(t, pubKey)
-	})
-
-	t.Run("Test with nil party data", func(t *testing.T) {
-		ctx := context.Background()
-		signer := NewECDSASigner(nil, nil)
-		message := []byte("test message")
-
-		// Test Sign
-		signature, err := signer.Sign(ctx, message, ECDSA)
-		require.NoError(t, err) // Current implementation returns dummy values
-		require.NotNil(t, signature)
-
-		// Test GetPublicKey
-		pubKey, err := signer.GetPublicKey(ctx, ECDSA)
-		require.NoError(t, err) // Current implementation returns dummy values
-		require.NotNil(t, pubKey)
 	})
 }
