@@ -1,6 +1,8 @@
 package networks
 
 import (
+	"strings"
+
 	"selfchain/x/keyless/types"
 )
 
@@ -42,15 +44,45 @@ func DefaultNetworks() []*types.NetworkParams {
 				AddressPrefix: "0x",
 			},
 		},
+		{
+			NetworkType:      string(Cosmos),
+			ChainId:         "cosmoshub-4",
+			SigningAlgorithm: string(ECDSA),
+			CurveType:       string(Secp256k1),
+			AddressPrefix:   "cosmos",
+			CoinType:        118,
+			Decimals:        6,
+			SymbolName:      "ATOM",
+			DisplayName:     "Cosmos Hub",
+			SigningConfig: &types.SigningConfig{
+				ChainId:       "cosmoshub-4",
+				GasToken:      "ATOM",
+				AddressPrefix: "cosmos",
+			},
+		},
 		// Add more networks as needed
 	}
 }
 
 // GetDefaultNetworkParams returns network parameters for the specified network ID
 func GetDefaultNetworkParams(networkID string) *types.NetworkParams {
+	// Split network ID into network type and chain ID
+	parts := strings.Split(networkID, ":")
+	if len(parts) != 2 {
+		return nil
+	}
+	networkType, chainID := parts[0], parts[1]
+
+	// Handle special cases
+	switch {
+	case networkType == "bitcoin" && chainID == "mainnet":
+		chainID = "bitcoin-mainnet"
+	}
+
 	networks := DefaultNetworks()
 	for _, network := range networks {
-		if network.ChainId == networkID {
+		// Match both network type and chain ID
+		if strings.EqualFold(network.NetworkType, networkType) && strings.EqualFold(network.ChainId, chainID) {
 			return network
 		}
 	}

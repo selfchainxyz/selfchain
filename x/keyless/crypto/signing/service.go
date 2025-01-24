@@ -2,9 +2,7 @@ package signing
 
 import (
 	"context"
-	"math/big"
-
-	"github.com/btcsuite/btcd/btcec/v2"
+	"selfchain/x/keyless/crypto/signing/types"
 )
 
 // SigningAlgorithm represents supported signing algorithms
@@ -27,11 +25,11 @@ type SignatureResult struct {
 // SigningService defines the interface for cryptographic signing operations
 type SigningService interface {
 	// Sign signs a message using the specified algorithm
-	Sign(ctx context.Context, msg []byte, algorithm SigningAlgorithm) (*SignatureResult, error)
+	Sign(ctx context.Context, msg []byte, algorithm types.SigningAlgorithm) (*types.SignatureResult, error)
 
 	// Verify verifies a signature
-	Verify(ctx context.Context, msg []byte, sig *SignatureResult, pubKey *btcec.PublicKey) (bool, error)
+	Verify(ctx context.Context, msg []byte, sig *types.SignatureResult, pubKeyBytes []byte) (bool, error)
 
 	// GetPublicKey returns the public key for the signing service
-	GetPublicKey(ctx context.Context, algorithm SigningAlgorithm) (*btcec.PublicKey, error)
+	GetPublicKey(ctx context.Context, algorithm types.SigningAlgorithm) ([]byte, error)
 }
