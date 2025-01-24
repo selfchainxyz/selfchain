@@ -161,6 +161,23 @@ func FormatDERSignature(sig *SignatureResult) ([]byte, error) {
 	if sig == nil {
 		return nil, errors.New("signature is nil")
 	}
+	if sig.R == nil {
+		return nil, errors.New("R value is nil")
+	}
+	if sig.S == nil {
+		return nil, errors.New("S value is nil")
+	}
+
+	// Validate R and S values
+	if sig.R.Sign() <= 0 || sig.S.Sign() <= 0 {
+		return nil, errors.New("invalid signature: R and S must be positive")
+	}
+
+	// Check if values are too large (> 32 bytes when padded)
+	maxValue := new(big.Int).Lsh(big.NewInt(1), 256)
+	if sig.R.Cmp(maxValue) >= 0 || sig.S.Cmp(maxValue) >= 0 {
+		return nil, errors.New("invalid signature: R or S too large")
+	}
 
 	// Calculate lengths
 	rBytes := sig.R.Bytes()
