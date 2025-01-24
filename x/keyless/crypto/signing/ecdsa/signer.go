@@ -37,6 +37,10 @@ func (s *ECDSASigner) Sign(ctx context.Context, message []byte, algorithm types.
 		return nil, errors.New("private key not initialized")
 	}
 
+	if len(message) == 0 {
+		return nil, errors.New("empty message")
+	}
+
 	// Hash the message
 	hash := sha256.Sum256(message)
 
