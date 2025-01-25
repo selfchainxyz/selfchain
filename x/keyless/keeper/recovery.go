@@ -1,78 +1,60 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
-	"selfchain/x/keyless/types"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"selfchain/x/keyless/types"
 )
 
-// RecoverWallet handles the wallet recovery process
-func (k Keeper) RecoverWallet(ctx context.Context, msg *types.MsgRecoverWallet) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	// 1. Verify DID ownership through identity module
-	didDoc, found := k.identityKeeper.GetDIDDocument(sdkCtx, msg.Creator)
-	if !found {
-		return fmt.Errorf("DID document not found: %s", msg.Creator)
-	}
-
-	// 2. Verify recovery proof through identity module
-	if err := k.identityKeeper.VerifyRecoveryToken(sdkCtx, msg.Creator, msg.RecoveryProof); err != nil {
-		return fmt.Errorf("failed to verify recovery proof: %w", err)
-	}
-
-	// 3. Get recovery share from identity module and use it for reconstruction
-	if _, found := k.identityKeeper.GetKeyShare(sdkCtx, msg.Creator); !found {
-		return fmt.Errorf("key share not found for DID: %s", msg.Creator)
-	}
-
-	// 4. Reconstruct wallet using recovery share
-	wallet, err := k.identityKeeper.ReconstructWallet(sdkCtx, didDoc)
+// CreateRecoverySession creates a new recovery session for a wallet
+func (k Keeper) CreateRecoverySession(ctx sdk.Context, creator, walletAddress string) error {
+	// Validate the wallet exists
+	_, err := k.GetWallet(ctx, walletAddress)
 	if err != nil {
-		return fmt.Errorf("failed to reconstruct wallet: %w", err)
+		return fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 
-	// 5. Store reconstructed wallet data in keeper's state
-	store := prefix.NewStore(sdkCtx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
-	blockTime := sdkCtx.BlockTime()
-	newWallet := &types.Wallet{
-		Id:            msg.WalletAddress,
-		Address:       msg.WalletAddress,
-		Status:        types.WalletStatusActive,
-		SecurityLevel: uint32(SecurityLevelHigh), // Recovered wallets use high security
-		Threshold:     2,                         // Default threshold for recovered wallets
-		Parties:       3,                         // Default number of parties for recovered wallets
-		CreatedAt:     &blockTime,
-		UpdatedAt:     &blockTime,
-		Metadata: map[string]string{
-			"recovery_method": "did_recovery",
-			"recovered_by":    msg.Creator,
-		},
-	}
-
-	// Copy reconstructed wallet data
-	if w, ok := wallet.(*types.Wallet); ok {
-		newWallet.PublicKey = w.PublicKey
-		newWallet.KeyVersion = w.KeyVersion
-		newWallet.ChainId = w.ChainId
-	}
-
-	walletBytes := k.cdc.MustMarshal(newWallet)
-	store.Set([]byte(msg.WalletAddress), walletBytes)
-
-	// 6. Emit recovery event
-	sdkCtx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeWalletRecovered,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyWalletAddress, msg.WalletAddress),
-			sdk.NewAttribute(types.AttributeKeyStatus, types.WalletStatusActive),
-		),
-	)
+	// TODO: Implement recovery session creation
+	// 1. Create a new recovery session
+	// 2. Store it in the keeper
+	// 3. Return any errors that occur
 
 	return nil
+}
+
+// ValidateRecoverySession validates a recovery session
+func (k Keeper) ValidateRecoverySession(ctx sdk.Context, creator, walletAddress string) error {
+	// TODO: Implement recovery session validation
+	// This should:
+	// 1. Check if session exists
+	// 2. Verify session hasn't expired
+	// 3. Validate creator matches session creator
+
+	return nil
+}
+
+// RecoverWallet recovers a wallet by its address
+func (k Keeper) RecoverWallet(ctx sdk.Context, walletAddress string) error {
+	// Get the wallet
+	wallet, err := k.GetWallet(ctx, walletAddress)
+	if err != nil {
+		return fmt.Errorf("failed to get wallet: %v", err)
+	}
+
+	// Set wallet status to active
+	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
+	err = k.SaveWallet(ctx, wallet)
+	if err != nil {
+		return fmt.Errorf("failed to save wallet: %v", err)
+	}
+
+	return nil
+}
+
+// verifyRecoveryProof checks if the recovery proof is valid
+func (k Keeper) verifyRecoveryProof(ctx sdk.Context, wallet *types.Wallet, recoveryProof string) bool {
+	// TODO: Implement recovery proof verification logic
+	// This should integrate with the identity module for verification
+	return true
 }

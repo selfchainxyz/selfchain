@@ -10,196 +10,175 @@ import (
 	"selfchain/x/keyless/types"
 )
 
-// Ensure Keeper implements QueryServer
 var _ types.QueryServer = Keeper{}
 
 // Params returns the module parameters
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
-	ctx := sdk.UnwrapSDKContext(c)
-
-	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-// Wallet returns information about a specific wallet
-func (k Keeper) Wallet(c context.Context, req *types.QueryWalletRequest) (*types.QueryWalletResponse, error) {
+// Wallet returns a specific wallet
+func (k Keeper) Wallet(goCtx context.Context, req *types.QueryWalletRequest) (*types.QueryWalletResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.Address == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.WalletKey))
-	bz := store.Get([]byte(req.Address))
-	if bz == nil {
-		return nil, status.Error(codes.NotFound, "wallet not found")
-	}
-
-	var wallet types.Wallet
-	k.cdc.MustUnmarshal(bz, &wallet)
-	return &types.QueryWalletResponse{
-		Wallet: &wallet,
-	}, nil
-}
-
-// Wallets returns all wallets with pagination
-func (k Keeper) Wallets(c context.Context, req *types.QueryWalletsRequest) (*types.QueryWalletsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	store := ctx.KVStore(k.storeKey)
-	walletStore := prefix.NewStore(store, types.KeyPrefix(types.WalletKey))
-
-	var wallets []*types.Wallet
-	pageRes, err := k.Paginate(walletStore, req.Pagination, func(key []byte, value []byte) error {
-		var wallet types.Wallet
-		if err := k.cdc.Unmarshal(value, &wallet); err != nil {
-			return err
-		}
-
-		wallets = append(wallets, &wallet)
-		return nil
-	})
-
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	wallet, err := k.GetWallet(ctx, req.Address)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.NotFound, "wallet not found: %s", err.Error())
 	}
 
-	return &types.QueryWalletsResponse{
-		Wallets:    wallets,
-		Pagination: pageRes,
-	}, nil
+	return &types.QueryWalletResponse{Wallet: wallet}, nil
+}
+
+// Wallets returns all wallets
+func (k Keeper) Wallets(goCtx context.Context, req *types.QueryWalletsRequest) (*types.QueryWalletsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	wallets, err := k.GetAllWalletsFromStore(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get wallets: %s", err.Error())
+	}
+
+	// Convert []types.Wallet to []*types.Wallet
+	walletPtrs := make([]*types.Wallet, len(wallets))
+	for i := range wallets {
+		walletPtrs[i] = &wallets[i]
+	}
+
+	return &types.QueryWalletsResponse{Wallets: walletPtrs}, nil
 }
 
 // PartyData returns TSS party data for a wallet
-func (k Keeper) PartyData(c context.Context, req *types.QueryPartyDataRequest) (*types.QueryPartyDataResponse, error) {
+func (k Keeper) PartyData(goCtx context.Context, req *types.QueryPartyDataRequest) (*types.QueryPartyDataResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.WalletAddress == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PartyDataKey))
-	bz := store.Get([]byte(req.WalletAddress))
-	if bz == nil {
-		return nil, status.Error(codes.NotFound, "party data not found")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	partyData, err := k.GetPartyData(ctx, req.WalletAddress)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "party data not found: %s", err.Error())
 	}
 
-	var partyData types.PartyData
-	k.cdc.MustUnmarshal(bz, &partyData)
 	return &types.QueryPartyDataResponse{
 		WalletAddress: req.WalletAddress,
-		PartyData:     &partyData,
+		PartyData:     partyData,
 	}, nil
 }
 
-// KeyRotation returns information about a specific key rotation
-func (k Keeper) KeyRotation(c context.Context, req *types.QueryKeyRotationRequest) (*types.QueryKeyRotationResponse, error) {
+// KeyRotation returns a specific key rotation by wallet ID and version
+func (k Keeper) KeyRotation(goCtx context.Context, req *types.QueryKeyRotationRequest) (*types.QueryKeyRotationResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.WalletId == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet ID cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.KeyRotationKey))
-	key := append([]byte(req.WalletId), sdk.Uint64ToBigEndian(req.Version)...)
-	bz := store.Get(key)
-	if bz == nil {
-		return nil, status.Error(codes.NotFound, "key rotation not found")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	rotation, err := k.GetKeyRotation(ctx, req.WalletId, req.Version)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "key rotation not found: %s", err.Error())
 	}
 
-	var rotation types.KeyRotation
-	k.cdc.MustUnmarshal(bz, &rotation)
-	return &types.QueryKeyRotationResponse{
-		Rotation: &rotation,
-	}, nil
+	return &types.QueryKeyRotationResponse{Rotation: rotation}, nil
 }
 
-// KeyRotations returns all key rotations for a wallet with pagination
-func (k Keeper) KeyRotations(c context.Context, req *types.QueryKeyRotationsRequest) (*types.QueryKeyRotationsResponse, error) {
+// KeyRotations returns all key rotations for a wallet
+func (k Keeper) KeyRotations(goCtx context.Context, req *types.QueryKeyRotationsRequest) (*types.QueryKeyRotationsResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.WalletId == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet ID cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := ctx.KVStore(k.storeKey)
-	rotationStore := prefix.NewStore(store, types.KeyPrefix(types.KeyRotationKey))
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.KeyRotationKey))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
 
 	var rotations []*types.KeyRotation
-	pageRes, err := k.Paginate(rotationStore, req.Pagination, func(key []byte, value []byte) error {
+	for ; iterator.Valid(); iterator.Next() {
 		var rotation types.KeyRotation
-		if err := k.cdc.Unmarshal(value, &rotation); err != nil {
-			return err
+		err := k.cdc.Unmarshal(iterator.Value(), &rotation)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal key rotation: %s", err.Error())
 		}
-
-		rotations = append(rotations, &rotation)
-		return nil
-	})
-
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if rotation.WalletId == req.WalletId {
+			rotations = append(rotations, &rotation)
+		}
 	}
 
-	return &types.QueryKeyRotationsResponse{
-		Rotations:  rotations,
-		Pagination: pageRes,
+	return &types.QueryKeyRotationsResponse{Rotations: rotations}, nil
+}
+
+// KeyRotationStatus returns the status of a key rotation operation
+func (k Keeper) KeyRotationStatus(goCtx context.Context, req *types.QueryKeyRotationStatusRequest) (*types.QueryKeyRotationStatusResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	rotationStatus, err := k.GetKeyRotationStatus(ctx, req.WalletId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "key rotation status not found: %s", err.Error())
+	}
+
+	return &types.QueryKeyRotationStatusResponse{
+		WalletId:   req.WalletId,
+		Status:     rotationStatus.Status.String(),
+		Version:    rotationStatus.Version,
+		NewPubKey:  rotationStatus.NewPublicKey,
 	}, nil
 }
 
-// ListAuditEvents returns all audit events with pagination
-func (k Keeper) ListAuditEvents(c context.Context, req *types.QueryListAuditEventsRequest) (*types.QueryListAuditEventsResponse, error) {
+// BatchSignStatus returns the status of a batch signing operation
+func (k Keeper) BatchSignStatus(goCtx context.Context, req *types.QueryBatchSignStatusRequest) (*types.QueryBatchSignStatusResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	if req.WalletId == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet ID cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := ctx.KVStore(k.storeKey)
-	eventStore := prefix.NewStore(store, types.KeyPrefix(types.AuditEventKey))
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	signStatus, err := k.GetBatchSignStatus(ctx, req.WalletId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "batch sign status not found: %s", err.Error())
+	}
+
+	return &types.QueryBatchSignStatusResponse{
+		WalletId:   req.WalletId,
+		BatchId:    req.BatchId,
+		Status:     signStatus.Status.String(),
+		Signatures: signStatus.Signatures,
+	}, nil
+}
+
+// ListAuditEvents returns all audit events
+func (k Keeper) ListAuditEvents(goCtx context.Context, req *types.QueryListAuditEventsRequest) (*types.QueryListAuditEventsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("audit/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
 
 	var events []*types.AuditEvent
-	pageRes, err := k.Paginate(eventStore, req.Pagination, func(key []byte, value []byte) error {
+	for ; iterator.Valid(); iterator.Next() {
 		var event types.AuditEvent
-		if err := k.cdc.Unmarshal(value, &event); err != nil {
-			return err
+		err := k.cdc.Unmarshal(iterator.Value(), &event)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal audit event: %s", err.Error())
 		}
-
-		// Filter by wallet ID, event type, and success
-		if event.WalletId != req.WalletId {
-			return nil
+		if event.WalletId == req.WalletId && (req.EventType == "" || event.EventType == req.EventType) {
+			events = append(events, &event)
 		}
-		if req.EventType != "" && event.EventType != req.EventType {
-			return nil
-		}
-		if event.Success != req.Success {
-			return nil
-		}
-
-		events = append(events, &event)
-		return nil
-	})
-
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &types.QueryListAuditEventsResponse{
-		Events:     events,
-		Pagination: pageRes,
-	}, nil
+	return &types.QueryListAuditEventsResponse{Events: events}, nil
 }

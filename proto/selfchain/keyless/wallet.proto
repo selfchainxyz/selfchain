@@ -1,24 +1,36 @@
 syntax = "proto3";
 package selfchain.keyless;
 
+option go_package = "selfchain/x/keyless/types";
+
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "selfchain/x/keyless/types";
+// WalletStatus represents the status of a wallet
+enum WalletStatus {
+  // WALLET_STATUS_UNSPECIFIED represents an unspecified wallet status
+  WALLET_STATUS_UNSPECIFIED = 0;
+  // WALLET_STATUS_ACTIVE represents an active wallet
+  WALLET_STATUS_ACTIVE = 1;
+  // WALLET_STATUS_INACTIVE represents an inactive wallet
+  WALLET_STATUS_INACTIVE = 2;
+  // WALLET_STATUS_RECOVERING represents a wallet in recovery process
+  WALLET_STATUS_RECOVERING = 3;
+  // WALLET_STATUS_ROTATING represents a wallet in key rotation process
+  WALLET_STATUS_ROTATING = 4;
+}
 
 // Wallet represents a keyless wallet
 message Wallet {
   string id = 1;
-  string address = 2;
+  string creator = 2;
   string public_key = 3;
-  uint32 key_version = 4;
-  repeated string permissions = 5;
-  google.protobuf.Timestamp created_at = 6 [(gogoproto.stdtime) = true];
-  google.protobuf.Timestamp updated_at = 7 [(gogoproto.stdtime) = true];
-  map<string, string> metadata = 8;
-  uint32 security_level = 9;
-  uint32 threshold = 10;
-  uint32 parties = 11;
-  string status = 12;
-  string chain_id = 13;
+  string wallet_address = 4;
+  string chain_id = 5;
+  WalletStatus status = 6;
+  uint32 key_version = 7;
+  google.protobuf.Timestamp created_at = 8 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp updated_at = 9 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp last_used = 10 [(gogoproto.stdtime) = true];
+  uint64 usage_count = 11;
 }

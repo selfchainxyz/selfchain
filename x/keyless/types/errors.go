@@ -42,4 +42,6 @@ var (
 	ErrMFARequired          = sdkerrors.Register(ModuleName, 1116, "MFA verification required")
 	ErrMFAFailed           = sdkerrors.Register(ModuleName, 1117, "MFA verification failed")
 	ErrUnauthorizedOperation = sdkerrors.Register(ModuleName, 1118, "unauthorized operation")
+	ErrInvalidKeyRotationStatus = sdkerrors.Register(ModuleName, 1119, "invalid key rotation status")
+	ErrKeyRotationNotFound      = sdkerrors.Register(ModuleName, 1120, "key rotation not found")
 )

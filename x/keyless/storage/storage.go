@@ -26,7 +26,7 @@ func NewStorage(store sdk.KVStore) *Storage {
 
 // SavePartyShare stores an encrypted key share
 func (s *Storage) SavePartyShare(ctx context.Context, key string, share *types.EncryptedShare) error {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.KeyShareKey))
+	store := prefix.NewStore(s.store, []byte(types.KeyShareKey))
 	bz, err := share.Marshal()
 	if err != nil {
 		return fmt.Errorf("failed to marshal share: %w", err)
@@ -37,7 +37,7 @@ func (s *Storage) SavePartyShare(ctx context.Context, key string, share *types.E
 
 // GetPartyShare retrieves an encrypted key share
 func (s *Storage) GetPartyShare(ctx context.Context, key string) (*types.EncryptedShare, error) {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.KeyShareKey))
+	store := prefix.NewStore(s.store, []byte(types.KeyShareKey))
 	bz := store.Get([]byte(key))
 	if bz == nil {
 		return nil, fmt.Errorf("share not found: %s", key)
@@ -52,13 +52,13 @@ func (s *Storage) GetPartyShare(ctx context.Context, key string) (*types.Encrypt
 
 // DeletePartyShare removes a key share
 func (s *Storage) DeletePartyShare(ctx context.Context, key string) {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.KeyShareKey))
+	store := prefix.NewStore(s.store, []byte(types.KeyShareKey))
 	store.Delete([]byte(key))
 }
 
 // SavePartyData stores TSS party data for a wallet
 func (s *Storage) SavePartyData(ctx context.Context, walletAddress string, party1Data, party2Data *keygen.LocalPartySaveData) error {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.PartyDataKey))
+	store := prefix.NewStore(s.store, []byte(types.PartyDataKey))
 	party1Key := fmt.Sprintf("%s_party1", walletAddress)
 	party2Key := fmt.Sprintf("%s_party2", walletAddress)
 
@@ -79,7 +79,7 @@ func (s *Storage) SavePartyData(ctx context.Context, walletAddress string, party
 
 // GetPartyData retrieves TSS party data for a wallet
 func (s *Storage) GetPartyData(ctx context.Context, walletAddress string) (*keygen.LocalPartySaveData, *keygen.LocalPartySaveData, error) {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.PartyDataKey))
+	store := prefix.NewStore(s.store, []byte(types.PartyDataKey))
 	party1Key := fmt.Sprintf("%s_party1", walletAddress)
 	party2Key := fmt.Sprintf("%s_party2", walletAddress)
 
@@ -103,7 +103,7 @@ func (s *Storage) GetPartyData(ctx context.Context, walletAddress string) (*keyg
 
 // DeletePartyData removes TSS party data for a wallet
 func (s *Storage) DeletePartyData(ctx context.Context, walletAddress string) error {
-	store := prefix.NewStore(s.store, types.KeyPrefix(types.PartyDataKey))
+	store := prefix.NewStore(s.store, []byte(types.PartyDataKey))
 	party1Key := fmt.Sprintf("%s_party1", walletAddress)
 	party2Key := fmt.Sprintf("%s_party2", walletAddress)
 	

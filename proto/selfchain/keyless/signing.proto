@@ -1,0 +1,62 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// SigningInput represents the input data for TSS signing
+message SigningInput {
+  bytes message = 1;
+  bytes party_share = 2 [(gogoproto.moretags) = "json:\"party_share\""];
+  bytes public_key = 3 [(gogoproto.moretags) = "json:\"public_key\""];
+  uint32 key_version = 4 [(gogoproto.moretags) = "json:\"key_version\""];
+  string wallet_id = 5 [(gogoproto.moretags) = "json:\"wallet_id\""];
+  string chain_id = 6 [(gogoproto.moretags) = "json:\"chain_id\""];
+}
+
+// SigningOutput represents the output from TSS signing
+message SigningOutput {
+  bytes signature = 1;
+  bytes public_key = 2 [(gogoproto.moretags) = "json:\"public_key\""];
+  google.protobuf.Timestamp signed_at = 3 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"signed_at\""
+  ];
+  uint32 key_version = 4 [(gogoproto.moretags) = "json:\"key_version\""];
+}
+
+// SigningStatus represents the status of a signing operation
+enum SigningStatus {
+  // Default unspecified status
+  SIGNING_STATUS_UNSPECIFIED = 0;
+  // Signing is in progress
+  SIGNING_STATUS_IN_PROGRESS = 1;
+  // Signing has completed successfully
+  SIGNING_STATUS_COMPLETED = 2;
+  // Signing has failed
+  SIGNING_STATUS_FAILED = 3;
+  // Signing has been cancelled
+  SIGNING_STATUS_CANCELLED = 4;
+}
+
+// SigningSession represents an active signing session
+message SigningSession {
+  string session_id = 1 [(gogoproto.moretags) = "json:\"session_id\""];
+  string wallet_id = 2 [(gogoproto.moretags) = "json:\"wallet_id\""];
+  bytes message = 3;
+  SigningStatus status = 4;
+  repeated string parties = 5;
+  google.protobuf.Timestamp created_at = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"created_at\""
+  ];
+  google.protobuf.Timestamp updated_at = 7 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"updated_at\""
+  ];
+}

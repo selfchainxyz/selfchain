@@ -3,6 +3,9 @@ package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+
 // KeyRotationStatus represents the status of a key rotation operation
 enum KeyRotationStatus {
   // Default unspecified status
@@ -18,3 +21,35 @@ enum KeyRotationStatus {
   // Key rotation has been cancelled
   KEY_ROTATION_STATUS_CANCELLED = 5;
 }
+
+// KeyRotation represents a key rotation record
+message KeyRotation {
+  string wallet_id = 1;
+  string old_pub_key = 2;
+  string new_pub_key = 3;
+  uint64 version = 4;
+  KeyRotationStatus status = 5;
+  string error = 6;
+  string signature = 7;
+}
+
+// KeyRotationStatusInfo represents the status information for a key rotation operation
+message KeyRotationStatusInfo {
+  string wallet_address = 1;
+  string new_public_key = 2;
+  KeyRotationStatus status = 3;
+  uint64 version = 4;
+}
+
+// MsgRotateKey represents a request to rotate a wallet's key
+message MsgRotateKey {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  string new_public_key = 3;
+  string signature = 4;
+}
+
+// MsgRotateKeyResponse represents the response to a key rotation request
+message MsgRotateKeyResponse {}

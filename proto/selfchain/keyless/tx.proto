@@ -3,6 +3,8 @@ package selfchain.keyless;
 
 import "gogoproto/gogo.proto";
 import "cosmos/msg/v1/msg.proto";
+import "selfchain/keyless/batch_sign.proto";
+import "selfchain/keyless/key_rotation.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
@@ -10,131 +12,83 @@ option go_package = "selfchain/x/keyless/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // CreateWallet creates a new keyless wallet
   rpc CreateWallet(MsgCreateWallet) returns (MsgCreateWalletResponse);
   
-  // RecoverWallet recovers a wallet using recovery proof
-  rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
-  
-  // SignTransaction signs a transaction using the keyless wallet
   rpc SignTransaction(MsgSignTransaction) returns (MsgSignTransactionResponse);
 
-  // BatchSign performs batch signing operation
-  rpc BatchSign(MsgBatchSign) returns (MsgBatchSignResponse);
+  rpc BatchSign(MsgBatchSignRequest) returns (MsgBatchSignResponse);
 
-  // InitiateKeyRotation initiates key rotation for a wallet
   rpc InitiateKeyRotation(MsgInitiateKeyRotation) returns (MsgInitiateKeyRotationResponse);
 
-  // CompleteKeyRotation completes key rotation for a wallet
   rpc CompleteKeyRotation(MsgCompleteKeyRotation) returns (MsgCompleteKeyRotationResponse);
 
-  // CancelKeyRotation cancels key rotation for a wallet
-  rpc CancelKeyRotation(MsgCancelKeyRotation) returns (MsgCancelKeyRotationResponse);
+  rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
 }
 
-// MsgCreateWallet defines the CreateWallet request type
+// MsgCreateWallet represents a message to create a new wallet
 message MsgCreateWallet {
-  option (cosmos.msg.v1.signer) = "creator";
-  
   string creator = 1;
   string pub_key = 2;
   string wallet_address = 3;
   string chain_id = 4;
 }
 
-// MsgCreateWalletResponse defines the CreateWallet response type
+// MsgCreateWalletResponse is the response type for the CreateWallet RPC method
 message MsgCreateWalletResponse {
   string wallet_address = 1;
 }
 
-// MsgRecoverWallet defines the RecoverWallet request type
-message MsgRecoverWallet {
-  option (cosmos.msg.v1.signer) = "creator";
-  
-  string creator = 1;
-  string wallet_address = 2;
-  string recovery_proof = 3;
-  string new_pub_key = 4;
-  string signature = 5;
-}
-
-// MsgRecoverWalletResponse defines the RecoverWallet response type
-message MsgRecoverWalletResponse {
-  string wallet_address = 1;
-}
-
-// MsgSignTransaction defines the SignTransaction request type
+// MsgSignTransaction represents a message to sign a transaction
 message MsgSignTransaction {
-  option (cosmos.msg.v1.signer) = "creator";
-  
   string creator = 1;
   string wallet_address = 2;
   string unsigned_tx = 3;
   string chain_id = 4;
 }
 
-// MsgSignTransactionResponse defines the SignTransaction response type
+// MsgSignTransactionResponse is the response type for the SignTransaction RPC method
 message MsgSignTransactionResponse {
   string signed_tx = 1;
 }
 
-// MsgBatchSign defines the BatchSign request type
-message MsgBatchSign {
-  option (cosmos.msg.v1.signer) = "creator";
-  
-  string creator = 1;
-  string wallet_address = 2;
-  repeated string unsigned_txs = 3;
-  string chain_id = 4;
-}
-
-// MsgBatchSignResponse defines the BatchSign response type
-message MsgBatchSignResponse {
-  repeated string signed_txs = 1;
-}
-
-// MsgInitiateKeyRotation defines the InitiateKeyRotation request type
+// MsgInitiateKeyRotation represents a message to initiate key rotation
 message MsgInitiateKeyRotation {
-  option (cosmos.msg.v1.signer) = "creator";
-  
   string creator = 1;
   string wallet_address = 2;
   string new_pub_key = 3;
   string signature = 4;
 }
 
-// MsgInitiateKeyRotationResponse defines the InitiateKeyRotation response type
+// MsgInitiateKeyRotationResponse is the response type for the InitiateKeyRotation RPC method
 message MsgInitiateKeyRotationResponse {
   string wallet_address = 1;
   uint32 new_version = 2;
 }
 
-// MsgCompleteKeyRotation defines the CompleteKeyRotation request type
+// MsgCompleteKeyRotation represents a message to complete key rotation
 message MsgCompleteKeyRotation {
-  option (cosmos.msg.v1.signer) = "creator";
-  
   string creator = 1;
   string wallet_address = 2;
   string version = 3;
   string signature = 4;
+  string new_pub_key = 5;
 }
 
-// MsgCompleteKeyRotationResponse defines the CompleteKeyRotation response type
+// MsgCompleteKeyRotationResponse is the response type for the CompleteKeyRotation RPC method
 message MsgCompleteKeyRotationResponse {
   string wallet_address = 1;
   string version = 2;
 }
 
-// MsgCancelKeyRotation defines the CancelKeyRotation request type
-message MsgCancelKeyRotation {
-  option (cosmos.msg.v1.signer) = "creator";
-  
+// MsgRecoverWallet represents a message to recover a wallet
+message MsgRecoverWallet {
   string creator = 1;
   string wallet_address = 2;
-  uint32 version = 3;
+  string new_pub_key = 3;
+  string recovery_proof = 4;
 }
 
-// MsgCancelKeyRotationResponse defines the CancelKeyRotation response type
-message MsgCancelKeyRotationResponse {
+// MsgRecoverWalletResponse is the response type for the RecoverWallet RPC method
+message MsgRecoverWalletResponse {
   string wallet_address = 1;
 }

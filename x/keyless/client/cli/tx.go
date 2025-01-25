@@ -73,9 +73,9 @@ func CmdCreateWallet() *cobra.Command {
 
 func CmdRecoverWallet() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "recover-wallet [wallet-address] [recovery-proof] [new-pub-key] [signature]",
-		Short: "Recover a wallet using recovery proof",
-		Args:  cobra.ExactArgs(4),
+		Use:   "recover-wallet [wallet-address] [recovery-proof] [new-pub-key]",
+		Short: "Recover a wallet with a new public key using recovery proof",
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -85,9 +85,8 @@ func CmdRecoverWallet() *cobra.Command {
 			msg := types.NewMsgRecoverWallet(
 				clientCtx.GetFromAddress().String(),
 				args[0], // wallet address
-				args[1], // recovery proof
 				args[2], // new public key
-				args[3], // signature
+				args[1], // recovery proof
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -100,9 +99,9 @@ func CmdRecoverWallet() *cobra.Command {
 
 func CmdSignTransaction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sign-tx [wallet-address] [unsigned-tx] [chain-id]",
+		Use:   "sign-tx [wallet-address] [unsigned-tx]",
 		Short: "Sign a transaction using the keyless wallet",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -119,7 +118,6 @@ func CmdSignTransaction() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				args[0], // wallet address
 				unsignedTx,
-				args[2], // chain id
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -143,17 +141,20 @@ func CmdBatchSign() *cobra.Command {
 
 			// Split comma-separated transactions
 			unsignedTxs := strings.Split(args[2], listSeparator)
+			var messages [][]byte
 			for _, tx := range unsignedTxs {
-				if _, err := hex.DecodeString(tx); err != nil {
+				txBytes, err := hex.DecodeString(tx)
+				if err != nil {
 					return fmt.Errorf("invalid unsigned transaction hex: %w", err)
 				}
+				messages = append(messages, txBytes)
 			}
 
-			msg := types.NewMsgBatchSign(
-				clientCtx.GetFromAddress().String(),
-				args[0], // wallet address
-				unsignedTxs,
-			)
+			msg := &types.MsgBatchSignRequest{
+				Creator:       clientCtx.GetFromAddress().String(),
+				WalletAddress: args[0],
+				Messages:      messages,
+			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -166,7 +167,7 @@ func CmdBatchSign() *cobra.Command {
 func CmdInitiateKeyRotation() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init-key-rotation [wallet-address] [new-pub-key]",
-		Short: "Initiate key rotation for a wallet",
+		Short: "Initiate key rotation for a wallet with a new public key",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -178,6 +179,7 @@ func CmdInitiateKeyRotation() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				args[0], // wallet address
 				args[1], // new public key
+				"",     // signature will be added by the signer
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -190,9 +192,9 @@ func CmdInitiateKeyRotation() *cobra.Command {
 
 func CmdCompleteKeyRotation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "complete-key-rotation [wallet-address] [version] [signature]",
+		Use:   "complete-key-rotation [wallet-address] [version] [signature] [new-pub-key]",
 		Short: "Complete key rotation for a wallet",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -204,6 +206,7 @@ func CmdCompleteKeyRotation() *cobra.Command {
 				args[0], // wallet address
 				args[1], // version
 				args[2], // signature
+				args[3], // new public key
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

@@ -5,8 +5,12 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -64,8 +68,280 @@ func (KeyRotationStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_9fb19ea6215f1694, []int{0}
 }
 
+// KeyRotation represents a key rotation record
+type KeyRotation struct {
+	WalletId  string            `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	OldPubKey string            `protobuf:"bytes,2,opt,name=old_pub_key,json=oldPubKey,proto3" json:"old_pub_key,omitempty"`
+	NewPubKey string            `protobuf:"bytes,3,opt,name=new_pub_key,json=newPubKey,proto3" json:"new_pub_key,omitempty"`
+	Version   uint64            `protobuf:"varint,4,opt,name=version,proto3" json:"version,omitempty"`
+	Status    KeyRotationStatus `protobuf:"varint,5,opt,name=status,proto3,enum=selfchain.keyless.KeyRotationStatus" json:"status,omitempty"`
+	Error     string            `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	Signature string            `protobuf:"bytes,7,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (m *KeyRotation) Reset()         { *m = KeyRotation{} }
+func (m *KeyRotation) String() string { return proto.CompactTextString(m) }
+func (*KeyRotation) ProtoMessage()    {}
+func (*KeyRotation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9fb19ea6215f1694, []int{0}
+}
+func (m *KeyRotation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeyRotation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeyRotation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KeyRotation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyRotation.Merge(m, src)
+}
+func (m *KeyRotation) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeyRotation) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeyRotation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeyRotation proto.InternalMessageInfo
+
+func (m *KeyRotation) GetWalletId() string {
+	if m != nil {
+		return m.WalletId
+	}
+	return ""
+}
+
+func (m *KeyRotation) GetOldPubKey() string {
+	if m != nil {
+		return m.OldPubKey
+	}
+	return ""
+}
+
+func (m *KeyRotation) GetNewPubKey() string {
+	if m != nil {
+		return m.NewPubKey
+	}
+	return ""
+}
+
+func (m *KeyRotation) GetVersion() uint64 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
+
+func (m *KeyRotation) GetStatus() KeyRotationStatus {
+	if m != nil {
+		return m.Status
+	}
+	return KeyRotationStatus_KEY_ROTATION_STATUS_UNSPECIFIED
+}
+
+func (m *KeyRotation) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+func (m *KeyRotation) GetSignature() string {
+	if m != nil {
+		return m.Signature
+	}
+	return ""
+}
+
+// KeyRotationStatusInfo represents the status information for a key rotation operation
+type KeyRotationStatusInfo struct {
+	WalletAddress string            `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
+	NewPublicKey  string            `protobuf:"bytes,2,opt,name=new_public_key,json=newPublicKey,proto3" json:"new_public_key,omitempty"`
+	Status        KeyRotationStatus `protobuf:"varint,3,opt,name=status,proto3,enum=selfchain.keyless.KeyRotationStatus" json:"status,omitempty"`
+	Version       uint64            `protobuf:"varint,4,opt,name=version,proto3" json:"version,omitempty"`
+}
+
+func (m *KeyRotationStatusInfo) Reset()         { *m = KeyRotationStatusInfo{} }
+func (m *KeyRotationStatusInfo) String() string { return proto.CompactTextString(m) }
+func (*KeyRotationStatusInfo) ProtoMessage()    {}
+func (*KeyRotationStatusInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9fb19ea6215f1694, []int{1}
+}
+func (m *KeyRotationStatusInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeyRotationStatusInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeyRotationStatusInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KeyRotationStatusInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyRotationStatusInfo.Merge(m, src)
+}
+func (m *KeyRotationStatusInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeyRotationStatusInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeyRotationStatusInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeyRotationStatusInfo proto.InternalMessageInfo
+
+func (m *KeyRotationStatusInfo) GetWalletAddress() string {
+	if m != nil {
+		return m.WalletAddress
+	}
+	return ""
+}
+
+func (m *KeyRotationStatusInfo) GetNewPublicKey() string {
+	if m != nil {
+		return m.NewPublicKey
+	}
+	return ""
+}
+
+func (m *KeyRotationStatusInfo) GetStatus() KeyRotationStatus {
+	if m != nil {
+		return m.Status
+	}
+	return KeyRotationStatus_KEY_ROTATION_STATUS_UNSPECIFIED
+}
+
+func (m *KeyRotationStatusInfo) GetVersion() uint64 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
+
+// MsgRotateKey represents a request to rotate a wallet's key
+type MsgRotateKey struct {
+	Creator       string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	WalletAddress string `protobuf:"bytes,2,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
+	NewPublicKey  string `protobuf:"bytes,3,opt,name=new_public_key,json=newPublicKey,proto3" json:"new_public_key,omitempty"`
+	Signature     string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (m *MsgRotateKey) Reset()         { *m = MsgRotateKey{} }
+func (m *MsgRotateKey) String() string { return proto.CompactTextString(m) }
+func (*MsgRotateKey) ProtoMessage()    {}
+func (*MsgRotateKey) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9fb19ea6215f1694, []int{2}
+}
+func (m *MsgRotateKey) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRotateKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRotateKey.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRotateKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRotateKey.Merge(m, src)
+}
+func (m *MsgRotateKey) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRotateKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRotateKey.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRotateKey proto.InternalMessageInfo
+
+func (m *MsgRotateKey) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgRotateKey) GetWalletAddress() string {
+	if m != nil {
+		return m.WalletAddress
+	}
+	return ""
+}
+
+func (m *MsgRotateKey) GetNewPublicKey() string {
+	if m != nil {
+		return m.NewPublicKey
+	}
+	return ""
+}
+
+func (m *MsgRotateKey) GetSignature() string {
+	if m != nil {
+		return m.Signature
+	}
+	return ""
+}
+
+// MsgRotateKeyResponse represents the response to a key rotation request
+type MsgRotateKeyResponse struct {
+}
+
+func (m *MsgRotateKeyResponse) Reset()         { *m = MsgRotateKeyResponse{} }
+func (m *MsgRotateKeyResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRotateKeyResponse) ProtoMessage()    {}
+func (*MsgRotateKeyResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9fb19ea6215f1694, []int{3}
+}
+func (m *MsgRotateKeyResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRotateKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRotateKeyResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRotateKeyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRotateKeyResponse.Merge(m, src)
+}
+func (m *MsgRotateKeyResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRotateKeyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRotateKeyResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRotateKeyResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterEnum("selfchain.keyless.KeyRotationStatus", KeyRotationStatus_name, KeyRotationStatus_value)
+	proto.RegisterType((*KeyRotation)(nil), "selfchain.keyless.KeyRotation")
+	proto.RegisterType((*KeyRotationStatusInfo)(nil), "selfchain.keyless.KeyRotationStatusInfo")
+	proto.RegisterType((*MsgRotateKey)(nil), "selfchain.keyless.MsgRotateKey")
+	proto.RegisterType((*MsgRotateKeyResponse)(nil), "selfchain.keyless.MsgRotateKeyResponse")
 }
 
 func init() {
@@ -73,20 +349,1050 @@ func init() {
 }
 
 var fileDescriptor_9fb19ea6215f1694 = []byte{
-	// 235 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x29, 0x4e, 0xcd, 0x49,
-	0x4b, 0xce, 0x48, 0xcc, 0xcc, 0xd3, 0xcf, 0x4e, 0xad, 0xcc, 0x49, 0x2d, 0x2e, 0x06, 0xd1, 0xf1,
-	0x45, 0xf9, 0x25, 0x89, 0x25, 0x99, 0xf9, 0x79, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x82,
-	0x70, 0x55, 0x7a, 0x50, 0x55, 0x5a, 0xcf, 0x18, 0xb9, 0x04, 0xbd, 0x53, 0x2b, 0x83, 0xa0, 0x0a,
-	0x83, 0x4b, 0x12, 0x4b, 0x4a, 0x8b, 0x85, 0x94, 0xb9, 0xe4, 0xbd, 0x5d, 0x23, 0xe3, 0x83, 0xfc,
-	0x43, 0x1c, 0x43, 0x3c, 0xfd, 0xfd, 0xe2, 0x83, 0x43, 0x1c, 0x43, 0x42, 0x83, 0xe3, 0x43, 0xfd,
-	0x82, 0x03, 0x5c, 0x9d, 0x3d, 0xdd, 0x3c, 0x5d, 0x5d, 0x04, 0x18, 0x84, 0x14, 0xb9, 0x64, 0xb1,
-	0x29, 0xf2, 0xf4, 0xf3, 0x0c, 0xf1, 0x74, 0x0c, 0x71, 0x75, 0x11, 0x60, 0xc4, 0x65, 0x8e, 0xa7,
-	0x5f, 0x7c, 0x40, 0x90, 0xbf, 0x7b, 0x90, 0x6b, 0x70, 0xb0, 0x00, 0x13, 0x2e, 0x73, 0x9c, 0xfd,
-	0x7d, 0x03, 0x7c, 0x5c, 0x41, 0xe6, 0x30, 0x0b, 0xc9, 0x71, 0x49, 0x61, 0x53, 0xe2, 0xe6, 0xe8,
-	0xe9, 0xe3, 0xea, 0x22, 0xc0, 0x82, 0xd3, 0x08, 0x47, 0x3f, 0x67, 0x57, 0x1f, 0x90, 0x12, 0x56,
-	0x27, 0xe3, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2,
-	0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x92, 0x44, 0x84, 0x5d,
-	0x05, 0x3c, 0xf4, 0x4a, 0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0xe1, 0x66, 0x0c, 0x08, 0x00,
-	0x00, 0xff, 0xff, 0xfb, 0x36, 0xab, 0x01, 0x5f, 0x01, 0x00, 0x00,
+	// 531 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0xcf, 0x8e, 0xd2, 0x40,
+	0x1c, 0x66, 0xf8, 0xb7, 0x32, 0x8b, 0x84, 0x9d, 0xa0, 0x56, 0xd4, 0x8a, 0x88, 0x09, 0xd9, 0x03,
+	0x44, 0xf7, 0x66, 0xbc, 0x54, 0xe8, 0x9a, 0x09, 0x2c, 0x90, 0xb6, 0x7b, 0xd0, 0x4b, 0x53, 0xda,
+	0xd9, 0xda, 0x6c, 0xb7, 0x43, 0x66, 0xca, 0x62, 0xaf, 0x3e, 0x81, 0xaf, 0xe0, 0x1b, 0xf8, 0x00,
+	0x3e, 0x80, 0xc7, 0x3d, 0x7a, 0x34, 0x90, 0xe8, 0x1b, 0x78, 0x36, 0xfd, 0x03, 0x8b, 0x02, 0x89,
+	0xd9, 0xd3, 0xcc, 0xef, 0xf7, 0x7d, 0xf3, 0xcd, 0xef, 0xfb, 0x92, 0x1f, 0x6c, 0x70, 0xe2, 0x9e,
+	0x99, 0xef, 0x0d, 0xc7, 0x6b, 0x9f, 0x93, 0xc0, 0x25, 0x9c, 0x87, 0xa7, 0xce, 0xa8, 0x6f, 0xf8,
+	0x0e, 0xf5, 0x5a, 0x13, 0x46, 0x7d, 0x8a, 0x0e, 0x56, 0xac, 0x56, 0xc2, 0xaa, 0xde, 0x33, 0x29,
+	0xbf, 0xa0, 0xbc, 0x7d, 0xc1, 0xed, 0xf6, 0xe5, 0xf3, 0xf0, 0x88, 0xb9, 0xd5, 0x8a, 0x4d, 0x6d,
+	0x1a, 0x5d, 0xdb, 0xe1, 0x2d, 0xee, 0xd6, 0x7f, 0x03, 0xb8, 0xdf, 0x23, 0x81, 0x92, 0xe8, 0xa2,
+	0x07, 0xb0, 0x30, 0x33, 0x5c, 0x97, 0xf8, 0xba, 0x63, 0x09, 0xa0, 0x06, 0x9a, 0x05, 0xe5, 0x56,
+	0xdc, 0xc0, 0x16, 0x12, 0xe1, 0x3e, 0x75, 0x2d, 0x7d, 0x32, 0x1d, 0xeb, 0xe7, 0x24, 0x10, 0xd2,
+	0x11, 0x5c, 0xa0, 0xae, 0x35, 0x9a, 0x8e, 0x7b, 0x24, 0x08, 0x71, 0x8f, 0xcc, 0x56, 0x78, 0x26,
+	0xc6, 0x3d, 0x32, 0x4b, 0x70, 0x01, 0xee, 0x5d, 0x12, 0xc6, 0x1d, 0xea, 0x09, 0xd9, 0x1a, 0x68,
+	0x66, 0x95, 0x65, 0x89, 0x5e, 0xc1, 0x3c, 0xf7, 0x0d, 0x7f, 0xca, 0x85, 0x5c, 0x0d, 0x34, 0x4b,
+	0x2f, 0x1a, 0xad, 0x0d, 0x67, 0xad, 0xb5, 0x31, 0xd5, 0x88, 0xab, 0x24, 0x6f, 0x50, 0x05, 0xe6,
+	0x08, 0x63, 0x94, 0x09, 0xf9, 0xe8, 0xc7, 0xb8, 0x40, 0x0f, 0x61, 0x81, 0x3b, 0xb6, 0x67, 0xf8,
+	0x53, 0x46, 0x84, 0xbd, 0x78, 0x96, 0x55, 0xa3, 0xfe, 0x15, 0xc0, 0x3b, 0x1b, 0x8a, 0xd8, 0x3b,
+	0xa3, 0xe8, 0x19, 0x2c, 0x25, 0x11, 0x18, 0x96, 0xc5, 0x08, 0xe7, 0x49, 0x0e, 0xb7, 0xe3, 0xae,
+	0x14, 0x37, 0x51, 0x03, 0x96, 0x12, 0xb3, 0xae, 0x63, 0xae, 0xe5, 0x51, 0x8c, 0xfd, 0xba, 0x8e,
+	0x19, 0x5a, 0xbe, 0x36, 0x96, 0xb9, 0x81, 0xb1, 0x9d, 0x81, 0xd5, 0x3f, 0x03, 0x58, 0x3c, 0xe1,
+	0x76, 0xf4, 0x8e, 0x24, 0xd9, 0x9a, 0x8c, 0x18, 0x3e, 0x65, 0xc9, 0xb8, 0xcb, 0x72, 0x8b, 0x9f,
+	0xf4, 0xff, 0xf9, 0xc9, 0x6c, 0xf1, 0xf3, 0x57, 0xa8, 0xd9, 0x7f, 0x42, 0x7d, 0x59, 0xfc, 0xf8,
+	0xeb, 0xcb, 0xe1, 0xf2, 0xe3, 0xfa, 0x5d, 0x58, 0x59, 0x1f, 0x51, 0x21, 0x7c, 0x42, 0x3d, 0x4e,
+	0x0e, 0x7f, 0x02, 0x78, 0xb0, 0xe1, 0x19, 0x3d, 0x85, 0x8f, 0x7b, 0xf2, 0x5b, 0x5d, 0x19, 0x6a,
+	0x92, 0x86, 0x87, 0x03, 0x5d, 0xd5, 0x24, 0xed, 0x54, 0xd5, 0x4f, 0x07, 0xea, 0x48, 0xee, 0xe0,
+	0x63, 0x2c, 0x77, 0xcb, 0x29, 0xf4, 0x04, 0x3e, 0xda, 0x46, 0xc2, 0x03, 0xac, 0x61, 0x49, 0x93,
+	0xbb, 0x65, 0xb0, 0x4b, 0x07, 0x0f, 0xf4, 0x91, 0x32, 0x7c, 0xa3, 0xc8, 0xaa, 0x5a, 0x4e, 0xef,
+	0xd2, 0xe9, 0x0c, 0x4f, 0x46, 0x7d, 0x39, 0xd4, 0xc9, 0x20, 0x11, 0x56, 0xb7, 0x51, 0x8e, 0x25,
+	0xdc, 0x97, 0xbb, 0xe5, 0xec, 0x4e, 0x09, 0x69, 0xd0, 0x91, 0xfb, 0x21, 0x25, 0xf7, 0xfa, 0xe8,
+	0xdb, 0x5c, 0x04, 0x57, 0x73, 0x11, 0xfc, 0x98, 0x8b, 0xe0, 0xd3, 0x42, 0x4c, 0x5d, 0x2d, 0xc4,
+	0xd4, 0xf7, 0x85, 0x98, 0x7a, 0x77, 0xff, 0x7a, 0xbd, 0x3f, 0xac, 0x16, 0xdc, 0x0f, 0x26, 0x84,
+	0x8f, 0xf3, 0xd1, 0x62, 0x1e, 0xfd, 0x09, 0x00, 0x00, 0xff, 0xff, 0xd7, 0x6b, 0x14, 0x5b, 0x02,
+	0x04, 0x00, 0x00,
 }
+
+func (m *KeyRotation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeyRotation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeyRotation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Signature) > 0 {
+		i -= len(m.Signature)
+		copy(dAtA[i:], m.Signature)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.Signature)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.Status != 0 {
+		i = encodeVarintKeyRotation(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Version != 0 {
+		i = encodeVarintKeyRotation(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.NewPubKey) > 0 {
+		i -= len(m.NewPubKey)
+		copy(dAtA[i:], m.NewPubKey)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.NewPubKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.OldPubKey) > 0 {
+		i -= len(m.OldPubKey)
+		copy(dAtA[i:], m.OldPubKey)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.OldPubKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletId) > 0 {
+		i -= len(m.WalletId)
+		copy(dAtA[i:], m.WalletId)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.WalletId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *KeyRotationStatusInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeyRotationStatusInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeyRotationStatusInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Version != 0 {
+		i = encodeVarintKeyRotation(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Status != 0 {
+		i = encodeVarintKeyRotation(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.NewPublicKey) > 0 {
+		i -= len(m.NewPublicKey)
+		copy(dAtA[i:], m.NewPublicKey)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.NewPublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletAddress) > 0 {
+		i -= len(m.WalletAddress)
+		copy(dAtA[i:], m.WalletAddress)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.WalletAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRotateKey) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRotateKey) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRotateKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Signature) > 0 {
+		i -= len(m.Signature)
+		copy(dAtA[i:], m.Signature)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.Signature)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.NewPublicKey) > 0 {
+		i -= len(m.NewPublicKey)
+		copy(dAtA[i:], m.NewPublicKey)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.NewPublicKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.WalletAddress) > 0 {
+		i -= len(m.WalletAddress)
+		copy(dAtA[i:], m.WalletAddress)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.WalletAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintKeyRotation(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRotateKeyResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRotateKeyResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRotateKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintKeyRotation(dAtA []byte, offset int, v uint64) int {
+	offset -= sovKeyRotation(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *KeyRotation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletId)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.OldPubKey)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.NewPubKey)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	if m.Version != 0 {
+		n += 1 + sovKeyRotation(uint64(m.Version))
+	}
+	if m.Status != 0 {
+		n += 1 + sovKeyRotation(uint64(m.Status))
+	}
+	l = len(m.Error)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.Signature)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	return n
+}
+
+func (m *KeyRotationStatusInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletAddress)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.NewPublicKey)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovKeyRotation(uint64(m.Status))
+	}
+	if m.Version != 0 {
+		n += 1 + sovKeyRotation(uint64(m.Version))
+	}
+	return n
+}
+
+func (m *MsgRotateKey) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.WalletAddress)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.NewPublicKey)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	l = len(m.Signature)
+	if l > 0 {
+		n += 1 + l + sovKeyRotation(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRotateKeyResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func sovKeyRotation(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozKeyRotation(x uint64) (n int) {
+	return sovKeyRotation(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *KeyRotation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeyRotation
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KeyRotation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KeyRotation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OldPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OldPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= KeyRotationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Error = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signature = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeyRotation(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *KeyRotationStatusInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeyRotation
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KeyRotationStatusInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KeyRotationStatusInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= KeyRotationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeyRotation(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRotateKey) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeyRotation
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRotateKey: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRotateKey: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signature = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeyRotation(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRotateKeyResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowKeyRotation
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRotateKeyResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRotateKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipKeyRotation(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthKeyRotation
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipKeyRotation(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowKeyRotation
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowKeyRotation
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthKeyRotation
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupKeyRotation
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthKeyRotation
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthKeyRotation        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowKeyRotation          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupKeyRotation = fmt.Errorf("proto: unexpected end of group")
+)

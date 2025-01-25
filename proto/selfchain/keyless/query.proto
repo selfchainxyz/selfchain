@@ -7,7 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "selfchain/keyless/params.proto";
 import "selfchain/keyless/keygen.proto";
 import "selfchain/keyless/wallet.proto";
-import "selfchain/keyless/rotation.proto";
+import "selfchain/keyless/key_rotation.proto";
 import "selfchain/keyless/audit.proto";
 
 option go_package = "selfchain/x/keyless/types";

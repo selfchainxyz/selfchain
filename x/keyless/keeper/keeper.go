@@ -23,12 +23,6 @@ type (
 	}
 )
 
-const (
-	// Store prefixes
-	walletPrefix    = "wallet"
-	partyDataPrefix = "party_data"
-)
-
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
@@ -57,53 +51,49 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetPartyDataStore returns the store for TSS party data
 func (k Keeper) GetPartyDataStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), []byte(partyDataPrefix))
+	store := ctx.KVStore(k.storeKey)
+	return prefix.NewStore(store, []byte("party-data/"))
 }
 
 // GetKeyShare retrieves a key share for a DID
 func (k Keeper) GetKeyShare(ctx sdk.Context, did string) ([]byte, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(walletPrefix))
-	keyShare := store.Get([]byte(did))
-	if keyShare == nil {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("key-share/"))
+	bz := store.Get([]byte(did))
+	if bz == nil {
 		return nil, false
 	}
-	return keyShare, true
+	return bz, true
 }
 
 // StoreKeyShare stores a key share for a DID
 func (k Keeper) StoreKeyShare(ctx sdk.Context, did string, keyShare []byte) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(walletPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("key-share/"))
 	store.Set([]byte(did), keyShare)
 	return nil
 }
 
 // ReconstructWallet reconstructs a wallet from a DID document
 func (k Keeper) ReconstructWallet(ctx sdk.Context, didDoc identitytypes.DIDDocument) ([]byte, error) {
-	// For now, just return the key share associated with the DID
-	keyShare, found := k.GetKeyShare(ctx, didDoc.Id)
-	if !found {
-		return nil, fmt.Errorf("no key share found for DID %s", didDoc.Id)
-	}
-	return keyShare, nil
+	// TODO: Implement wallet reconstruction logic
+	return nil, nil
 }
 
 // InitiateRecovery initiates the wallet recovery process
 func (k Keeper) InitiateRecovery(ctx sdk.Context, did string, recoveryToken string, recoveryAddress string) error {
-	// Store recovery information
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("recovery"))
-	recoveryInfo := types.RecoveryInfo{
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("recovery/"))
+	recoveryInfo := &types.RecoveryInfo{
 		Did:             did,
 		RecoveryToken:   recoveryToken,
 		RecoveryAddress: recoveryAddress,
 		Status:          types.RecoveryStatus_PENDING,
 		CreatedAt:       ctx.BlockTime().Unix(),
 	}
-	
-	bz, err := k.cdc.Marshal(&recoveryInfo)
+
+	bz, err := k.cdc.Marshal(recoveryInfo)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal recovery info: %w", err)
 	}
-	
+
 	store.Set([]byte(did), bz)
 	return nil
 }

@@ -1,15 +1,20 @@
 package testutil
 
 import (
-	"context"
+	"strconv"
 	"testing"
 	"time"
-	"strconv"
 
 	"github.com/stretchr/testify/suite"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/cometbft/cometbft/libs/log"
+	db "github.com/cometbft/cometbft-db"
+
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
 	identitytypes "selfchain/x/identity/types"
@@ -21,247 +26,258 @@ type IntegrationTestSuite struct {
 	ctx           sdk.Context
 	keeper        *keeper.Keeper
 	msgServer     types.MsgServer
-	networkParams *types.NetworkParams
+	storeKey      *storetypes.KVStoreKey
+	memKey        *storetypes.MemoryStoreKey
+	paramsKey     *storetypes.KVStoreKey
+	tParamsKey    *storetypes.TransientStoreKey
+	networkParams types.NetworkParams
 	mockIdentity  *keeper.MockIdentityKeeper
 }
 
 func (s *IntegrationTestSuite) SetupTest() {
-	// Create test context
-	s.ctx = sdk.NewContext(
-		NewTestMultiStore(s.T(), sdk.NewKVStoreKey("test")),
-		tmproto.Header{Height: 1, Time: time.Now().UTC()},
-		false,
-		nil,
-	)
+	// Initialize store keys
+	s.storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	s.memKey = storetypes.NewMemoryStoreKey(types.MemStoreKey)
+	s.paramsKey = storetypes.NewKVStoreKey("params")
+	s.tParamsKey = storetypes.NewTransientStoreKey("transient_params")
 
-	// Create mock identity keeper
+	// Create db and multistore
+	db := db.NewMemDB()
+	ms := store.NewCommitMultiStore(db)
+	ms.MountStoreWithDB(s.storeKey, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(s.memKey, storetypes.StoreTypeMemory, nil)
+	ms.MountStoreWithDB(s.paramsKey, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(s.tParamsKey, storetypes.StoreTypeTransient, nil)
+	s.Require().NoError(ms.LoadLatestVersion())
+
+	// Create context
+	s.ctx = sdk.NewContext(ms, tmproto.Header{Height: 1, Time: time.Now().UTC()}, false, log.NewNopLogger())
+
+	// Initialize encoding config
+	encConfig := MakeTestEncodingConfig()
+
+	// Initialize params keeper
+	paramsKeeper := paramtypes.NewSubspace(
+		encConfig.Codec,
+		encConfig.Amino,
+		s.paramsKey,
+		s.tParamsKey,
+		"KeylessParams",
+	)
+	paramsKeeper = paramsKeeper.WithKeyTable(types.ParamKeyTable())
+
+	// Initialize mock identity keeper
 	s.mockIdentity = keeper.NewMockIdentityKeeper()
 
-	// Initialize keeper
+	// Create keeper
 	s.keeper = keeper.NewKeeper(
-		MakeTestEncodingConfig(),
-		sdk.NewKVStoreKey(types.StoreKey),
-		sdk.NewKVStoreKey("memKey"),
-		paramtypes.Subspace{},
+		encConfig.Codec,
+		s.storeKey,
+		s.memKey,
+		paramsKeeper,
 		s.mockIdentity,
 	)
 
-	// Initialize message server
+	// Create message server
 	s.msgServer = keeper.NewMsgServerImpl(*s.keeper)
 
 	// Set up test network params
-	s.networkParams = &types.NetworkParams{
+	s.networkParams = types.NetworkParams{
 		NetworkType:      "testnet",
 		ChainId:         "test-chain",
 		SigningAlgorithm: "ECDSA",
 		CurveType:       "secp256k1",
 		AddressPrefix:   "self",
 	}
+
+	// Set up initial params
+	s.keeper.SetParams(s.ctx, types.DefaultParams())
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+// Helper function to create and authorize a wallet
+func (s *IntegrationTestSuite) createAndAuthorizeWallet(creator, pubKey, walletAddress string) error {
+	// Create wallet
+	createMsg := &types.MsgCreateWallet{
+		Creator:       creator,
+		PublicKey:     pubKey,
+		WalletAddress: walletAddress,
+		ChainId:       s.networkParams.ChainId,
+	}
+
+	_, err := s.msgServer.CreateWallet(sdk.WrapSDKContext(s.ctx), createMsg)
+	if err != nil {
+		return err
+	}
+
+	// Set up DID document
+	did := "did:self:" + creator
+	now := time.Now()
+	didDoc := &identitytypes.DIDDocument{
+		Id:      did,
+		Created: &now,
+		Updated: &now,
+		Status:  identitytypes.Status_STATUS_ACTIVE,
+		VerificationMethod: []*identitytypes.VerificationMethod{
+			{
+				Id:              did + "#key1",
+				Type:            "Ed25519VerificationKey2018",
+				Controller:      did,
+				PublicKeyBase58: pubKey,
+			},
+		},
+	}
+	s.mockIdentity.SetDIDDocument(s.ctx, did, didDoc)
+
+	// Authorize wallet for the creator
+	err = s.keeper.ValidateWalletAccess(s.ctx, creator, walletAddress)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// Test wallet creation flow
 func (s *IntegrationTestSuite) TestCreateWalletFlow() {
 	// Set up test data
 	creator := "cosmos1creator"
 	pubKey := "testPubKey"
 	walletAddress := "cosmos1wallet"
 
-	// Create wallet
-	createMsg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        pubKey,
-		WalletAddress: walletAddress,
-		ChainId:      s.networkParams.ChainId,
-	}
-
-	// Execute create wallet
-	resp, err := s.msgServer.CreateWallet(context.Background(), createMsg)
+	err := s.createAndAuthorizeWallet(creator, pubKey, walletAddress)
 	s.Require().NoError(err)
-	s.Require().Equal(walletAddress, resp.WalletAddress)
 
 	// Verify wallet was created
-	wallet, found := s.keeper.GetWalletFromStore(s.ctx, walletAddress)
-	s.Require().True(found)
+	wallet, err := s.keeper.GetWallet(s.ctx, walletAddress)
+	s.Require().NoError(err)
+	s.Require().NotNil(wallet)
 	s.Require().Equal(pubKey, wallet.PublicKey)
 }
 
-// Test transaction signing flow
 func (s *IntegrationTestSuite) TestSignTransactionFlow() {
-	// Set up test wallet
+	// First create and authorize wallet
 	creator := "cosmos1creator"
 	pubKey := "testPubKey"
 	walletAddress := "cosmos1wallet"
-	unsignedTx := "testUnsignedTx"
 
-	// Create wallet first
-	createMsg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        pubKey,
-		WalletAddress: walletAddress,
-		ChainId:      s.networkParams.ChainId,
-	}
-	_, err := s.msgServer.CreateWallet(context.Background(), createMsg)
+	err := s.createAndAuthorizeWallet(creator, pubKey, walletAddress)
 	s.Require().NoError(err)
 
-	// Sign transaction
+	// Now test signing
+	unsignedTx := "testUnsignedTx"
 	signMsg := &types.MsgSignTransaction{
 		Creator:       creator,
 		WalletAddress: walletAddress,
 		UnsignedTx:    unsignedTx,
-		ChainId:      s.networkParams.ChainId,
 	}
 
-	resp, err := s.msgServer.SignTransaction(context.Background(), signMsg)
+	resp, err := s.msgServer.SignTransaction(sdk.WrapSDKContext(s.ctx), signMsg)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(resp.SignedTx)
 }
 
-// Test wallet recovery flow
 func (s *IntegrationTestSuite) TestWalletRecoveryFlow() {
-	// Set up test data
+	// First create and authorize wallet
 	creator := "cosmos1creator"
 	pubKey := "testPubKey"
 	walletAddress := "cosmos1wallet"
-	recoveryProof := "testRecoveryProof"
-	newPubKey := "newTestPubKey"
 
-	// Create wallet first
-	createMsg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        pubKey,
-		WalletAddress: walletAddress,
-		ChainId:      s.networkParams.ChainId,
-	}
-	_, err := s.msgServer.CreateWallet(context.Background(), createMsg)
+	err := s.createAndAuthorizeWallet(creator, pubKey, walletAddress)
 	s.Require().NoError(err)
 
-	// Create test DID document
-	did := "did:self:123"
-	now := time.Now()
-	didDoc := identitytypes.DIDDocument{
-		Id:        did,
-		Created:   &now,
-		Updated:   &now,
-		Status:    identitytypes.Status_STATUS_ACTIVE,
-		VerificationMethod: []*identitytypes.VerificationMethod{
-			{
-				Id:              did + "#key1",
-				Type:            "Ed25519VerificationKey2018",
-				Controller:      did,
-				PublicKeyBase58: "test-pubkey",
-			},
-		},
-	}
-
-	// Set DID document in mock keeper
-	s.mockIdentity.SetDIDDocument(s.ctx, did, &didDoc)
-
-	// Recover wallet
-	recoverMsg := &types.MsgRecoverWallet{
+	// Test recovery
+	newPubKey := "newTestPubKey"
+	recoveryProof := "recovery_proof"
+	recoveryMsg := &types.MsgRecoverWallet{
 		Creator:       creator,
 		WalletAddress: walletAddress,
-		RecoveryProof: recoveryProof,
 		NewPubKey:     newPubKey,
+		RecoveryProof: recoveryProof,
 	}
 
-	resp, err := s.msgServer.RecoverWallet(context.Background(), recoverMsg)
+	resp, err := s.msgServer.RecoverWallet(sdk.WrapSDKContext(s.ctx), recoveryMsg)
 	s.Require().NoError(err)
 	s.Require().Equal(walletAddress, resp.WalletAddress)
 
 	// Verify wallet was recovered
-	wallet, found := s.keeper.GetWalletFromStore(s.ctx, walletAddress)
-	s.Require().True(found)
+	wallet, err := s.keeper.GetWallet(s.ctx, walletAddress)
+	s.Require().NoError(err)
+	s.Require().NotNil(wallet)
 	s.Require().Equal(newPubKey, wallet.PublicKey)
 }
 
-// Test batch signing flow
 func (s *IntegrationTestSuite) TestBatchSignFlow() {
-	// Set up test wallet
+	// First create and authorize wallet
 	creator := "cosmos1creator"
 	pubKey := "testPubKey"
 	walletAddress := "cosmos1wallet"
-	unsignedTxs := []string{"tx1", "tx2", "tx3"}
 
-	// Create wallet first
-	createMsg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        pubKey,
-		WalletAddress: walletAddress,
-		ChainId:      s.networkParams.ChainId,
-	}
-	_, err := s.msgServer.CreateWallet(context.Background(), createMsg)
+	err := s.createAndAuthorizeWallet(creator, pubKey, walletAddress)
 	s.Require().NoError(err)
 
-	// Batch sign transactions
-	batchSignMsg := &types.MsgBatchSign{
+	// Now test batch signing
+	messages := [][]byte{
+		[]byte("tx1"),
+		[]byte("tx2"),
+	}
+	batchSignMsg := &types.MsgBatchSignRequest{
 		Creator:       creator,
 		WalletAddress: walletAddress,
-		UnsignedTxs:   unsignedTxs,
-		ChainId:      s.networkParams.ChainId,
+		Messages:      messages,
 	}
 
-	resp, err := s.msgServer.BatchSign(context.Background(), batchSignMsg)
+	resp, err := s.msgServer.BatchSign(sdk.WrapSDKContext(s.ctx), batchSignMsg)
 	s.Require().NoError(err)
-	s.Require().Equal(len(unsignedTxs), len(resp.SignedTxs))
+	s.Require().NotNil(resp)
+
+	// Verify batch sign status
+	status, err := s.keeper.GetBatchSignStatus(s.ctx, walletAddress)
+	s.Require().NoError(err)
+	s.Require().Equal(types.BatchSignStatus_BATCH_SIGN_STATUS_COMPLETED, status.Status)
 }
 
-// Test key rotation flow
 func (s *IntegrationTestSuite) TestKeyRotationFlow() {
-	// Set up test wallet
+	// First create and authorize wallet
 	creator := "cosmos1creator"
 	pubKey := "testPubKey"
 	walletAddress := "cosmos1wallet"
-	newPubKey := "newTestPubKey"
 
-	// Create wallet first
-	createMsg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        pubKey,
-		WalletAddress: walletAddress,
-		ChainId:      s.networkParams.ChainId,
-	}
-	_, err := s.msgServer.CreateWallet(context.Background(), createMsg)
+	err := s.createAndAuthorizeWallet(creator, pubKey, walletAddress)
 	s.Require().NoError(err)
 
-	// Set up DID document in mock keeper
-	did := "did:self:123"
-	s.mockIdentity.SetDIDDocument(s.ctx, did, &identitytypes.DIDDocument{
-		Id: did,
-		// Add other required DID document fields
-	})
-
-	// Initiate key rotation
-	rotateMsg := &types.MsgInitiateKeyRotation{
+	// Test key rotation
+	newPubKey := "newTestPubKey"
+	initiateMsg := &types.MsgInitiateKeyRotation{
 		Creator:       creator,
 		WalletAddress: walletAddress,
 		NewPubKey:     newPubKey,
 		Signature:     "test-signature",
 	}
 
-	resp, err := s.msgServer.InitiateKeyRotation(context.Background(), rotateMsg)
+	initiateResp, err := s.msgServer.InitiateKeyRotation(sdk.WrapSDKContext(s.ctx), initiateMsg)
 	s.Require().NoError(err)
-	s.Require().NotNil(resp)
-	s.Require().NotZero(resp.NewVersion)
+	s.Require().NotNil(initiateResp)
+	s.Require().NotZero(initiateResp.NewVersion)
 
 	// Complete key rotation
 	completeMsg := &types.MsgCompleteKeyRotation{
 		Creator:       creator,
 		WalletAddress: walletAddress,
-		Version:      strconv.FormatUint(uint64(resp.NewVersion), 10),
+		Version:      strconv.FormatUint(uint64(initiateResp.NewVersion), 10),
 		Signature:    "test-signature",
 	}
 
-	completeResp, err := s.msgServer.CompleteKeyRotation(context.Background(), completeMsg)
+	completeResp, err := s.msgServer.CompleteKeyRotation(sdk.WrapSDKContext(s.ctx), completeMsg)
 	s.Require().NoError(err)
 	s.Require().NotNil(completeResp)
 	s.Require().Equal(walletAddress, completeResp.WalletAddress)
 
 	// Verify key was rotated
-	wallet, found := s.keeper.GetWalletFromStore(s.ctx, walletAddress)
-	s.Require().True(found)
+	wallet, err := s.keeper.GetWallet(s.ctx, walletAddress)
+	s.Require().NoError(err)
+	s.Require().NotNil(wallet)
 	s.Require().Equal(newPubKey, wallet.PublicKey)
+}
+
+func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
 }

@@ -27,21 +27,59 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// WalletStatus represents the status of a wallet
+type WalletStatus int32
+
+const (
+	// WALLET_STATUS_UNSPECIFIED represents an unspecified wallet status
+	WalletStatus_WALLET_STATUS_UNSPECIFIED WalletStatus = 0
+	// WALLET_STATUS_ACTIVE represents an active wallet
+	WalletStatus_WALLET_STATUS_ACTIVE WalletStatus = 1
+	// WALLET_STATUS_INACTIVE represents an inactive wallet
+	WalletStatus_WALLET_STATUS_INACTIVE WalletStatus = 2
+	// WALLET_STATUS_RECOVERING represents a wallet in recovery process
+	WalletStatus_WALLET_STATUS_RECOVERING WalletStatus = 3
+	// WALLET_STATUS_ROTATING represents a wallet in key rotation process
+	WalletStatus_WALLET_STATUS_ROTATING WalletStatus = 4
+)
+
+var WalletStatus_name = map[int32]string{
+	0: "WALLET_STATUS_UNSPECIFIED",
+	1: "WALLET_STATUS_ACTIVE",
+	2: "WALLET_STATUS_INACTIVE",
+	3: "WALLET_STATUS_RECOVERING",
+	4: "WALLET_STATUS_ROTATING",
+}
+
+var WalletStatus_value = map[string]int32{
+	"WALLET_STATUS_UNSPECIFIED": 0,
+	"WALLET_STATUS_ACTIVE":      1,
+	"WALLET_STATUS_INACTIVE":    2,
+	"WALLET_STATUS_RECOVERING":  3,
+	"WALLET_STATUS_ROTATING":    4,
+}
+
+func (x WalletStatus) String() string {
+	return proto.EnumName(WalletStatus_name, int32(x))
+}
+
+func (WalletStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_26dddf90ae5a75d4, []int{0}
+}
+
 // Wallet represents a keyless wallet
 type Wallet struct {
-	Id            string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Address       string            `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	PublicKey     string            `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	KeyVersion    uint32            `protobuf:"varint,4,opt,name=key_version,json=keyVersion,proto3" json:"key_version,omitempty"`
-	Permissions   []string          `protobuf:"bytes,5,rep,name=permissions,proto3" json:"permissions,omitempty"`
-	CreatedAt     *time.Time        `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
-	UpdatedAt     *time.Time        `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3,stdtime" json:"updated_at,omitempty"`
-	Metadata      map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	SecurityLevel uint32            `protobuf:"varint,9,opt,name=security_level,json=securityLevel,proto3" json:"security_level,omitempty"`
-	Threshold     uint32            `protobuf:"varint,10,opt,name=threshold,proto3" json:"threshold,omitempty"`
-	Parties       uint32            `protobuf:"varint,11,opt,name=parties,proto3" json:"parties,omitempty"`
-	Status        string            `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
-	ChainId       string            `protobuf:"bytes,13,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	Id            string       `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator       string       `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	PublicKey     string       `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	WalletAddress string       `protobuf:"bytes,4,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
+	ChainId       string       `protobuf:"bytes,5,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	Status        WalletStatus `protobuf:"varint,6,opt,name=status,proto3,enum=selfchain.keyless.WalletStatus" json:"status,omitempty"`
+	KeyVersion    uint32       `protobuf:"varint,7,opt,name=key_version,json=keyVersion,proto3" json:"key_version,omitempty"`
+	CreatedAt     *time.Time   `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at,omitempty"`
+	UpdatedAt     *time.Time   `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3,stdtime" json:"updated_at,omitempty"`
+	LastUsed      *time.Time   `protobuf:"bytes,10,opt,name=last_used,json=lastUsed,proto3,stdtime" json:"last_used,omitempty"`
+	UsageCount    uint64       `protobuf:"varint,11,opt,name=usage_count,json=usageCount,proto3" json:"usage_count,omitempty"`
 }
 
 func (m *Wallet) Reset()         { *m = Wallet{} }
@@ -84,9 +122,9 @@ func (m *Wallet) GetId() string {
 	return ""
 }
 
-func (m *Wallet) GetAddress() string {
+func (m *Wallet) GetCreator() string {
 	if m != nil {
-		return m.Address
+		return m.Creator
 	}
 	return ""
 }
@@ -98,18 +136,32 @@ func (m *Wallet) GetPublicKey() string {
 	return ""
 }
 
+func (m *Wallet) GetWalletAddress() string {
+	if m != nil {
+		return m.WalletAddress
+	}
+	return ""
+}
+
+func (m *Wallet) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+func (m *Wallet) GetStatus() WalletStatus {
+	if m != nil {
+		return m.Status
+	}
+	return WalletStatus_WALLET_STATUS_UNSPECIFIED
+}
+
 func (m *Wallet) GetKeyVersion() uint32 {
 	if m != nil {
 		return m.KeyVersion
 	}
 	return 0
-}
-
-func (m *Wallet) GetPermissions() []string {
-	if m != nil {
-		return m.Permissions
-	}
-	return nil
 }
 
 func (m *Wallet) GetCreatedAt() *time.Time {
@@ -126,86 +178,60 @@ func (m *Wallet) GetUpdatedAt() *time.Time {
 	return nil
 }
 
-func (m *Wallet) GetMetadata() map[string]string {
+func (m *Wallet) GetLastUsed() *time.Time {
 	if m != nil {
-		return m.Metadata
+		return m.LastUsed
 	}
 	return nil
 }
 
-func (m *Wallet) GetSecurityLevel() uint32 {
+func (m *Wallet) GetUsageCount() uint64 {
 	if m != nil {
-		return m.SecurityLevel
+		return m.UsageCount
 	}
 	return 0
-}
-
-func (m *Wallet) GetThreshold() uint32 {
-	if m != nil {
-		return m.Threshold
-	}
-	return 0
-}
-
-func (m *Wallet) GetParties() uint32 {
-	if m != nil {
-		return m.Parties
-	}
-	return 0
-}
-
-func (m *Wallet) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *Wallet) GetChainId() string {
-	if m != nil {
-		return m.ChainId
-	}
-	return ""
 }
 
 func init() {
+	proto.RegisterEnum("selfchain.keyless.WalletStatus", WalletStatus_name, WalletStatus_value)
 	proto.RegisterType((*Wallet)(nil), "selfchain.keyless.Wallet")
-	proto.RegisterMapType((map[string]string)(nil), "selfchain.keyless.Wallet.MetadataEntry")
 }
 
 func init() { proto.RegisterFile("selfchain/keyless/wallet.proto", fileDescriptor_26dddf90ae5a75d4) }
 
 var fileDescriptor_26dddf90ae5a75d4 = []byte{
-	// 457 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xc1, 0x6e, 0xd3, 0x40,
-	0x10, 0x8d, 0x93, 0x34, 0x8d, 0xc7, 0xa4, 0x82, 0x55, 0x85, 0xb6, 0x11, 0x38, 0x16, 0x12, 0xc2,
-	0x27, 0x5b, 0x6a, 0x2f, 0x08, 0x0e, 0xa8, 0x45, 0x1c, 0x10, 0x70, 0xb1, 0x10, 0x48, 0x5c, 0xac,
-	0x4d, 0x76, 0x9a, 0xac, 0xb2, 0x89, 0x2d, 0xef, 0x3a, 0xe0, 0xbf, 0xe8, 0x77, 0xf0, 0x25, 0x1c,
-	0x7b, 0xe4, 0x06, 0x4a, 0x7e, 0x04, 0x79, 0xd7, 0x4e, 0x40, 0x5c, 0x7a, 0xdb, 0xf7, 0xde, 0xcc,
-	0x68, 0xe7, 0xbd, 0x01, 0x5f, 0xa1, 0xbc, 0x9e, 0x2d, 0x98, 0x58, 0xc7, 0x4b, 0xac, 0x24, 0x2a,
-	0x15, 0x7f, 0x65, 0x52, 0xa2, 0x8e, 0xf2, 0x22, 0xd3, 0x19, 0x79, 0xb0, 0xd7, 0xa3, 0x46, 0x1f,
-	0x9f, 0xce, 0xb3, 0x79, 0x66, 0xd4, 0xb8, 0x7e, 0xd9, 0xc2, 0xf1, 0x64, 0x9e, 0x65, 0x73, 0x89,
-	0xb1, 0x41, 0xd3, 0xf2, 0x3a, 0xd6, 0x62, 0x85, 0x4a, 0xb3, 0x55, 0x6e, 0x0b, 0x9e, 0x7c, 0xef,
-	0xc3, 0xe0, 0xb3, 0x19, 0x4d, 0x4e, 0xa0, 0x2b, 0x38, 0x75, 0x02, 0x27, 0x74, 0x93, 0xae, 0xe0,
-	0x84, 0xc2, 0x31, 0xe3, 0xbc, 0x40, 0xa5, 0x68, 0xd7, 0x90, 0x2d, 0x24, 0x8f, 0x01, 0xf2, 0x72,
-	0x2a, 0xc5, 0x2c, 0x5d, 0x62, 0x45, 0x7b, 0x46, 0x74, 0x2d, 0xf3, 0x0e, 0x2b, 0x32, 0x01, 0x6f,
-	0x89, 0x55, 0xba, 0xc1, 0x42, 0x89, 0x6c, 0x4d, 0xfb, 0x81, 0x13, 0x8e, 0x12, 0x58, 0x62, 0xf5,
-	0xc9, 0x32, 0x24, 0x00, 0x2f, 0xc7, 0x62, 0x25, 0x54, 0x8d, 0x14, 0x3d, 0x0a, 0x7a, 0xa1, 0x9b,
-	0xfc, 0x4d, 0x91, 0x57, 0x00, 0xb3, 0x02, 0x99, 0x46, 0x9e, 0x32, 0x4d, 0x07, 0x81, 0x13, 0x7a,
-	0xe7, 0xe3, 0xc8, 0x2e, 0x13, 0xb5, 0xcb, 0x44, 0x1f, 0xdb, 0x65, 0xae, 0xfa, 0x37, 0xbf, 0x26,
-	0x4e, 0xe2, 0x36, 0x3d, 0x97, 0xba, 0x1e, 0x50, 0xe6, 0xbc, 0x1d, 0x70, 0x7c, 0xd7, 0x01, 0x4d,
-	0xcf, 0xa5, 0x26, 0xaf, 0x61, 0xb8, 0x42, 0xcd, 0x38, 0xd3, 0x8c, 0x0e, 0x83, 0x5e, 0xe8, 0x9d,
-	0x3f, 0x8b, 0xfe, 0x73, 0x3d, 0xb2, 0xd6, 0x45, 0x1f, 0x9a, 0xca, 0x37, 0x6b, 0x5d, 0x54, 0xc9,
-	0xbe, 0x91, 0x3c, 0x85, 0x13, 0x85, 0xb3, 0xb2, 0x10, 0xba, 0x4a, 0x25, 0x6e, 0x50, 0x52, 0xd7,
-	0x98, 0x31, 0x6a, 0xd9, 0xf7, 0x35, 0x49, 0x1e, 0x81, 0xab, 0x17, 0x05, 0xaa, 0x45, 0x26, 0x39,
-	0x05, 0x53, 0x71, 0x20, 0xea, 0x1c, 0x72, 0x56, 0x68, 0x81, 0x8a, 0x7a, 0x46, 0x6b, 0x21, 0x79,
-	0x08, 0x03, 0xa5, 0x99, 0x2e, 0x15, 0xbd, 0x67, 0x32, 0x68, 0x10, 0x39, 0x83, 0xa1, 0xf9, 0x66,
-	0x2a, 0x38, 0x1d, 0xd9, 0xe8, 0x0c, 0x7e, 0xcb, 0xc7, 0x2f, 0x61, 0xf4, 0xcf, 0x67, 0xc9, 0x7d,
-	0xe8, 0xd5, 0x21, 0xda, 0xd8, 0xeb, 0x27, 0x39, 0x85, 0xa3, 0x0d, 0x93, 0x25, 0x36, 0xa9, 0x5b,
-	0xf0, 0xa2, 0xfb, 0xdc, 0xb9, 0xba, 0xf8, 0xb1, 0xf5, 0x9d, 0xdb, 0xad, 0xef, 0xfc, 0xde, 0xfa,
-	0xce, 0xcd, 0xce, 0xef, 0xdc, 0xee, 0xfc, 0xce, 0xcf, 0x9d, 0xdf, 0xf9, 0x72, 0x76, 0x38, 0xd8,
-	0x6f, 0xfb, 0x93, 0xd5, 0x55, 0x8e, 0x6a, 0x3a, 0x30, 0x6e, 0x5f, 0xfc, 0x09, 0x00, 0x00, 0xff,
-	0xff, 0xe3, 0x2d, 0x66, 0x19, 0xd4, 0x02, 0x00, 0x00,
+	// 486 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x41, 0x6e, 0xd3, 0x40,
+	0x18, 0x85, 0x33, 0x49, 0x48, 0x93, 0x3f, 0x34, 0x0a, 0xa3, 0x0a, 0x4d, 0x22, 0xea, 0x58, 0x48,
+	0x48, 0x16, 0x0b, 0x5b, 0x6a, 0x17, 0xac, 0x10, 0x72, 0x83, 0x41, 0x16, 0x55, 0x8a, 0x1c, 0x27,
+	0x95, 0xd8, 0x58, 0x4e, 0x66, 0x6a, 0xac, 0xb8, 0xb1, 0xe5, 0x19, 0x03, 0xbe, 0x45, 0x2f, 0xc0,
+	0x7d, 0xd8, 0xd1, 0x25, 0x3b, 0x50, 0x72, 0x11, 0xe4, 0xb1, 0x53, 0x88, 0xba, 0xe9, 0xce, 0xf3,
+	0xbe, 0xf7, 0x7e, 0xcf, 0xff, 0x34, 0xa0, 0x70, 0x16, 0x5d, 0x2d, 0x3f, 0xfb, 0xe1, 0xda, 0x58,
+	0xb1, 0x3c, 0x62, 0x9c, 0x1b, 0x5f, 0xfd, 0x28, 0x62, 0x42, 0x4f, 0xd2, 0x58, 0xc4, 0xf8, 0xc9,
+	0x1d, 0xd7, 0x2b, 0x3e, 0x3c, 0x0a, 0xe2, 0x20, 0x96, 0xd4, 0x28, 0xbe, 0x4a, 0xe3, 0x70, 0x14,
+	0xc4, 0x71, 0x10, 0x31, 0x43, 0x9e, 0x16, 0xd9, 0x95, 0x21, 0xc2, 0x6b, 0xc6, 0x85, 0x7f, 0x9d,
+	0x94, 0x86, 0xe7, 0x3f, 0x1b, 0xd0, 0xba, 0x94, 0xa3, 0x71, 0x0f, 0xea, 0x21, 0x25, 0x48, 0x45,
+	0x5a, 0xc7, 0xa9, 0x87, 0x14, 0x13, 0x38, 0x58, 0xa6, 0xcc, 0x17, 0x71, 0x4a, 0xea, 0x52, 0xdc,
+	0x1d, 0xf1, 0x31, 0x40, 0x92, 0x2d, 0xa2, 0x70, 0xe9, 0xad, 0x58, 0x4e, 0x1a, 0x12, 0x76, 0x4a,
+	0xe5, 0x03, 0xcb, 0xf1, 0x0b, 0xe8, 0x95, 0xb7, 0xf5, 0x7c, 0x4a, 0x53, 0xc6, 0x39, 0x69, 0x4a,
+	0xcb, 0x61, 0xa9, 0x9a, 0xa5, 0x88, 0x07, 0xd0, 0x96, 0x2b, 0x78, 0x21, 0x25, 0x8f, 0xaa, 0x1f,
+	0x14, 0x67, 0x9b, 0xe2, 0x57, 0xd0, 0xe2, 0xc2, 0x17, 0x19, 0x27, 0x2d, 0x15, 0x69, 0xbd, 0x93,
+	0x91, 0x7e, 0x6f, 0x61, 0xbd, 0xbc, 0xf5, 0x54, 0xda, 0x9c, 0xca, 0x8e, 0x47, 0xd0, 0x5d, 0xb1,
+	0xdc, 0xfb, 0xc2, 0x52, 0x1e, 0xc6, 0x6b, 0x72, 0xa0, 0x22, 0xed, 0xd0, 0x81, 0x15, 0xcb, 0xe7,
+	0xa5, 0x82, 0xdf, 0x00, 0xc8, 0x2d, 0x18, 0xf5, 0x7c, 0x41, 0xda, 0x2a, 0xd2, 0xba, 0x27, 0x43,
+	0xbd, 0x6c, 0x49, 0xdf, 0xb5, 0xa4, 0xbb, 0xbb, 0x96, 0xce, 0x9a, 0x37, 0xbf, 0x47, 0xc8, 0xe9,
+	0x54, 0x19, 0x53, 0x14, 0x03, 0xb2, 0x84, 0xee, 0x06, 0x74, 0x1e, 0x3a, 0xa0, 0xca, 0x98, 0x02,
+	0xbf, 0x86, 0x4e, 0xe4, 0x73, 0xe1, 0x65, 0x9c, 0x51, 0x02, 0x0f, 0xcc, 0xb7, 0x8b, 0xc8, 0x8c,
+	0x33, 0x5a, 0x6c, 0x98, 0x71, 0x3f, 0x60, 0xde, 0x32, 0xce, 0xd6, 0x82, 0x74, 0x55, 0xa4, 0x35,
+	0x1d, 0x90, 0xd2, 0xb8, 0x50, 0x5e, 0x7e, 0x47, 0xf0, 0xf8, 0xff, 0x6e, 0xf0, 0x31, 0x0c, 0x2e,
+	0xcd, 0xf3, 0x73, 0xcb, 0xf5, 0xa6, 0xae, 0xe9, 0xce, 0xa6, 0xde, 0x6c, 0x32, 0xfd, 0x68, 0x8d,
+	0xed, 0x77, 0xb6, 0xf5, 0xb6, 0x5f, 0xc3, 0x04, 0x8e, 0xf6, 0xb1, 0x39, 0x76, 0xed, 0xb9, 0xd5,
+	0x47, 0x78, 0x08, 0x4f, 0xf7, 0x89, 0x3d, 0xa9, 0x58, 0x1d, 0x3f, 0x03, 0xb2, 0xcf, 0x1c, 0x6b,
+	0x7c, 0x31, 0xb7, 0x1c, 0x7b, 0xf2, 0xbe, 0xdf, 0xb8, 0x9f, 0x74, 0x2e, 0x5c, 0xd3, 0x2d, 0x58,
+	0xf3, 0xec, 0xf4, 0xc7, 0x46, 0x41, 0xb7, 0x1b, 0x05, 0xfd, 0xd9, 0x28, 0xe8, 0x66, 0xab, 0xd4,
+	0x6e, 0xb7, 0x4a, 0xed, 0xd7, 0x56, 0xa9, 0x7d, 0x1a, 0xfc, 0x7b, 0xf5, 0xdf, 0xee, 0xde, 0xbd,
+	0xc8, 0x13, 0xc6, 0x17, 0x2d, 0xd9, 0xcc, 0xe9, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xcb, 0xcd,
+	0x2a, 0xe7, 0x19, 0x03, 0x00, 0x00,
 }
 
 func (m *Wallet) Marshal() (dAtA []byte, err error) {
@@ -228,87 +254,64 @@ func (m *Wallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintWallet(dAtA, i, uint64(len(m.ChainId)))
-		i--
-		dAtA[i] = 0x6a
-	}
-	if len(m.Status) > 0 {
-		i -= len(m.Status)
-		copy(dAtA[i:], m.Status)
-		i = encodeVarintWallet(dAtA, i, uint64(len(m.Status)))
-		i--
-		dAtA[i] = 0x62
-	}
-	if m.Parties != 0 {
-		i = encodeVarintWallet(dAtA, i, uint64(m.Parties))
+	if m.UsageCount != 0 {
+		i = encodeVarintWallet(dAtA, i, uint64(m.UsageCount))
 		i--
 		dAtA[i] = 0x58
 	}
-	if m.Threshold != 0 {
-		i = encodeVarintWallet(dAtA, i, uint64(m.Threshold))
-		i--
-		dAtA[i] = 0x50
-	}
-	if m.SecurityLevel != 0 {
-		i = encodeVarintWallet(dAtA, i, uint64(m.SecurityLevel))
-		i--
-		dAtA[i] = 0x48
-	}
-	if len(m.Metadata) > 0 {
-		for k := range m.Metadata {
-			v := m.Metadata[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintWallet(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintWallet(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintWallet(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x42
-		}
-	}
-	if m.UpdatedAt != nil {
-		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.UpdatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.UpdatedAt):])
+	if m.LastUsed != nil {
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.LastUsed, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.LastUsed):])
 		if err1 != nil {
 			return 0, err1
 		}
 		i -= n1
 		i = encodeVarintWallet(dAtA, i, uint64(n1))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x52
 	}
-	if m.CreatedAt != nil {
-		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+	if m.UpdatedAt != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.UpdatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.UpdatedAt):])
 		if err2 != nil {
 			return 0, err2
 		}
 		i -= n2
 		i = encodeVarintWallet(dAtA, i, uint64(n2))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x4a
 	}
-	if len(m.Permissions) > 0 {
-		for iNdEx := len(m.Permissions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Permissions[iNdEx])
-			copy(dAtA[i:], m.Permissions[iNdEx])
-			i = encodeVarintWallet(dAtA, i, uint64(len(m.Permissions[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
+	if m.CreatedAt != nil {
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt):])
+		if err3 != nil {
+			return 0, err3
 		}
+		i -= n3
+		i = encodeVarintWallet(dAtA, i, uint64(n3))
+		i--
+		dAtA[i] = 0x42
 	}
 	if m.KeyVersion != 0 {
 		i = encodeVarintWallet(dAtA, i, uint64(m.KeyVersion))
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x38
+	}
+	if m.Status != 0 {
+		i = encodeVarintWallet(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x30
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintWallet(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.WalletAddress) > 0 {
+		i -= len(m.WalletAddress)
+		copy(dAtA[i:], m.WalletAddress)
+		i = encodeVarintWallet(dAtA, i, uint64(len(m.WalletAddress)))
+		i--
+		dAtA[i] = 0x22
 	}
 	if len(m.PublicKey) > 0 {
 		i -= len(m.PublicKey)
@@ -317,10 +320,10 @@ func (m *Wallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintWallet(dAtA, i, uint64(len(m.Address)))
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintWallet(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -355,7 +358,7 @@ func (m *Wallet) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
-	l = len(m.Address)
+	l = len(m.Creator)
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
@@ -363,14 +366,19 @@ func (m *Wallet) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovWallet(uint64(l))
 	}
+	l = len(m.WalletAddress)
+	if l > 0 {
+		n += 1 + l + sovWallet(uint64(l))
+	}
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovWallet(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovWallet(uint64(m.Status))
+	}
 	if m.KeyVersion != 0 {
 		n += 1 + sovWallet(uint64(m.KeyVersion))
-	}
-	if len(m.Permissions) > 0 {
-		for _, s := range m.Permissions {
-			l = len(s)
-			n += 1 + l + sovWallet(uint64(l))
-		}
 	}
 	if m.CreatedAt != nil {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.CreatedAt)
@@ -380,30 +388,12 @@ func (m *Wallet) Size() (n int) {
 		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.UpdatedAt)
 		n += 1 + l + sovWallet(uint64(l))
 	}
-	if len(m.Metadata) > 0 {
-		for k, v := range m.Metadata {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovWallet(uint64(len(k))) + 1 + len(v) + sovWallet(uint64(len(v)))
-			n += mapEntrySize + 1 + sovWallet(uint64(mapEntrySize))
-		}
-	}
-	if m.SecurityLevel != 0 {
-		n += 1 + sovWallet(uint64(m.SecurityLevel))
-	}
-	if m.Threshold != 0 {
-		n += 1 + sovWallet(uint64(m.Threshold))
-	}
-	if m.Parties != 0 {
-		n += 1 + sovWallet(uint64(m.Parties))
-	}
-	l = len(m.Status)
-	if l > 0 {
+	if m.LastUsed != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.LastUsed)
 		n += 1 + l + sovWallet(uint64(l))
 	}
-	l = len(m.ChainId)
-	if l > 0 {
-		n += 1 + l + sovWallet(uint64(l))
+	if m.UsageCount != 0 {
+		n += 1 + sovWallet(uint64(m.UsageCount))
 	}
 	return n
 }
@@ -477,7 +467,7 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -505,7 +495,7 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Address = string(dAtA[iNdEx:postIndex])
+			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -540,27 +530,8 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			m.PublicKey = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyVersion", wireType)
-			}
-			m.KeyVersion = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.KeyVersion |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Permissions", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -588,9 +559,79 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Permissions = append(m.Permissions, string(dAtA[iNdEx:postIndex]))
+			m.WalletAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWallet
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthWallet
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthWallet
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWallet
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= WalletStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyVersion", wireType)
+			}
+			m.KeyVersion = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWallet
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.KeyVersion |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
@@ -626,7 +667,7 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UpdatedAt", wireType)
 			}
@@ -662,9 +703,9 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 8:
+		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LastUsed", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -691,147 +732,18 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Metadata == nil {
-				m.Metadata = make(map[string]string)
+			if m.LastUsed == nil {
+				m.LastUsed = new(time.Time)
 			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowWallet
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowWallet
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthWallet
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthWallet
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowWallet
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthWallet
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthWallet
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipWallet(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthWallet
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.LastUsed, dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			m.Metadata[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SecurityLevel", wireType)
-			}
-			m.SecurityLevel = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.SecurityLevel |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Threshold", wireType)
-			}
-			m.Threshold = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Threshold |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		case 11:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Parties", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UsageCount", wireType)
 			}
-			m.Parties = 0
+			m.UsageCount = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowWallet
@@ -841,75 +753,11 @@ func (m *Wallet) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Parties |= uint32(b&0x7F) << shift
+				m.UsageCount |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthWallet
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthWallet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Status = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 13:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWallet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthWallet
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthWallet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipWallet(dAtA[iNdEx:])

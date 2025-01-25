@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/mock"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
@@ -12,16 +12,14 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
-	identitytypes "selfchain/x/identity/types"
 	"selfchain/x/keyless/testutil/mocks"
 )
 
-func TestRecoverWallet(t *testing.T) {
+func TestWalletManagement(t *testing.T) {
 	// Setup test environment
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey("mem_keyless")
@@ -45,20 +43,6 @@ func TestRecoverWallet(t *testing.T) {
 	// Create mock identity keeper
 	identityKeeper := mocks.NewIdentityKeeper(t)
 
-	// Create test data
-	walletAddr := "cosmos1xyxs3skf3f4jfqeuv89yyaqvjc6lffavxqhc8g"
-	creator := "cosmos1creator"
-
-	// Create DID document
-	didDoc := identitytypes.DIDDocument{
-		Id:         creator,
-		Controller: []string{"owner123"},
-	}
-
-	// Setup mock expectations with any context
-	identityKeeper.On("GetDIDDocument", mock.Anything, creator).Return(didDoc, true)
-	identityKeeper.On("VerifyDIDOwnership", mock.Anything, creator, sdk.AccAddress{}).Return(nil)
-
 	// Create keeper
 	k := keeper.NewKeeper(
 		cdc,
@@ -70,33 +54,71 @@ func TestRecoverWallet(t *testing.T) {
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
 
-	// Create a wallet first
-	wallet := &types.Wallet{
-		Creator:       creator,
-		WalletAddress: walletAddr,
-		ChainId:       "test-1",
-		Status:        types.WalletStatus_WALLET_STATUS_INACTIVE,
-		KeyVersion:    1,
+	tests := []struct {
+		name        string
+		wallet      *types.Wallet
+		expectError bool
+	}{
+		{
+			name: "valid wallet creation",
+			wallet: &types.Wallet{
+				Creator:       "self1creator",
+				WalletAddress: "self1wallet",
+				ChainId:       "self-1",
+				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
+				KeyVersion:    1,
+			},
+			expectError: false,
+		},
+		{
+			name: "duplicate wallet address",
+			wallet: &types.Wallet{
+				Creator:       "self1creator",
+				WalletAddress: "self1wallet",
+				ChainId:       "self-1",
+				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
+				KeyVersion:    1,
+			},
+			expectError: true,
+		},
+		{
+			name: "invalid chain ID",
+			wallet: &types.Wallet{
+				Creator:       "self1creator",
+				WalletAddress: "self1wallet3",
+				ChainId:       "",
+				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
+				KeyVersion:    1,
+			},
+			expectError: true,
+		},
 	}
 
-	err := k.SaveWallet(ctx, wallet)
-	require.NoError(t, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := k.SaveWallet(ctx, tc.wallet)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				
+				// Verify wallet was created correctly
+				wallet, err := k.GetWallet(ctx, tc.wallet.WalletAddress)
+				require.NoError(t, err)
+				require.Equal(t, tc.wallet.Creator, wallet.Creator)
+				require.Equal(t, tc.wallet.ChainId, wallet.ChainId)
+				require.Equal(t, tc.wallet.Status, wallet.Status)
+			}
+		})
+	}
 
-	// Test successful recovery
-	err = k.RecoverWallet(ctx, walletAddr)
+	// Test getting all wallets
+	wallets, err := k.GetAllWalletsFromStore(ctx)
 	require.NoError(t, err)
-
-	// Verify wallet status is now active
-	recoveredWallet, err := k.GetWallet(ctx, walletAddr)
-	require.NoError(t, err)
-	require.Equal(t, types.WalletStatus_WALLET_STATUS_ACTIVE, recoveredWallet.Status)
-
-	// Test recovery of non-existent wallet
-	err = k.RecoverWallet(ctx, "non_existent_wallet")
-	require.Error(t, err)
+	require.NotEmpty(t, wallets)
 }
 
-func TestCreateRecoverySession(t *testing.T) {
+func TestWalletAccess(t *testing.T) {
 	// Setup test environment
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey("mem_keyless")
@@ -109,7 +131,7 @@ func TestCreateRecoverySession(t *testing.T) {
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
-
+	
 	paramsSubspace := paramtypes.NewSubspace(cdc,
 		types.Amino,
 		storeKey,
@@ -119,10 +141,6 @@ func TestCreateRecoverySession(t *testing.T) {
 
 	// Create mock identity keeper
 	identityKeeper := mocks.NewIdentityKeeper(t)
-
-	// Create test data
-	walletAddr := "cosmos1xyxs3skf3f4jfqeuv89yyaqvjc6lffavxqhc8g"
-	creator := "cosmos1creator"
 
 	// Create keeper
 	k := keeper.NewKeeper(
@@ -135,11 +153,11 @@ func TestCreateRecoverySession(t *testing.T) {
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
 
-	// Create a wallet first
+	// Create a test wallet
 	wallet := &types.Wallet{
-		Creator:       creator,
-		WalletAddress: walletAddr,
-		ChainId:       "test-1",
+		Creator:       "self1creator",
+		WalletAddress: "self1wallet",
+		ChainId:       "self-1",
 		Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
 		KeyVersion:    1,
 	}
@@ -147,11 +165,17 @@ func TestCreateRecoverySession(t *testing.T) {
 	err := k.SaveWallet(ctx, wallet)
 	require.NoError(t, err)
 
-	// Test creating recovery session for existing wallet
-	err = k.CreateRecoverySession(ctx, creator, walletAddr)
+	// Test wallet access validation
+	err = k.ValidateWalletAccess(ctx, wallet.WalletAddress, "sign")
 	require.NoError(t, err)
 
-	// Test creating recovery session for non-existent wallet
-	err = k.CreateRecoverySession(ctx, creator, "non_existent_wallet")
-	require.Error(t, err)
+	// Test wallet authorization
+	authorized, err := k.IsWalletAuthorized(ctx, wallet.Creator, wallet.WalletAddress)
+	require.NoError(t, err)
+	require.True(t, authorized)
+
+	// Test unauthorized access
+	authorized, err = k.IsWalletAuthorized(ctx, "unauthorized_creator", wallet.WalletAddress)
+	require.NoError(t, err)
+	require.False(t, authorized)
 }

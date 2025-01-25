@@ -3,6 +3,8 @@ package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
+import "cosmos/msg/v1/msg.proto";
+
 // BatchSignStatus represents the status of a batch signing operation
 enum BatchSignStatus {
   // Default unspecified status
@@ -16,3 +18,24 @@ enum BatchSignStatus {
   // Batch signing has been cancelled
   BATCH_SIGN_STATUS_CANCELLED = 4;
 }
+
+// BatchSignStatusInfo represents the status information for a batch signing operation
+message BatchSignStatusInfo {
+  string wallet_address = 1;
+  repeated bytes messages = 2;
+  repeated string signatures = 3;
+  BatchSignStatus status = 4;
+}
+
+// MsgBatchSignRequest represents a request to sign multiple messages
+message MsgBatchSignRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1;
+  string wallet_address = 2;
+  repeated bytes messages = 3;
+  repeated string parties = 4;
+}
+
+// MsgBatchSignResponse represents the response to a batch sign request
+message MsgBatchSignResponse {}
