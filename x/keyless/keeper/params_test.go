@@ -9,18 +9,19 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.KeylessKeeper(t)
+	k := testkeeper.NewKeylessKeeper(t)
 	params := types.DefaultParams()
 
-	k.SetParams(ctx, params)
-	require.EqualValues(t, params, k.GetParams(ctx))
+	k.SetParams(k.Ctx, params)
+
+	require.EqualValues(t, params, k.GetParams(k.Ctx))
 }
 
 func TestParams(t *testing.T) {
-	k, ctx := testkeeper.KeylessKeeper(t)
+	k := testkeeper.NewKeylessKeeper(t)
 	
 	// Test default values
-	params := k.GetParams(ctx)
+	params := k.GetParams(k.Ctx)
 
 	// Test wallet limits
 	require.Equal(t, uint32(5), params.MaxParties)
@@ -51,10 +52,10 @@ func TestParams(t *testing.T) {
 		7200, // RecoveryWindowSeconds (2 hours)
 		5,    // MaxSigningAttempts
 	)
-	k.SetParams(ctx, newParams)
+	k.SetParams(k.Ctx, newParams)
 
 	// Verify new values
-	params = k.GetParams(ctx)
+	params = k.GetParams(k.Ctx)
 
 	// Verify wallet limits
 	require.Equal(t, uint32(10), params.MaxParties)

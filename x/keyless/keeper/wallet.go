@@ -61,9 +61,14 @@ func (k Keeper) SignWithTSS(ctx sdk.Context, wallet *types.Wallet, unsignedTx st
 	}
 
 	// Get party data for the wallet
-	_, err := k.GetPartyData(ctx, wallet.WalletAddress)
+	partyData, err := k.GetPartyData(ctx, wallet.WalletAddress)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get party data: %w", err)
+	}
+
+	// Verify party data is active
+	if partyData.Status != "active" {
+		return nil, fmt.Errorf("party data is not active")
 	}
 
 	// Verify wallet is active
@@ -76,22 +81,29 @@ func (k Keeper) SignWithTSS(ctx sdk.Context, wallet *types.Wallet, unsignedTx st
 
 	// Create signing session
 	session := &types.SigningSession{
-		SessionId: sessionID,
-		WalletId:  wallet.WalletAddress,
-		Message:   []byte(unsignedTx),
-		Status:    types.SigningStatus_SIGNING_STATUS_IN_PROGRESS,
-		CreatedAt: ctx.BlockTime(),
-		UpdatedAt: ctx.BlockTime(),
+		SessionId:  sessionID,
+		WalletId:   wallet.WalletAddress,
+		Message:    []byte(unsignedTx),
+		Status:     types.SigningStatus_SIGNING_STATUS_IN_PROGRESS,
+		CreatedAt:  ctx.BlockTime(),
+		UpdatedAt:  ctx.BlockTime(),
 	}
 
-	// Save signing session
+	// Save initial signing session
 	if err := k.SaveSigningSession(ctx, session); err != nil {
 		return nil, fmt.Errorf("failed to save signing session: %w", err)
 	}
 
-	// Create dummy signature for testing
-	// TODO: Implement actual TSS signing protocol
-	signature := []byte("dummy_signature")
+	// Start TSS signing process
+	signResp, err := k.tssProtocol.InitiateSigning(ctx, []byte(unsignedTx), wallet.WalletAddress)
+	if err != nil {
+		session.Status = types.SigningStatus_SIGNING_STATUS_FAILED
+		session.UpdatedAt = ctx.BlockTime()
+		if saveErr := k.SaveSigningSession(ctx, session); saveErr != nil {
+			ctx.Logger().Error("failed to update failed signing session", "error", saveErr)
+		}
+		return nil, fmt.Errorf("failed to initiate TSS signing: %w", err)
+	}
 
 	// Update session status
 	session.Status = types.SigningStatus_SIGNING_STATUS_COMPLETED
@@ -106,7 +118,7 @@ func (k Keeper) SignWithTSS(ctx sdk.Context, wallet *types.Wallet, unsignedTx st
 		ctx.Logger().Error("failed to update wallet metadata after signing", "error", err)
 	}
 
-	return signature, nil
+	return signResp.Signature, nil
 }
 
 // updateWalletAfterSigning updates wallet metadata after successful signing

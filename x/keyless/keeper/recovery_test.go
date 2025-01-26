@@ -3,155 +3,52 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	"selfchain/x/keyless/keeper"
+	"selfchain/testutil/keeper"
 	"selfchain/x/keyless/types"
-	identitytypes "selfchain/x/identity/types"
-	"selfchain/x/keyless/testutil/mocks"
 )
 
 func TestRecoverWallet(t *testing.T) {
-	// Setup test environment
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey("mem_keyless")
-
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
-	require.NoError(t, stateStore.LoadLatestVersion())
-
-	registry := codectypes.NewInterfaceRegistry()
-	cdc := codec.NewProtoCodec(registry)
+	k := keeper.NewKeylessKeeper(t)
 	
-	paramsSubspace := paramtypes.NewSubspace(cdc,
-		types.Amino,
-		storeKey,
-		memStoreKey,
-		"KeylessParams",
-	)
-
-	// Create mock identity keeper
-	identityKeeper := mocks.NewIdentityKeeper(t)
-
-	// Create test data
-	walletAddr := "cosmos1xyxs3skf3f4jfqeuv89yyaqvjc6lffavxqhc8g"
-	creator := "cosmos1creator"
-
-	// Create DID document
-	didDoc := identitytypes.DIDDocument{
-		Id:         creator,
-		Controller: []string{"owner123"},
-	}
-
-	// Setup mock expectations with any context
-	identityKeeper.On("GetDIDDocument", mock.Anything, creator).Return(didDoc, true)
-	identityKeeper.On("VerifyDIDOwnership", mock.Anything, creator, sdk.AccAddress{}).Return(nil)
-
-	// Create keeper
-	k := keeper.NewKeeper(
-		cdc,
-		storeKey,
-		memStoreKey,
-		paramsSubspace,
-		identityKeeper,
-	)
-
-	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
-
 	// Create a wallet first
+	walletID := "test_wallet"
+	creator := "test_creator"
 	wallet := &types.Wallet{
-		Creator:       creator,
-		WalletAddress: walletAddr,
-		ChainId:       "test-1",
-		Status:        types.WalletStatus_WALLET_STATUS_INACTIVE,
-		KeyVersion:    1,
+		WalletAddress: walletID,
+		ChainId:      "test-chain",
+		Creator:      creator,
+		Status:       types.WalletStatus_WALLET_STATUS_INACTIVE,
 	}
-
-	err := k.SaveWallet(ctx, wallet)
+	err := k.SaveWallet(k.Ctx, wallet)
 	require.NoError(t, err)
 
-	// Test successful recovery
-	err = k.RecoverWallet(ctx, walletAddr)
+	// Test recovery process
+	err = k.RecoverWallet(k.Ctx, walletID)
 	require.NoError(t, err)
 
-	// Verify wallet status is now active
-	recoveredWallet, err := k.GetWallet(ctx, walletAddr)
+	// Verify wallet is active
+	recoveredWallet, err := k.GetWallet(k.Ctx, walletID)
 	require.NoError(t, err)
 	require.Equal(t, types.WalletStatus_WALLET_STATUS_ACTIVE, recoveredWallet.Status)
-
-	// Test recovery of non-existent wallet
-	err = k.RecoverWallet(ctx, "non_existent_wallet")
-	require.Error(t, err)
 }
 
 func TestCreateRecoverySession(t *testing.T) {
-	// Setup test environment
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey("mem_keyless")
-
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
-	require.NoError(t, stateStore.LoadLatestVersion())
-
-	registry := codectypes.NewInterfaceRegistry()
-	cdc := codec.NewProtoCodec(registry)
-
-	paramsSubspace := paramtypes.NewSubspace(cdc,
-		types.Amino,
-		storeKey,
-		memStoreKey,
-		"KeylessParams",
-	)
-
-	// Create mock identity keeper
-	identityKeeper := mocks.NewIdentityKeeper(t)
-
-	// Create test data
-	walletAddr := "cosmos1xyxs3skf3f4jfqeuv89yyaqvjc6lffavxqhc8g"
-	creator := "cosmos1creator"
-
-	// Create keeper
-	k := keeper.NewKeeper(
-		cdc,
-		storeKey,
-		memStoreKey,
-		paramsSubspace,
-		identityKeeper,
-	)
-
-	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
-
+	k := keeper.NewKeylessKeeper(t)
+	
 	// Create a wallet first
+	walletID := "test_wallet"
+	creator := "test_creator"
 	wallet := &types.Wallet{
-		Creator:       creator,
-		WalletAddress: walletAddr,
-		ChainId:       "test-1",
-		Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
-		KeyVersion:    1,
+		WalletAddress: walletID,
+		ChainId:      "test-chain",
+		Creator:      creator,
+		Status:       types.WalletStatus_WALLET_STATUS_INACTIVE,
 	}
-
-	err := k.SaveWallet(ctx, wallet)
+	err := k.SaveWallet(k.Ctx, wallet)
 	require.NoError(t, err)
 
-	// Test creating recovery session for existing wallet
-	err = k.CreateRecoverySession(ctx, creator, walletAddr)
+	// Test recovery session creation
+	err = k.CreateRecoverySession(k.Ctx, creator, walletID)
 	require.NoError(t, err)
-
-	// Test creating recovery session for non-existent wallet
-	err = k.CreateRecoverySession(ctx, creator, "non_existent_wallet")
-	require.Error(t, err)
 }

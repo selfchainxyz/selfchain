@@ -20,6 +20,7 @@ type (
 		memKey        storetypes.StoreKey
 		paramstore    paramtypes.Subspace
 		identityKeeper types.IdentityKeeper
+		tssProtocol    types.TSSProtocol
 	}
 )
 
@@ -29,24 +30,33 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	identityKeeper types.IdentityKeeper,
+	tssProtocol types.TSSProtocol,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
-	return &Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		paramstore:    ps,
+	k := &Keeper{
+		cdc:            cdc,
+		storeKey:       storeKey,
+		memKey:         memKey,
+		paramstore:     ps,
 		identityKeeper: identityKeeper,
+		tssProtocol:    tssProtocol,
 	}
+
+	return k
 }
 
 // Logger returns a module-specific logger
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetTSSProtocol sets the TSS protocol implementation
+func (k *Keeper) SetTSSProtocol(protocol types.TSSProtocol) {
+	k.tssProtocol = protocol
 }
 
 // GetPartyDataStore returns the store for TSS party data
