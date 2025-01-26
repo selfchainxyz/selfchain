@@ -190,7 +190,7 @@ func (k msgServer) RecoverWallet(goCtx context.Context, msg *types.MsgRecoverWal
 	}
 
 	// Recover the wallet
-	err := k.Keeper.RecoverWallet(ctx, msg.WalletAddress)
+	err := k.Keeper.RecoverWallet(ctx, msg)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

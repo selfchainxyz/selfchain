@@ -35,15 +35,20 @@ func (k Keeper) ValidateRecoverySession(ctx sdk.Context, creator, walletAddress 
 }
 
 // RecoverWallet recovers a wallet by its address
-func (k Keeper) RecoverWallet(ctx sdk.Context, walletAddress string) error {
+func (k Keeper) RecoverWallet(ctx sdk.Context, msg *types.MsgRecoverWallet) error {
 	// Get the wallet
-	wallet, err := k.GetWallet(ctx, walletAddress)
+	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
 	if err != nil {
 		return fmt.Errorf("failed to get wallet: %v", err)
 	}
 
-	// Set wallet status to active
+	// Update wallet with new owner and public key
+	now := ctx.BlockTime()
+	wallet.Creator = msg.Creator
+	wallet.PublicKey = msg.NewPubKey
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
+	wallet.UpdatedAt = &now
+
 	err = k.SaveWallet(ctx, wallet)
 	if err != nil {
 		return fmt.Errorf("failed to save wallet: %v", err)
