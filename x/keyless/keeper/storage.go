@@ -35,11 +35,26 @@ func (k Keeper) SaveWallet(ctx sdk.Context, wallet *types.Wallet) error {
 	// Check for existing wallet
 	existingWallet, err := k.GetWallet(ctx, wallet.WalletAddress)
 	if err == nil && existingWallet != nil {
-		// Allow updates to existing wallet if:
-		// 1. The creator matches OR
-		// 2. The wallet is being recovered (status will be ACTIVE)
-		if existingWallet.Creator != wallet.Creator && wallet.Status != types.WalletStatus_WALLET_STATUS_ACTIVE {
-			return fmt.Errorf("cannot update wallet: creator mismatch")
+		// For active wallets, only allow updates by the creator
+		if existingWallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE {
+			// Allow recovery to override any existing wallet
+			if wallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE && wallet.Creator != existingWallet.Creator {
+				// This is a recovery operation, allow it
+			} else {
+				// For normal updates, require creator match
+				if wallet.Creator != existingWallet.Creator {
+					return fmt.Errorf("wallet already exists: %s", wallet.WalletAddress)
+				}
+				// Don't allow creating a new active wallet if one already exists
+				if wallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE {
+					return fmt.Errorf("active wallet already exists: %s", wallet.WalletAddress)
+				}
+			}
+		} else {
+			// For inactive wallets, only allow recovery
+			if wallet.Status != types.WalletStatus_WALLET_STATUS_ACTIVE {
+				return fmt.Errorf("cannot update inactive wallet: must recover first")
+			}
 		}
 	}
 

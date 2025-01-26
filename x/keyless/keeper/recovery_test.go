@@ -24,13 +24,24 @@ func TestRecoverWallet(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test recovery process
-	err = k.RecoverWallet(k.Ctx, walletID)
+	newOwner := "new_owner"
+	newPubKey := "new_pubkey"
+	recoveryMsg := &types.MsgRecoverWallet{
+		Creator:       newOwner,
+		WalletAddress: walletID,
+		NewPubKey:    newPubKey,
+		RecoveryProof: "test_proof",
+	}
+
+	err = k.RecoverWallet(k.Ctx, recoveryMsg)
 	require.NoError(t, err)
 
-	// Verify wallet is active
+	// Verify wallet is recovered with new owner and key
 	recoveredWallet, err := k.GetWallet(k.Ctx, walletID)
 	require.NoError(t, err)
 	require.Equal(t, types.WalletStatus_WALLET_STATUS_ACTIVE, recoveredWallet.Status)
+	require.Equal(t, newOwner, recoveredWallet.Creator)
+	require.Equal(t, newPubKey, recoveredWallet.PublicKey)
 }
 
 func TestCreateRecoverySession(t *testing.T) {
