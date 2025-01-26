@@ -26,6 +26,7 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Create wallet
+	now := ctx.BlockTime()
 	wallet := types.NewWallet(
 		msg.Creator,
 		msg.PubKey,
@@ -34,6 +35,9 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 		types.WalletStatus_WALLET_STATUS_ACTIVE,
 		0, // Initial key version
 	)
+	wallet.CreatedAt = &now
+	wallet.UpdatedAt = &now
+	wallet.LastUsed = &now
 
 	// Save wallet to store
 	err := k.SaveWallet(ctx, wallet)

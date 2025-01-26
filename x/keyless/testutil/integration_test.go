@@ -3,21 +3,13 @@ package testutil
 import (
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/suite"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cometbft/cometbft/libs/log"
-	db "github.com/cometbft/cometbft-db"
-
+	"github.com/stretchr/testify/suite"
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
-	identitytypes "selfchain/x/identity/types"
 )
 
 type IntegrationTestSuite struct {
@@ -99,9 +91,9 @@ func (s *IntegrationTestSuite) createAndAuthorizeWallet(creator, pubKey, walletA
 	// Create wallet
 	createMsg := &types.MsgCreateWallet{
 		Creator:       creator,
-		PublicKey:     pubKey,
+		PubKey:       pubKey,
 		WalletAddress: walletAddress,
-		ChainId:       s.networkParams.ChainId,
+		ChainId:      s.networkParams.ChainId,
 	}
 
 	_, err := s.msgServer.CreateWallet(sdk.WrapSDKContext(s.ctx), createMsg)
@@ -109,27 +101,8 @@ func (s *IntegrationTestSuite) createAndAuthorizeWallet(creator, pubKey, walletA
 		return err
 	}
 
-	// Set up DID document
-	did := "did:self:" + creator
-	now := time.Now()
-	didDoc := &identitytypes.DIDDocument{
-		Id:      did,
-		Created: &now,
-		Updated: &now,
-		Status:  identitytypes.Status_STATUS_ACTIVE,
-		VerificationMethod: []*identitytypes.VerificationMethod{
-			{
-				Id:              did + "#key1",
-				Type:            "Ed25519VerificationKey2018",
-				Controller:      did,
-				PublicKeyBase58: pubKey,
-			},
-		},
-	}
-	s.mockIdentity.SetDIDDocument(s.ctx, did, didDoc)
-
 	// Authorize wallet for the creator
-	err = s.keeper.ValidateWalletAccess(s.ctx, creator, walletAddress)
+	err = s.keeper.ValidateWalletAccess(s.ctx, walletAddress, "sign")
 	if err != nil {
 		return err
 	}

@@ -48,6 +48,9 @@ const (
 
 	// PartyDataKey is the prefix for party data
 	PartyDataKey = KeyPrefix + "party_data/"
+
+	// SigningSessionKey is the prefix for signing sessions
+	SigningSessionKey = KeyPrefix + "signing_session/"
 )
 
 var (

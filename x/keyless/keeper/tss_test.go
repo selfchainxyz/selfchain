@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/testutil/mocks"
@@ -56,6 +57,16 @@ func TestWalletKeyGeneration(t *testing.T) {
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
 
+	// Initialize params
+	params := types.DefaultParams()
+	paramsSubspace.SetParamSet(ctx, &params)
+
+	// Initialize stores with prefixes
+	store := ctx.KVStore(storeKey)
+	_ = prefix.NewStore(store, []byte(types.WalletKey))
+	_ = prefix.NewStore(store, []byte(types.SigningSessionKey))
+	_ = prefix.NewStore(store, []byte(types.PartyDataKey))
+
 	tests := []struct {
 		name        string
 		walletAddr  string
@@ -63,6 +74,7 @@ func TestWalletKeyGeneration(t *testing.T) {
 		parties     []string
 		threshold   uint32
 		expectError bool
+		chainId     string
 	}{
 		{
 			name:        "valid keygen request",
@@ -71,6 +83,7 @@ func TestWalletKeyGeneration(t *testing.T) {
 			parties:     []string{"party1", "party2", "party3"},
 			threshold:   2,
 			expectError: false,
+			chainId:     "test-chain",
 		},
 		{
 			name:        "invalid threshold",
@@ -79,24 +92,25 @@ func TestWalletKeyGeneration(t *testing.T) {
 			parties:     []string{"party1", "party2"},
 			threshold:   3, // Greater than number of parties
 			expectError: true,
+			chainId:     "test-chain",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create wallet
-			blockTime := ctx.BlockTime()
+			now := ctx.BlockTime()
 			wallet := &types.Wallet{
 				Id:            tc.walletAddr,
 				Creator:       tc.creator,
 				PublicKey:     "test_public_key",
 				WalletAddress: tc.walletAddr,
-				ChainId:       "test-chain",
+				ChainId:       tc.chainId,
 				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
 				KeyVersion:    1,
-				CreatedAt:     &blockTime,
-				UpdatedAt:     &blockTime,
-				LastUsed:      &blockTime,
+				CreatedAt:     &now,
+				UpdatedAt:     &now,
+				LastUsed:      &now,
 				UsageCount:    0,
 			}
 			err := k.SaveWallet(ctx, wallet)
@@ -108,11 +122,11 @@ func TestWalletKeyGeneration(t *testing.T) {
 				PublicKey:        []byte("test_public_key"),
 				PartyShare:       []byte("test_party_share"),
 				VerificationData: []byte("test_verification_data"),
-				ChainId:          tc.walletAddr,
+				ChainId:          tc.chainId,
 				Status:           "active",
 			}
 
-			// For invalid threshold test, don't save party data
+			// Save party data for valid test case
 			if !tc.expectError {
 				err = k.SavePartyData(ctx, tc.walletAddr, partyData)
 				require.NoError(t, err)
@@ -123,6 +137,7 @@ func TestWalletKeyGeneration(t *testing.T) {
 			if tc.expectError {
 				require.Error(t, err)
 				require.Nil(t, signature)
+				require.Contains(t, err.Error(), "party data not found")
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, signature)
@@ -180,6 +195,16 @@ func TestKeyShare(t *testing.T) {
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, nil)
+
+	// Initialize params
+	params := types.DefaultParams()
+	paramsSubspace.SetParamSet(ctx, &params)
+
+	// Initialize stores with prefixes
+	store := ctx.KVStore(storeKey)
+	_ = prefix.NewStore(store, []byte(types.WalletKey))
+	_ = prefix.NewStore(store, []byte(types.SigningSessionKey))
+	_ = prefix.NewStore(store, []byte(types.PartyDataKey))
 
 	// Setup test data
 	did := "did:self:123"

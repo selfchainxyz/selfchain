@@ -107,3 +107,39 @@ func (k Keeper) DeletePartyData(ctx sdk.Context, walletID string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PartyDataKey))
 	store.Delete([]byte(walletID))
 }
+
+// SaveSigningSession stores a signing session
+func (k Keeper) SaveSigningSession(ctx sdk.Context, session *types.SigningSession) error {
+	if session == nil {
+		return fmt.Errorf("signing session cannot be nil")
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SigningSessionKey))
+	bz, err := k.cdc.Marshal(session)
+	if err != nil {
+		return fmt.Errorf("failed to marshal signing session: %w", err)
+	}
+	store.Set([]byte(session.SessionId), bz)
+	return nil
+}
+
+// GetSigningSession retrieves a signing session by ID
+func (k Keeper) GetSigningSession(ctx sdk.Context, sessionID string) (*types.SigningSession, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SigningSessionKey))
+	bz := store.Get([]byte(sessionID))
+	if bz == nil {
+		return nil, fmt.Errorf("signing session not found: %s", sessionID)
+	}
+
+	var session types.SigningSession
+	if err := k.cdc.Unmarshal(bz, &session); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal signing session: %w", err)
+	}
+	return &session, nil
+}
+
+// DeleteSigningSession removes a signing session
+func (k Keeper) DeleteSigningSession(ctx sdk.Context, sessionID string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SigningSessionKey))
+	store.Delete([]byte(sessionID))
+}

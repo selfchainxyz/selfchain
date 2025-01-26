@@ -5,8 +5,6 @@ import (
 
 	"selfchain/x/keyless/types"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -65,7 +63,7 @@ func (k Keeper) SignWithTSS(ctx sdk.Context, wallet *types.Wallet, unsignedTx st
 	// Get party data for the wallet
 	_, err := k.GetPartyData(ctx, wallet.WalletAddress)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get party data: %w", err)
+		return nil, err
 	}
 
 	// Verify wallet is active
@@ -109,33 +107,6 @@ func (k Keeper) SignWithTSS(ctx sdk.Context, wallet *types.Wallet, unsignedTx st
 	}
 
 	return signature, nil
-}
-
-// GetSigningSession retrieves a signing session by ID
-func (k Keeper) GetSigningSession(ctx sdk.Context, sessionID string) (*types.SigningSession, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSigningSession)
-	bz := store.Get([]byte(sessionID))
-	if bz == nil {
-		return nil, fmt.Errorf("signing session not found: %s", sessionID)
-	}
-
-	var session types.SigningSession
-	if err := k.cdc.Unmarshal(bz, &session); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal signing session: %w", err)
-	}
-
-	return &session, nil
-}
-
-// SaveSigningSession stores a signing session
-func (k Keeper) SaveSigningSession(ctx sdk.Context, session *types.SigningSession) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSigningSession)
-	bz, err := k.cdc.Marshal(session)
-	if err != nil {
-		return fmt.Errorf("failed to marshal signing session: %w", err)
-	}
-	store.Set([]byte(session.SessionId), bz)
-	return nil
 }
 
 // updateWalletAfterSigning updates wallet metadata after successful signing
