@@ -36,4 +36,10 @@ type IdentityKeeper interface {
 	// Security Features
 	CheckRateLimit(ctx sdk.Context, did string, operation string) error
 	LogAuditEvent(ctx sdk.Context, event *identitytypes.AuditEvent) error
+
+	// GenerateRecoveryToken generates a recovery token for wallet recovery
+	GenerateRecoveryToken(ctx sdk.Context, walletID string) (string, error)
+	
+	// ValidateRecoveryToken validates a recovery token
+	ValidateRecoveryToken(ctx sdk.Context, walletID string, token string) error
 }

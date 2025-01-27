@@ -6,42 +6,57 @@ import (
 
 // x/keyless module sentinel errors
 var (
-	ErrUnauthorized = sdkerrors.Register(ModuleName, 1, "unauthorized")
-	ErrInvalidMaxWallets = sdkerrors.Register(ModuleName, 2, "invalid max wallets per DID")
-	ErrInvalidMaxShares = sdkerrors.Register(ModuleName, 3, "invalid max shares per wallet")
-	ErrInvalidRecoveryThreshold = sdkerrors.Register(ModuleName, 4, "invalid recovery threshold")
-	ErrInvalidRecoveryWindow = sdkerrors.Register(ModuleName, 5, "invalid recovery window")
-	ErrInvalidMaxAttempts = sdkerrors.Register(ModuleName, 6, "invalid max signing attempts")
-	ErrWalletExists = sdkerrors.Register(ModuleName, 7, "wallet already exists")
-	ErrWalletNotFound = sdkerrors.Register(ModuleName, 8, "wallet not found")
-	ErrInvalidWalletAddress = sdkerrors.Register(ModuleName, 9, "invalid wallet address")
-	ErrInvalidWalletDID = sdkerrors.Register(ModuleName, 10, "invalid wallet DID")
-	ErrInvalidWalletCreator = sdkerrors.Register(ModuleName, 11, "invalid wallet creator")
-	ErrInvalidSignature = sdkerrors.Register(ModuleName, 12, "invalid signature")
-	ErrSigningAttemptExceeded = sdkerrors.Register(ModuleName, 13, "signing attempt limit exceeded")
-	ErrRecoveryInProgress = sdkerrors.Register(ModuleName, 14, "recovery already in progress")
-	ErrRecoveryNotAllowed = sdkerrors.Register(ModuleName, 15, "recovery not allowed")
-	ErrInvalidRecoveryProof = sdkerrors.Register(ModuleName, 16, "invalid recovery proof")
-	ErrInvalidParam = sdkerrors.Register(ModuleName, 17, "invalid parameter")
-	ErrInvalidRequest   = sdkerrors.Register(ModuleName, 1100, "invalid request")
-	ErrInvalidResponse  = sdkerrors.Register(ModuleName, 1101, "invalid response")
-	ErrKeyGenFailed     = sdkerrors.Register(ModuleName, 1102, "key generation failed")
-	ErrEncryptFailed    = sdkerrors.Register(ModuleName, 1103, "encryption failed")
-	ErrDecryptFailed    = sdkerrors.Register(ModuleName, 1104, "decryption failed")
-	ErrShareNotFound    = sdkerrors.Register(ModuleName, 1105, "share not found")
-	ErrInvalidShare     = sdkerrors.Register(ModuleName, 1106, "invalid share")
-	ErrInvalidWalletID      = sdkerrors.Register(ModuleName, 1107, "invalid wallet ID")
-	ErrInvalidPartyData     = sdkerrors.Register(ModuleName, 1108, "invalid party data")
-	ErrInvalidChainID       = sdkerrors.Register(ModuleName, 1109, "invalid chain ID")
-	ErrInvalidSecurityLevel = sdkerrors.Register(ModuleName, 1110, "invalid security level")
-	ErrInvalidDID           = sdkerrors.Register(ModuleName, 1111, "invalid DID")
-	ErrInvalidRecoveryToken = sdkerrors.Register(ModuleName, 1112, "invalid recovery token")
-	ErrRecoveryNotFound     = sdkerrors.Register(ModuleName, 1113, "recovery session not found")
-	ErrRecoveryExpired      = sdkerrors.Register(ModuleName, 1114, "recovery session expired")
-	ErrRateLimitExceeded    = sdkerrors.Register(ModuleName, 1115, "rate limit exceeded")
-	ErrMFARequired          = sdkerrors.Register(ModuleName, 1116, "MFA verification required")
-	ErrMFAFailed           = sdkerrors.Register(ModuleName, 1117, "MFA verification failed")
-	ErrUnauthorizedOperation = sdkerrors.Register(ModuleName, 1118, "unauthorized operation")
-	ErrInvalidKeyRotationStatus = sdkerrors.Register(ModuleName, 1119, "invalid key rotation status")
-	ErrKeyRotationNotFound      = sdkerrors.Register(ModuleName, 1120, "key rotation not found")
+	// Basic errors
+	ErrInvalidRequest        = sdkerrors.Register(ModuleName, 1, "invalid request")
+	ErrInvalidResponse       = sdkerrors.Register(ModuleName, 2, "invalid response")
+	ErrUnauthorized         = sdkerrors.Register(ModuleName, 3, "unauthorized")
+	ErrInvalidParam         = sdkerrors.Register(ModuleName, 4, "invalid parameter")
+
+	// Wallet errors
+	ErrWalletNotFound       = sdkerrors.Register(ModuleName, 10, "wallet not found")
+	ErrWalletExists         = sdkerrors.Register(ModuleName, 11, "wallet already exists")
+	ErrInvalidWalletStatus  = sdkerrors.Register(ModuleName, 12, "invalid wallet status")
+	ErrInvalidWalletAddress = sdkerrors.Register(ModuleName, 13, "invalid wallet address")
+	ErrInvalidWalletID      = sdkerrors.Register(ModuleName, 14, "invalid wallet ID")
+	ErrInvalidWalletDID     = sdkerrors.Register(ModuleName, 15, "invalid wallet DID")
+	ErrInvalidWalletCreator = sdkerrors.Register(ModuleName, 16, "invalid wallet creator")
+
+	// Permission errors
+	ErrInvalidPermission    = sdkerrors.Register(ModuleName, 20, "invalid permission")
+	ErrPermissionNotFound   = sdkerrors.Register(ModuleName, 21, "permission not found")
+	ErrPermissionExpired    = sdkerrors.Register(ModuleName, 22, "permission expired")
+	ErrPermissionRevoked    = sdkerrors.Register(ModuleName, 23, "permission revoked")
+
+	// Key management errors
+	ErrKeyGenFailed         = sdkerrors.Register(ModuleName, 30, "key generation failed")
+	ErrInvalidPublicKey     = sdkerrors.Register(ModuleName, 31, "invalid public key")
+	ErrInvalidKeyVersion    = sdkerrors.Register(ModuleName, 32, "invalid key version")
+	ErrInvalidKeyRotationStatus = sdkerrors.Register(ModuleName, 33, "invalid key rotation status")
+	ErrKeyRotationNotFound  = sdkerrors.Register(ModuleName, 34, "key rotation not found")
+
+	// Share management errors
+	ErrInvalidShare         = sdkerrors.Register(ModuleName, 40, "invalid share")
+	ErrShareNotFound        = sdkerrors.Register(ModuleName, 41, "share not found")
+	ErrEncryptFailed        = sdkerrors.Register(ModuleName, 42, "encryption failed")
+	ErrDecryptFailed        = sdkerrors.Register(ModuleName, 43, "decryption failed")
+
+	// Recovery errors
+	ErrInvalidRecoveryProof = sdkerrors.Register(ModuleName, 50, "invalid recovery proof")
+	ErrRecoveryInProgress   = sdkerrors.Register(ModuleName, 51, "recovery already in progress")
+	ErrRecoveryNotAllowed   = sdkerrors.Register(ModuleName, 52, "recovery not allowed")
+	ErrRecoveryNotFound     = sdkerrors.Register(ModuleName, 53, "recovery session not found")
+	ErrRecoveryExpired      = sdkerrors.Register(ModuleName, 54, "recovery session expired")
+	ErrInvalidRecoveryToken = sdkerrors.Register(ModuleName, 55, "invalid recovery token")
+
+	// Security errors
+	ErrInvalidSignature     = sdkerrors.Register(ModuleName, 60, "invalid signature")
+	ErrInvalidChainID       = sdkerrors.Register(ModuleName, 61, "invalid chain ID")
+	ErrInvalidSecurityLevel = sdkerrors.Register(ModuleName, 62, "invalid security level")
+	ErrRateLimitExceeded    = sdkerrors.Register(ModuleName, 63, "rate limit exceeded")
+	ErrMFARequired          = sdkerrors.Register(ModuleName, 64, "MFA verification required")
+	ErrMFAFailed            = sdkerrors.Register(ModuleName, 65, "MFA verification failed")
+
+	// Party data errors
+	ErrInvalidPartyData     = sdkerrors.Register(ModuleName, 70, "invalid party data")
+	ErrInvalidRotationProof = sdkerrors.Register(ModuleName, 71, "invalid rotation proof")
 )

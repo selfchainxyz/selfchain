@@ -4,6 +4,7 @@ import (
     "crypto/ecdsa"
     "crypto/elliptic"
     "math/big"
+    "selfchain/x/keyless/types"
 )
 
 // reconstructPublicKey reconstructs the ECDSA public key from the TSS public key bytes
@@ -13,7 +14,7 @@ func reconstructPublicKey(pubKeyBytes []byte) (*ecdsa.PublicKey, error) {
     y := new(big.Int).SetBytes(pubKeyBytes[32:])
 
     if !curve.IsOnCurve(x, y) {
-        return nil, ErrInvalidPublicKey
+        return nil, types.ErrInvalidPublicKey
     }
 
     return &ecdsa.PublicKey{
@@ -21,16 +22,4 @@ func reconstructPublicKey(pubKeyBytes []byte) (*ecdsa.PublicKey, error) {
         X:     x,
         Y:     y,
     }, nil
-}
-
-// ErrInvalidPublicKey is returned when the public key is not valid
-var ErrInvalidPublicKey = &customError{"invalid public key"}
-
-// customError is a simple error type for testing
-type customError struct {
-    msg string
-}
-
-func (e *customError) Error() string {
-    return e.msg
 }

@@ -263,7 +263,7 @@ func validateSchnorrPublicKey(pubKey []byte) error {
 ### External Libraries
 ```go
 import (
-    "github.com/binance-chain/tss-lib"
+    "github.com/bnb-chain/tss-lib/v2"
     "github.com/cosmos/cosmos-sdk/crypto"
     "github.com/tendermint/tendermint/crypto"
 )

@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"time"
 
+	"selfchain/x/identity/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang-jwt/jwt/v4"
-	"selfchain/x/identity/types"
 )
 
 const (
-	OAuthSessionPrefix  = "oauth_session/"
+	OAuthSessionPrefix = "oauth_session/"
 	MFASessionPrefix   = "mfa_session/"
-	RecoveryPrefix    = "recovery/"
-	KeySharePrefix    = "key_share/"
-	AuditEventPrefix  = "audit_event/"
+	KeySharePrefix     = "key_share/"
+	AuditEventPrefix   = "audit_event/"
 )
 
 // VerifyDIDOwnership verifies that an address owns a DID

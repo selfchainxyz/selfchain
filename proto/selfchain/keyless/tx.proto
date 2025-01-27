@@ -5,6 +5,8 @@ import "gogoproto/gogo.proto";
 import "cosmos/msg/v1/msg.proto";
 import "selfchain/keyless/batch_sign.proto";
 import "selfchain/keyless/key_rotation.proto";
+import "selfchain/keyless/permission.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
@@ -23,6 +25,10 @@ service Msg {
   rpc CompleteKeyRotation(MsgCompleteKeyRotation) returns (MsgCompleteKeyRotationResponse);
 
   rpc RecoverWallet(MsgRecoverWallet) returns (MsgRecoverWalletResponse);
+
+  rpc GrantPermission(MsgGrantPermission) returns (MsgGrantPermissionResponse);
+
+  rpc RevokePermission(MsgRevokePermission) returns (MsgRevokePermissionResponse);
 }
 
 // MsgCreateWallet represents a message to create a new wallet
@@ -91,4 +97,33 @@ message MsgRecoverWallet {
 // MsgRecoverWalletResponse is the response type for the RecoverWallet RPC method
 message MsgRecoverWalletResponse {
   string wallet_address = 1;
+}
+
+// MsgGrantPermission represents a message to grant permissions
+message MsgGrantPermission {
+  string creator = 1;
+  string wallet_id = 2;
+  string grantee = 3;
+  repeated WalletPermission permissions = 4;
+  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
+}
+
+// MsgGrantPermissionResponse is the response type for the GrantPermission RPC method
+message MsgGrantPermissionResponse {
+  string wallet_id = 1;
+  string grantee = 2;
+}
+
+// MsgRevokePermission represents a message to revoke permissions
+message MsgRevokePermission {
+  string creator = 1;
+  string wallet_id = 2;
+  string grantee = 3;
+  repeated WalletPermission permissions = 4;
+}
+
+// MsgRevokePermissionResponse is the response type for the RevokePermission RPC method
+message MsgRevokePermissionResponse {
+  string wallet_id = 1;
+  string grantee = 2;
 }

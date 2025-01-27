@@ -6,6 +6,13 @@ option go_package = "selfchain/x/identity/types";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
+// RecoveryData represents data for a recovery token
+message RecoveryData {
+  string wallet_id = 1;
+  string token = 2;
+  google.protobuf.Timestamp expires_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+}
+
 // RecoverySession represents an active wallet recovery session
 message RecoverySession {
   string id = 1;

@@ -1,0 +1,47 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Permission represents a wallet permission
+message Permission {
+  string wallet_id = 1;
+  string grantee = 2;
+  repeated string permissions = 3;
+  google.protobuf.Timestamp granted_at = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
+  bool revoked = 6;
+  google.protobuf.Timestamp revoked_at = 7 [(gogoproto.stdtime) = true];
+}
+
+// WalletPermission represents the type of permission
+enum WalletPermission {
+  // WALLET_PERMISSION_UNSPECIFIED represents an unspecified permission
+  WALLET_PERMISSION_UNSPECIFIED = 0;
+  // WALLET_PERMISSION_SIGN represents permission to sign transactions
+  WALLET_PERMISSION_SIGN = 1;
+  // WALLET_PERMISSION_RECOVER represents permission to initiate recovery
+  WALLET_PERMISSION_RECOVER = 2;
+  // WALLET_PERMISSION_ROTATE represents permission to rotate keys
+  WALLET_PERMISSION_ROTATE = 3;
+  // WALLET_PERMISSION_ADMIN represents admin permissions
+  WALLET_PERMISSION_ADMIN = 4;
+}
+
+// PermissionGrant represents a permission grant request
+message PermissionGrant {
+  string wallet_id = 1;
+  string grantee = 2;
+  repeated WalletPermission permissions = 3;
+  google.protobuf.Timestamp expires_at = 4 [(gogoproto.stdtime) = true];
+}
+
+// PermissionRevoke represents a permission revocation request
+message PermissionRevoke {
+  string wallet_id = 1;
+  string grantee = 2;
+  repeated WalletPermission permissions = 3;
+}

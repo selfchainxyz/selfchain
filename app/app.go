@@ -578,6 +578,7 @@ func New(
 		keys[keylessmoduletypes.MemStoreKey],
 		app.GetSubspace(keylessmoduletypes.ModuleName),
 		app.IdentityKeeper,
+		keylessmoduletypes.NewTSSProtocolImpl(),
 	)
 	keylessModule := keylessmodule.NewAppModule(
 		appCodec,

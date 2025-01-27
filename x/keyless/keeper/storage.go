@@ -15,77 +15,106 @@ func (k Keeper) GetWalletStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(store, []byte(types.WalletKey))
 }
 
-// SaveWallet stores a wallet
+// SaveWallet saves a wallet to the store
 func (k Keeper) SaveWallet(ctx sdk.Context, wallet *types.Wallet) error {
 	if wallet == nil {
 		return fmt.Errorf("wallet cannot be nil")
 	}
 
-	// Validate required fields
-	if wallet.WalletAddress == "" {
-		return fmt.Errorf("wallet address cannot be empty")
-	}
-	if wallet.ChainId == "" {
-		return fmt.Errorf("chain ID cannot be empty")
-	}
-	if wallet.Creator == "" {
-		return fmt.Errorf("creator cannot be empty")
-	}
-
-	// Check for existing wallet
-	existingWallet, err := k.GetWallet(ctx, wallet.WalletAddress)
-	if err == nil && existingWallet != nil {
-		// For active wallets, only allow updates by the creator
-		if existingWallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE {
-			// Allow recovery to override any existing wallet
-			if wallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE && wallet.Creator != existingWallet.Creator {
-				// This is a recovery operation, allow it
-			} else {
-				// For normal updates, require creator match
-				if wallet.Creator != existingWallet.Creator {
-					return fmt.Errorf("wallet already exists: %s", wallet.WalletAddress)
-				}
-				// Don't allow creating a new active wallet if one already exists
-				if wallet.Status == types.WalletStatus_WALLET_STATUS_ACTIVE {
-					return fmt.Errorf("active wallet already exists: %s", wallet.WalletAddress)
-				}
-			}
-		} else {
-			// For inactive wallets, only allow recovery
-			if wallet.Status != types.WalletStatus_WALLET_STATUS_ACTIVE {
-				return fmt.Errorf("cannot update inactive wallet: must recover first")
-			}
-		}
-	}
-
-	store := k.GetWalletStore(ctx)
+	store := ctx.KVStore(k.storeKey)
+	key := []byte(fmt.Sprintf("wallet/%s", wallet.Id))
 	bz, err := k.cdc.Marshal(wallet)
 	if err != nil {
-		return fmt.Errorf("failed to marshal wallet: %w", err)
+		return fmt.Errorf("failed to marshal wallet: %v", err)
 	}
-	store.Set([]byte(wallet.WalletAddress), bz)
+	store.Set(key, bz)
 	return nil
 }
 
-// GetWallet retrieves a wallet
-func (k Keeper) GetWallet(ctx sdk.Context, walletAddress string) (*types.Wallet, error) {
-	store := k.GetWalletStore(ctx)
-	bz := store.Get([]byte(walletAddress))
+// GetWallet gets a wallet from the store
+func (k Keeper) GetWallet(ctx sdk.Context, walletId string) (*types.Wallet, error) {
+	store := ctx.KVStore(k.storeKey)
+	key := []byte(fmt.Sprintf("wallet/%s", walletId))
+	bz := store.Get(key)
 	if bz == nil {
-		return nil, fmt.Errorf("wallet not found: %s", walletAddress)
+		return nil, fmt.Errorf("wallet not found")
 	}
 
 	var wallet types.Wallet
 	if err := k.cdc.Unmarshal(bz, &wallet); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal wallet: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
 	}
 	return &wallet, nil
 }
 
-// DeleteWallet removes a wallet
-func (k Keeper) DeleteWallet(ctx sdk.Context, walletAddress string) {
-	store := k.GetWalletStore(ctx)
-	store.Delete([]byte(walletAddress))
+// DeleteWallet deletes a wallet from the store
+func (k Keeper) DeleteWallet(ctx sdk.Context, walletId string) error {
+	store := ctx.KVStore(k.storeKey)
+	key := []byte(fmt.Sprintf("wallet/%s", walletId))
+	if !store.Has(key) {
+		return fmt.Errorf("wallet not found")
+	}
+
+	store.Delete(key)
+	return nil
+}
+
+// ListWallets returns all wallets
+func (k Keeper) ListWallets(ctx sdk.Context) ([]*types.Wallet, error) {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte("wallet/")
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
+	defer iterator.Close()
+
+	var wallets []*types.Wallet
+	for ; iterator.Valid(); iterator.Next() {
+		var wallet types.Wallet
+		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
+		}
+		wallets = append(wallets, &wallet)
+	}
+
+	return wallets, nil
+}
+
+// GetAllWalletsFromStore returns all wallets from the KVStore
+func (k Keeper) GetAllWalletsFromStore(ctx sdk.Context) ([]types.Wallet, error) {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte("wallet/")
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
+	defer iterator.Close()
+
+	var wallets []types.Wallet
+	for ; iterator.Valid(); iterator.Next() {
+		var wallet types.Wallet
+		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
+		}
+		wallets = append(wallets, wallet)
+	}
+
+	return wallets, nil
+}
+
+// GetWalletStatus returns the current status of a wallet
+func (k Keeper) GetWalletStatus(ctx sdk.Context, walletAddress string) (types.WalletStatus, error) {
+	wallet, err := k.GetWallet(ctx, walletAddress)
+	if err != nil {
+		return types.WalletStatus_WALLET_STATUS_UNSPECIFIED, fmt.Errorf("wallet not found: %v", err)
+	}
+	return wallet.Status, nil
+}
+
+// SetWalletStatus updates the status of a wallet
+func (k Keeper) SetWalletStatus(ctx sdk.Context, walletAddress string, status types.WalletStatus) error {
+	wallet, err := k.GetWallet(ctx, walletAddress)
+	if err != nil {
+		return fmt.Errorf("wallet not found: %v", err)
+	}
+
+	wallet.Status = status
+	return k.SaveWallet(ctx, wallet)
 }
 
 // SavePartyData stores TSS party data

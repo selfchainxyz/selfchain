@@ -2,15 +2,14 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/spf13/cobra"
 	"selfchain/x/keyless/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
-	// Group keyless queries under a subcommand
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
@@ -19,16 +18,11 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(
-		CmdQueryParams(),
-		CmdQueryWallet(),
-		CmdListWallets(),
-		CmdQueryPartyData(),
-		CmdQueryKeyRotationStatus(),
-		CmdQueryBatchSignStatus(),
-	)
-
-	flags.AddQueryFlagsToCmd(cmd)
+	cmd.AddCommand(CmdQueryWallet())
+	cmd.AddCommand(CmdListWallets())
+	cmd.AddCommand(CmdQueryPartyData())
+	cmd.AddCommand(CmdQueryKeyRotationStatus())
+	cmd.AddCommand(CmdQueryBatchSignStatus())
 
 	return cmd
 }
@@ -36,7 +30,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdQueryWallet() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wallet [address]",
-		Short: "Query a wallet by address",
+		Short: "Query wallet by address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -96,7 +90,7 @@ func CmdListWallets() *cobra.Command {
 func CmdQueryPartyData() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "party-data [wallet-address]",
-		Short: "Query party data for a wallet",
+		Short: "Query party data by wallet address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -123,7 +117,7 @@ func CmdQueryPartyData() *cobra.Command {
 func CmdQueryKeyRotationStatus() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "key-rotation-status [wallet-id]",
-		Short: "Query key rotation status for a wallet",
+		Short: "Query key rotation status by wallet ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -150,7 +144,7 @@ func CmdQueryKeyRotationStatus() *cobra.Command {
 func CmdQueryBatchSignStatus() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "batch-sign-status [wallet-id] [batch-id]",
-		Short: "Query batch signing status for a wallet",
+		Short: "Query batch sign status by wallet ID and batch ID",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

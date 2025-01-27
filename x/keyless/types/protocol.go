@@ -18,6 +18,11 @@ type TSSProtocol interface {
 // TSSProtocolImpl implements the TSSProtocol interface
 type TSSProtocolImpl struct{}
 
+// NewTSSProtocolImpl creates a new TSSProtocolImpl
+func NewTSSProtocolImpl() TSSProtocol {
+	return &TSSProtocolImpl{}
+}
+
 // InitiateSigning starts a new signing session
 func (p *TSSProtocolImpl) InitiateSigning(ctx context.Context, msg []byte, walletID string) (*SigningResponse, error) {
 	// TODO: Implement actual TSS signing protocol

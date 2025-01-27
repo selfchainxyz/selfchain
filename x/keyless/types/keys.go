@@ -49,8 +49,17 @@ const (
 	// PartyDataKey is the prefix for party data
 	PartyDataKey = KeyPrefix + "party_data/"
 
+	// PermissionKey is the prefix for permissions
+	PermissionKey = KeyPrefix + "permission/"
+
 	// SigningSessionKey is the prefix for signing sessions
 	SigningSessionKey = KeyPrefix + "signing_session/"
+
+	// RecoveryKeyPrefix is the prefix for recovery keys
+	RecoveryKeyPrefix = KeyPrefix + "recovery/"
+
+	// AuditEventKey is the prefix for audit events
+	AuditEventKey = KeyPrefix + "audit_event/"
 )
 
 var (
@@ -63,6 +72,11 @@ var (
 	// KeyPrefixSigningSession is the prefix for signing session storage
 	KeyPrefixSigningSession = []byte{0x03}
 )
+
+// GetPrefixedKey returns a key with the module prefix
+func GetPrefixedKey(key []byte) []byte {
+	return append([]byte(KeyPrefix), key...)
+}
 
 // WalletStoreKey returns the store key to retrieve a Wallet from the index fields
 func WalletStoreKey(walletId string) []byte {
@@ -87,7 +101,6 @@ func KeyRotationStatusKey(walletId string) []byte {
 func GetKeyRotationKey(walletId string, version uint64) []byte {
 	key := []byte(KeyRotationKey)
 	key = append(key, []byte(walletId)...)
-	
 	versionBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(versionBytes, version)
 	return append(key, versionBytes...)
@@ -102,4 +115,28 @@ func BatchSignStatusStoreKey(walletId string) []byte {
 // ParamsStoreKey returns the store key for module parameters
 func ParamsStoreKey() []byte {
 	return []byte(ParamsKey)
+}
+
+// GetPermissionKey returns the store key for a permission
+func GetPermissionKey(walletID, grantee string) []byte {
+	return append(GetPermissionPrefix(walletID), []byte(grantee)...)
+}
+
+// GetPermissionPrefix returns the prefix for all permissions of a wallet
+func GetPermissionPrefix(walletID string) []byte {
+	return append([]byte(PermissionKey), []byte(walletID)...)
+}
+
+// GetRecoveryKey returns the key for storing recovery data
+func GetRecoveryKey(walletID string) []byte {
+	return append([]byte(RecoveryKeyPrefix), []byte(walletID)...)
+}
+
+// GetAuditEventKey returns the store key to retrieve an AuditEvent from the index fields
+func GetAuditEventKey(walletId string, timestamp int64) []byte {
+	key := []byte(AuditEventKey)
+	key = append(key, []byte(walletId)...)
+	timeBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(timeBytes, uint64(timestamp))
+	return append(key, timeBytes...)
 }

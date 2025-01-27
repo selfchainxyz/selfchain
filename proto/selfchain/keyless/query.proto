@@ -9,6 +9,7 @@ import "selfchain/keyless/keygen.proto";
 import "selfchain/keyless/wallet.proto";
 import "selfchain/keyless/key_rotation.proto";
 import "selfchain/keyless/audit.proto";
+import "selfchain/keyless/permission.proto";
 
 option go_package = "selfchain/x/keyless/types";
 
@@ -57,6 +58,16 @@ service Query {
   // ListAuditEvents queries audit events for a wallet with filtering
   rpc ListAuditEvents(QueryListAuditEventsRequest) returns (QueryListAuditEventsResponse) {
     option (google.api.http).get = "/selfchain/keyless/audit_events/{wallet_id}";
+  }
+
+  // Permissions queries all permissions for a wallet
+  rpc Permissions(QueryPermissionsRequest) returns (QueryPermissionsResponse) {
+    option (google.api.http).get = "/selfchain/keyless/permissions/{wallet_id}";
+  }
+
+  // Permission queries a specific permission by wallet ID and grantee
+  rpc Permission(QueryPermissionRequest) returns (QueryPermissionResponse) {
+    option (google.api.http).get = "/selfchain/keyless/permission/{wallet_id}/{grantee}";
   }
 }
 
@@ -165,4 +176,27 @@ message QueryListAuditEventsRequest {
 message QueryListAuditEventsResponse {
   repeated AuditEvent events = 1 [(gogoproto.nullable) = true];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryPermissionsRequest is request type for the Query/Permissions RPC method.
+message QueryPermissionsRequest {
+  string wallet_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryPermissionsResponse is response type for the Query/Permissions RPC method.
+message QueryPermissionsResponse {
+  repeated Permission permissions = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryPermissionRequest is request type for the Query/Permission RPC method.
+message QueryPermissionRequest {
+  string wallet_id = 1;
+  string grantee = 2;
+}
+
+// QueryPermissionResponse is response type for the Query/Permission RPC method.
+message QueryPermissionResponse {
+  Permission permission = 1;
 }
