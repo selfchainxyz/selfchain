@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"math"
 	"selfchain/x/migration/types"
 	selfvestingTypes "selfchain/x/selfvesting/types"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
@@ -75,7 +76,7 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 	// Mint new coins to the selfvesting module
 	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, migrationCoins)
 	if mintError != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
+		return nil, sdkerrors.Wrapf(errors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
 	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method

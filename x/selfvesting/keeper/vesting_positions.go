@@ -3,7 +3,8 @@ package keeper
 import (
 	"selfchain/x/selfvesting/types"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+	cosmotypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -37,7 +38,7 @@ func (k Keeper) GetVestingPositions(
 // GetAllVestingPositions returns all vestingPositions
 func (k Keeper) GetAllVestingPositions(ctx sdk.Context) (list []types.VestingPositions) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.VestingPositionsKeyPrefix))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := cosmotypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 

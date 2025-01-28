@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"context"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -8,7 +10,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 const (
@@ -52,18 +53,21 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper,
+	) func(cont context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	return func(cont context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(cont)
+
 		ctx.Logger().Info("Starting upgrade v2")
 
-		// 1. Run all module migrations first
+		// Run module migrations with the provided version map
 		newVM, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
 			ctx.Logger().Error("Failed to run module migrations for v2", "error", err)
 			return nil, err
 		}
 
-		// 2. After all modules are migrated, run your custom logic
+		// Run custom upgrade logic
 		if err := updateVestingSchedules(ctx, accountKeeper, bankkeeper); err != nil {
 			ctx.Logger().Error("Failed to execute v2 upgrade (vestings)", "error", err)
 			return nil, err

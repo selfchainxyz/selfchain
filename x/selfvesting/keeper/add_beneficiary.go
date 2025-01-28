@@ -1,18 +1,19 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"selfchain/x/selfvesting/types"
 	"selfchain/x/selfvesting/utils"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k Keeper) AddBeneficiary(ctx sdk.Context, req types.AddBeneficiaryRequest) (*types.VestingInfo, error) {
 	// check the benficiary address is a valid bech32 address
 	_, err := sdk.AccAddressFromBech32(req.Beneficiary)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid beneficiary address (%s)", err)
+		return nil, sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid beneficiary address (%s)", err)
 	}
 
 	// create and add a new vesting position under the beneficiary key

@@ -1,9 +1,9 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"selfchain/testutil/sample"
 )
@@ -19,7 +19,7 @@ func TestMsgUpdateConfig_ValidateBasic(t *testing.T) {
 			msg: MsgUpdateConfig{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: errors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgUpdateConfig{

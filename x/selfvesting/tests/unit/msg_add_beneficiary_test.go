@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 
 	keepertest "selfchain/testutil/keeper"
@@ -11,8 +12,6 @@ import (
 	mocktest "selfchain/x/selfvesting/tests/mock"
 	"selfchain/x/selfvesting/types"
 	"selfchain/x/selfvesting/utils"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -49,7 +48,7 @@ func TestShouldFailIfInvalidBeneficiaryAddr(t *testing.T) {
 		Amount:      "",
 	})
 
-	require.ErrorIs(t, err, sdkerrors.ErrInvalidAddress)
+	require.ErrorIs(t, err, errors.ErrInvalidAddress)
 }
 
 func TestShouldCreateNewVestingPosition(t *testing.T) {

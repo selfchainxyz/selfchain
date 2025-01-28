@@ -619,19 +619,19 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "params"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TokenMigration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"selfchain", "migration", "token_migration", "msgHash"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_TokenMigration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"selfchain", "migration", "token_migration", "msgHash"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TokenMigrationAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "token_migration"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_TokenMigrationAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "token_migration"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Acl_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "acl"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Acl_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "acl"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Migrator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2}, []string{"selfchain", "migration", "migrator"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Migrator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2}, []string{"selfchain", "migration", "migrator"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_MigratorAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "migrator"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_MigratorAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "migrator"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Config_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "config"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Config_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"selfchain", "migration", "config"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
