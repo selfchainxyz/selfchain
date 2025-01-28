@@ -99,10 +99,7 @@ func initTendermintConfig() *tmcfg.Config {
 	return cfg
 }
 
-func initRootCmd(
-	rootCmd *cobra.Command,
-	encodingConfig appparams.EncodingConfig,
-) {
+func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig) {
 	// Set config
 	initSDKConfig()
 
@@ -112,18 +109,18 @@ func initRootCmd(
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator, valOperAddressCodec),
+		//genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(
 			app.ModuleBasics,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
-			valOperAddressCodec,
-		),
+			valOperAddressCodec),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
+		genutilcli.GenesisCoreCommand(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome),
 		debug.Cmd(),
-		// this line is used by starport scaffolding # root/commands
 	)
 
 	a := appCreator{
@@ -139,11 +136,6 @@ func initRootCmd(
 		addModuleInitFlags,
 	)
 
-	// Extend reset command with WASM support if needed
-	if shouldExtendWasmReset() {
-		wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
-	}
-
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
@@ -151,24 +143,36 @@ func initRootCmd(
 		txCommand(app.ModuleBasics),
 		keys.Commands(),
 	)
+
+	// Add WASM commands if needed
+	if shouldExtendWasmReset() {
+		wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
+	}
 }
 
 // shouldExtendWasmReset checks if WASM reset should be enabled
 func shouldExtendWasmReset() bool {
-	// You can add additional checks here if needed
 	_, ok := app.ModuleBasics["wasm"]
 	return ok
 }
 
+// shouldExtendWasmReset checks if WASM reset should be enabled
+
 func SafeAddTxCommands(moduleBasics module.BasicManager, cmd *cobra.Command) {
+	// Keep track of which modules we've warned about
+	warnedModules := make(map[string]bool)
+
 	for name, modBasic := range moduleBasics {
 		if modTxCmd, ok := modBasic.(interface{ GetTxCmd() *cobra.Command }); ok {
 			// Safely try to get tx command
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						// Log to stderr to avoid interfering with JSON output
-						fmt.Fprintf(os.Stderr, "Warning: skipping tx commands for module %s\n", name)
+						// Only warn once per module
+						if !warnedModules[name] {
+							fmt.Fprintf(os.Stderr, "Warning: skipping tx commands for module %s\n", name)
+							warnedModules[name] = true
+						}
 					}
 				}()
 
@@ -179,6 +183,7 @@ func SafeAddTxCommands(moduleBasics module.BasicManager, cmd *cobra.Command) {
 		}
 	}
 }
+
 
 
 // queryCommand returns the sub-command to send queries to the app
@@ -208,9 +213,6 @@ func queryCommand() *cobra.Command {
 }
 
 // txCommand returns the sub-command to send transactions to the app
-// txCommand returns the sub-command to send transactions to the app
-// txCommand returns the sub-command to send transactions to the app
-// txCommand returns the sub-command to send transactions to the app
 func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
@@ -239,6 +241,7 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 
 	return cmd
 }
+
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
