@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"io"
 	"os"
@@ -24,7 +26,6 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -67,21 +68,10 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 
 	rootCmd := &cobra.Command{
 		Use:   app.Name + "d",
-		Short: "Start Selfchain node",
+		Short: "Start " + app.Name + " node",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// set the default command outputs
-			cmd.SetOut(cmd.OutOrStdout())
-			cmd.SetErr(cmd.ErrOrStderr())
-			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
-			if err != nil {
-				return err
-			}
-
-			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+			// Set the client context before any command executes
+			if err := client.SetCmdClientContext(cmd, initClientCtx); err != nil {
 				return err
 			}
 
@@ -122,13 +112,13 @@ func initRootCmd(
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator, valOperAddressCodec),
-		//genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(
 			app.ModuleBasics,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
-			valOperAddressCodec),
+			valOperAddressCodec,
+		),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
@@ -149,16 +139,47 @@ func initRootCmd(
 		addModuleInitFlags,
 	)
 
-	wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
+	// Extend reset command with WASM support if needed
+	if shouldExtendWasmReset() {
+		wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
+	}
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
 		queryCommand(),
-		txCommand(),
+		txCommand(app.ModuleBasics),
 		keys.Commands(),
 	)
 }
+
+// shouldExtendWasmReset checks if WASM reset should be enabled
+func shouldExtendWasmReset() bool {
+	// You can add additional checks here if needed
+	_, ok := app.ModuleBasics["wasm"]
+	return ok
+}
+
+func SafeAddTxCommands(moduleBasics module.BasicManager, cmd *cobra.Command) {
+	for name, modBasic := range moduleBasics {
+		if modTxCmd, ok := modBasic.(interface{ GetTxCmd() *cobra.Command }); ok {
+			// Safely try to get tx command
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						// Log to stderr to avoid interfering with JSON output
+						fmt.Fprintf(os.Stderr, "Warning: skipping tx commands for module %s\n", name)
+					}
+				}()
+
+				if txCmd := modTxCmd.GetTxCmd(); txCmd != nil {
+					cmd.AddCommand(txCmd)
+				}
+			}()
+		}
+	}
+}
+
 
 // queryCommand returns the sub-command to send queries to the app
 func queryCommand() *cobra.Command {
@@ -187,7 +208,10 @@ func queryCommand() *cobra.Command {
 }
 
 // txCommand returns the sub-command to send transactions to the app
-func txCommand() *cobra.Command {
+// txCommand returns the sub-command to send transactions to the app
+// txCommand returns the sub-command to send transactions to the app
+// txCommand returns the sub-command to send transactions to the app
+func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",
@@ -207,8 +231,11 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 	)
 
-	app.ModuleBasics.AddTxCommands(cmd)
+	// Safely add module tx commands
+	SafeAddTxCommands(moduleBasics, cmd)
+
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

@@ -16,20 +16,23 @@ func makeEncodingConfig() params.EncodingConfig {
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 
-	return params.EncodingConfig{
+	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Marshaler:         marshaler,
+		Marshaler:         marshaler,  // Use the same marshaler instance
 		TxConfig:          txCfg,
 		Amino:             amino,
 	}
-}
 
-// MakeEncodingConfig creates an EncodingConfig for testing
-func MakeEncodingConfig() params.EncodingConfig {
-	encodingConfig := makeEncodingConfig()
+	// Register the interfaces only once
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
 	return encodingConfig
+}
+
+// MakeEncodingConfig creates an EncodingConfig for testing
+func MakeEncodingConfig() params.EncodingConfig {
+	return makeEncodingConfig()
 }
