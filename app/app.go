@@ -519,6 +519,8 @@ func New(
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(ibctransfertypes.ModuleName).String(),
 	)
+	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
+
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey],
 		app.GetSubspace(icacontrollertypes.SubModuleName),
