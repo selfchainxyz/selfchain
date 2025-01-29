@@ -63,14 +63,14 @@ func (km *KeyGenManager) GenerateKeyShares(ctx context.Context, req *types.KeyGe
 	}
 
 	// 5. Store encrypted shares
-	if err := km.storeKeyShares(ctx, req.WalletId, encryptedShares); err != nil {
+	if err := km.storeKeyShares(ctx, req.WalletAddress, encryptedShares); err != nil {
 		return nil, fmt.Errorf("share storage failed: %w", err)
 	}
 
 	return &types.KeyGenResponse{
-		WalletId:  req.WalletId,
-		PublicKey: keygenResult.PublicKeyBytes,
-		Metadata:  metadata,
+		WalletAddress: req.WalletAddress,
+		PublicKey:    keygenResult.PublicKeyBytes,
+		Metadata:     metadata,
 	}, nil
 }
 
@@ -107,9 +107,9 @@ func (km *KeyGenManager) encryptKeyShares(ctx context.Context, result *tss.Keyge
 	return shares, nil
 }
 
-func (km *KeyGenManager) storeKeyShares(ctx context.Context, walletID string, shares []*types.EncryptedShare) error {
+func (km *KeyGenManager) storeKeyShares(ctx context.Context, walletAddress string, shares []*types.EncryptedShare) error {
 	for i, share := range shares {
-		key := fmt.Sprintf("%s_share_%d", walletID, i+1)
+		key := fmt.Sprintf("%s_share_%d", walletAddress, i+1)
 		if err := km.keeper.SavePartyShare(ctx, key, share); err != nil {
 			return fmt.Errorf("failed to store share %d: %w", i+1, err)
 		}

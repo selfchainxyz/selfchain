@@ -37,25 +37,34 @@ func (k Keeper) DeleteKeyRotationStatus(ctx sdk.Context, walletAddress string) {
 	store.Delete(key)
 }
 
-// GetKeyRotation retrieves a key rotation record by wallet ID and version
-func (k Keeper) GetKeyRotation(ctx sdk.Context, walletId string, version uint64) (*types.KeyRotation, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.KeyRotationKey))
-	key := types.GetKeyRotationKey(walletId, version)
+// GetKeyRotation gets a key rotation record
+func (k Keeper) GetKeyRotation(ctx sdk.Context, walletAddress string, version uint64) (*types.KeyRotation, error) {
+	key := types.GetKeyRotationKey(walletAddress, version)
+	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(key)
 	if bz == nil {
-		return nil, fmt.Errorf("key rotation not found for wallet %s version %d", walletId, version)
+		return nil, fmt.Errorf("key rotation not found")
 	}
 
 	var rotation types.KeyRotation
-	k.cdc.MustUnmarshal(bz, &rotation)
+	if err := k.cdc.Unmarshal(bz, &rotation); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal key rotation: %v", err)
+	}
 	return &rotation, nil
 }
 
-// SetKeyRotation stores a key rotation record
-func (k Keeper) SetKeyRotation(ctx sdk.Context, rotation *types.KeyRotation) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.KeyRotationKey))
-	key := types.GetKeyRotationKey(rotation.WalletId, rotation.Version)
-	bz := k.cdc.MustMarshal(rotation)
+// SaveKeyRotation saves a key rotation record
+func (k Keeper) SaveKeyRotation(ctx sdk.Context, rotation *types.KeyRotation) error {
+	if rotation == nil {
+		return fmt.Errorf("key rotation cannot be nil")
+	}
+
+	key := types.GetKeyRotationKey(rotation.WalletAddress, rotation.Version)
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(rotation)
+	if err != nil {
+		return fmt.Errorf("failed to marshal key rotation: %v", err)
+	}
 	store.Set(key, bz)
 	return nil
 }
@@ -77,17 +86,17 @@ func (k Keeper) InitiateKeyRotation(ctx sdk.Context, msg *types.MsgInitiateKeyRo
 	// Create new key rotation record
 	nextVersion := uint64(wallet.KeyVersion) + 1
 	rotation := &types.KeyRotation{
-		WalletId:  msg.WalletAddress,
-		OldPubKey: wallet.PublicKey,
-		NewPubKey: msg.NewPubKey,
-		Version:   nextVersion,
-		Status:    types.KeyRotationStatus_KEY_ROTATION_STATUS_IN_PROGRESS,
-		Error:     "",
-		Signature: msg.Signature,
+		WalletAddress: msg.WalletAddress,
+		OldPubKey:     wallet.PublicKey,
+		NewPubKey:     msg.NewPubKey,
+		Version:       nextVersion,
+		Status:        types.KeyRotationStatus_KEY_ROTATION_STATUS_IN_PROGRESS,
+		Error:         "",
+		Signature:     msg.Signature,
 	}
 
 	// Store key rotation record
-	if err := k.SetKeyRotation(ctx, rotation); err != nil {
+	if err := k.SaveKeyRotation(ctx, rotation); err != nil {
 		return err
 	}
 
@@ -155,7 +164,7 @@ func (k Keeper) CompleteKeyRotation(ctx sdk.Context, msg *types.MsgCompleteKeyRo
 
 	// Update key rotation record
 	rotation.Status = types.KeyRotationStatus_KEY_ROTATION_STATUS_COMPLETED
-	if err := k.SetKeyRotation(ctx, rotation); err != nil {
+	if err := k.SaveKeyRotation(ctx, rotation); err != nil {
 		return err
 	}
 
@@ -172,17 +181,45 @@ func (k Keeper) CompleteKeyRotation(ctx sdk.Context, msg *types.MsgCompleteKeyRo
 	return nil
 }
 
-// GetKeyRotationsForWallet returns all key rotations for a wallet
-func (k Keeper) GetKeyRotationsForWallet(ctx sdk.Context, walletId string) []*types.KeyRotation {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.KeyRotationKey))
-	iterator := store.Iterator([]byte(walletId), nil)
-	defer iterator.Close()
+// GetAllKeyRotations gets all key rotations for a wallet
+func (k Keeper) GetAllKeyRotations(ctx sdk.Context, walletAddress string) ([]*types.KeyRotation, error) {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, []byte(types.KeyRotationKey))
 
 	var rotations []*types.KeyRotation
+	iterator := prefixStore.Iterator(nil, nil)
+	defer iterator.Close()
+
 	for ; iterator.Valid(); iterator.Next() {
 		var rotation types.KeyRotation
-		k.cdc.MustUnmarshal(iterator.Value(), &rotation)
-		if rotation.WalletId == walletId {
+		err := k.cdc.Unmarshal(iterator.Value(), &rotation)
+		if err != nil {
+			return nil, err
+		}
+		if rotation.WalletAddress == walletAddress {
+			rotations = append(rotations, &rotation)
+		}
+	}
+
+	return rotations, nil
+}
+
+// GetKeyRotationsForWallet returns all key rotations for a wallet
+func (k Keeper) GetKeyRotationsForWallet(ctx sdk.Context, walletAddress string) []*types.KeyRotation {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, []byte(types.KeyRotationKey))
+
+	var rotations []*types.KeyRotation
+	iterator := prefixStore.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var rotation types.KeyRotation
+		err := k.cdc.Unmarshal(iterator.Value(), &rotation)
+		if err != nil {
+			continue
+		}
+		if rotation.WalletAddress == walletAddress {
 			rotations = append(rotations, &rotation)
 		}
 	}

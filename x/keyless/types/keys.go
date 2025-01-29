@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 )
 
 const (
@@ -79,9 +80,9 @@ func GetPrefixedKey(key []byte) []byte {
 }
 
 // WalletStoreKey returns the store key to retrieve a Wallet from the index fields
-func WalletStoreKey(walletId string) []byte {
+func WalletStoreKey(walletAddress string) []byte {
 	key := []byte(WalletKey)
-	return append(key, []byte(walletId)...)
+	return append(key, []byte(walletAddress)...)
 }
 
 // AuthorizationKey returns the store key to retrieve an authorization from the index fields
@@ -92,24 +93,20 @@ func AuthorizationKey(creator, walletAddress string) []byte {
 }
 
 // KeyRotationStatusKey returns the store key to retrieve a key rotation status from the index fields
-func KeyRotationStatusKey(walletId string) []byte {
+func KeyRotationStatusKey(walletAddress string) []byte {
 	key := []byte(KeyRotationStatusPrefix)
-	return append(key, []byte(walletId)...)
+	return append(key, []byte(walletAddress)...)
 }
 
 // GetKeyRotationKey returns the store key to retrieve a KeyRotation from the index fields
-func GetKeyRotationKey(walletId string, version uint64) []byte {
-	key := []byte(KeyRotationKey)
-	key = append(key, []byte(walletId)...)
-	versionBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(versionBytes, version)
-	return append(key, versionBytes...)
+func GetKeyRotationKey(walletAddress string, version uint64) []byte {
+	return []byte(fmt.Sprintf("%s/%s/%d", KeyRotationKey, walletAddress, version))
 }
 
 // BatchSignStatusStoreKey returns the store key for batch sign status
-func BatchSignStatusStoreKey(walletId string) []byte {
+func BatchSignStatusStoreKey(walletAddress string) []byte {
 	key := []byte(BatchSignStatusKey)
-	return append(key, []byte(walletId)...)
+	return append(key, []byte(walletAddress)...)
 }
 
 // ParamsStoreKey returns the store key for module parameters
@@ -118,24 +115,24 @@ func ParamsStoreKey() []byte {
 }
 
 // GetPermissionKey returns the store key for a permission
-func GetPermissionKey(walletID, grantee string) []byte {
-	return append(GetPermissionPrefix(walletID), []byte(grantee)...)
+func GetPermissionKey(walletAddress string, grantee string) []byte {
+	return []byte(fmt.Sprintf("%s/%s/%s", PermissionKey, walletAddress, grantee))
 }
 
 // GetPermissionPrefix returns the prefix for all permissions of a wallet
-func GetPermissionPrefix(walletID string) []byte {
-	return append([]byte(PermissionKey), []byte(walletID)...)
+func GetPermissionPrefix(walletAddress string) []byte {
+	return []byte(fmt.Sprintf("%s/%s/", PermissionKey, walletAddress))
 }
 
 // GetRecoveryKey returns the key for storing recovery data
-func GetRecoveryKey(walletID string) []byte {
-	return append([]byte(RecoveryKeyPrefix), []byte(walletID)...)
+func GetRecoveryKey(walletAddress string) []byte {
+	return append([]byte(RecoveryKeyPrefix), []byte(walletAddress)...)
 }
 
 // GetAuditEventKey returns the store key to retrieve an AuditEvent from the index fields
-func GetAuditEventKey(walletId string, timestamp int64) []byte {
+func GetAuditEventKey(walletAddress string, timestamp int64) []byte {
 	key := []byte(AuditEventKey)
-	key = append(key, []byte(walletId)...)
+	key = append(key, []byte(walletAddress)...)
 	timeBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(timeBytes, uint64(timestamp))
 	return append(key, timeBytes...)

@@ -1,15 +1,19 @@
 package types
 
+import (
+	"fmt"
+)
+
 // Validate validates a KeyGenRequest
 func (r *KeyGenRequest) Validate() error {
-	if r.WalletId == "" {
-		return ErrInvalidRequest.Wrap("wallet ID is required")
+	if r.WalletAddress == "" {
+		return fmt.Errorf("wallet address cannot be empty")
 	}
 	if r.ChainId == "" {
-		return ErrInvalidRequest.Wrap("chain ID is required")
+		return fmt.Errorf("chain id cannot be empty")
 	}
-	if !r.SecurityLevel.IsValid() {
-		return ErrInvalidRequest.Wrap("invalid security level")
+	if r.SecurityLevel == SecurityLevel_SECURITY_LEVEL_UNSPECIFIED {
+		return fmt.Errorf("security level must be specified")
 	}
 	return nil
 }
@@ -31,16 +35,16 @@ func (s *EncryptedShare) ValidateBasic() error {
 	return nil
 }
 
-// ValidateBasic performs basic validation of a KeyGenResponse
-func (r *KeyGenResponse) ValidateBasic() error {
-	if r.WalletId == "" {
-		return ErrInvalidResponse.Wrap("wallet ID is required")
+// Validate validates a KeyGenResponse
+func (r *KeyGenResponse) Validate() error {
+	if r.WalletAddress == "" {
+		return fmt.Errorf("wallet address cannot be empty")
 	}
-	if len(r.PublicKey) == 0 {
-		return ErrInvalidResponse.Wrap("public key is required")
+	if r.PublicKey == nil {
+		return fmt.Errorf("public key cannot be nil")
 	}
 	if r.Metadata == nil {
-		return ErrInvalidResponse.Wrap("metadata is required")
+		return fmt.Errorf("metadata cannot be nil")
 	}
 	return nil
 }

@@ -38,4 +38,6 @@ message MsgBatchSignRequest {
 }
 
 // MsgBatchSignResponse represents the response to a batch sign request
-message MsgBatchSignResponse {}
+message MsgBatchSignResponse {
+  BatchSignStatusInfo status = 1;
+}

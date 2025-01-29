@@ -53,14 +53,14 @@ message PartyData {
 
 // KeyGenRequest represents a request to generate new key shares
 message KeyGenRequest {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string chain_id = 2;
   SecurityLevel security_level = 3;
 }
 
 // KeyGenResponse represents the response from key generation
 message KeyGenResponse {
-  string wallet_id = 1;
+  string wallet_address = 1;
   bytes public_key = 2;
   KeyMetadata metadata = 3;
 }

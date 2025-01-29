@@ -10,6 +10,7 @@ func NewWallet(
 	keyVersion uint32,
 ) *Wallet {
 	return &Wallet{
+		Id:            walletAddress, // Set id to be same as wallet_address for consistency
 		Creator:       creator,
 		PublicKey:     publicKey,
 		WalletAddress: walletAddress,

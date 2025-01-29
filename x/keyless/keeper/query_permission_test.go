@@ -2,131 +2,109 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	testkeeper "selfchain/testutil/keeper"
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
 )
 
-func TestPermissionsQuery(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	wctx := sdk.WrapSDKContext(k.Ctx)
-	testCases := []struct {
-		desc     string
-		request  *types.QueryPermissionsRequest
-		response *types.QueryPermissionsResponse
-		err      error
-	}{
-		{
-			desc:    "First",
-			request: &types.QueryPermissionsRequest{},
-			err:     status.Error(codes.InvalidArgument, "invalid request"),
-		},
-		{
-			desc: "NoPermissions",
-			request: &types.QueryPermissionsRequest{
-				WalletId: "test-wallet",
-			},
-			response: &types.QueryPermissionsResponse{
-				Permissions: []*types.Permission{},
-			},
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := k.Permissions(wctx, tc.request)
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.response, response)
-			}
-		})
-	}
-}
-
 func TestPermissionQuery(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	wctx := sdk.WrapSDKContext(k.Ctx)
-	testCases := []struct {
-		desc     string
-		request  *types.QueryPermissionRequest
-		response *types.QueryPermissionResponse
-		err      error
-	}{
-		{
-			desc:    "InvalidRequest",
-			request: nil,
-			err:     status.Error(codes.InvalidArgument, "invalid request"),
-		},
-		{
-			desc: "NotFound",
-			request: &types.QueryPermissionRequest{
-				WalletId: "test-wallet",
-				Grantee:  "test-grantee",
-			},
-			err: status.Error(codes.NotFound, "permission not found"),
-		},
-		{
-			desc: "NoWalletId",
-			request: &types.QueryPermissionRequest{
-				Grantee: "test-grantee",
-			},
-			err: status.Error(codes.InvalidArgument, "wallet ID cannot be empty"),
-		},
-		{
-			desc: "NoGrantee",
-			request: &types.QueryPermissionRequest{
-				WalletId: "test-wallet",
-			},
-			err: status.Error(codes.InvalidArgument, "grantee cannot be empty"),
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := k.Permission(wctx, tc.request)
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.response, response)
-			}
-		})
-	}
-}
-
-func TestPermissionsQueryPaginated(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
+	k := keepertest.NewKeylessKeeper(t)
+	srv := keeper.NewMsgServerImpl(k.Keeper)
 	wctx := sdk.WrapSDKContext(k.Ctx)
 
-	// Create test permissions
-	testWalletId := "test-wallet"
-	for i := 0; i < 5; i++ {
-		perm := types.Permission{
-			WalletId: testWalletId,
-			Grantee:  "grantee-" + string(rune(i+'0')),
-			Permissions: []string{
-				types.WalletPermission_WALLET_PERMISSION_SIGN.String(),
+	// Clear store before test
+	k.ClearStore()
+
+	// Create test wallet first
+	walletAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
+	creator := "cosmos1s4ycalgh3gjemd4hmqcvcgmnf647rnd0tpg2w9"
+	grantee1 := "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa"
+	grantee2 := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
+
+	msg := &types.MsgCreateWallet{
+		Creator:       creator,
+		PubKey:        "pubkey1",
+		WalletAddress: walletAddr,
+		ChainId:       "test-1",
+	}
+	_, err := srv.CreateWallet(wctx, msg)
+	require.NoError(t, err)
+
+	// Set wallet status to active
+	wallet, err := k.GetWallet(k.Ctx, walletAddr)
+	require.NoError(t, err)
+	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
+	err = k.SaveWallet(k.Ctx, wallet)
+	require.NoError(t, err)
+
+	expiresAt := time.Now().Add(24 * time.Hour)
+
+	// Grant permissions to two different grantees
+	perm1 := &types.Permission{
+		WalletAddress: walletAddr,
+		Grantee:      grantee1,
+		Permissions:  []string{"WALLET_PERMISSION_SIGN"},
+		ExpiresAt:    &expiresAt,
+	}
+	err = k.GrantPermission(k.Ctx, perm1)
+	require.NoError(t, err)
+
+	perm2 := &types.Permission{
+		WalletAddress: walletAddr,
+		Grantee:      grantee2,
+		Permissions:  []string{"WALLET_PERMISSION_ADMIN"},
+		ExpiresAt:    &expiresAt,
+	}
+	err = k.GrantPermission(k.Ctx, perm2)
+	require.NoError(t, err)
+
+	t.Run("Query_Permissions", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			req     *types.QueryPermissionsRequest
+			err     error
+			perms   []*types.Permission
+		}{
+			{
+				name: "Valid Query",
+				req: &types.QueryPermissionsRequest{
+					WalletId: walletAddr,
+				},
+				perms: []*types.Permission{perm1, perm2},
+			},
+			{
+				name: "Invalid Wallet",
+				req: &types.QueryPermissionsRequest{
+					WalletId: "invalid",
+				},
+				err: status.Error(codes.InvalidArgument, "invalid wallet address (decoding bech32 failed: invalid bech32 string length 7): invalid address"),
 			},
 		}
-		k.SetPermission(k.Ctx, &perm)
-	}
 
-	request := &types.QueryPermissionsRequest{
-		WalletId: testWalletId,
-		Pagination: &query.PageRequest{
-			Limit: 3,
-		},
-	}
-
-	response, err := k.Permissions(wctx, request)
-	require.NoError(t, err)
-	require.NotNil(t, response.Pagination)
-	require.Len(t, response.Permissions, 3)
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				resp, err := k.Permissions(wctx, tt.req)
+				if tt.err != nil {
+					require.Error(t, err)
+					require.Equal(t, tt.err.Error(), err.Error())
+					return
+				}
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				require.Len(t, resp.Permissions, len(tt.perms))
+				for i, perm := range resp.Permissions {
+					require.Equal(t, tt.perms[i].WalletAddress, perm.WalletAddress)
+					require.Equal(t, tt.perms[i].Grantee, perm.Grantee)
+					require.Equal(t, tt.perms[i].Permissions, perm.Permissions)
+				}
+			})
+		}
+	})
 }

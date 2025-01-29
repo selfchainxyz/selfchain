@@ -19,6 +19,8 @@ const (
 	EventTypeRecoveryCompleted     = "recovery_completed"
 	EventTypePermissionGranted     = "permission_granted"
 	EventTypePermissionRevoked     = "permission_revoked"
+	EventTypePermissionGrant       = "permission_grant"
+	EventTypePermissionRevoke      = "permission_revoke"
 
 	AttributeKeyWalletID      = "wallet_id"
 	AttributeKeyGrantee       = "grantee"
@@ -35,4 +37,5 @@ const (
 	AttributeKeyRecoveryAddress = "recovery_address"
 	AttributeKeyNewOwner        = "new_owner"
 	AttributeKeyTimestamp       = "timestamp"
+	AttributeKeyRevokedBy       = "revoked_by"
 )

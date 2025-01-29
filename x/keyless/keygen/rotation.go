@@ -24,21 +24,21 @@ func NewKeyRotationManager(keyGen *KeyGenManager, storage *storage.Storage) *Key
 }
 
 // RotateKeyShares performs secure key rotation
-func (kr *KeyRotationManager) RotateKeyShares(ctx context.Context, walletID string) error {
+func (kr *KeyRotationManager) RotateKeyShares(ctx context.Context, walletAddress string) error {
 	// 1. Load existing shares
-	share1, err := kr.storage.GetPartyShare(ctx, fmt.Sprintf("%s_share_1", walletID))
+	share1, err := kr.storage.GetPartyShare(ctx, fmt.Sprintf("%s_share_1", walletAddress))
 	if err != nil {
 		return fmt.Errorf("failed to get share 1: %w", err)
 	}
 
-	share2, err := kr.storage.GetPartyShare(ctx, fmt.Sprintf("%s_share_2", walletID))
+	share2, err := kr.storage.GetPartyShare(ctx, fmt.Sprintf("%s_share_2", walletAddress))
 	if err != nil {
 		return fmt.Errorf("failed to get share 2: %w", err)
 	}
 
 	// 2. Generate new key shares
 	req := &types.KeyGenRequest{
-		WalletId:      walletID,
+		WalletAddress:  walletAddress,
 		ChainId:       "temp", // This should be retrieved from wallet metadata
 		SecurityLevel: types.SecurityLevel_SECURITY_LEVEL_STANDARD,
 	}
@@ -54,7 +54,7 @@ func (kr *KeyRotationManager) RotateKeyShares(ctx context.Context, walletID stri
 	}
 
 	// 4. Backup old shares
-	if err := kr.backupOldShares(ctx, walletID, share1, share2); err != nil {
+	if err := kr.backupOldShares(ctx, walletAddress, share1, share2); err != nil {
 		return fmt.Errorf("failed to backup old shares: %w", err)
 	}
 
@@ -70,7 +70,7 @@ func (kr *KeyRotationManager) validateNewShares(ctx context.Context, resp *types
 	return nil
 }
 
-func (kr *KeyRotationManager) backupOldShares(ctx context.Context, walletID string, share1, share2 *types.EncryptedShare) error {
+func (kr *KeyRotationManager) backupOldShares(ctx context.Context, walletAddress string, share1, share2 *types.EncryptedShare) error {
 	// Implement backup logic
 	// This should store old shares in a secure backup location
 	return nil

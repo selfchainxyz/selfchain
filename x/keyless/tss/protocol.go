@@ -52,7 +52,7 @@ type Session struct {
 	mu            sync.RWMutex
 	// Additional fields for signing
 	Message   []byte
-	WalletID  string
+	WalletAddress  string
 	Signature *format.SignatureResult
 }
 
@@ -104,7 +104,7 @@ func (p *Protocol) GenerateKeyShares(ctx context.Context, req *ktypes.KeyGenRequ
 		SecurityLevel: req.SecurityLevel,
 		Status:        ktypes.SessionStatus_SESSION_STATUS_PENDING,
 		StartTime:     time.Now(),
-		WalletID:      req.WalletId,
+		WalletAddress:  req.WalletAddress,
 	}
 
 	// Store session
@@ -133,8 +133,8 @@ func (p *Protocol) GenerateKeyShares(ctx context.Context, req *ktypes.KeyGenRequ
 			case ktypes.SessionStatus_SESSION_STATUS_COMPLETED:
 				now := time.Now()
 				resultCh <- &ktypes.KeyGenResponse{
-					WalletId:  req.WalletId,
-					PublicKey: session.PublicKey,
+					WalletAddress:  req.WalletAddress,
+					PublicKey:     session.PublicKey,
 					Metadata: &ktypes.KeyMetadata{
 						CreatedAt:     now,
 						LastRotated:   now,
@@ -211,8 +211,8 @@ func (p *Protocol) ProcessKeyGenRound(ctx context.Context, sessionID string, par
 }
 
 // InitiateSigning starts a new signing session
-func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletID string) (*ktypes.SigningResponse, error) {
-	if len(msg) == 0 || walletID == "" {
+func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletAddress string) (*ktypes.SigningResponse, error) {
+	if len(msg) == 0 || walletAddress == "" {
 		return nil, errors.New("invalid input parameters")
 	}
 
@@ -224,14 +224,14 @@ func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletID str
 		Status:    ktypes.SessionStatus_SESSION_STATUS_PENDING,
 		StartTime: time.Now(),
 		Message:   msg,
-		WalletID:  walletID,
+		WalletAddress:  walletAddress,
 	}
 
 	// Store session
 	p.sessions.Store(session.ID, session)
 
 	// Initialize signing
-	if err := p.initializeSigning(ctx, session, msg, walletID); err != nil {
+	if err := p.initializeSigning(ctx, session, msg, walletAddress); err != nil {
 		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
 		return nil, fmt.Errorf("failed to initialize signing: %v", err)
 	}
@@ -266,8 +266,8 @@ func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletID str
 
 				now := time.Now()
 				resultCh <- &ktypes.SigningResponse{
-					WalletId:  walletID,
-					Signature: sigBytes,
+					WalletAddress:  walletAddress,
+					Signature:     sigBytes,
 					Metadata: &ktypes.SignatureMetadata{
 						Timestamp: &now,
 						ChainId:   "", // Set from request
@@ -372,7 +372,7 @@ func (p *Protocol) finalizeKeyGen(ctx context.Context, session *Session) error {
 	return nil
 }
 
-func (p *Protocol) initializeSigning(ctx context.Context, session *Session, msg []byte, walletID string) error {
+func (p *Protocol) initializeSigning(ctx context.Context, session *Session, msg []byte, walletAddress string) error {
 	// Hash the message
 	hash := sha256.Sum256(msg)
 

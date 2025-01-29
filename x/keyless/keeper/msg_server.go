@@ -10,12 +10,12 @@ import (
 )
 
 type msgServer struct {
-	Keeper
+	*Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+func NewMsgServerImpl(keeper *Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
@@ -55,12 +55,9 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate creator is authorized
-	authorized, err := k.IsWalletAuthorized(ctx, msg.Creator, msg.WalletAddress)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
+	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized")
+		return nil, status.Error(codes.PermissionDenied, "not authorized to sign transactions")
 	}
 
 	// TODO: Implement TSS signing logic
@@ -76,12 +73,9 @@ func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSignReque
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate creator is authorized
-	authorized, err := k.IsWalletAuthorized(ctx, msg.Creator, msg.WalletAddress)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
+	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized")
+		return nil, status.Error(codes.PermissionDenied, "not authorized to perform batch signing")
 	}
 
 	// Get wallet
@@ -98,20 +92,15 @@ func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSignReque
 	}
 
 	// Create batch sign status
-	batchStatus := &types.BatchSignStatusInfo{
+	status := &types.BatchSignStatusInfo{
 		WalletAddress: msg.WalletAddress,
-		Messages:      msg.Messages,
-		Status:        types.BatchSignStatus_BATCH_SIGN_STATUS_IN_PROGRESS,
-		Signatures:    make([]string, 0),
+		Messages:     msg.Messages,
+		Status:       types.BatchSignStatus_BATCH_SIGN_STATUS_IN_PROGRESS,
 	}
 
-	// Save batch sign status
-	err = k.SetBatchSignStatus(ctx, batchStatus)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &types.MsgBatchSignResponse{}, nil
+	return &types.MsgBatchSignResponse{
+		Status: status,
+	}, nil
 }
 
 // CompleteKeyRotation completes key rotation process
@@ -119,12 +108,9 @@ func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgComp
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate creator is authorized
-	authorized, err := k.IsWalletAuthorized(ctx, msg.Creator, msg.WalletAddress)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
+	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_ROTATE)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized")
+		return nil, status.Error(codes.PermissionDenied, "not authorized to complete key rotation")
 	}
 
 	// Get wallet
@@ -152,12 +138,9 @@ func (k msgServer) InitiateKeyRotation(goCtx context.Context, msg *types.MsgInit
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate creator is authorized
-	authorized, err := k.IsWalletAuthorized(ctx, msg.Creator, msg.WalletAddress)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
+	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_ROTATE)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized")
+		return nil, status.Error(codes.PermissionDenied, "not authorized to initiate key rotation")
 	}
 
 	// Get wallet

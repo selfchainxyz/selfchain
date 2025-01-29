@@ -24,7 +24,7 @@ enum KeyRotationStatus {
 
 // KeyRotation represents a key rotation record
 message KeyRotation {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string old_pub_key = 2;
   string new_pub_key = 3;
   uint64 version = 4;

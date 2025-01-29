@@ -11,6 +11,12 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// NewQueryServerImpl returns an implementation of the QueryServer interface
+// for the provided Keeper.
+func NewQueryServerImpl(k Keeper) types.QueryServer {
+	return k
+}
+
 // Params returns the module parameters
 func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
@@ -157,37 +163,4 @@ func (k Keeper) ListAuditEvents(goCtx context.Context, req *types.QueryListAudit
 		Events:     events,
 		Pagination: nil,
 	}, nil
-}
-
-// Permissions returns all permissions for a wallet
-func (k Keeper) Permissions(goCtx context.Context, req *types.QueryPermissionsRequest) (*types.QueryPermissionsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	permissions, err := k.GetPermissionsForWallet(ctx, req.WalletId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryPermissionsResponse{
-		Permissions: permissions,
-		Pagination: nil,
-	}, nil
-}
-
-// Permission returns a specific permission by wallet ID and grantee
-func (k Keeper) Permission(goCtx context.Context, req *types.QueryPermissionRequest) (*types.QueryPermissionResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	permission, err := k.GetPermission(ctx, req.WalletId, req.Grantee)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryPermissionResponse{Permission: permission}, nil
 }

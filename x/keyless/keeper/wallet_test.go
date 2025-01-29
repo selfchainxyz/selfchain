@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	testkeeper "selfchain/testutil/keeper"
@@ -90,17 +91,35 @@ func TestWalletAccess(t *testing.T) {
 	err := k.SaveWallet(k.Ctx, wallet)
 	require.NoError(t, err)
 
-	// Test wallet access validation
-	err = k.ValidateWalletAccess(k.Ctx, wallet.WalletAddress, "sign")
-	require.NoError(t, err)
+	// Test wallet authorization for creator (should be authorized for SIGN)
+	authorized := k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, wallet.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
+	require.True(t, authorized)
 
-	// Test wallet authorization
-	authorized, err := k.IsWalletAuthorized(k.Ctx, wallet.Creator, wallet.WalletAddress)
-	require.NoError(t, err)
+	// Test wallet authorization for creator (should be authorized for ADMIN)
+	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, wallet.Creator, types.WalletPermission_WALLET_PERMISSION_ADMIN)
 	require.True(t, authorized)
 
 	// Test unauthorized access
-	authorized, err = k.IsWalletAuthorized(k.Ctx, "unauthorized_creator", wallet.WalletAddress)
+	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, "unauthorized_creator", types.WalletPermission_WALLET_PERMISSION_SIGN)
+	require.False(t, authorized)
+
+	// Grant permission to another address
+	grantee := "self1grantee"
+	expiresAt := time.Now().Add(24 * time.Hour)
+	permission := &types.Permission{
+		WalletAddress: wallet.WalletAddress,
+		Grantee:      grantee,
+		Permissions:  []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()},
+		ExpiresAt:    &expiresAt,
+	}
+	err = k.GrantPermission(k.Ctx, permission)
 	require.NoError(t, err)
+
+	// Test authorized access for grantee
+	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, grantee, types.WalletPermission_WALLET_PERMISSION_SIGN)
+	require.True(t, authorized)
+
+	// Test unauthorized permission for grantee
+	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, grantee, types.WalletPermission_WALLET_PERMISSION_ADMIN)
 	require.False(t, authorized)
 }

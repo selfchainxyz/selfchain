@@ -11,13 +11,13 @@ var _ sdk.Msg = &MsgGrantPermission{}
 var _ sdk.Msg = &MsgRevokePermission{}
 
 // NewMsgGrantPermission creates a new MsgGrantPermission instance
-func NewMsgGrantPermission(creator string, walletID string, grantee string, permissions []WalletPermission, expiresAt *time.Time) *MsgGrantPermission {
+func NewMsgGrantPermission(creator string, walletAddress string, grantee string, permissions []WalletPermission, expiresAt *time.Time) *MsgGrantPermission {
 	return &MsgGrantPermission{
-		Creator:     creator,
-		WalletId:    walletID,
-		Grantee:     grantee,
-		Permissions: permissions,
-		ExpiresAt:   expiresAt,
+		Creator:      creator,
+		WalletAddress: walletAddress,
+		Grantee:      grantee,
+		Permissions:  permissions,
+		ExpiresAt:    expiresAt,
 	}
 }
 
@@ -54,12 +54,12 @@ func (msg *MsgGrantPermission) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgRevokePermission creates a new MsgRevokePermission instance
-func NewMsgRevokePermission(creator string, walletID string, grantee string, permissions []WalletPermission) *MsgRevokePermission {
+func NewMsgRevokePermission(creator string, walletAddress string, grantee string, permissions []WalletPermission) *MsgRevokePermission {
 	return &MsgRevokePermission{
-		Creator:     creator,
-		WalletId:    walletID,
-		Grantee:     grantee,
-		Permissions: permissions,
+		Creator:      creator,
+		WalletAddress: walletAddress,
+		Grantee:      grantee,
+		Permissions:  permissions,
 	}
 }
 

@@ -9,7 +9,7 @@ import "selfchain/keyless/keygen.proto";
 
 // SigningRequest represents a request to sign data
 message SigningRequest {
-  string wallet_id = 1;
+  string wallet_address = 1;
   bytes message = 2;
   string chain_id = 3;
   SignatureType sign_type = 4;
@@ -18,7 +18,7 @@ message SigningRequest {
 
 // SigningResponse represents the response from signing
 message SigningResponse {
-  string wallet_id = 1;
+  string wallet_address = 1;
   bytes signature = 2;
   SignatureMetadata metadata = 3;
 }
@@ -60,4 +60,11 @@ enum SignatureType {
   SIGNATURE_TYPE_EDDSA = 2;
   SIGNATURE_TYPE_BLS = 3;
   SIGNATURE_TYPE_SCHNORR = 4;
+}
+
+// KeyRotationResponse represents the response from a key rotation operation
+message KeyRotationResponse {
+  string wallet_address = 1;
+  bytes new_public_key = 2;
+  KeyMetadata metadata = 3;
 }

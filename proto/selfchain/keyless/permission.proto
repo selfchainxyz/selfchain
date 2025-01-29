@@ -8,13 +8,13 @@ import "google/protobuf/timestamp.proto";
 
 // Permission represents a wallet permission
 message Permission {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string grantee = 2;
   repeated string permissions = 3;
-  google.protobuf.Timestamp granted_at = 4 [(gogoproto.stdtime) = true];
-  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp granted_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+  google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
   bool revoked = 6;
-  google.protobuf.Timestamp revoked_at = 7 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp revoked_at = 7 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
 }
 
 // WalletPermission represents the type of permission
@@ -33,15 +33,15 @@ enum WalletPermission {
 
 // PermissionGrant represents a permission grant request
 message PermissionGrant {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string grantee = 2;
   repeated WalletPermission permissions = 3;
-  google.protobuf.Timestamp expires_at = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp expires_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
 }
 
 // PermissionRevoke represents a permission revocation request
 message PermissionRevoke {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string grantee = 2;
   repeated WalletPermission permissions = 3;
 }

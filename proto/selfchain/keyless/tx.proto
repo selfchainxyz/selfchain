@@ -102,7 +102,7 @@ message MsgRecoverWalletResponse {
 // MsgGrantPermission represents a message to grant permissions
 message MsgGrantPermission {
   string creator = 1;
-  string wallet_id = 2;
+  string wallet_address = 2;
   string grantee = 3;
   repeated WalletPermission permissions = 4;
   google.protobuf.Timestamp expires_at = 5 [(gogoproto.stdtime) = true];
@@ -110,20 +110,20 @@ message MsgGrantPermission {
 
 // MsgGrantPermissionResponse is the response type for the GrantPermission RPC method
 message MsgGrantPermissionResponse {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string grantee = 2;
 }
 
 // MsgRevokePermission represents a message to revoke permissions
 message MsgRevokePermission {
   string creator = 1;
-  string wallet_id = 2;
+  string wallet_address = 2;
   string grantee = 3;
   repeated WalletPermission permissions = 4;
 }
 
 // MsgRevokePermissionResponse is the response type for the RevokePermission RPC method
 message MsgRevokePermissionResponse {
-  string wallet_id = 1;
+  string wallet_address = 1;
   string grantee = 2;
 }

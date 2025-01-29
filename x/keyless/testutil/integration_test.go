@@ -25,7 +25,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	k, ctx := NewTestKeeper(s.T())
 	s.keeper = k
 	s.ctx = ctx
-	s.msgServer = keeper.NewMsgServerImpl(*s.keeper)
+	s.msgServer = keeper.NewMsgServerImpl(k)
 }
 
 func (s *IntegrationTestSuite) TestA_CreateWallet() {

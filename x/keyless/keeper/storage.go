@@ -3,10 +3,12 @@ package keeper
 import (
 	"fmt"
 
-	"selfchain/x/keyless/types"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"selfchain/x/keyless/types"
 )
 
 // GetWalletStore returns the store for wallet data
@@ -15,62 +17,147 @@ func (k Keeper) GetWalletStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(store, []byte(types.WalletKey))
 }
 
+// GetWalletKey returns the key for a wallet
+func (k Keeper) GetWalletKey(walletAddress string) []byte {
+	return []byte("wallet/" + walletAddress)
+}
+
 // SaveWallet saves a wallet to the store
 func (k Keeper) SaveWallet(ctx sdk.Context, wallet *types.Wallet) error {
-	if wallet == nil {
-		return fmt.Errorf("wallet cannot be nil")
+	// Basic validation
+	if wallet.WalletAddress == "" {
+		return status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+	}
+	if wallet.Creator == "" {
+		return status.Error(codes.InvalidArgument, "creator cannot be empty")
+	}
+	if wallet.ChainId == "" {
+		return status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("wallet/%s", wallet.Id))
-	bz, err := k.cdc.Marshal(wallet)
-	if err != nil {
-		return fmt.Errorf("failed to marshal wallet: %v", err)
+	// Check for duplicate wallet
+	existingWallet, err := k.GetWallet(ctx, wallet.WalletAddress)
+	if err == nil && existingWallet != nil {
+		return status.Error(codes.AlreadyExists, "wallet already exists")
 	}
+
+	store := k.GetWalletStore(ctx)
+	key := k.GetWalletKey(wallet.WalletAddress)
+	bz := k.cdc.MustMarshal(wallet)
 	store.Set(key, bz)
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWalletCreated,
+			sdk.NewAttribute("wallet_address", wallet.WalletAddress),
+			sdk.NewAttribute("creator", wallet.Creator),
+			sdk.NewAttribute("chain_id", wallet.ChainId),
+		),
+	)
+
 	return nil
 }
 
-// GetWallet gets a wallet from the store
-func (k Keeper) GetWallet(ctx sdk.Context, walletId string) (*types.Wallet, error) {
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("wallet/%s", walletId))
+// GetWallet retrieves a wallet from the store
+func (k Keeper) GetWallet(ctx sdk.Context, walletAddress string) (*types.Wallet, error) {
+	if walletAddress == "" {
+		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+	}
+
+	store := k.GetWalletStore(ctx)
+	key := k.GetWalletKey(walletAddress)
 	bz := store.Get(key)
 	if bz == nil {
-		return nil, fmt.Errorf("wallet not found")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", walletAddress))
 	}
 
 	var wallet types.Wallet
 	if err := k.cdc.Unmarshal(bz, &wallet); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
 	}
+
 	return &wallet, nil
 }
 
 // DeleteWallet deletes a wallet from the store
-func (k Keeper) DeleteWallet(ctx sdk.Context, walletId string) error {
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("wallet/%s", walletId))
+func (k Keeper) DeleteWallet(ctx sdk.Context, walletAddress string) error {
+	if walletAddress == "" {
+		return status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+	}
+
+	store := k.GetWalletStore(ctx)
+	key := k.GetWalletKey(walletAddress)
+
 	if !store.Has(key) {
-		return fmt.Errorf("wallet not found")
+		return status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", walletAddress))
 	}
 
 	store.Delete(key)
 	return nil
 }
 
+// GetWalletByCreator retrieves a wallet by its creator address
+func (k Keeper) GetWalletByCreator(ctx sdk.Context, creator string) ([]*types.Wallet, error) {
+	if creator == "" {
+		return nil, status.Error(codes.InvalidArgument, "creator address cannot be empty")
+	}
+
+	var wallets []*types.Wallet
+	store := k.GetWalletStore(ctx)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var wallet types.Wallet
+		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
+		}
+
+		if wallet.Creator == creator {
+			wallets = append(wallets, &wallet)
+		}
+	}
+
+	return wallets, nil
+}
+
+// GetWalletsByChainId retrieves all wallets for a specific chain ID
+func (k Keeper) GetWalletsByChainId(ctx sdk.Context, chainId string) ([]*types.Wallet, error) {
+	if chainId == "" {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	var wallets []*types.Wallet
+	store := k.GetWalletStore(ctx)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var wallet types.Wallet
+		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
+		}
+
+		if wallet.ChainId == chainId {
+			wallets = append(wallets, &wallet)
+		}
+	}
+
+	return wallets, nil
+}
+
 // ListWallets returns all wallets
 func (k Keeper) ListWallets(ctx sdk.Context) ([]*types.Wallet, error) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := []byte("wallet/")
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
+	store := k.GetWalletStore(ctx)
+	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
 	var wallets []*types.Wallet
 	for ; iterator.Valid(); iterator.Next() {
 		var wallet types.Wallet
 		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
 		}
 		wallets = append(wallets, &wallet)
 	}
@@ -80,16 +167,15 @@ func (k Keeper) ListWallets(ctx sdk.Context) ([]*types.Wallet, error) {
 
 // GetAllWalletsFromStore returns all wallets from the KVStore
 func (k Keeper) GetAllWalletsFromStore(ctx sdk.Context) ([]types.Wallet, error) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := []byte("wallet/")
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
+	store := k.GetWalletStore(ctx)
+	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
 	var wallets []types.Wallet
 	for ; iterator.Valid(); iterator.Next() {
 		var wallet types.Wallet
 		if err := k.cdc.Unmarshal(iterator.Value(), &wallet); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal wallet: %v", err)
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
 		}
 		wallets = append(wallets, wallet)
 	}
