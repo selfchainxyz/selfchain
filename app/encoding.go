@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
@@ -12,7 +12,7 @@ import (
 // makeEncodingConfig creates an EncodingConfig for an amino based test configuration.
 func makeEncodingConfig() params.EncodingConfig {
 	amino := codec.NewLegacyAmino()
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := testutil.CodecOptions{AccAddressPrefix: "self", ValAddressPrefix: "selfvaloper"}.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 
