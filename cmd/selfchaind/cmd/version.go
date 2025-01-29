@@ -47,8 +47,8 @@ Use --json flag for JSON output.`,
 				GitCommit:         version.Commit,
 				GoVersion:         fmt.Sprintf("go version %s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
 				BuildTags:         version.BuildTags,
-				CosmosSdkVersion:  "v0.47.10", // From go.mod
-				TendermintVersion: "v0.37.4",  // From go.mod
+				CosmosSdkVersion:  "v0.47.10", // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
+				TendermintVersion: "v0.37.4",  // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
 			}
 
 			jsonFormat, err := cmd.Flags().GetBool("json")

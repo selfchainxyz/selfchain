@@ -1146,3 +1146,4 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.Wa
 	}
 	app.SetAnteHandler(anteHandler)
 }
+
