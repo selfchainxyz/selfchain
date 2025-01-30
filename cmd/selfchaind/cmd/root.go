@@ -1,12 +1,18 @@
 package cmd
 
 import (
+	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/client/v2/autocli/flag"
 	"errors"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"io"
 	"os"
 	"path/filepath"
@@ -41,6 +47,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 
 	// this line is used by starport scaffolding # root/moduleImport
 
@@ -56,6 +63,8 @@ import (
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
+	var autoCliOpts autocli.AppOptions
+
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -89,8 +98,64 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 		flags.FlagKeyringBackend: "test",
 	})
 
+	autoCliOpts = autocli.AppOptions{
+		AddressCodec:          authcodec.NewBech32Codec("self"),
+		ValidatorAddressCodec: authcodec.NewBech32Codec("selfvaloper"),
+		ConsensusAddressCodec: authcodec.NewBech32Codec("selfvalcons"),
+		ClientCtx:             initClientCtx.WithInterfaceRegistry(encodingConfig.InterfaceRegistry),
+		ModuleOptions: map[string]*autocliv1.ModuleOptions{
+			"bank": {
+				Query: &autocliv1.ServiceCommandDescriptor{
+					Service: "cosmos.bank.v1beta1.Query",
+					Short: "Querying commands for the bank module",
+				},
+				Tx: &autocliv1.ServiceCommandDescriptor{
+					Service: "cosmos.bank.v1beta1.Msg",
+					Short:   "Transaction commands for the bank module",
+				},
+			},
+			"staking": {
+				Query: &autocliv1.ServiceCommandDescriptor{
+					Service: "cosmos.staking.v1beta1.Query",
+				},
+				Tx: &autocliv1.ServiceCommandDescriptor{
+					Service: "cosmos.staking.v1beta1.Msg",
+				},
+			},
+		},
+	}
+
+	// Create a custom builder with the safe flag adder
+	builder := &autocli.Builder{
+		Builder: flag.Builder{
+			TypeResolver:          protoregistry.GlobalTypes,
+			FileResolver:          encodingConfig.InterfaceRegistry,
+			AddressCodec:          autoCliOpts.AddressCodec,
+			ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
+			ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
+		},
+		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
+			return client.GetClientQueryContext(cmd)
+		},
+		AddQueryConnFlags: safeAddQueryFlagsToCmd,  // Use our safe version
+		AddTxConnFlags:    sdkflags.AddTxFlagsToCmd,
+	}
+
+	// Use EnhanceRootCommandWithBuilder instead of EnhanceRootCommand
+	if err := autoCliOpts.EnhanceRootCommandWithBuilder(rootCmd, builder); err != nil {
+		panic(err)
+	}
+
 	return rootCmd, encodingConfig
 }
+
+func safeAddQueryFlagsToCmd(cmd *cobra.Command) {
+	// Only add flags if they don't already exist
+	if cmd.Flags().Lookup("height") == nil {
+		sdkflags.AddQueryFlagsToCmd(cmd)
+	}
+}
+
 
 // initTendermintConfig helps to override default Tendermint Config values.
 // return tmcfg.DefaultConfig if no custom configuration is required for the application.
@@ -206,7 +271,7 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxCmd(),
 	)
 
-	app.ModuleBasics.AddQueryCommands(cmd)
+	//app.ModuleBasics.AddQueryCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return cmd

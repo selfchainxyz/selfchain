@@ -46,6 +46,7 @@ require (
 )
 
 require (
+	cosmossdk.io/client/v2 v2.0.0-beta.3
 	cosmossdk.io/core v0.11.1
 	cosmossdk.io/log v1.5.0
 	github.com/bufbuild/buf v1.50.0
