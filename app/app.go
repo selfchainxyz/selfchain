@@ -1,6 +1,8 @@
 package app
 
 import (
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/core/appmodule"
 	corestoretypes "cosmossdk.io/core/store"
 	"encoding/json"
 	"fmt"
@@ -297,6 +299,7 @@ func New(
 	encodingConfig appparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
+	basicApp bool,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
 	appCodec := encodingConfig.Marshaler
@@ -922,7 +925,7 @@ func New(
 			}
 
 			// Check if the Wasm module version is 0 (uninitialized)
-			if mv[wasmtypes.ModuleName] == 0 {
+			if mv[wasmtypes.ModuleName] == 0 && !basicApp{
 				// Run migrations to initialize the Wasm module
 				mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
 				if err != nil {
@@ -1147,3 +1150,22 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.Wa
 	app.SetAnteHandler(anteHandler)
 }
 
+
+func (app *App) AutoCliOpts() autocli.AppOptions {
+	modules := make(map[string]appmodule.AppModule, 0)
+	for _, m := range app.mm.Modules {
+		if moduleWithName, ok := m.(module.HasName); ok {
+			moduleName := moduleWithName.Name()
+			if appModule, ok := moduleWithName.(appmodule.AppModule); ok {
+				modules[moduleName] = appModule
+			}
+		}
+	}
+
+	return autocli.AppOptions{
+		Modules:               modules,
+		AddressCodec:          authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+		ValidatorAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		ConsensusAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
+	}
+}

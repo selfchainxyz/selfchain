@@ -1,27 +1,22 @@
 package cmd
 
 import (
-	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	"cosmossdk.io/client/v2/autocli"
-	"cosmossdk.io/client/v2/autocli/flag"
+	storetypes "cosmossdk.io/store/types"
 	"errors"
 	"fmt"
+	cosmosdb "github.com/cosmos/cosmos-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/reflect/protoregistry"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	storetypes "cosmossdk.io/store/types"
-	cosmosdb "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/codec/address"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -33,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -47,7 +43,6 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 
 	// this line is used by starport scaffolding # root/moduleImport
 
@@ -63,7 +58,6 @@ import (
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
-	var autoCliOpts autocli.AppOptions
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
@@ -93,60 +87,51 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        strings.ReplaceAll(app.Name, "-", ""),
 		flags.FlagKeyringBackend: "test",
 	})
 
-	autoCliOpts = autocli.AppOptions{
-		AddressCodec:          authcodec.NewBech32Codec("self"),
-		ValidatorAddressCodec: authcodec.NewBech32Codec("selfvaloper"),
-		ConsensusAddressCodec: authcodec.NewBech32Codec("selfvalcons"),
-		ClientCtx:             initClientCtx.WithInterfaceRegistry(encodingConfig.InterfaceRegistry),
-		ModuleOptions: map[string]*autocliv1.ModuleOptions{
-			"bank": {
-				Query: &autocliv1.ServiceCommandDescriptor{
-					Service: "cosmos.bank.v1beta1.Query",
-					Short: "Querying commands for the bank module",
-				},
-				Tx: &autocliv1.ServiceCommandDescriptor{
-					Service: "cosmos.bank.v1beta1.Msg",
-					Short:   "Transaction commands for the bank module",
-				},
-			},
-			"staking": {
-				Query: &autocliv1.ServiceCommandDescriptor{
-					Service: "cosmos.staking.v1beta1.Query",
-				},
-				Tx: &autocliv1.ServiceCommandDescriptor{
-					Service: "cosmos.staking.v1beta1.Msg",
-				},
-			},
-		},
+	baseAppOptions := []func(*baseapp.BaseApp){
+		baseapp.SetChainID("dummy-chain"),
+		baseapp.SetInterBlockCache(nil),
+		baseapp.SetSnapshot(nil, snapshottypes.NewSnapshotOptions(0, 0)),
 	}
 
-	// Create a custom builder with the safe flag adder
-	builder := &autocli.Builder{
-		Builder: flag.Builder{
-			TypeResolver:          protoregistry.GlobalTypes,
-			FileResolver:          encodingConfig.InterfaceRegistry,
-			AddressCodec:          autoCliOpts.AddressCodec,
-			ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
-			ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
-		},
-		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
-			return client.GetClientQueryContext(cmd)
-		},
-		AddQueryConnFlags: safeAddQueryFlagsToCmd,  // Use our safe version
-		AddTxConnFlags:    sdkflags.AddTxFlagsToCmd,
-	}
 
-	// Use EnhanceRootCommandWithBuilder instead of EnhanceRootCommand
-	if err := autoCliOpts.EnhanceRootCommandWithBuilder(rootCmd, builder); err != nil {
+	dummyApp := app.New(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		io.Discard,
+		true,
+		map[int64]bool{},
+		"",
+		0,
+		encodingConfig,
+		app.EmptyAppOptions{},
+		[]wasmkeeper.Option{},
+		true,
+		baseAppOptions...,
+	)
+
+	autoCliOptss := enrichAutoCliOpts(dummyApp.AutoCliOpts(), initClientCtx)
+
+	if err := autoCliOptss.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
 	}
 
 	return rootCmd, encodingConfig
+}
+
+func enrichAutoCliOpts(autoCliOpts autocli.AppOptions, clientCtx client.Context) autocli.AppOptions {
+	autoCliOpts.AddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())
+	autoCliOpts.ValidatorAddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
+	autoCliOpts.ConsensusAddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix())
+
+	autoCliOpts.ClientCtx = clientCtx
+
+	return autoCliOpts
 }
 
 func safeAddQueryFlagsToCmd(cmd *cobra.Command) {
@@ -155,7 +140,6 @@ func safeAddQueryFlagsToCmd(cmd *cobra.Command) {
 		sdkflags.AddQueryFlagsToCmd(cmd)
 	}
 }
-
 
 // initTendermintConfig helps to override default Tendermint Config values.
 // return tmcfg.DefaultConfig if no custom configuration is required for the application.
@@ -169,7 +153,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig
 	//initSDKConfig()
 
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
-	valOperAddressCodec := address.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
+	valOperAddressCodec := addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
 
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
@@ -249,8 +233,6 @@ func SafeAddTxCommands(moduleBasics module.BasicManager, cmd *cobra.Command) {
 	}
 }
 
-
-
 // queryCommand returns the sub-command to send queries to the app
 func queryCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -306,7 +288,6 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 
 	return cmd
 }
-
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
@@ -400,6 +381,7 @@ func (a appCreator) newApp(
 		a.encodingConfig,
 		appOpts,
 		wasmOpts,
+		false,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -443,6 +425,7 @@ func (a appCreator) appExport(
 		a.encodingConfig,
 		appOpts,
 		emptyWasmOpts,
+		false,
 	)
 
 	if height != -1 {
@@ -454,7 +437,7 @@ func (a appCreator) appExport(
 	return app.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }
 
-// initAppConfig helps to override default appConfig template and configs.
+// initAppConfig helps to override default appConfigplate and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
 	// The following code snippet is just for reference.

@@ -9,9 +9,9 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	cosmosdb "github.com/cosmos/cosmos-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	cosmosdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -76,6 +76,7 @@ func setup(withGenesis bool, invCheckPeriod uint, t *testing.T) (*App, GenesisSt
 		encCdc,
 		EmptyAppOptions{},
 		nil,
+		false,
 	)
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
