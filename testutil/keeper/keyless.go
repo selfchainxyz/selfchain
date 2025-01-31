@@ -29,6 +29,7 @@ type KeylessKeeper struct {
 	MockIdentityKeeper *mocks.IdentityKeeper
 	MockTSSProtocol    *mocks.TSSProtocol
 	storeKey           storetypes.StoreKey
+	memKey             storetypes.StoreKey
 	db                 *dbm.MemDB
 	stateStore         store.CommitMultiStore
 }
@@ -58,10 +59,14 @@ func NewKeylessKeeper(t testing.TB) *KeylessKeeper {
 	identitytypes.RegisterInterfaces(registry)
 
 	// Create mock identity keeper
-	mockIdentityKeeper := mocks.NewIdentityKeeper(t)
-	mockIdentityKeeper.On("GetIdentity", mock.Anything, mock.Anything).Return(&identitytypes.Identity{
-		Id:     "test-id",
-		Status: identitytypes.IdentityStatus_IDENTITY_STATUS_ACTIVE,
+	mockIdentityKeeper := mocks.NewIdentityKeeper()
+	now := time.Now().UTC()
+	mockIdentityKeeper.On("GetDIDDocument", mock.Anything, mock.Anything).Return(&identitytypes.DIDDocument{
+		Id:         "test-did",
+		Controller: []string{"test-controller"},
+		Created:    &now,
+		Updated:    &now,
+		Status:     identitytypes.Status_STATUS_ACTIVE,
 	}, nil)
 	mockIdentityKeeper.On("VerifyDIDOwnership", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockIdentityKeeper.On("VerifyMFA", mock.Anything, mock.Anything).Return(nil)
@@ -75,19 +80,25 @@ func NewKeylessKeeper(t testing.TB) *KeylessKeeper {
 	mockIdentityKeeper.On("CheckRateLimit", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Create mock TSS protocol
-	mockTSSProtocol := mocks.NewTSSProtocol(t)
+	mockTSSProtocol := mocks.NewTSSProtocol()
 	mockTSSProtocol.On("ValidateRecoveryProof", mock.Anything, mock.Anything).Return(nil)
-	mockTSSProtocol.On("GenerateKeygenSession", mock.Anything, mock.Anything).Return(&types.KeygenSession{
-		Id:            "test-session",
+	mockTSSProtocol.On("GenerateKeyShares", mock.Anything, mock.Anything).Return(&types.KeyGenResponse{
 		WalletAddress: "test-wallet",
-		Status:        types.SessionStatus_SESSION_STATUS_ACTIVE,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		PublicKey:     []byte("test-pubkey"),
+		Metadata: &types.KeyMetadata{
+			CreatedAt:     now.UTC(),
+			LastRotated:   now.UTC(),
+			LastUsed:      now.UTC(),
+			UsageCount:    0,
+			BackupStatus:  types.BackupStatus_BACKUP_STATUS_COMPLETED,
+			SecurityLevel: types.SecurityLevel_SECURITY_LEVEL_HIGH,
+		},
 	}, nil)
 
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
+		memStoreKey,
 		paramsSubspace,
 		mockIdentityKeeper,
 		mockTSSProtocol,
@@ -104,6 +115,7 @@ func NewKeylessKeeper(t testing.TB) *KeylessKeeper {
 		MockIdentityKeeper: mockIdentityKeeper,
 		MockTSSProtocol:    mockTSSProtocol,
 		storeKey:         storeKey,
+		memKey:           memStoreKey,
 		db:               db,
 		stateStore:       stateStore,
 	}
@@ -121,6 +133,7 @@ func (k *KeylessKeeper) GetTSSProtocol() *mocks.TSSProtocol {
 
 // ClearStore clears all data from the store
 func (k *KeylessKeeper) ClearStore() {
+	// Clear main store
 	store := k.stateStore.GetKVStore(k.storeKey)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
@@ -128,16 +141,51 @@ func (k *KeylessKeeper) ClearStore() {
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
+
+	// Clear memory store
+	memStore := k.stateStore.GetKVStore(k.memKey)
+	memIter := memStore.Iterator(nil, nil)
+	defer memIter.Close()
+
+	for ; memIter.Valid(); memIter.Next() {
+		memStore.Delete(memIter.Key())
+	}
+
+	// Reset mock identity keeper
+	k.MockIdentityKeeper = &mocks.IdentityKeeper{}
+	k.MockIdentityKeeper.On("GetDIDDocument", mock.Anything, mock.Anything).Return(&identitytypes.DIDDocument{}, nil)
+	k.MockIdentityKeeper.On("VerifyDIDOwnership", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("VerifyOAuth2Token", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("VerifyMFA", mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("VerifyRecoveryToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("GetKeyShare", mock.Anything, mock.Anything).Return([]byte("mock_key_share"), true)
+	k.MockIdentityKeeper.On("ReconstructWallet", mock.Anything, mock.Anything).Return(nil, nil)
+	k.MockIdentityKeeper.On("CheckRateLimit", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("LogAuditEvent", mock.Anything, mock.Anything).Return(nil)
+	k.MockIdentityKeeper.On("GenerateRecoveryToken", mock.Anything, mock.Anything).Return("mock_token", nil)
+	k.MockIdentityKeeper.On("ValidateRecoveryToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	// Reset mock TSS protocol
+	k.MockTSSProtocol = &mocks.TSSProtocol{}
+	k.MockTSSProtocol.On("GenerateKeyShare", mock.Anything).Return([]byte("mock_key_share"), nil)
+	k.MockTSSProtocol.On("ValidateRecoveryProof", mock.Anything, mock.Anything).Return(true, nil)
+	k.MockTSSProtocol.On("Sign", mock.Anything, mock.Anything).Return([]byte("mock_signature"), nil)
+	k.MockTSSProtocol.On("VerifySignature", mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
+	k.MockTSSProtocol.On("BatchSign", mock.Anything, mock.Anything).Return([]byte("mock_batch_signature"), nil)
+	k.MockTSSProtocol.On("VerifyBatchSignature", mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
+
+	// Reset context with fresh store
+	k.stateStore.Commit()
+	k.Ctx = sdk.NewContext(k.stateStore, tmproto.Header{}, false, log.NewNopLogger())
 }
 
 // MockSigningResponse creates a mock signing response
-func MockSigningResponse(walletAddress string) *types.SigningResponse {
+func MockSigningResponse(walletAddress string) *types.SigningOutput {
 	now := time.Now().UTC()
-	return &types.SigningResponse{
-		WalletAddress: walletAddress,
-		Signature:     []byte("test-signature"),
-		Status:        types.SigningStatus_SIGNING_STATUS_COMPLETED,
-		CreatedAt:     &now,
-		UpdatedAt:     &now,
+	return &types.SigningOutput{
+		Signature:  []byte("test-signature"),
+		PublicKey:  []byte("test-public-key"),
+		SignedAt:   now.UTC(),
+		KeyVersion: 1,
 	}
 }

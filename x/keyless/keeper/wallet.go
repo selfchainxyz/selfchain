@@ -35,7 +35,7 @@ func (k Keeper) IsWalletAuthorized(ctx sdk.Context, address string, grantee stri
 }
 
 // ValidateWalletAccess validates access to a wallet for a specific operation
-func (k Keeper) ValidateWalletAccess(ctx sdk.Context, walletAddress string, operation string) error {
+func (k Keeper) ValidateWalletAccess(ctx sdk.Context, walletAddress string, creator string, operation string) error {
 	// Get wallet
 	wallet, err := k.GetWallet(ctx, walletAddress)
 	if err != nil {
@@ -62,8 +62,8 @@ func (k Keeper) ValidateWalletAccess(ctx sdk.Context, walletAddress string, oper
 		return fmt.Errorf("unknown operation: %s", operation)
 	}
 
-	// Check if wallet is authorized for the operation
-	if !k.IsWalletAuthorized(ctx, walletAddress, wallet.Creator, requiredPerm) {
+	// Check if creator is authorized for the operation
+	if !k.IsWalletAuthorized(ctx, walletAddress, creator, requiredPerm) {
 		return fmt.Errorf("not authorized for operation: %s", operation)
 	}
 

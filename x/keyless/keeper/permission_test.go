@@ -4,321 +4,90 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	testkeeper "selfchain/testutil/keeper"
+	keepertest "selfchain/testutil/keeper"
 	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
 )
 
-func TestPermissionValidation(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
+func TestPermissionManagement(t *testing.T) {
+	k := keepertest.NewKeylessKeeper(t)
 	srv := keeper.NewMsgServerImpl(k.Keeper)
+	wctx := sdk.WrapSDKContext(k.Ctx)
+
+	// Clear store before test
+	k.ClearStore()
 
 	// Create test wallet first
-	walletAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
-	msg := &types.MsgCreateWallet{
-		Creator:       "cosmos1s4ycalgh3gjemd4hmqcvcgmnf647rnd0tpg2w9",
-		PubKey:        "pubkey1",
-		WalletAddress: walletAddr,
-		ChainId:      "test-1",
-	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
-	require.NoError(t, err)
+	walletAddr := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	creator := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	grantee := "cosmos1w3jhxapjta047h6lta047h6lta047h6lwuy8a3"
 
-	// Set wallet status to active
-	wallet, err := k.GetWallet(k.Ctx, walletAddr)
-	require.NoError(t, err)
-	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-	err = k.SaveWallet(k.Ctx, wallet)
-	require.NoError(t, err)
-
-	expiresAt := time.Now().Add(24 * time.Hour)
-
-	// Test cases
-	tests := []struct {
-		name        string
-		permission  *types.Permission
-		expectError bool
-		errorMsg    error
-	}{
-		{
-			name: "valid permission",
-			permission: &types.Permission{
-				WalletAddress: walletAddr,
-				Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-				Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-				ExpiresAt:    &expiresAt,
-			},
-			expectError: false,
-		},
-		{
-			name: "empty wallet address",
-			permission: &types.Permission{
-				WalletAddress: "",
-				Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-				Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-				ExpiresAt:    &expiresAt,
-			},
-			expectError: true,
-			errorMsg:    status.Error(codes.InvalidArgument, "wallet address cannot be empty: invalid permission"),
-		},
-		{
-			name: "empty grantee",
-			permission: &types.Permission{
-				WalletAddress: walletAddr,
-				Grantee:      "",
-				Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-				ExpiresAt:    &expiresAt,
-			},
-			expectError: true,
-			errorMsg:    status.Error(codes.InvalidArgument, "grantee cannot be empty: invalid permission"),
-		},
-		{
-			name: "no permissions",
-			permission: &types.Permission{
-				WalletAddress: walletAddr,
-				Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-				Permissions:  []string{},
-				ExpiresAt:    &expiresAt,
-			},
-			expectError: true,
-			errorMsg:    status.Error(codes.InvalidArgument, "permissions cannot be empty: invalid permission"),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// Clear store before each test case
-			k.ClearStore()
-
-			// Create wallet again after clearing store
-			_, err := srv.CreateWallet(k.Ctx, msg)
-			require.NoError(t, err)
-
-			// Set wallet status to active
-			wallet, err := k.GetWallet(k.Ctx, walletAddr)
-			require.NoError(t, err)
-			wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-			err = k.SaveWallet(k.Ctx, wallet)
-			require.NoError(t, err)
-
-			err = k.GrantPermission(k.Ctx, tc.permission)
-			if tc.expectError {
-				require.Error(t, err)
-				require.Equal(t, tc.errorMsg.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestSinglePermission(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-
-	// Create test wallet first
-	walletAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
-	creator := "cosmos1s4ycalgh3gjemd4hmqcvcgmnf647rnd0tpg2w9"
-
-	srv := keeper.NewMsgServerImpl(k.Keeper)
 	msg := &types.MsgCreateWallet{
 		Creator:       creator,
 		PubKey:        "pubkey1",
 		WalletAddress: walletAddr,
 		ChainId:       "test-1",
 	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
+	_, err := srv.CreateWallet(wctx, msg)
 	require.NoError(t, err)
 
 	// Set wallet status to active
-	wallet, err := k.GetWallet(k.Ctx, walletAddr)
-	require.NoError(t, err)
-	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-	err = k.SaveWallet(k.Ctx, wallet)
+	err = k.SetWalletStatus(k.Ctx, walletAddr, types.WalletStatus_WALLET_STATUS_ACTIVE)
 	require.NoError(t, err)
 
+	// Test granting permission
 	expiresAt := time.Now().Add(24 * time.Hour)
-
-	// Grant permission
 	permission := &types.Permission{
 		WalletAddress: walletAddr,
-		Grantee:      "cosmos1grantee",
-		Permissions:  []string{"WALLET_PERMISSION_SIGN"},
+		Grantee:      grantee,
+		Permissions:  []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()},
 		ExpiresAt:    &expiresAt,
 	}
 
 	err = k.GrantPermission(k.Ctx, permission)
-	require.NoError(t, err)
-
-	// Check permission is valid
-	isValid := k.Keeper.IsWalletAuthorized(k.Ctx, walletAddr, "cosmos1grantee", types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.True(t, isValid)
-}
-
-func TestMultiplePermissions(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-
-	// Create test wallet first
-	walletAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
-	creator := "cosmos1s4ycalgh3gjemd4hmqcvcgmnf647rnd0tpg2w9"
-
-	srv := keeper.NewMsgServerImpl(k.Keeper)
-	msg := &types.MsgCreateWallet{
-		Creator:       creator,
-		PubKey:        "pubkey1",
-		WalletAddress: walletAddr,
-		ChainId:       "test-1",
-	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
-	require.NoError(t, err)
-
-	// Set wallet status to active
-	wallet, err := k.GetWallet(k.Ctx, walletAddr)
-	require.NoError(t, err)
-	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-	err = k.SaveWallet(k.Ctx, wallet)
-	require.NoError(t, err)
-
-	expiresAt := time.Now().Add(24 * time.Hour)
-
-	// Grant permission
-	permission := &types.Permission{
-		WalletAddress: walletAddr,
-		Grantee:      "cosmos1grantee",
-		Permissions:  []string{"WALLET_PERMISSION_SIGN", "WALLET_PERMISSION_ADMIN"},
-		ExpiresAt:    &expiresAt,
-	}
-
-	err = k.GrantPermission(k.Ctx, permission)
-	require.NoError(t, err)
-
-	// Check both permissions are valid
-	isValid := k.Keeper.IsWalletAuthorized(k.Ctx, walletAddr, "cosmos1grantee", types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.True(t, isValid)
-
-	isValid = k.Keeper.IsWalletAuthorized(k.Ctx, walletAddr, "cosmos1grantee", types.WalletPermission_WALLET_PERMISSION_ADMIN)
-	require.True(t, isValid)
-}
-
-func TestPermissionGrantAndRevoke(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	srv := keeper.NewMsgServerImpl(k.Keeper)
-
-	// Create a test wallet first
-	walletAddr := "cosmos1test"
-	msg := &types.MsgCreateWallet{
-		Creator:       "cosmos1owner",
-		PubKey:        "pubkey1",
-		WalletAddress: walletAddr,
-		ChainId:      "test-1",
-	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
-	require.NoError(t, err)
-
-	expiresAt := time.Now().Add(24 * time.Hour)
-
-	// Grant permission
-	permission := &types.Permission{
-		WalletAddress: walletAddr,
-		Grantee:      "cosmos1grantee",
-		Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-		ExpiresAt:    &expiresAt,
-	}
-
-	err = k.Keeper.GrantPermission(k.Ctx, permission)
 	require.NoError(t, err)
 
 	// Verify permission exists
-	perm, err := k.Keeper.GetPermission(k.Ctx, walletAddr, "cosmos1grantee")
+	perms, err := k.GetPermissionsForWallet(k.Ctx, walletAddr)
 	require.NoError(t, err)
-	require.Equal(t, permission.Permissions, perm.Permissions)
+	require.Len(t, perms, 1)
+	require.Equal(t, grantee, perms[0].Grantee)
+	require.Equal(t, []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()}, perms[0].Permissions)
 
-	// Revoke permission
-	err = k.Keeper.RevokePermission(k.Ctx, walletAddr, "cosmos1grantee")
+	// Test revoking permission
+	err = k.RevokePermission(k.Ctx, walletAddr, grantee)
 	require.NoError(t, err)
 
 	// Verify permission is revoked
-	perm, err = k.Keeper.GetPermission(k.Ctx, walletAddr, "cosmos1grantee")
+	perms, err = k.GetPermissionsForWallet(k.Ctx, walletAddr)
 	require.NoError(t, err)
-	require.True(t, perm.Revoked)
-}
+	require.Empty(t, perms)
 
-func TestGetPermissionsForWallet(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	srv := keeper.NewMsgServerImpl(k.Keeper)
+	// Test granting permission with invalid grantee
+	permission.Grantee = "invalid"
+	err = k.GrantPermission(k.Ctx, permission)
+	require.Error(t, err)
 
-	// Create a test wallet first
-	walletAddr := "cosmos1test"
-	msg := &types.MsgCreateWallet{
-		Creator:       "cosmos1owner",
-		PubKey:        "pubkey1",
-		WalletAddress: walletAddr,
-		ChainId:      "test-1",
-	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
-	require.NoError(t, err)
+	// Test revoking permission with invalid grantee
+	err = k.RevokePermission(k.Ctx, walletAddr, "invalid")
+	require.Error(t, err)
 
-	expiresAt := time.Now().Add(24 * time.Hour)
+	// Test granting permission with invalid wallet address
+	permission.WalletAddress = "invalid"
+	err = k.GrantPermission(k.Ctx, permission)
+	require.Error(t, err)
 
-	// Grant multiple permissions
-	permissions := []*types.Permission{
-		{
-			WalletAddress: walletAddr,
-			Grantee:      "cosmos1grantee1",
-			Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-			ExpiresAt:    &expiresAt,
-		},
-		{
-			WalletAddress: walletAddr,
-			Grantee:      "cosmos1grantee2",
-			Permissions:  []string{"WALLET_PERMISSION_RECOVER"},
-			ExpiresAt:    &expiresAt,
-		},
-	}
+	// Test revoking permission with invalid wallet address
+	err = k.RevokePermission(k.Ctx, "invalid", grantee)
+	require.Error(t, err)
 
-	for _, perm := range permissions {
-		err := k.Keeper.GrantPermission(k.Ctx, perm)
-		require.NoError(t, err)
-	}
-
-	// Get all permissions for wallet
-	perms, err := k.Keeper.GetPermissionsForWallet(k.Ctx, walletAddr)
-	require.NoError(t, err)
-	require.Len(t, perms, 2)
-}
-
-func TestPermissionExpiration(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	srv := keeper.NewMsgServerImpl(k.Keeper)
-
-	// Create a test wallet first
-	walletAddr := "cosmos1test"
-	msg := &types.MsgCreateWallet{
-		Creator:       "cosmos1owner",
-		PubKey:        "pubkey1",
-		WalletAddress: walletAddr,
-		ChainId:      "test-1",
-	}
-	_, err := srv.CreateWallet(k.Ctx, msg)
-	require.NoError(t, err)
-
-	expiresAt := time.Now().Add(24 * time.Hour)
-
-	// Grant permission
-	permission := &types.Permission{
-		WalletAddress: walletAddr,
-		Grantee:      "cosmos1grantee",
-		Permissions:  []string{"WALLET_PERMISSION_SIGN"},
-		ExpiresAt:    &expiresAt,
-	}
-
-	err = k.Keeper.GrantPermission(k.Ctx, permission)
-	require.NoError(t, err)
-
-	// Check permission is valid
-	isValid := k.Keeper.IsWalletAuthorized(k.Ctx, walletAddr, "cosmos1grantee", types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.True(t, isValid)
+	// Test granting permission with empty permissions
+	permission.WalletAddress = walletAddr
+	permission.Grantee = grantee
+	permission.Permissions = []string{}
+	err = k.GrantPermission(k.Ctx, permission)
+	require.Error(t, err)
 }

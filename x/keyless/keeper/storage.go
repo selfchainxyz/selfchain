@@ -200,7 +200,12 @@ func (k Keeper) SetWalletStatus(ctx sdk.Context, walletAddress string, status ty
 	}
 
 	wallet.Status = status
-	return k.SaveWallet(ctx, wallet)
+	store := k.GetWalletStore(ctx)
+	key := k.GetWalletKey(walletAddress)
+	bz := k.cdc.MustMarshal(wallet)
+	store.Set(key, bz)
+
+	return nil
 }
 
 // SavePartyData stores TSS party data

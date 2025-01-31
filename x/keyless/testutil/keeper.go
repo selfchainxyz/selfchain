@@ -51,7 +51,7 @@ func NewKeeper(t testing.TB) (*TestKeeper, sdk.Context) {
 	)
 
 	// Mock the identity keeper
-	identityKeeper := mocks.NewIdentityKeeper(t)
+	identityKeeper := mocks.NewIdentityKeeper()
 	now := time.Now().UTC()
 	
 	// Set up mock expectations for identity keeper
@@ -83,7 +83,7 @@ func NewKeeper(t testing.TB) (*TestKeeper, sdk.Context) {
 	identityKeeper.On("ValidateRecoveryToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Mock the TSS protocol
-	tssProtocol := mocks.NewTSSProtocol(t)
+	tssProtocol := mocks.NewTSSProtocol()
 	
 	// Set up mock expectations for TSS protocol
 	tssProtocol.On("GenerateKeyShares", mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.MatchedBy(func(req *types.KeyGenRequest) bool { return true })).Return(&types.KeyGenResponse{

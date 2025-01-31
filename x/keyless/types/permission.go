@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewPermission creates a new Permission instance
@@ -23,9 +25,17 @@ func (p Permission) Validate() error {
 	if p.WalletAddress == "" {
 		return ErrInvalidPermission.Wrap("wallet address cannot be empty")
 	}
+	if _, err := sdk.AccAddressFromBech32(p.WalletAddress); err != nil {
+		return ErrInvalidPermission.Wrapf("invalid wallet address: %s", err)
+	}
+
 	if p.Grantee == "" {
 		return ErrInvalidPermission.Wrap("grantee cannot be empty")
 	}
+	if _, err := sdk.AccAddressFromBech32(p.Grantee); err != nil {
+		return ErrInvalidPermission.Wrapf("invalid grantee address: %s", err)
+	}
+
 	if len(p.Permissions) == 0 {
 		return ErrInvalidPermission.Wrap("permissions cannot be empty")
 	}

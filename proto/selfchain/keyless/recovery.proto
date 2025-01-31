@@ -3,10 +3,43 @@ package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/keyless/protocol.proto";
+
 enum RecoveryStatus {
-  PENDING = 0;
-  COMPLETED = 1;
-  FAILED = 2;
+  RECOVERY_STATUS_UNSPECIFIED = 0;
+  RECOVERY_STATUS_PENDING = 1;
+  RECOVERY_STATUS_COMPLETED = 2;
+  RECOVERY_STATUS_FAILED = 3;
+}
+
+message RecoveryProof {
+  string wallet_address = 1 [(gogoproto.moretags) = "json:\"wallet_address\""];
+  string new_owner = 2 [(gogoproto.moretags) = "json:\"new_owner\""];
+  string new_pub_key = 3 [(gogoproto.moretags) = "json:\"new_pub_key\""];
+  google.protobuf.Timestamp timestamp = 4 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"timestamp\""
+  ];
+  bytes signature = 5;
+}
+
+message RecoverySession {
+  string wallet_address = 1 [(gogoproto.moretags) = "json:\"wallet_address\""];
+  string creator = 2 [(gogoproto.moretags) = "json:\"creator\""];
+  SessionStatus status = 3;
+  google.protobuf.Timestamp created_at = 4 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"created_at\""
+  ];
+  google.protobuf.Timestamp updated_at = 5 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"updated_at\""
+  ];
 }
 
 message RecoveryInfo {
@@ -14,5 +47,9 @@ message RecoveryInfo {
   string recovery_token = 2;
   string recovery_address = 3;
   RecoveryStatus status = 4;
-  int64 created_at = 5;
+  google.protobuf.Timestamp created_at = 5 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"created_at\""
+  ];
 }

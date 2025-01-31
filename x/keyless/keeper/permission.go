@@ -62,11 +62,8 @@ func (k Keeper) RevokePermission(ctx sdk.Context, walletAddress string, grantee 
 		return status.Error(codes.FailedPrecondition, "permission is already revoked")
 	}
 
-	// Revoke the permission
-	existingPerm.Revoke()
-
-	// Save updated permission
-	k.StorePermission(ctx, existingPerm)
+	// Delete the permission instead of storing it with revoked status
+	k.DeletePermission(ctx, existingPerm)
 
 	// Emit event
 	ctx.EventManager().EmitEvent(
@@ -90,7 +87,7 @@ func (k Keeper) HasPermission(ctx sdk.Context, walletAddress string, grantee str
 
 	// Check if wallet exists
 	if _, err := k.GetWallet(ctx, walletAddress); err != nil {
-		return false, err
+		return false, nil
 	}
 
 	perm, err := k.GetPermission(ctx, walletAddress, grantee)

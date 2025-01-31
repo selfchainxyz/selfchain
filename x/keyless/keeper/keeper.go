@@ -95,8 +95,8 @@ func (k Keeper) InitiateRecovery(ctx sdk.Context, did string, recoveryToken stri
 		Did:             did,
 		RecoveryToken:   recoveryToken,
 		RecoveryAddress: recoveryAddress,
-		Status:          types.RecoveryStatus_PENDING,
-		CreatedAt:       ctx.BlockTime().Unix(),
+		Status:          types.RecoveryStatus_RECOVERY_STATUS_PENDING,
+		CreatedAt:       ctx.BlockTime(),
 	}
 
 	bz, err := k.cdc.Marshal(recoveryInfo)
@@ -106,6 +106,32 @@ func (k Keeper) InitiateRecovery(ctx sdk.Context, did string, recoveryToken stri
 
 	store.Set([]byte(did), bz)
 	return nil
+}
+
+// SaveRecoverySession saves a recovery session
+func (k Keeper) SaveRecoverySession(ctx sdk.Context, session *types.RecoverySession) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("recovery-session/"))
+	bz, err := k.cdc.Marshal(session)
+	if err != nil {
+		return err
+	}
+	store.Set([]byte(session.WalletAddress), bz)
+	return nil
+}
+
+// GetRecoverySession retrieves a recovery session
+func (k Keeper) GetRecoverySession(ctx sdk.Context, walletAddress string) (*types.RecoverySession, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte("recovery-session/"))
+	bz := store.Get([]byte(walletAddress))
+	if bz == nil {
+		return nil, fmt.Errorf("recovery session not found for wallet: %s", walletAddress)
+	}
+
+	var session types.RecoverySession
+	if err := k.cdc.Unmarshal(bz, &session); err != nil {
+		return nil, err
+	}
+	return &session, nil
 }
 
 // GetIdentityKeeper returns the identity keeper

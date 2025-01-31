@@ -5,16 +5,21 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -25,21 +30,24 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type RecoveryStatus int32
 
 const (
-	RecoveryStatus_PENDING   RecoveryStatus = 0
-	RecoveryStatus_COMPLETED RecoveryStatus = 1
-	RecoveryStatus_FAILED    RecoveryStatus = 2
+	RecoveryStatus_RECOVERY_STATUS_UNSPECIFIED RecoveryStatus = 0
+	RecoveryStatus_RECOVERY_STATUS_PENDING     RecoveryStatus = 1
+	RecoveryStatus_RECOVERY_STATUS_COMPLETED   RecoveryStatus = 2
+	RecoveryStatus_RECOVERY_STATUS_FAILED      RecoveryStatus = 3
 )
 
 var RecoveryStatus_name = map[int32]string{
-	0: "PENDING",
-	1: "COMPLETED",
-	2: "FAILED",
+	0: "RECOVERY_STATUS_UNSPECIFIED",
+	1: "RECOVERY_STATUS_PENDING",
+	2: "RECOVERY_STATUS_COMPLETED",
+	3: "RECOVERY_STATUS_FAILED",
 }
 
 var RecoveryStatus_value = map[string]int32{
-	"PENDING":   0,
-	"COMPLETED": 1,
-	"FAILED":    2,
+	"RECOVERY_STATUS_UNSPECIFIED": 0,
+	"RECOVERY_STATUS_PENDING":     1,
+	"RECOVERY_STATUS_COMPLETED":   2,
+	"RECOVERY_STATUS_FAILED":      3,
 }
 
 func (x RecoveryStatus) String() string {
@@ -50,19 +58,171 @@ func (RecoveryStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_e7a4f73f4a14eb1f, []int{0}
 }
 
+type RecoveryProof struct {
+	WalletAddress string    `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty" json:"wallet_address"`
+	NewOwner      string    `protobuf:"bytes,2,opt,name=new_owner,json=newOwner,proto3" json:"new_owner,omitempty" json:"new_owner"`
+	NewPubKey     string    `protobuf:"bytes,3,opt,name=new_pub_key,json=newPubKey,proto3" json:"new_pub_key,omitempty" json:"new_pub_key"`
+	Timestamp     time.Time `protobuf:"bytes,4,opt,name=timestamp,proto3,stdtime" json:"timestamp" json:"timestamp"`
+	Signature     []byte    `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (m *RecoveryProof) Reset()         { *m = RecoveryProof{} }
+func (m *RecoveryProof) String() string { return proto.CompactTextString(m) }
+func (*RecoveryProof) ProtoMessage()    {}
+func (*RecoveryProof) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7a4f73f4a14eb1f, []int{0}
+}
+func (m *RecoveryProof) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RecoveryProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RecoveryProof.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RecoveryProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RecoveryProof.Merge(m, src)
+}
+func (m *RecoveryProof) XXX_Size() int {
+	return m.Size()
+}
+func (m *RecoveryProof) XXX_DiscardUnknown() {
+	xxx_messageInfo_RecoveryProof.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RecoveryProof proto.InternalMessageInfo
+
+func (m *RecoveryProof) GetWalletAddress() string {
+	if m != nil {
+		return m.WalletAddress
+	}
+	return ""
+}
+
+func (m *RecoveryProof) GetNewOwner() string {
+	if m != nil {
+		return m.NewOwner
+	}
+	return ""
+}
+
+func (m *RecoveryProof) GetNewPubKey() string {
+	if m != nil {
+		return m.NewPubKey
+	}
+	return ""
+}
+
+func (m *RecoveryProof) GetTimestamp() time.Time {
+	if m != nil {
+		return m.Timestamp
+	}
+	return time.Time{}
+}
+
+func (m *RecoveryProof) GetSignature() []byte {
+	if m != nil {
+		return m.Signature
+	}
+	return nil
+}
+
+type RecoverySession struct {
+	WalletAddress string        `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty" json:"wallet_address"`
+	Creator       string        `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty" json:"creator"`
+	Status        SessionStatus `protobuf:"varint,3,opt,name=status,proto3,enum=selfchain.keyless.SessionStatus" json:"status,omitempty"`
+	CreatedAt     time.Time     `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at" json:"created_at"`
+	UpdatedAt     time.Time     `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3,stdtime" json:"updated_at" json:"updated_at"`
+}
+
+func (m *RecoverySession) Reset()         { *m = RecoverySession{} }
+func (m *RecoverySession) String() string { return proto.CompactTextString(m) }
+func (*RecoverySession) ProtoMessage()    {}
+func (*RecoverySession) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7a4f73f4a14eb1f, []int{1}
+}
+func (m *RecoverySession) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RecoverySession) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RecoverySession.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RecoverySession) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RecoverySession.Merge(m, src)
+}
+func (m *RecoverySession) XXX_Size() int {
+	return m.Size()
+}
+func (m *RecoverySession) XXX_DiscardUnknown() {
+	xxx_messageInfo_RecoverySession.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RecoverySession proto.InternalMessageInfo
+
+func (m *RecoverySession) GetWalletAddress() string {
+	if m != nil {
+		return m.WalletAddress
+	}
+	return ""
+}
+
+func (m *RecoverySession) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *RecoverySession) GetStatus() SessionStatus {
+	if m != nil {
+		return m.Status
+	}
+	return SessionStatus_SESSION_STATUS_UNSPECIFIED
+}
+
+func (m *RecoverySession) GetCreatedAt() time.Time {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return time.Time{}
+}
+
+func (m *RecoverySession) GetUpdatedAt() time.Time {
+	if m != nil {
+		return m.UpdatedAt
+	}
+	return time.Time{}
+}
+
 type RecoveryInfo struct {
 	Did             string         `protobuf:"bytes,1,opt,name=did,proto3" json:"did,omitempty"`
 	RecoveryToken   string         `protobuf:"bytes,2,opt,name=recovery_token,json=recoveryToken,proto3" json:"recovery_token,omitempty"`
 	RecoveryAddress string         `protobuf:"bytes,3,opt,name=recovery_address,json=recoveryAddress,proto3" json:"recovery_address,omitempty"`
 	Status          RecoveryStatus `protobuf:"varint,4,opt,name=status,proto3,enum=selfchain.keyless.RecoveryStatus" json:"status,omitempty"`
-	CreatedAt       int64          `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt       time.Time      `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3,stdtime" json:"created_at" json:"created_at"`
 }
 
 func (m *RecoveryInfo) Reset()         { *m = RecoveryInfo{} }
 func (m *RecoveryInfo) String() string { return proto.CompactTextString(m) }
 func (*RecoveryInfo) ProtoMessage()    {}
 func (*RecoveryInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e7a4f73f4a14eb1f, []int{0}
+	return fileDescriptor_e7a4f73f4a14eb1f, []int{2}
 }
 func (m *RecoveryInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -116,43 +276,183 @@ func (m *RecoveryInfo) GetStatus() RecoveryStatus {
 	if m != nil {
 		return m.Status
 	}
-	return RecoveryStatus_PENDING
+	return RecoveryStatus_RECOVERY_STATUS_UNSPECIFIED
 }
 
-func (m *RecoveryInfo) GetCreatedAt() int64 {
+func (m *RecoveryInfo) GetCreatedAt() time.Time {
 	if m != nil {
 		return m.CreatedAt
 	}
-	return 0
+	return time.Time{}
 }
 
 func init() {
 	proto.RegisterEnum("selfchain.keyless.RecoveryStatus", RecoveryStatus_name, RecoveryStatus_value)
+	proto.RegisterType((*RecoveryProof)(nil), "selfchain.keyless.RecoveryProof")
+	proto.RegisterType((*RecoverySession)(nil), "selfchain.keyless.RecoverySession")
 	proto.RegisterType((*RecoveryInfo)(nil), "selfchain.keyless.RecoveryInfo")
 }
 
 func init() { proto.RegisterFile("selfchain/keyless/recovery.proto", fileDescriptor_e7a4f73f4a14eb1f) }
 
 var fileDescriptor_e7a4f73f4a14eb1f = []byte{
-	// 286 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x28, 0x4e, 0xcd, 0x49,
-	0x4b, 0xce, 0x48, 0xcc, 0xcc, 0xd3, 0xcf, 0x4e, 0xad, 0xcc, 0x49, 0x2d, 0x2e, 0xd6, 0x2f, 0x4a,
-	0x4d, 0xce, 0x2f, 0x4b, 0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x84, 0xab,
-	0xd0, 0x83, 0xaa, 0x50, 0x3a, 0xc3, 0xc8, 0xc5, 0x13, 0x04, 0x55, 0xe5, 0x99, 0x97, 0x96, 0x2f,
-	0x24, 0xc0, 0xc5, 0x9c, 0x92, 0x99, 0x22, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x19, 0x04, 0x62, 0x0a,
-	0xa9, 0x72, 0xf1, 0xc1, 0xcc, 0x89, 0x2f, 0xc9, 0xcf, 0x4e, 0xcd, 0x93, 0x60, 0x02, 0x4b, 0xf2,
-	0xc2, 0x44, 0x43, 0x40, 0x82, 0x42, 0x9a, 0x5c, 0x02, 0x70, 0x65, 0x89, 0x29, 0x29, 0x45, 0xa9,
-	0xc5, 0xc5, 0x12, 0xcc, 0x60, 0x85, 0xfc, 0x30, 0x71, 0x47, 0x88, 0xb0, 0x90, 0x25, 0x17, 0x5b,
-	0x71, 0x49, 0x62, 0x49, 0x69, 0xb1, 0x04, 0x8b, 0x02, 0xa3, 0x06, 0x9f, 0x91, 0xa2, 0x1e, 0x86,
-	0xc3, 0xf4, 0x60, 0x8e, 0x0a, 0x06, 0x2b, 0x0c, 0x82, 0x6a, 0x10, 0x92, 0xe5, 0xe2, 0x4a, 0x2e,
-	0x4a, 0x4d, 0x2c, 0x49, 0x4d, 0x89, 0x4f, 0x2c, 0x91, 0x60, 0x55, 0x60, 0xd4, 0x60, 0x0e, 0xe2,
-	0x84, 0x8a, 0x38, 0x96, 0x68, 0x59, 0x70, 0xf1, 0xa1, 0x6a, 0x14, 0xe2, 0xe6, 0x62, 0x0f, 0x70,
-	0xf5, 0x73, 0xf1, 0xf4, 0x73, 0x17, 0x60, 0x10, 0xe2, 0xe5, 0xe2, 0x74, 0xf6, 0xf7, 0x0d, 0xf0,
-	0x71, 0x0d, 0x71, 0x75, 0x11, 0x60, 0x14, 0xe2, 0xe2, 0x62, 0x73, 0x73, 0xf4, 0xf4, 0x71, 0x75,
-	0x11, 0x60, 0x72, 0x32, 0x3e, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4,
-	0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0x49,
-	0x44, 0xb8, 0x56, 0xc0, 0x43, 0xb6, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0xae, 0xc6,
-	0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xeb, 0x8a, 0xd6, 0xf6, 0x7b, 0x01, 0x00, 0x00,
+	// 616 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xdf, 0x6e, 0xd3, 0x30,
+	0x18, 0xc5, 0x9b, 0xee, 0x0f, 0xd4, 0xdb, 0xba, 0xcc, 0x1a, 0xa3, 0xeb, 0xb6, 0xa4, 0x44, 0x42,
+	0x1a, 0x08, 0xa5, 0x62, 0x93, 0x10, 0x70, 0x45, 0xb7, 0x66, 0xa8, 0x62, 0x6c, 0x95, 0xdb, 0x4d,
+	0xc0, 0x4d, 0x94, 0x36, 0x6e, 0x29, 0xcb, 0xe2, 0x2a, 0x76, 0x28, 0x7d, 0x02, 0xc4, 0xdd, 0x9e,
+	0x85, 0xa7, 0xd8, 0xe5, 0x2e, 0xb9, 0x2a, 0x68, 0x7b, 0x00, 0xa4, 0x3e, 0x01, 0x8a, 0x63, 0x27,
+	0x6c, 0x4c, 0x08, 0xa4, 0xdd, 0x39, 0xdf, 0x39, 0xe7, 0xb3, 0xfd, 0xb3, 0x63, 0x50, 0xa2, 0xd8,
+	0xeb, 0xb4, 0xdf, 0x3b, 0x3d, 0xbf, 0x7c, 0x84, 0x87, 0x1e, 0xa6, 0xb4, 0x1c, 0xe0, 0x36, 0xf9,
+	0x88, 0x83, 0xa1, 0xd9, 0x0f, 0x08, 0x23, 0x70, 0x21, 0x71, 0x98, 0xc2, 0x51, 0x5c, 0xec, 0x92,
+	0x2e, 0xe1, 0x6a, 0x39, 0x1a, 0xc5, 0xc6, 0xa2, 0xde, 0x25, 0xa4, 0xeb, 0xe1, 0x32, 0xff, 0x6a,
+	0x85, 0x9d, 0x32, 0xeb, 0x1d, 0x63, 0xca, 0x9c, 0xe3, 0xbe, 0x30, 0x5c, 0x33, 0x17, 0x17, 0xda,
+	0xc4, 0x8b, 0x1d, 0xc6, 0xd7, 0x2c, 0x98, 0x43, 0x62, 0xfa, 0x7a, 0x40, 0x48, 0x07, 0xbe, 0x00,
+	0xf9, 0x81, 0xe3, 0x79, 0x98, 0xd9, 0x8e, 0xeb, 0x06, 0x98, 0xd2, 0x82, 0x52, 0x52, 0xd6, 0x73,
+	0x5b, 0xcb, 0xe3, 0x91, 0x7e, 0xe7, 0x03, 0x25, 0xfe, 0x73, 0xe3, 0xb2, 0x6e, 0xa0, 0xb9, 0xb8,
+	0x50, 0x89, 0xbf, 0xe1, 0x63, 0x90, 0xf3, 0xf1, 0xc0, 0x26, 0x03, 0x1f, 0x07, 0x85, 0x2c, 0x0f,
+	0x2f, 0x8e, 0x47, 0xba, 0x1a, 0x87, 0x13, 0xc9, 0x40, 0xb7, 0x7d, 0x3c, 0xd8, 0x8f, 0x86, 0xf0,
+	0x09, 0x98, 0x89, 0xea, 0xfd, 0xb0, 0x65, 0x1f, 0xe1, 0x61, 0x61, 0x82, 0x87, 0x96, 0xc6, 0x23,
+	0x1d, 0xa6, 0x21, 0x21, 0x1a, 0x28, 0xea, 0x5e, 0x0f, 0x5b, 0xaf, 0xf0, 0x10, 0x1e, 0x82, 0x5c,
+	0xb2, 0xe7, 0xc2, 0x64, 0x49, 0x59, 0x9f, 0xd9, 0x28, 0x9a, 0x31, 0x15, 0x53, 0x52, 0x31, 0x9b,
+	0xd2, 0xb1, 0xb5, 0x7a, 0x3a, 0xd2, 0x33, 0xe9, 0x52, 0x92, 0xa8, 0x71, 0xf2, 0x5d, 0x57, 0x50,
+	0xda, 0x0a, 0xae, 0x82, 0x1c, 0xed, 0x75, 0x7d, 0x87, 0x85, 0x01, 0x2e, 0x4c, 0x95, 0x94, 0xf5,
+	0x59, 0x94, 0x16, 0x8c, 0x9f, 0x59, 0x30, 0x2f, 0xa1, 0x35, 0x30, 0xa5, 0x3d, 0xe2, 0xdf, 0x00,
+	0xb6, 0x47, 0xe0, 0x56, 0x3b, 0xc0, 0x0e, 0x23, 0x12, 0x1a, 0x1c, 0x8f, 0xf4, 0x7c, 0x1c, 0x15,
+	0x82, 0x81, 0xa4, 0x05, 0x3e, 0x05, 0xd3, 0x94, 0x39, 0x2c, 0xa4, 0x1c, 0x56, 0x7e, 0xa3, 0x64,
+	0xfe, 0x71, 0x6b, 0x4c, 0xb1, 0xb6, 0x06, 0xf7, 0x21, 0xe1, 0x87, 0x6f, 0x00, 0xe0, 0x4d, 0xb0,
+	0x6b, 0x3b, 0xec, 0x1f, 0xa0, 0xad, 0x09, 0x68, 0x0b, 0xbf, 0x2d, 0x85, 0x67, 0x05, 0x35, 0x51,
+	0xa8, 0xb0, 0xa8, 0x73, 0xd8, 0x77, 0x65, 0xe7, 0xa9, 0xff, 0xed, 0x9c, 0x66, 0x45, 0x67, 0x51,
+	0xa8, 0x30, 0xe3, 0x73, 0x16, 0xcc, 0x4a, 0xe2, 0x35, 0xbf, 0x43, 0xa0, 0x0a, 0x26, 0xdc, 0x9e,
+	0x1b, 0x33, 0x46, 0xd1, 0x10, 0xde, 0x07, 0x79, 0xf9, 0x1f, 0xd9, 0x8c, 0x1c, 0x61, 0x3f, 0xa6,
+	0x88, 0xe6, 0x64, 0xb5, 0x19, 0x15, 0xe1, 0x03, 0xa0, 0x26, 0x36, 0x79, 0x52, 0xfc, 0xba, 0xa1,
+	0x79, 0x59, 0x97, 0x07, 0xf2, 0x2c, 0x41, 0x3c, 0xc9, 0x11, 0xdf, 0xbb, 0x06, 0x71, 0x72, 0x0d,
+	0xfe, 0xc6, 0x78, 0xea, 0xe6, 0x18, 0x3f, 0xfc, 0xa2, 0x80, 0xfc, 0xe5, 0x49, 0xa1, 0x0e, 0x56,
+	0x90, 0xb5, 0xbd, 0x7f, 0x68, 0xa1, 0xb7, 0x76, 0xa3, 0x59, 0x69, 0x1e, 0x34, 0xec, 0x83, 0xbd,
+	0x46, 0xdd, 0xda, 0xae, 0xed, 0xd4, 0xac, 0xaa, 0x9a, 0x81, 0x2b, 0xe0, 0xee, 0x55, 0x43, 0xdd,
+	0xda, 0xab, 0xd6, 0xf6, 0x5e, 0xaa, 0x0a, 0x5c, 0x03, 0xcb, 0x57, 0xc5, 0xed, 0xfd, 0xd7, 0xf5,
+	0x5d, 0xab, 0x69, 0x55, 0xd5, 0x2c, 0x2c, 0x82, 0xa5, 0xab, 0xf2, 0x4e, 0xa5, 0xb6, 0x6b, 0x55,
+	0xd5, 0x89, 0xad, 0xcd, 0xd3, 0x73, 0x4d, 0x39, 0x3b, 0xd7, 0x94, 0x1f, 0xe7, 0x9a, 0x72, 0x72,
+	0xa1, 0x65, 0xce, 0x2e, 0xb4, 0xcc, 0xb7, 0x0b, 0x2d, 0xf3, 0x6e, 0x39, 0x7d, 0x78, 0x3e, 0x25,
+	0x4f, 0x0f, 0x1b, 0xf6, 0x31, 0x6d, 0x4d, 0xf3, 0xed, 0x6f, 0xfe, 0x0a, 0x00, 0x00, 0xff, 0xff,
+	0x47, 0x11, 0x92, 0x9c, 0x08, 0x05, 0x00, 0x00,
+}
+
+func (m *RecoveryProof) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RecoveryProof) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RecoveryProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Signature) > 0 {
+		i -= len(m.Signature)
+		copy(dAtA[i:], m.Signature)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.Signature)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.Timestamp, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.Timestamp):])
+	if err1 != nil {
+		return 0, err1
+	}
+	i -= n1
+	i = encodeVarintRecovery(dAtA, i, uint64(n1))
+	i--
+	dAtA[i] = 0x22
+	if len(m.NewPubKey) > 0 {
+		i -= len(m.NewPubKey)
+		copy(dAtA[i:], m.NewPubKey)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.NewPubKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.NewOwner) > 0 {
+		i -= len(m.NewOwner)
+		copy(dAtA[i:], m.NewOwner)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.NewOwner)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletAddress) > 0 {
+		i -= len(m.WalletAddress)
+		copy(dAtA[i:], m.WalletAddress)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.WalletAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *RecoverySession) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RecoverySession) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RecoverySession) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.UpdatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt):])
+	if err2 != nil {
+		return 0, err2
+	}
+	i -= n2
+	i = encodeVarintRecovery(dAtA, i, uint64(n2))
+	i--
+	dAtA[i] = 0x2a
+	n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt):])
+	if err3 != nil {
+		return 0, err3
+	}
+	i -= n3
+	i = encodeVarintRecovery(dAtA, i, uint64(n3))
+	i--
+	dAtA[i] = 0x22
+	if m.Status != 0 {
+		i = encodeVarintRecovery(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.WalletAddress) > 0 {
+		i -= len(m.WalletAddress)
+		copy(dAtA[i:], m.WalletAddress)
+		i = encodeVarintRecovery(dAtA, i, uint64(len(m.WalletAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *RecoveryInfo) Marshal() (dAtA []byte, err error) {
@@ -175,11 +475,14 @@ func (m *RecoveryInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.CreatedAt != 0 {
-		i = encodeVarintRecovery(dAtA, i, uint64(m.CreatedAt))
-		i--
-		dAtA[i] = 0x28
+	n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CreatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt):])
+	if err4 != nil {
+		return 0, err4
 	}
+	i -= n4
+	i = encodeVarintRecovery(dAtA, i, uint64(n4))
+	i--
+	dAtA[i] = 0x2a
 	if m.Status != 0 {
 		i = encodeVarintRecovery(dAtA, i, uint64(m.Status))
 		i--
@@ -220,6 +523,57 @@ func encodeVarintRecovery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *RecoveryProof) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletAddress)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	l = len(m.NewOwner)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	l = len(m.NewPubKey)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.Timestamp)
+	n += 1 + l + sovRecovery(uint64(l))
+	l = len(m.Signature)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	return n
+}
+
+func (m *RecoverySession) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.WalletAddress)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovRecovery(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovRecovery(uint64(m.Status))
+	}
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt)
+	n += 1 + l + sovRecovery(uint64(l))
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt)
+	n += 1 + l + sovRecovery(uint64(l))
+	return n
+}
+
 func (m *RecoveryInfo) Size() (n int) {
 	if m == nil {
 		return 0
@@ -241,9 +595,8 @@ func (m *RecoveryInfo) Size() (n int) {
 	if m.Status != 0 {
 		n += 1 + sovRecovery(uint64(m.Status))
 	}
-	if m.CreatedAt != 0 {
-		n += 1 + sovRecovery(uint64(m.CreatedAt))
-	}
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CreatedAt)
+	n += 1 + l + sovRecovery(uint64(l))
 	return n
 }
 
@@ -252,6 +605,418 @@ func sovRecovery(x uint64) (n int) {
 }
 func sozRecovery(x uint64) (n int) {
 	return sovRecovery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *RecoveryProof) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRecovery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RecoveryProof: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RecoveryProof: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewOwner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewOwner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.Timestamp, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signature = append(m.Signature[:0], dAtA[iNdEx:postIndex]...)
+			if m.Signature == nil {
+				m.Signature = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRecovery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RecoverySession) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRecovery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RecoverySession: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RecoverySession: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WalletAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WalletAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= SessionStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdatedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRecovery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.UpdatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRecovery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *RecoveryInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -398,10 +1163,10 @@ func (m *RecoveryInfo) Unmarshal(dAtA []byte) error {
 				}
 			}
 		case 5:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}
-			m.CreatedAt = 0
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowRecovery
@@ -411,11 +1176,25 @@ func (m *RecoveryInfo) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.CreatedAt |= int64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			if msglen < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecovery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CreatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRecovery(dAtA[iNdEx:])

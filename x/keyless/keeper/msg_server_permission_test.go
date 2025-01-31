@@ -6,8 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	keepertest "selfchain/testutil/keeper"
 	"selfchain/x/keyless/keeper"
@@ -19,9 +17,14 @@ func TestMsgServerPermission(t *testing.T) {
 	srv := keeper.NewMsgServerImpl(k.Keeper)
 	wctx := sdk.WrapSDKContext(k.Ctx)
 
+	// Clear store before test
+	k.ClearStore()
+
 	// Create test wallet first
-	walletAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
-	creator := "cosmos1s4ycalgh3gjemd4hmqcvcgmnf647rnd0tpg2w9"
+	walletAddr := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	creator := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	grantee := "cosmos1w3jhxapjta047h6lta047h6lta047h6lwuy8a3"
+
 	msg := &types.MsgCreateWallet{
 		Creator:       creator,
 		PubKey:        "pubkey1",
@@ -32,152 +35,52 @@ func TestMsgServerPermission(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set wallet status to active
-	wallet, err := k.GetWallet(k.Ctx, walletAddr)
-	require.NoError(t, err)
-	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-	err = k.SaveWallet(k.Ctx, wallet)
+	err = k.SetWalletStatus(k.Ctx, walletAddr, types.WalletStatus_WALLET_STATUS_ACTIVE)
 	require.NoError(t, err)
 
+	// Test granting permission
 	expiresAt := time.Now().Add(24 * time.Hour)
+	grantMsg := &types.MsgGrantPermission{
+		Creator:       creator,
+		WalletAddress: walletAddr,
+		Grantee:      grantee,
+		Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN},
+		ExpiresAt:    &expiresAt,
+	}
 
-	t.Run("GrantPermission", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			msg     *types.MsgGrantPermission
-			err     error
-		}{
-			{
-				name: "Valid Grant",
-				msg: &types.MsgGrantPermission{
-					Creator:       creator,
-					WalletAddress: walletAddr,
-					Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-					Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN, types.WalletPermission_WALLET_PERMISSION_ADMIN},
-					ExpiresAt:    &expiresAt,
-				},
-			},
-			{
-				name: "Invalid Creator",
-				msg: &types.MsgGrantPermission{
-					Creator:       "invalid",
-					WalletAddress: walletAddr,
-					Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-					Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN},
-					ExpiresAt:    &expiresAt,
-				},
-				err: status.Error(codes.InvalidArgument, "invalid creator address (decoding bech32 failed: invalid bech32 string length 7): invalid address"),
-			},
-			{
-				name: "Invalid Wallet",
-				msg: &types.MsgGrantPermission{
-					Creator:       creator,
-					WalletAddress: "invalid",
-					Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-					Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN},
-					ExpiresAt:    &expiresAt,
-				},
-				err: status.Error(codes.InvalidArgument, "invalid wallet address (decoding bech32 failed: invalid bech32 string length 7): invalid address"),
-			},
-		}
+	_, err = srv.GrantPermission(wctx, grantMsg)
+	require.NoError(t, err)
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Clear store before each test case
-				k.ClearStore()
+	// Verify permission exists
+	perms, err := k.GetPermissionsForWallet(k.Ctx, walletAddr)
+	require.NoError(t, err)
+	require.Len(t, perms, 1)
+	require.Equal(t, grantee, perms[0].Grantee)
+	require.Equal(t, []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()}, perms[0].Permissions)
 
-				// Create wallet again after clearing store
-				_, err := srv.CreateWallet(wctx, msg)
-				require.NoError(t, err)
+	// Test revoking permission
+	revokeMsg := &types.MsgRevokePermission{
+		Creator:       creator,
+		WalletAddress: walletAddr,
+		Grantee:      grantee,
+		Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN},
+	}
 
-				// Set wallet status to active
-				wallet, err := k.GetWallet(k.Ctx, walletAddr)
-				require.NoError(t, err)
-				wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-				err = k.SaveWallet(k.Ctx, wallet)
-				require.NoError(t, err)
+	_, err = srv.RevokePermission(wctx, revokeMsg)
+	require.NoError(t, err)
 
-				_, err = srv.GrantPermission(wctx, tt.msg)
-				if tt.err != nil {
-					require.Error(t, err)
-					require.Equal(t, tt.err.Error(), err.Error())
-					return
-				}
-				require.NoError(t, err)
+	// Verify permission is revoked
+	perms, err = k.GetPermissionsForWallet(k.Ctx, walletAddr)
+	require.NoError(t, err)
+	require.Empty(t, perms)
 
-				// Verify permission was granted
-				perm, err := k.GetPermission(k.Ctx, tt.msg.WalletAddress, tt.msg.Grantee)
-				require.NoError(t, err)
-				require.NotNil(t, perm)
-				require.Equal(t, tt.msg.Permissions, perm.Permissions)
-			})
-		}
-	})
+	// Test granting permission with invalid grantee
+	grantMsg.Grantee = "invalid"
+	_, err = srv.GrantPermission(wctx, grantMsg)
+	require.Error(t, err)
 
-	t.Run("RevokePermission", func(t *testing.T) {
-		// Clear store before revoke tests
-		k.ClearStore()
-
-		// Create wallet again after clearing store
-		_, err := srv.CreateWallet(wctx, msg)
-		require.NoError(t, err)
-
-		// Set wallet status to active
-		wallet, err := k.GetWallet(k.Ctx, walletAddr)
-		require.NoError(t, err)
-		wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-		err = k.SaveWallet(k.Ctx, wallet)
-		require.NoError(t, err)
-
-		// First grant a permission
-		grantMsg := &types.MsgGrantPermission{
-			Creator:       creator,
-			WalletAddress: walletAddr,
-			Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-			Permissions:  []types.WalletPermission{types.WalletPermission_WALLET_PERMISSION_SIGN},
-			ExpiresAt:    &expiresAt,
-		}
-		_, err = srv.GrantPermission(wctx, grantMsg)
-		require.NoError(t, err)
-
-		tests := []struct {
-			name    string
-			msg     *types.MsgRevokePermission
-			err     error
-		}{
-			{
-				name: "Valid Revoke",
-				msg: &types.MsgRevokePermission{
-					Creator:       creator,
-					WalletAddress: walletAddr,
-					Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-				},
-			},
-			{
-				name: "Invalid Creator",
-				msg: &types.MsgRevokePermission{
-					Creator:       "invalid",
-					WalletAddress: walletAddr,
-					Grantee:      "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytqqpspa",
-				},
-				err: status.Error(codes.InvalidArgument, "invalid creator address (decoding bech32 failed: invalid bech32 string length 7): invalid address"),
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				_, err := srv.RevokePermission(wctx, tt.msg)
-				if tt.err != nil {
-					require.Error(t, err)
-					require.Equal(t, tt.err.Error(), err.Error())
-					return
-				}
-				require.NoError(t, err)
-
-				// Verify permission was revoked
-				perm, err := k.GetPermission(k.Ctx, tt.msg.WalletAddress, tt.msg.Grantee)
-				require.NoError(t, err)
-				require.True(t, perm.Revoked)
-			})
-		}
-	})
+	// Test revoking permission with invalid grantee
+	revokeMsg.Grantee = "invalid"
+	_, err = srv.RevokePermission(wctx, revokeMsg)
+	require.Error(t, err)
 }

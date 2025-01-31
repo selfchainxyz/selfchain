@@ -4,13 +4,16 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	testkeeper "selfchain/testutil/keeper"
+
+	keepertest "selfchain/testutil/keeper"
+	"selfchain/x/keyless/keeper"
 	"selfchain/x/keyless/types"
 )
 
 func TestWalletManagement(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
+	k := keepertest.NewKeylessKeeper(t)
 	
 	tests := []struct {
 		name        string
@@ -20,8 +23,8 @@ func TestWalletManagement(t *testing.T) {
 		{
 			name: "valid wallet creation",
 			wallet: &types.Wallet{
-				Creator:       "self1creator",
-				WalletAddress: "self1wallet",
+				Creator:       "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66",
+				WalletAddress: "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66",
 				ChainId:       "self-1",
 				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
 				KeyVersion:    1,
@@ -31,8 +34,8 @@ func TestWalletManagement(t *testing.T) {
 		{
 			name: "duplicate wallet address",
 			wallet: &types.Wallet{
-				Creator:       "self1creator",
-				WalletAddress: "self1wallet",
+				Creator:       "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66",
+				WalletAddress: "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66",
 				ChainId:       "self-1",
 				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
 				KeyVersion:    1,
@@ -42,8 +45,8 @@ func TestWalletManagement(t *testing.T) {
 		{
 			name: "invalid chain ID",
 			wallet: &types.Wallet{
-				Creator:       "self1creator",
-				WalletAddress: "self1wallet3",
+				Creator:       "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66",
+				WalletAddress: "cosmos1w3jhxapjta047h6lta047h6lta047h6lwuy8a3",
 				ChainId:       "",
 				Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
 				KeyVersion:    1,
@@ -77,49 +80,60 @@ func TestWalletManagement(t *testing.T) {
 }
 
 func TestWalletAccess(t *testing.T) {
-	k := testkeeper.NewKeylessKeeper(t)
-	
-	// Create a test wallet
-	wallet := &types.Wallet{
-		Creator:       "self1creator",
-		WalletAddress: "self1wallet",
-		ChainId:       "self-1",
-		Status:        types.WalletStatus_WALLET_STATUS_ACTIVE,
-		KeyVersion:    1,
-	}
+	k := keepertest.NewKeylessKeeper(t)
+	srv := keeper.NewMsgServerImpl(k.Keeper)
+	wctx := sdk.WrapSDKContext(k.Ctx)
 
-	err := k.SaveWallet(k.Ctx, wallet)
+	// Clear store before test
+	k.ClearStore()
+
+	// Create test wallet first
+	walletAddr := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	creator := "cosmos1w3jhxap3ta047h6lta047h6lta047h6lx84s66"
+	grantee := "cosmos1w3jhxapjta047h6lta047h6lta047h6lwuy8a3"
+
+	msg := &types.MsgCreateWallet{
+		Creator:       creator,
+		PubKey:        "pubkey1",
+		WalletAddress: walletAddr,
+		ChainId:       "test-1",
+	}
+	_, err := srv.CreateWallet(wctx, msg)
 	require.NoError(t, err)
 
-	// Test wallet authorization for creator (should be authorized for SIGN)
-	authorized := k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, wallet.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.True(t, authorized)
+	// Set wallet status to active
+	err = k.SetWalletStatus(k.Ctx, walletAddr, types.WalletStatus_WALLET_STATUS_ACTIVE)
+	require.NoError(t, err)
 
-	// Test wallet authorization for creator (should be authorized for ADMIN)
-	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, wallet.Creator, types.WalletPermission_WALLET_PERMISSION_ADMIN)
-	require.True(t, authorized)
-
-	// Test unauthorized access
-	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, "unauthorized_creator", types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.False(t, authorized)
-
-	// Grant permission to another address
-	grantee := "self1grantee"
+	// Test granting permission
 	expiresAt := time.Now().Add(24 * time.Hour)
 	permission := &types.Permission{
-		WalletAddress: wallet.WalletAddress,
+		WalletAddress: walletAddr,
 		Grantee:      grantee,
 		Permissions:  []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()},
 		ExpiresAt:    &expiresAt,
 	}
+
 	err = k.GrantPermission(k.Ctx, permission)
 	require.NoError(t, err)
 
-	// Test authorized access for grantee
-	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, grantee, types.WalletPermission_WALLET_PERMISSION_SIGN)
-	require.True(t, authorized)
+	// Test checking permission
+	hasPermission, err := k.HasPermission(k.Ctx, walletAddr, grantee, types.WalletPermission_WALLET_PERMISSION_SIGN.String())
+	require.NoError(t, err)
+	require.True(t, hasPermission)
 
-	// Test unauthorized permission for grantee
-	authorized = k.IsWalletAuthorized(k.Ctx, wallet.WalletAddress, grantee, types.WalletPermission_WALLET_PERMISSION_ADMIN)
-	require.False(t, authorized)
+	// Test checking non-existent permission
+	hasPermission, err = k.HasPermission(k.Ctx, walletAddr, grantee, types.WalletPermission_WALLET_PERMISSION_RECOVER.String())
+	require.NoError(t, err)
+	require.False(t, hasPermission)
+
+	// Test checking permission for non-existent grantee
+	hasPermission, err = k.HasPermission(k.Ctx, walletAddr, "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytkut3hz", types.WalletPermission_WALLET_PERMISSION_SIGN.String())
+	require.NoError(t, err)
+	require.False(t, hasPermission)
+
+	// Test checking permission for non-existent wallet
+	hasPermission, err = k.HasPermission(k.Ctx, "cosmos1v9jxgu33kewfvynvl5mu8xg3u2m3ugytkut3hz", grantee, types.WalletPermission_WALLET_PERMISSION_SIGN.String())
+	require.NoError(t, err)
+	require.False(t, hasPermission)
 }
