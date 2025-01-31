@@ -15,7 +15,6 @@ import (
 const (
 	RecoverySessionPrefix = "recovery_session/"
 	RecoveryExpiry        = 30 * time.Minute
-	RecoveryPrefix        = "recovery/"
 )
 
 // InitiateRecovery starts a new wallet recovery session
@@ -126,23 +125,23 @@ func (k Keeper) CompleteRecovery(ctx sdk.Context, sessionID string, mfaCode stri
 func (k Keeper) GenerateRecoveryToken(ctx sdk.Context, walletID string) (string, error) {
 	// Generate a random token
 	token := fmt.Sprintf("%s-%d", walletID, ctx.BlockHeight())
-	
+
 	// Store the token with expiry
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoveryPrefix))
 	expiresAt := ctx.BlockTime().Add(RecoveryExpiry)
-	
+
 	// Create and store recovery data
 	recoveryData := &types.RecoveryData{
 		WalletId:  walletID,
 		Token:     token,
 		ExpiresAt: &expiresAt,
 	}
-	
+
 	bz, err := k.cdc.Marshal(recoveryData)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal recovery data: %w", err)
 	}
-	
+
 	store.Set([]byte(token), bz)
 	return token, nil
 }
@@ -150,30 +149,30 @@ func (k Keeper) GenerateRecoveryToken(ctx sdk.Context, walletID string) (string,
 // ValidateRecoveryToken validates a recovery token for a wallet
 func (k Keeper) ValidateRecoveryToken(ctx sdk.Context, walletID string, token string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoveryPrefix))
-	
+
 	bz := store.Get([]byte(token))
 	if bz == nil {
 		return fmt.Errorf("recovery token not found for wallet: %s", walletID)
 	}
-	
+
 	var recoveryData types.RecoveryData
 	if err := k.cdc.Unmarshal(bz, &recoveryData); err != nil {
 		return fmt.Errorf("failed to unmarshal recovery data: %w", err)
 	}
-	
+
 	// Validate wallet ID matches
 	if recoveryData.WalletId != walletID {
 		return fmt.Errorf("invalid recovery token: wallet ID mismatch")
 	}
-	
+
 	// Check if token has expired
 	if recoveryData.ExpiresAt.Before(ctx.BlockTime()) {
 		return fmt.Errorf("recovery token has expired")
 	}
-	
+
 	// Token is valid, clean it up since it's one-time use
 	store.Delete([]byte(token))
-	
+
 	return nil
 }
 

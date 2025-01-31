@@ -2,112 +2,135 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
-	"selfchain/x/identity/types"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"selfchain/x/identity/types"
 )
 
 // LinkSocialIdentity links a social identity to a DID
-func (k Keeper) LinkSocialIdentity(ctx sdk.Context, did string, provider string, token string) error {
-	// Verify DID exists
-	if !k.HasDIDDocument(ctx, did) {
-		return sdkerrors.Wrap(types.ErrDIDNotFound, "DID not found")
+func (k Keeper) LinkSocialIdentity(ctx sdk.Context, did string, provider string, userInfo *types.UserInfo) error {
+	// Check if DID exists
+	_, found := k.GetDIDDocument(ctx, did)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrDIDNotFound, "did %s not found", did)
 	}
 
-	// Verify token with provider
-	socialID, err := k.verifySocialToken(ctx, provider, token)
-	if err != nil {
-		return sdkerrors.Wrap(types.ErrInvalidToken, err.Error())
+	// Check if social identity already exists
+	key := fmt.Sprintf("%s:%s:%s", did, provider, userInfo.Id)
+	if _, found := k.GetSocialIdentity(ctx, did, provider); found {
+		return sdkerrors.Wrapf(types.ErrSocialIdentityExists, "social identity %s already exists for did %s", key, did)
 	}
 
-	// Create social identity
-	blockTime := ctx.BlockTime()
-	identity := types.SocialIdentity{
+	// Get current block time
+	now := ctx.BlockTime()
+
+	// Create new social identity
+	socialIdentity := types.SocialIdentity{
+		Id:         key,
 		Did:        did,
 		Provider:   provider,
-		ProviderId: socialID,
-		CreatedAt:  &blockTime,
-		LastUsed:   &blockTime,
+		ProviderId: userInfo.Id,
+		Profile: map[string]string{
+			"username": userInfo.Username,
+			"email":    userInfo.Email,
+		},
+		CreatedAt:  &now,
+		VerifiedAt: &now,
+		LastUsed:   &now,
 	}
 
 	// Store social identity
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SocialIdentityPrefix))
-	key := []byte(fmt.Sprintf("%s-%s", did, provider))
-	bz, err := k.cdc.Marshal(&identity)
-	if err != nil {
-		return err
-	}
-	store.Set(key, bz)
+	store := k.GetStore(ctx, []byte(types.SocialIdentityPrefix))
+	bz := k.cdc.MustMarshal(&socialIdentity)
+	store.Set([]byte(key), bz)
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOAuthSuccess,
+			sdk.NewAttribute(types.AttributeKeyDID, did),
+			sdk.NewAttribute(types.AttributeKeyProvider, provider),
+			sdk.NewAttribute(types.AttributeKeySocialID, userInfo.Id),
+			sdk.NewAttribute(types.AttributeKeyStatus, "linked"),
+		),
+	)
 
 	return nil
 }
 
 // UnlinkSocialIdentity unlinks a social identity from a DID
-func (k Keeper) UnlinkSocialIdentity(ctx sdk.Context, did string, socialID string) error {
-	// Find and delete the social identity
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SocialIdentityPrefix))
-	iterator := sdk.KVStorePrefixIterator(store, []byte(did))
-	defer iterator.Close()
-
-	found := false
-	for ; iterator.Valid(); iterator.Next() {
-		var identity types.SocialIdentity
-		if err := k.cdc.Unmarshal(iterator.Value(), &identity); err != nil {
-			return err
-		}
-		if identity.ProviderId == socialID {
-			store.Delete(iterator.Key())
-			found = true
-			break
-		}
-	}
-
+func (k Keeper) UnlinkSocialIdentity(ctx sdk.Context, did string, provider string, socialId string) error {
+	// Check if DID exists
+	_, found := k.GetDIDDocument(ctx, did)
 	if !found {
-		return sdkerrors.Wrap(types.ErrSocialIdentityNotFound, "social identity not found")
+		return sdkerrors.Wrapf(types.ErrDIDNotFound, "did %s not found", did)
 	}
+
+	// Check if social identity exists
+	key := fmt.Sprintf("%s:%s:%s", did, provider, socialId)
+	if _, found := k.GetSocialIdentity(ctx, did, provider); !found {
+		return sdkerrors.Wrapf(types.ErrSocialIdentityNotFound, "social identity %s not found", key)
+	}
+
+	// Delete social identity
+	store := k.GetStore(ctx, []byte(types.SocialIdentityPrefix))
+	store.Delete([]byte(key))
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOAuthSuccess,
+			sdk.NewAttribute(types.AttributeKeyDID, did),
+			sdk.NewAttribute(types.AttributeKeyProvider, provider),
+			sdk.NewAttribute(types.AttributeKeySocialID, socialId),
+			sdk.NewAttribute(types.AttributeKeyStatus, "unlinked"),
+		),
+	)
 
 	return nil
 }
 
-// GetOAuthPublicKey retrieves the public key for verifying OAuth2 tokens
-func (k Keeper) GetOAuthPublicKey(ctx sdk.Context, did string) (interface{}, error) {
-	// Get social identities for the DID
-	socialIdentities, err := k.GetSocialIdentities(ctx, did)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get social identities: %w", err)
+// GetOAuthConfig gets OAuth configuration for a provider
+func (k Keeper) GetOAuthConfig(ctx sdk.Context, provider string) (*types.OAuthProvider, error) {
+	switch provider {
+	case "google":
+		return &types.OAuthProvider{
+			Id:           "google",
+			Name:         "Google",
+			ClientId:     "YOUR_GOOGLE_CLIENT_ID", // TODO: Move to env vars
+			ClientSecret: "YOUR_GOOGLE_CLIENT_SECRET", // TODO: Move to env vars
+			AuthUrl:      GoogleOAuthAuthURL,
+			TokenUrl:     GoogleOAuthTokenURL,
+			ProfileUrl:   GoogleOAuthProfileURL,
+			Scopes:       []string{"openid", "email", "profile"},
+			Config:       make(map[string]string),
+		}, nil
+	case "github":
+		return &types.OAuthProvider{
+			Id:           "github",
+			Name:         "GitHub",
+			ClientId:     "YOUR_GITHUB_CLIENT_ID", // TODO: Move to env vars
+			ClientSecret: "YOUR_GITHUB_CLIENT_SECRET", // TODO: Move to env vars
+			AuthUrl:      GithubOAuthAuthURL,
+			TokenUrl:     GithubOAuthTokenURL,
+			ProfileUrl:   GithubOAuthProfileURL,
+			Scopes:       []string{"read:user", "user:email"},
+			Config:       make(map[string]string),
+		}, nil
+	default:
+		return nil, sdkerrors.Wrapf(types.ErrInvalidProvider, "unsupported provider: %s", provider)
 	}
-	if len(socialIdentities) == 0 {
-		return nil, fmt.Errorf("no social identity found for DID: %s", did)
-	}
-
-	// Use the first social identity's provider
-	provider := socialIdentities[0].Provider
-
-	// Get OAuth provider configuration
-	providerStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.OAuthProviderPrefix))
-	providerBytes := providerStore.Get([]byte(provider))
-	if providerBytes == nil {
-		return nil, fmt.Errorf("OAuth provider not found: %s", provider)
-	}
-
-	var oauthProvider types.OAuthProvider
-	k.cdc.MustUnmarshal(providerBytes, &oauthProvider)
-
-	// Get public key from provider config
-	publicKey, ok := oauthProvider.Config["public_key"]
-	if !ok {
-		return nil, fmt.Errorf("public key not found in provider config")
-	}
-
-	return []byte(publicKey), nil
 }
 
-// verifySocialToken verifies a social identity token with the provider
-func (k Keeper) verifySocialToken(ctx sdk.Context, provider string, token string) (string, error) {
-	// TODO: Implement actual token verification with providers
-	// For now, just return a dummy social ID
-	return fmt.Sprintf("%s-user-123", provider), nil
-}
+// Parameters for OAuth providers
+const (
+	GoogleOAuthAuthURL    = "https://accounts.google.com/o/oauth2/v2/auth"
+	GoogleOAuthTokenURL   = "https://oauth2.googleapis.com/token"
+	GoogleOAuthProfileURL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+	GithubOAuthAuthURL    = "https://github.com/login/oauth/authorize"
+	GithubOAuthTokenURL   = "https://github.com/login/oauth/access_token"
+	GithubOAuthProfileURL = "https://api.github.com/user"
+)

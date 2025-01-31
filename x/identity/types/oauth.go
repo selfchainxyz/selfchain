@@ -7,110 +7,99 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var (
-	ErrInvalidOAuthProvider   = sdkerrors.Register(ModuleName, 1300, "invalid OAuth provider")
-	ErrInvalidOAuthSession    = sdkerrors.Register(ModuleName, 1301, "invalid OAuth session")
-	ErrOAuthSessionExpired    = sdkerrors.Register(ModuleName, 1303, "OAuth session expired")
-	ErrOAuthProviderNotFound  = sdkerrors.Register(ModuleName, 1304, "OAuth provider not found")
-	ErrOAuthSessionNotFound   = sdkerrors.Register(ModuleName, 1305, "OAuth session not found")
-	ErrSocialIdentityNotFound = sdkerrors.Register(ModuleName, 1306, "social identity not found")
+// OAuth provider constants
+const (
+	ProviderGoogle = "google"
+	ProviderGithub = "github"
 )
 
 // OAuthClaims represents the claims in an OAuth2 JWT token
 type OAuthClaims struct {
 	jwt.RegisteredClaims
-	Issuer    string `json:"iss"`
-	Subject   string `json:"sub"`
-	Audience  string `json:"aud"`
-	ExpiresAt int64  `json:"exp"`
-	IssuedAt  int64  `json:"iat"`
-	Nonce     string `json:"nonce,omitempty"`
-	Provider  string `json:"provider"`
+	DID      string `json:"did"`
+	Provider string `json:"provider"`
 }
 
-// ValidateBasic performs basic validation of social identity
-func (s *SocialIdentity) ValidateBasic() error {
-	if s.Id == "" {
-		return sdkerrors.Wrap(ErrInvalidSocialIdentity, "ID cannot be empty")
+// Valid implements jwt.Claims interface
+func (c *OAuthClaims) Valid() error {
+	// Validate standard claims
+	if err := c.RegisteredClaims.Valid(); err != nil {
+		return sdkerrors.Wrap(ErrInvalidTokenClaims, err.Error())
 	}
-	if s.Did == "" {
-		return sdkerrors.Wrap(ErrInvalidSocialIdentity, "DID cannot be empty")
+	
+	// Additional validation for our custom claims
+	if c.DID == "" {
+		return sdkerrors.Wrap(ErrInvalidTokenClaims, "DID cannot be empty")
 	}
-	if s.Provider == "" {
-		return sdkerrors.Wrap(ErrInvalidSocialIdentity, "provider cannot be empty")
+	if c.Provider == "" {
+		return sdkerrors.Wrap(ErrInvalidTokenClaims, "provider cannot be empty")
 	}
-	if s.ProviderId == "" {
-		return sdkerrors.Wrap(ErrInvalidSocialIdentity, "provider ID cannot be empty")
+	
+	return nil
+}
+
+// ValidateOAuthProvider performs basic validation of OAuth provider
+func ValidateOAuthProvider(p *OAuthProvider) error {
+	if p.GetName() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "name cannot be empty")
 	}
-	if s.CreatedAt == nil {
-		return sdkerrors.Wrap(ErrInvalidSocialIdentity, "creation time must be set")
+	if p.GetClientId() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "client ID cannot be empty")
+	}
+	if p.GetClientSecret() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "client secret cannot be empty")
+	}
+	if p.GetAuthUrl() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "auth URL cannot be empty")
+	}
+	if p.GetTokenUrl() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "token URL cannot be empty")
+	}
+	if p.GetProfileUrl() == "" {
+		return sdkerrors.Wrap(ErrInvalidProvider, "profile URL cannot be empty")
+	}
+	if len(p.GetScopes()) == 0 {
+		return sdkerrors.Wrap(ErrInvalidProvider, "scopes cannot be empty")
 	}
 	return nil
 }
 
-// IsVerified checks if the social identity is verified
-func (s *SocialIdentity) IsVerified() bool {
-	return s.VerifiedAt != nil
-}
-
-// ValidateBasic performs basic validation of OAuth provider
-func (p *OAuthProvider) ValidateBasic() error {
-	if p.Id == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "ID cannot be empty")
+// ValidateOAuthSession performs basic validation of OAuth session
+func ValidateOAuthSession(s *OAuthSession) error {
+	if s.GetId() == "" {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "session ID cannot be empty")
 	}
-	if p.Name == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "name cannot be empty")
+	if s.GetDid() == "" {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "DID cannot be empty")
 	}
-	if p.ClientId == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "client ID cannot be empty")
+	if s.GetProvider() == "" {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "provider cannot be empty")
 	}
-	if p.ClientSecret == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "client secret cannot be empty")
+	if s.GetState() == "" {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "state cannot be empty")
 	}
-	if p.AuthUrl == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "auth URL cannot be empty")
+	if s.GetCodeVerifier() == "" {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "code verifier cannot be empty")
 	}
-	if p.TokenUrl == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "token URL cannot be empty")
+	if s.GetCreatedAt() == nil {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "creation time must be set")
 	}
-	if p.ProfileUrl == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthProvider, "profile URL cannot be empty")
+	if s.GetExpiresAt() == nil {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "expiration time must be set")
+	}
+	if s.GetExpiresAt().Before(*s.GetCreatedAt()) {
+		return sdkerrors.Wrap(ErrInvalidRecoverySession, "expiration time must be after creation time")
 	}
 	return nil
 }
 
-// ValidateBasic performs basic validation of OAuth session
-func (s *OAuthSession) ValidateBasic() error {
-	if s.Id == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "ID cannot be empty")
-	}
-	if s.Did == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "DID cannot be empty")
-	}
-	if s.Provider == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "provider cannot be empty")
-	}
-	if s.State == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "state cannot be empty")
-	}
-	if s.CodeVerifier == "" {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "code verifier cannot be empty")
-	}
-	if s.CreatedAt == nil || s.ExpiresAt == nil {
-		return sdkerrors.Wrap(ErrInvalidOAuthSession, "timestamps must be set")
-	}
-	now := time.Date(2025, 1, 12, 15, 5, 4, 0, time.FixedZone("IST", 5*60*60+30*60))
-	if s.ExpiresAt.Before(now) {
-		return ErrOAuthSessionExpired
-	}
-	return nil
+// IsOAuthSessionExpired checks if the OAuth session has expired
+func IsOAuthSessionExpired(s *OAuthSession) bool {
+	expiresAt := s.GetExpiresAt()
+	return expiresAt != nil && time.Now().After(*expiresAt)
 }
 
-// IsExpired checks if the OAuth session has expired
-func (s *OAuthSession) IsExpired() bool {
-	if s.ExpiresAt == nil {
-		return true
-	}
-	now := time.Date(2025, 1, 12, 15, 5, 4, 0, time.FixedZone("IST", 5*60*60+30*60))
-	return s.ExpiresAt.Before(now)
+// IsOAuthSessionActive checks if the OAuth session is active
+func IsOAuthSessionActive(s *OAuthSession) bool {
+	return !IsOAuthSessionExpired(s)
 }

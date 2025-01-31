@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"selfchain/x/keyless/types"
+	"selfchain/x/keyless/tss"
 )
 
 type msgServer struct {
@@ -42,7 +44,7 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 	// Save wallet to store
 	err := k.SaveWallet(ctx, wallet)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
 	}
 
 	return &types.MsgCreateWalletResponse{
@@ -50,21 +52,69 @@ func (k msgServer) CreateWallet(goCtx context.Context, msg *types.MsgCreateWalle
 	}, nil
 }
 
-// SignTransaction signs a transaction using TSS
+// SignTransaction handles MsgSignTransaction
 func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTransaction) (*types.MsgSignTransactionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Validate creator is authorized
-	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
-	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to sign transactions")
+	// Get wallet
+	wallet, err := k.Keeper.GetWallet(ctx, msg.WalletAddress)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
-	// TODO: Implement TSS signing logic
-	signedTx := "dummy_signed_tx"
+	// Verify creator has permission
+	if wallet.Creator != msg.Creator {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "creator %s not authorized", msg.Creator)
+	}
+
+	// Verify wallet is active
+	if wallet.Status != types.WalletStatus_WALLET_STATUS_ACTIVE {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "wallet %s is not active", msg.WalletAddress)
+	}
+
+	// Get key shares
+	personalShare, found := k.Keeper.GetKeyShare(ctx, msg.Creator)
+	if !found {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "personal share not found for creator %s", msg.Creator)
+	}
+
+	remoteShare, found := k.Keeper.GetKeyShare(ctx, msg.WalletAddress)
+	if !found {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "remote share not found for wallet %s", msg.WalletAddress)
+	}
+
+	// Unmarshal key shares
+	var personalPartyData keygen.LocalPartySaveData
+	if err := json.Unmarshal(personalShare, &personalPartyData); err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to unmarshal personal share: %v", err)
+	}
+
+	var remotePartyData keygen.LocalPartySaveData
+	if err := json.Unmarshal(remoteShare, &remotePartyData); err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to unmarshal remote share: %v", err)
+	}
+
+	// Sign transaction using TSS protocol
+	signResult, err := tss.SignMessage(ctx, []byte(msg.UnsignedTx), &personalPartyData, &remotePartyData)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to sign transaction: %v", err)
+	}
+
+	// Convert signature to hex string
+	signature := signResult.R.Text(16) + signResult.S.Text(16)
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTransactionSigned,
+			sdk.NewAttribute(types.AttributeKeyWalletAddress, msg.WalletAddress),
+			sdk.NewAttribute(types.AttributeKeyChainID, msg.ChainId),
+			sdk.NewAttribute(types.AttributeKeyStatus, "success"),
+		),
+	)
 
 	return &types.MsgSignTransactionResponse{
-		SignedTx: signedTx,
+		SignedTx: signature,
 	}, nil
 }
 
@@ -75,20 +125,20 @@ func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSignReque
 	// Validate creator is authorized
 	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_SIGN)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to perform batch signing")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "creator %s not authorized", msg.Creator)
 	}
 
 	// Get wallet
 	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet status
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ROTATING
 	err = k.SaveWallet(ctx, wallet)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
 	}
 
 	// Create batch sign status
@@ -110,13 +160,13 @@ func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgComp
 	// Validate creator is authorized
 	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_ROTATE)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to complete key rotation")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "creator %s not authorized", msg.Creator)
 	}
 
 	// Get wallet
 	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet with new public key
@@ -124,7 +174,7 @@ func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgComp
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
 	err = k.SaveWallet(ctx, wallet)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
 	}
 
 	return &types.MsgCompleteKeyRotationResponse{
@@ -140,13 +190,13 @@ func (k msgServer) InitiateKeyRotation(goCtx context.Context, msg *types.MsgInit
 	// Validate creator is authorized
 	authorized := k.IsWalletAuthorized(ctx, msg.WalletAddress, msg.Creator, types.WalletPermission_WALLET_PERMISSION_ROTATE)
 	if !authorized {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to initiate key rotation")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "creator %s not authorized", msg.Creator)
 	}
 
 	// Get wallet
 	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet status
@@ -154,7 +204,7 @@ func (k msgServer) InitiateKeyRotation(goCtx context.Context, msg *types.MsgInit
 	wallet.KeyVersion++
 	err = k.SaveWallet(ctx, wallet)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
 	}
 
 	return &types.MsgInitiateKeyRotationResponse{
@@ -169,13 +219,13 @@ func (k msgServer) RecoverWallet(goCtx context.Context, msg *types.MsgRecoverWal
 
 	// Validate basic message fields
 	if err := msg.ValidateBasic(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid request: %v", err)
 	}
 
 	// Recover the wallet
 	err := k.Keeper.RecoverWallet(ctx, msg)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to recover wallet: %v", err)
 	}
 
 	return &types.MsgRecoverWalletResponse{

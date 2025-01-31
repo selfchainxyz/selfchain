@@ -1,0 +1,16 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+// Operation types for rate limiting
+enum Operation {
+  OPERATION_UNSPECIFIED = 0;
+  OPERATION_CREATE_DID = 1;
+  OPERATION_UPDATE_DID = 2;
+  OPERATION_DELETE_DID = 3;
+  OPERATION_VERIFY_MFA = 4;
+  OPERATION_RECOVER_WALLET = 5;
+  OPERATION_ADD_MFA = 6;
+  OPERATION_REMOVE_MFA = 7;
+}

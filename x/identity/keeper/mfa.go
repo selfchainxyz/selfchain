@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/pquerna/otp/totp"
 	"selfchain/x/identity/types"
 )
 
@@ -191,75 +192,110 @@ func (k Keeper) DeleteMFAChallenge(ctx sdk.Context, did string, methodType strin
 	return nil
 }
 
-// VerifyMFAMethod verifies an MFA method
-func (k Keeper) VerifyMFAMethod(ctx sdk.Context, did string, methodType string, code string) error {
-	method, err := k.GetMFAMethod(ctx, did, methodType)
+// VerifyMFACode verifies an MFA code for a given method
+func (k Keeper) VerifyMFACode(ctx sdk.Context, did string, methodID string, code string) error {
+	method, err := k.GetMFAMethod(ctx, did, methodID)
 	if err != nil {
 		return err
 	}
 
 	if !method.IsActive() {
-		return sdkerrors.Wrap(types.ErrMFAMethodInactive, "method is not active")
+		return sdkerrors.Wrap(types.ErrMFAMethodDisabled, "method is disabled")
 	}
 
-	// Update method status
-	blockTime := ctx.BlockTime()
-	method.Status = types.MFAMethodStatus_MFA_METHOD_STATUS_ACTIVE
-	method.CreatedAt = &blockTime
+	var verifyErr error
+	switch method.Type {
+	case "OTP":
+		verifyErr = k.verifyOTP(ctx, method, code)
+	case "TOTP":
+		verifyErr = k.verifyTOTP(ctx, method, code)
+	default:
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "unsupported MFA method type")
+	}
 
-	// TODO: Implement actual OTP verification using method.Secret and code
-	// For now, just update the method status
+	if verifyErr != nil {
+		// Emit failure event
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				"mfa_verification",
+				sdk.NewAttribute("method_id", methodID),
+				sdk.NewAttribute("error", verifyErr.Error()),
+			),
+		)
+		return verifyErr
+	}
+
+	// Emit success event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			"mfa_verification",
+			sdk.NewAttribute("method_id", methodID),
+		),
+	)
+
+	return nil
+}
+
+// verifyOTP verifies a one-time password
+func (k Keeper) verifyOTP(ctx sdk.Context, method *types.MFAMethod, code string) error {
+	if method.Type != "OTP" {
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "invalid OTP method type")
+	}
+
+	// Implement OTP verification logic here
+	// For now, return unimplemented
+	return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "OTP verification not implemented")
+}
+
+// verifyTOTP verifies a time-based one-time password
+func (k Keeper) verifyTOTP(ctx sdk.Context, method *types.MFAMethod, code string) error {
+	if method.Type != "TOTP" {
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "invalid TOTP method type")
+	}
+
+	// Verify TOTP code
+	valid := totp.Validate(code, method.Secret)
+	if !valid {
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "invalid TOTP code")
+	}
 
 	return nil
 }
 
 // VerifyMFAChallenge verifies an MFA challenge
 func (k Keeper) VerifyMFAChallenge(ctx sdk.Context, did string, methodType string, code string) error {
-	// Get the challenge
+	// Get challenge
 	challenge, err := k.GetMFAChallenge(ctx, did, methodType)
 	if err != nil {
 		return err
 	}
 
-	// Check if challenge has expired
-	if challenge.IsExpired() {
-		return sdkerrors.Wrap(types.ErrMFAChallengeExpired, "challenge has expired")
-	}
-
-	// Get the MFA method
+	// Get method
 	method, err := k.GetMFAMethod(ctx, did, methodType)
 	if err != nil {
 		return err
 	}
 
-	// Check if method is active
-	if !method.IsActive() {
-		return sdkerrors.Wrap(types.ErrMFAMethodInactive, "method is not active")
+	// Verify challenge hasn't expired
+	if challenge.IsExpired() {
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "challenge expired")
 	}
 
 	// Verify the code using the appropriate method
 	switch methodType {
 	case "totp":
-		if !k.verifyTOTP(method.Secret, code) {
+		err := k.verifyTOTP(ctx, method, code)
+		if err != nil {
 			return sdkerrors.Wrap(types.ErrMFAVerificationFailed, "invalid TOTP code")
 		}
 	default:
-		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "unsupported MFA method")
+		return sdkerrors.Wrap(types.ErrInvalidMFAMethod, "unsupported MFA method type")
 	}
 
 	// Delete the challenge after successful verification
-	store := ctx.KVStore(k.storeKey)
-	key := append([]byte(types.MFAChallengePrefix), []byte(challenge.Id)...)
-	store.Delete(key)
+	k.DeleteMFAChallenge(ctx, did, methodType)
 
 	return nil
-}
-
-// verifyTOTP verifies a TOTP code
-func (k Keeper) verifyTOTP(secret string, code string) bool {
-	// TODO: Implement actual TOTP verification
-	// For now, just check if code matches secret for testing
-	return code == secret
 }
 
 // GetAllMFAConfigs returns all MFA configurations
@@ -296,19 +332,5 @@ func (k Keeper) SetMFAMethod(ctx sdk.Context, did string, method string, secret 
 	}
 
 	store.Set(key, bz)
-	return nil
-}
-
-// VerifyMFACode verifies an MFA code for a given method
-func (k Keeper) VerifyMFACode(ctx sdk.Context, did string, method string, code string) error {
-	mfaMethod, err := k.GetMFAMethod(ctx, did, method)
-	if err != nil {
-		return err
-	}
-
-	if code != mfaMethod.Secret {
-		return sdkerrors.Wrap(types.ErrInvalidMFACode, "invalid MFA code")
-	}
-
 	return nil
 }

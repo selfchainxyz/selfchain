@@ -1,0 +1,31 @@
+syntax = "proto3";
+package selfchain.identity;
+
+option go_package = "selfchain/x/identity/types";
+
+// Event types for OAuth verification
+message EventOAuthVerification {
+  string provider = 1;
+  string social_id = 2;
+  bool success = 3;
+  string error = 4;
+}
+
+// Event types for MFA verification
+message EventMFAVerification {
+  string did = 1;
+  string method_id = 2;
+  bool success = 3;
+  string error = 4;
+}
+
+// Event types for rate limiting
+message EventRateLimit {
+  string did = 1;
+  string operation = 2;
+  bool success = 3;
+  string error = 4;
+  uint64 window_seconds = 5;
+  uint64 max_operations = 6;
+  uint64 current_count = 7;
+}

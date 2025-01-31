@@ -62,22 +62,22 @@ func (m *MFAMethod) IsDisabled() bool {
 // ValidateBasic performs basic validation of MFA challenge
 func (m *MFAChallenge) ValidateBasic() error {
 	if m.Id == "" {
-		return errors.Wrap(ErrInvalidMFAChallenge, "ID cannot be empty")
+		return errors.Wrap(ErrInvalidMFAConfig, "ID cannot be empty")
 	}
 	if m.Did == "" {
-		return errors.Wrap(ErrInvalidMFAChallenge, "DID cannot be empty")
+		return errors.Wrap(ErrInvalidMFAConfig, "DID cannot be empty")
 	}
 	if m.Method == "" {
-		return errors.Wrap(ErrInvalidMFAChallenge, "method cannot be empty")
+		return errors.Wrap(ErrInvalidMFAConfig, "method cannot be empty")
 	}
 	if m.CreatedAt == nil {
-		return errors.Wrap(ErrInvalidMFAChallenge, "creation time must be set")
+		return errors.Wrap(ErrInvalidMFAConfig, "creation time must be set")
 	}
 	if m.ExpiresAt == nil {
-		return errors.Wrap(ErrInvalidMFAChallenge, "expiry time must be set")
+		return errors.Wrap(ErrInvalidMFAConfig, "expiry time must be set")
 	}
 	if m.ExpiresAt.Before(*m.CreatedAt) {
-		return errors.Wrap(ErrInvalidMFAChallenge, "expiry time must be after creation time")
+		return errors.Wrap(ErrInvalidMFAConfig, "expiry time must be after creation time")
 	}
 	return nil
 }

@@ -1,0 +1,30 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+// Event types for transaction signing
+message EventSignTransaction {
+  string wallet_address = 1;
+  string signature_type = 2;
+  bool success = 3;
+  string error = 4;
+  uint64 signing_latency_ms = 5;
+}
+
+// Event types for key rotation
+message EventKeyRotation {
+  string wallet_address = 1;
+  uint64 version = 2;
+  bool success = 3;
+  string error = 4;
+}
+
+// Event types for wallet recovery
+message EventWalletRecovery {
+  string wallet_address = 1;
+  string did = 2;
+  bool success = 3;
+  string error = 4;
+  uint64 recovery_latency_ms = 5;
+}

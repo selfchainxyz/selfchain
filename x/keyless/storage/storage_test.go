@@ -4,19 +4,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
+	db "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	db "github.com/cometbft/cometbft-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
-func setupTestStorage(t *testing.T) (*Storage, sdk.Context) {
+func setupTestStorage(t *testing.T) (Storage, sdk.Context) {
 	key := storetypes.NewKVStoreKey("test")
 	db := db.NewMemDB()
 	cms := store.NewCommitMultiStore(db)
