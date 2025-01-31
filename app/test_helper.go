@@ -76,7 +76,6 @@ func setup(withGenesis bool, invCheckPeriod uint, t *testing.T) (*App, GenesisSt
 		encCdc,
 		EmptyAppOptions{},
 		nil,
-		false,
 	)
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)

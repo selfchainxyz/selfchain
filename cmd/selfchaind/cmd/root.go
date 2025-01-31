@@ -99,20 +99,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	}
 
 
-	dummyApp := app.New(
-		log.NewNopLogger(),
-		dbm.NewMemDB(),
-		io.Discard,
-		true,
-		map[int64]bool{},
-		"",
-		0,
-		encodingConfig,
-		app.EmptyAppOptions{},
-		[]wasmkeeper.Option{},
-		true,
-		baseAppOptions...,
-	)
+	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseAppOptions...)
 
 	autoCliOptss := enrichAutoCliOpts(dummyApp.AutoCliOpts(), initClientCtx)
 
@@ -369,31 +356,7 @@ func (a appCreator) newApp(
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
-	return app.New(
-		logger,
-		db,
-		traceStore,
-		true,
-		skipUpgradeHeights,
-		cast.ToString(appOpts.Get(flags.FlagHome)),
-		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		a.encodingConfig,
-		appOpts,
-		wasmOpts,
-		false,
-		baseapp.SetPruning(pruningOpts),
-		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
-		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
-		baseapp.SetHaltTime(cast.ToUint64(appOpts.Get(server.FlagHaltTime))),
-		baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(server.FlagMinRetainBlocks))),
-		baseapp.SetInterBlockCache(cache),
-		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
-		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
-		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
-		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(server.FlagIAVLCacheSize))),
-		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(server.FlagDisableIAVLFastNode))),
-		baseapp.SetChainID(chainID),
-	)
+	return app.New(logger, db, traceStore, true, skipUpgradeHeights, cast.ToString(appOpts.Get(flags.FlagHome)), cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmOpts, baseapp.SetPruning(pruningOpts), baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))), baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))), baseapp.SetHaltTime(cast.ToUint64(appOpts.Get(server.FlagHaltTime))), baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(server.FlagMinRetainBlocks))), baseapp.SetInterBlockCache(cache), baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))), baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))), baseapp.SetSnapshot(snapshotStore, snapshotOptions), baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(server.FlagIAVLCacheSize))), baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(server.FlagDisableIAVLFastNode))), baseapp.SetChainID(chainID))
 }
 
 // appExport creates a new simapp (optionally at a given height)
@@ -424,7 +387,6 @@ func (a appCreator) appExport(
 		a.encodingConfig,
 		appOpts,
 		emptyWasmOpts,
-		false,
 	)
 
 	if height != -1 {

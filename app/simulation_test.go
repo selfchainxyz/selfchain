@@ -86,18 +86,7 @@ func BenchmarkSimulation(b *testing.B) {
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	bApp := app.New(
-		logger,
-		db,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		app.MakeEncodingConfig(),
-		appOptions,
-		baseapp.SetChainID(config.ChainID),
-	)
+	bApp := app.New(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, 0, app.MakeEncodingConfig(), appOptions, baseapp.SetChainID(config.ChainID))
 	require.Equal(b, app.Name, bApp.Name())
 
 	// run randomized simulation
@@ -240,18 +229,7 @@ func TestAppImportExport(t *testing.T) {
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	bApp := app.New(
-		logger,
-		db,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		app.MakeEncodingConfig(),
-		appOptions,
-		baseapp.SetChainID(config.ChainID),
-	)
+	bApp := app.New(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, 0, app.MakeEncodingConfig(), appOptions, baseapp.SetChainID(config.ChainID))
 	require.Equal(t, app.Name, bApp.Name())
 
 	// run randomized simulation
@@ -301,18 +279,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := app.New(
-		log.NewNopLogger(),
-		newDB,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		app.MakeEncodingConfig(),
-		appOptions,
-		baseapp.SetChainID(config.ChainID),
-	)
+	newApp := app.New(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, 0, app.MakeEncodingConfig(), appOptions, baseapp.SetChainID(config.ChainID))
 	require.Equal(t, app.Name, bApp.Name())
 
 	var genesisState app.GenesisState

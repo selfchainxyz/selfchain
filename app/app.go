@@ -286,20 +286,7 @@ type App struct {
 }
 
 // New returns a reference to an initialized blockchain app
-func New(
-	logger log.Logger,
-	db dbm.DB,
-	traceStore io.Writer,
-	loadLatest bool,
-	skipUpgradeHeights map[int64]bool,
-	homePath string,
-	invCheckPeriod uint,
-	encodingConfig appparams.EncodingConfig,
-	appOpts servertypes.AppOptions,
-	wasmOpts []wasmkeeper.Option,
-	basicApp bool,
-	baseAppOptions ...func(*baseapp.BaseApp),
-) *App {
+func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, appOpts servertypes.AppOptions, wasmOpts []wasmkeeper.Option, baseAppOptions ...func(*baseapp.BaseApp), ) *App {
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
