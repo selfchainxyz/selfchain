@@ -19,8 +19,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
-	v2 "selfchain/upgrades/v2"
-
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -316,6 +314,7 @@ func New(
 	)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
+	logger.Info("version.Version", version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
@@ -871,67 +870,13 @@ func New(
 	}
 
 	if loadLatest {
-		if isDevelopmentEnv() {
-			if err := app.LoadLatestVersion(); err != nil {
-				tmos.Exit(err.Error())
-			}
-			ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-			if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
-			}
-		} else {
-			app.UpgradeKeeper.SetUpgradeHandler(
-				v2.UpgradeName,
-				v2.CreateUpgradeHandler(
-					app.mm,
-					app.configurator,
-					app.AccountKeeper,
-					app.BankKeeper,
-				),
-			)
-
-			if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-				if upgradeInfo.Name == "v2" {
-					storeUpgrades := storetypes.StoreUpgrades{
-						Added: []string{
-							wasmtypes.ModuleName,
-							ibcfeetypes.ModuleName,
-						},
-					}
-
-					app.SetStoreLoader(
-						upgradetypes.UpgradeStoreLoader(
-							upgradeInfo.Height,
-							&storeUpgrades,
-						),
-					)
-				}
-			}
-
-			// Load the latest version of the app state
-			if err := app.LoadLatestVersion(); err != nil {
-				tmos.Exit(err.Error())
-			}
-
-			// After loading, run module migrations for new modules
-			ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-
-			// Get the module version map
-			mv, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-
-			// Initialize pinned codes in wasmvm as they are not persisted there
-			if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
-			}
-
-			// Check if the Wasm module version is 0 (uninitialized)
-			if mv[wasmtypes.ModuleName] == 0 && !basicApp{
-				// Run migrations to initialize the Wasm module
-				mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
-				if err != nil {
-					panic(fmt.Sprintf("Failed to run migrations. Error: %v, Module Versions: %v", err, mv))
-				}
-			}
+		if err := app.LoadLatestVersion(); err != nil {
+			logger.Info("app.LoadLatestVersion() failed")
+			tmos.Exit(err.Error())
+		}
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
 

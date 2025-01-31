@@ -281,7 +281,7 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 	)
 
 	// Safely add module tx commands
-	SafeAddTxCommands(moduleBasics, cmd)
+	//SafeAddTxCommands(moduleBasics, cmd)
 
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 	flags.AddTxFlagsToCmd(cmd)
