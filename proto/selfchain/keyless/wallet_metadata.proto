@@ -1,0 +1,19 @@
+syntax = "proto3";
+package selfchain.keyless;
+
+option go_package = "selfchain/x/keyless/types";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "selfchain/keyless/keygen.proto";
+
+// WalletMetadata represents metadata for a wallet
+message WalletMetadata {
+  string chain_id = 1;
+  SecurityLevel security_level = 2;
+  google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp last_rotated = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp last_used = 5 [(gogoproto.stdtime) = true];
+  uint64 usage_count = 6;
+  BackupStatus backup_status = 7;
+}

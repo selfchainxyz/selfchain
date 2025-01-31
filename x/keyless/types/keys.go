@@ -20,6 +20,9 @@ const (
 
 	// Version defines the current version the keyless module
 	Version = 1
+
+	// WalletMetadataKey defines the key for storing wallet metadata
+	WalletMetadataKey = "walletmetadata"
 )
 
 const (

@@ -20,6 +20,7 @@ var (
 	ErrInvalidWalletID      = sdkerrors.Register(ModuleName, 14, "invalid wallet ID")
 	ErrInvalidWalletDID     = sdkerrors.Register(ModuleName, 15, "invalid wallet DID")
 	ErrInvalidWalletCreator = sdkerrors.Register(ModuleName, 16, "invalid wallet creator")
+	ErrWalletMetadataNotFound = sdkerrors.Register(ModuleName, 17, "wallet metadata not found")
 
 	// Permission errors
 	ErrInvalidPermission    = sdkerrors.Register(ModuleName, 20, "invalid permission")

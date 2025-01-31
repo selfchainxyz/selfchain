@@ -3,6 +3,7 @@ package keygen
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +16,8 @@ import (
 // EncryptionManager handles key encryption
 type EncryptionManager struct {
 	masterKey []byte
+	keyStore  map[string]crypto.EncryptionKey
+	mu        sync.RWMutex
 }
 
 // NewEncryptionManager creates a new encryption manager
@@ -22,11 +25,16 @@ func NewEncryptionManager() *EncryptionManager {
 	// In production, this should be loaded from a secure source or HSM
 	return &EncryptionManager{
 		masterKey: make([]byte, 32), // Placeholder for demo
+		keyStore:  make(map[string]crypto.EncryptionKey),
 	}
 }
 
 // EncryptShare encrypts a party's save data
 func (em *EncryptionManager) EncryptShare(data *keygen.LocalPartySaveData) (*types.EncryptedShare, error) {
+	if data == nil {
+		return nil, fmt.Errorf("nil data")
+	}
+
 	// 1. Generate unique encryption key
 	key, err := crypto.NewEncryptionKey()
 	if err != nil {
@@ -45,10 +53,16 @@ func (em *EncryptionManager) EncryptShare(data *keygen.LocalPartySaveData) (*typ
 		return nil, fmt.Errorf("failed to encrypt share data: %w", err)
 	}
 
-	// 4. Create encrypted share with metadata
+	// 4. Store the key
+	keyID := uuid.New().String()
+	em.mu.Lock()
+	em.keyStore[keyID] = key
+	em.mu.Unlock()
+
+	// 5. Create encrypted share with metadata
 	return &types.EncryptedShare{
 		EncryptedData: encryptedData,
-		KeyId:        uuid.New().String(),
+		KeyId:        keyID,
 		Version:      1,
 		CreatedAt:    time.Now(),
 	}, nil
@@ -56,6 +70,10 @@ func (em *EncryptionManager) EncryptShare(data *keygen.LocalPartySaveData) (*typ
 
 // DecryptShare decrypts an encrypted share
 func (em *EncryptionManager) DecryptShare(share *types.EncryptedShare) (*keygen.LocalPartySaveData, error) {
+	if share == nil {
+		return nil, fmt.Errorf("nil share")
+	}
+
 	// 1. Get encryption key for the share
 	key, err := em.getKeyForShare(share.KeyId)
 	if err != nil {
@@ -79,7 +97,13 @@ func (em *EncryptionManager) DecryptShare(share *types.EncryptedShare) (*keygen.
 
 // getKeyForShare retrieves the encryption key for a share
 func (em *EncryptionManager) getKeyForShare(keyID string) (crypto.EncryptionKey, error) {
-	// In production, this should retrieve the key from a secure key management service
-	// For now, return a placeholder key
-	return make([]byte, 32), nil
+	em.mu.RLock()
+	key, ok := em.keyStore[keyID]
+	em.mu.RUnlock()
+
+	if !ok {
+		return nil, fmt.Errorf("key not found: %s", keyID)
+	}
+
+	return key, nil
 }

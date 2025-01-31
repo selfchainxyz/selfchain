@@ -29,8 +29,25 @@ func NewKeyGenManager(keeper storage.Storage) *KeyGenManager {
 // GenerateKeyShares creates a new key pair with enhanced security
 func (km *KeyGenManager) GenerateKeyShares(ctx context.Context, req *types.KeyGenRequest) (*types.KeyGenResponse, error) {
 	// 1. Validate request
+	if req == nil {
+		return nil, fmt.Errorf("nil request")
+	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	// Check if shares already exist
+	key1 := fmt.Sprintf("%s_share_1", req.WalletAddress)
+	key2 := fmt.Sprintf("%s_share_2", req.WalletAddress)
+	
+	share1, err := km.keeper.GetPartyShare(ctx, key1)
+	if err == nil && share1 != nil {
+		return nil, fmt.Errorf("key shares already exist for wallet %s", req.WalletAddress)
+	}
+	
+	share2, err := km.keeper.GetPartyShare(ctx, key2)
+	if err == nil && share2 != nil {
+		return nil, fmt.Errorf("key shares already exist for wallet %s", req.WalletAddress)
 	}
 
 	// 2. Generate pre-parameters with timeout
@@ -65,6 +82,14 @@ func (km *KeyGenManager) GenerateKeyShares(ctx context.Context, req *types.KeyGe
 	// 5. Store encrypted shares
 	if err := km.storeKeyShares(ctx, req.WalletAddress, encryptedShares); err != nil {
 		return nil, fmt.Errorf("share storage failed: %w", err)
+	}
+
+	// 6. Store party data
+	if err := km.keeper.SavePartyData(ctx, req.WalletAddress, keygenResult.Party1Data, keygenResult.Party2Data); err != nil {
+		// Cleanup stored shares on error
+		km.keeper.DeletePartyShare(ctx, key1)
+		km.keeper.DeletePartyShare(ctx, key2)
+		return nil, fmt.Errorf("party data storage failed: %w", err)
 	}
 
 	return &types.KeyGenResponse{
@@ -111,6 +136,10 @@ func (km *KeyGenManager) storeKeyShares(ctx context.Context, walletAddress strin
 	for i, share := range shares {
 		key := fmt.Sprintf("%s_share_%d", walletAddress, i+1)
 		if err := km.keeper.SavePartyShare(ctx, key, share); err != nil {
+			// Cleanup any previously stored shares on error
+			for j := 0; j < i; j++ {
+				km.keeper.DeletePartyShare(ctx, fmt.Sprintf("%s_share_%d", walletAddress, j+1))
+			}
 			return fmt.Errorf("failed to store share %d: %w", i+1, err)
 		}
 	}
