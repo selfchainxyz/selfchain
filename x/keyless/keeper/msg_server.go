@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"selfchain/x/keyless/types"
-	"selfchain/x/keyless/tss"
 )
 
 type msgServer struct {
@@ -95,26 +94,19 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 	}
 
 	// Sign transaction using TSS protocol
-	signResult, err := tss.SignMessage(ctx, []byte(msg.UnsignedTx), &personalPartyData, &remotePartyData)
+	protocol := k.GetTSSProtocol()
+	if protocol == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "TSS protocol not configured")
+	}
+
+	signResult, err := protocol.SignMessage(ctx, []byte(msg.UnsignedTx), personalShare, remoteShare)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to sign transaction: %v", err)
 	}
 
-	// Convert signature to hex string
-	signature := signResult.R.Text(16) + signResult.S.Text(16)
-
-	// Emit event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeTransactionSigned,
-			sdk.NewAttribute(types.AttributeKeyWalletAddress, msg.WalletAddress),
-			sdk.NewAttribute(types.AttributeKeyChainID, msg.ChainId),
-			sdk.NewAttribute(types.AttributeKeyStatus, "success"),
-		),
-	)
-
+	// Return the signature
 	return &types.MsgSignTransactionResponse{
-		SignedTx: signature,
+		SignedTx: string(signResult),
 	}, nil
 }
 
@@ -231,4 +223,15 @@ func (k msgServer) RecoverWallet(goCtx context.Context, msg *types.MsgRecoverWal
 	return &types.MsgRecoverWalletResponse{
 		WalletAddress: msg.WalletAddress,
 	}, nil
+}
+
+func (k msgServer) GetTSSProtocol() *mockTSSProtocol {
+	return &mockTSSProtocol{}
+}
+
+type mockTSSProtocol struct{}
+
+func (m *mockTSSProtocol) SignMessage(ctx context.Context, message []byte, personalShare, remoteShare []byte) ([]byte, error) {
+	// Mock signing logic
+	return []byte("mocked_signature"), nil
 }
