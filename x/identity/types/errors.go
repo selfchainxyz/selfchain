@@ -64,6 +64,7 @@ var (
 	ErrInvalidTokenResponse  = sdkerrors.Register(ModuleName, 307, "invalid OAuth token response")
 	ErrInvalidOAuthToken     = sdkerrors.Register(ModuleName, 308, "invalid oauth token")
 	ErrOAuthProviderNotFound = sdkerrors.Register(ModuleName, 309, "oauth provider not found")
+	ErrInvalidOAuthConfig    = sdkerrors.Register(ModuleName, 310, "invalid OAuth configuration")
 
 	// Recovery errors (400-499)
 	ErrInvalidRecoverySession  = sdkerrors.Register(ModuleName, 400, "invalid recovery session")

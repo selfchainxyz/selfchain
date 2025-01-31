@@ -2,12 +2,26 @@ package keeper
 
 import (
 	"fmt"
-	"time"
+
+	"selfchain/x/identity/config"
+	"selfchain/x/identity/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"selfchain/x/identity/types"
 )
+
+// OAuthConfig is the global OAuth configuration
+var oauthConfig *config.Config
+
+// InitOAuthConfig initializes the OAuth configuration
+func InitOAuthConfig() error {
+	var err error
+	oauthConfig, err = config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load OAuth configuration: %w", err)
+	}
+	return nil
+}
 
 // LinkSocialIdentity links a social identity to a DID
 func (k Keeper) LinkSocialIdentity(ctx sdk.Context, did string, provider string, userInfo *types.UserInfo) error {
@@ -94,33 +108,39 @@ func (k Keeper) UnlinkSocialIdentity(ctx sdk.Context, did string, provider strin
 
 // GetOAuthConfig gets OAuth configuration for a provider
 func (k Keeper) GetOAuthConfig(ctx sdk.Context, provider string) (*types.OAuthProvider, error) {
+	if oauthConfig == nil {
+		if err := InitOAuthConfig(); err != nil {
+			return nil, sdkerrors.Wrapf(types.ErrInvalidOAuthConfig, "OAuth configuration not initialized: %s", err.Error())
+		}
+	}
+
 	switch provider {
 	case "google":
 		return &types.OAuthProvider{
 			Id:           "google",
 			Name:         "Google",
-			ClientId:     "YOUR_GOOGLE_CLIENT_ID", // TODO: Move to env vars
-			ClientSecret: "YOUR_GOOGLE_CLIENT_SECRET", // TODO: Move to env vars
-			AuthUrl:      GoogleOAuthAuthURL,
-			TokenUrl:     GoogleOAuthTokenURL,
-			ProfileUrl:   GoogleOAuthProfileURL,
-			Scopes:       []string{"openid", "email", "profile"},
+			ClientId:     oauthConfig.GoogleOAuth.ClientID,
+			ClientSecret: oauthConfig.GoogleOAuth.ClientSecret,
+			AuthUrl:      oauthConfig.GoogleOAuth.AuthURL,
+			TokenUrl:     oauthConfig.GoogleOAuth.TokenURL,
+			ProfileUrl:   oauthConfig.GoogleOAuth.ProfileURL,
+			Scopes:       oauthConfig.GoogleOAuth.Scopes,
 			Config:       make(map[string]string),
 		}, nil
 	case "github":
 		return &types.OAuthProvider{
 			Id:           "github",
 			Name:         "GitHub",
-			ClientId:     "YOUR_GITHUB_CLIENT_ID", // TODO: Move to env vars
-			ClientSecret: "YOUR_GITHUB_CLIENT_SECRET", // TODO: Move to env vars
-			AuthUrl:      GithubOAuthAuthURL,
-			TokenUrl:     GithubOAuthTokenURL,
-			ProfileUrl:   GithubOAuthProfileURL,
-			Scopes:       []string{"read:user", "user:email"},
+			ClientId:     oauthConfig.GithubOAuth.ClientID,
+			ClientSecret: oauthConfig.GithubOAuth.ClientSecret,
+			AuthUrl:      oauthConfig.GithubOAuth.AuthURL,
+			TokenUrl:     oauthConfig.GithubOAuth.TokenURL,
+			ProfileUrl:   oauthConfig.GithubOAuth.ProfileURL,
+			Scopes:       oauthConfig.GithubOAuth.Scopes,
 			Config:       make(map[string]string),
 		}, nil
 	default:
-		return nil, sdkerrors.Wrapf(types.ErrInvalidProvider, "unsupported provider: %s", provider)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidProvider, "unsupported OAuth provider: %s", provider)
 	}
 }
 
