@@ -3,14 +3,15 @@ package keeper
 import (
 	"fmt"
 
-	"selfchain/x/identity/types"
-
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"selfchain/x/identity/types"
 )
 
 type (
@@ -31,7 +32,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	keyless types.KeylessKeeper,
 ) *Keeper {
-	// set KeyTable if it has not already been set
+	// Set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
@@ -50,53 +51,64 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetParams returns the total set of identity parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramstore.GetParamSet(ctx, &params)
-	return params
-}
-
-// SetParams sets the identity parameters to the param space.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramstore.SetParamSet(ctx, &params)
-}
-
-// VerifyOAuthToken verifies an OAuth token with the provider
-func (k Keeper) VerifyOAuthToken(ctx sdk.Context, provider string, token string) (string, error) {
-	// TODO: Implement OAuth token verification
-	return "", fmt.Errorf("not implemented")
+// GetStore returns a store for a specific prefix
+func (k Keeper) GetStore(ctx sdk.Context, storePrefix []byte) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), storePrefix)
 }
 
 // GetSocialIdentitiesByDID returns all social identities for a DID
 func (k Keeper) GetSocialIdentitiesByDID(ctx sdk.Context, did string) []types.SocialIdentity {
-	// TODO: Implement getting social identities by DID
-	return []types.SocialIdentity{}
+	store := k.GetStore(ctx, []byte(types.SocialIdentityPrefix))
+	iterator := store.Iterator([]byte(did), nil)
+	defer iterator.Close()
+
+	var identities []types.SocialIdentity
+	for ; iterator.Valid(); iterator.Next() {
+		var identity types.SocialIdentity
+		k.cdc.MustUnmarshal(iterator.Value(), &identity)
+		identities = append(identities, identity)
+	}
+
+	return identities
 }
 
-// HasSocialIdentity checks if a social identity exists
-func (k Keeper) HasSocialIdentity(ctx sdk.Context, did string, provider string, userInfo string) bool {
-	// TODO: Implement checking if social identity exists
-	return false
-}
-
-// GetSocialIdentity returns a social identity by DID and provider
+// GetSocialIdentity gets a social identity for a DID and provider
 func (k Keeper) GetSocialIdentity(ctx sdk.Context, did string, provider string) (*types.SocialIdentity, bool) {
-	// TODO: Implement getting social identity
-	return nil, false
-}
+	store := k.GetStore(ctx, []byte(types.SocialIdentityPrefix))
+	key := append([]byte(did), []byte(provider)...)
 
-// GetSocialIdentityBySocialID returns a social identity by provider and social ID
-func (k Keeper) GetSocialIdentityBySocialID(ctx sdk.Context, provider string, socialID string) (*types.SocialIdentity, bool) {
-	store := k.GetStore(ctx, []byte(types.SocialIdentityByIDPrefix))
-	prefixKey := append([]byte(provider), []byte(socialID)...)
-	bz := store.Get(prefixKey)
-	if bz == nil {
+	if !store.Has(key) {
 		return nil, false
 	}
 
 	var identity types.SocialIdentity
+	bz := store.Get(key)
 	k.cdc.MustUnmarshal(bz, &identity)
+
 	return &identity, true
+}
+
+// HasSocialIdentity checks if a social identity exists for a DID and provider
+func (k Keeper) HasSocialIdentity(ctx sdk.Context, did string, provider string) bool {
+	store := k.GetStore(ctx, []byte(types.SocialIdentityPrefix))
+	key := append([]byte(did), []byte(provider)...)
+	return store.Has(key)
+}
+
+// GetOAuthProvider gets an OAuth provider configuration
+func (k Keeper) GetOAuthProvider(ctx sdk.Context, provider string) (*types.OAuthProvider, error) {
+	store := k.GetStore(ctx, []byte(types.OAuthProviderPrefix))
+	key := []byte(provider)
+
+	if !store.Has(key) {
+		return nil, sdkerrors.Wrapf(types.ErrOAuthProviderNotFound, "provider %s not found", provider)
+	}
+
+	var oauthProvider types.OAuthProvider
+	bz := store.Get(key)
+	k.cdc.MustUnmarshal(bz, &oauthProvider)
+
+	return &oauthProvider, nil
 }
 
 // IsAuthorized checks if an address is authorized for a DID
@@ -106,7 +118,7 @@ func (k Keeper) IsAuthorized(ctx sdk.Context, did string, address string) bool {
 		return false
 	}
 
-	// Check if the address is the controller
+	// Check if the address is in the controllers list
 	for _, controller := range doc.Controller {
 		if controller == address {
 			return true
@@ -116,25 +128,13 @@ func (k Keeper) IsAuthorized(ctx sdk.Context, did string, address string) bool {
 	return false
 }
 
-// GetDIDFromMsg extracts DID from various message types
-func (k Keeper) GetDIDFromMsg(msg sdk.Msg) string {
-	switch v := msg.(type) {
-	case *types.MsgCreateDID:
-		return v.Id
-	case *types.MsgUpdateDID:
-		return v.Id
-	case *types.MsgDeleteDID:
-		return v.Id
-	case *types.MsgLinkSocialIdentity:
-		return v.Creator
-	case *types.MsgUnlinkSocialIdentity:
-		return v.Creator
-	default:
-		return ""
-	}
+// GetParams returns the total set of identity parameters.
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.paramstore.GetParamSet(ctx, &params)
+	return params
 }
 
-// GetStore returns a store for a given prefix
-func (k Keeper) GetStore(ctx sdk.Context, storePrefix []byte) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), storePrefix)
+// SetParams sets the identity parameters to the param space.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramstore.SetParamSet(ctx, &params)
 }

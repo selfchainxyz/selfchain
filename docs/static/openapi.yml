@@ -53011,6 +53011,60 @@ paths:
           type: boolean
       tags:
         - Query
+  /selfchain/keyless/batch_sign_status/{wallet_id}/{batch_id}:
+    get:
+      summary: BatchSignStatus queries the status of a batch signing operation
+      operationId: SelfchainKeylessBatchSignStatus
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wallet_id:
+                type: string
+              batch_id:
+                type: string
+              status:
+                type: string
+              signatures:
+                type: array
+                items:
+                  type: string
+              error:
+                type: string
+            description: >-
+              QueryBatchSignStatusResponse is response type for the
+              Query/BatchSignStatus RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+        - name: batch_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /selfchain/keyless/key_rotation/{wallet_id}/{version}:
     get:
       summary: KeyRotation queries a specific key rotation by wallet ID and version
@@ -53024,25 +53078,41 @@ paths:
               rotation:
                 type: object
                 properties:
-                  wallet_id:
+                  wallet_address:
+                    type: string
+                  old_pub_key:
+                    type: string
+                  new_pub_key:
                     type: string
                   version:
                     type: string
                     format: uint64
-                  new_pub_key:
-                    type: string
                   status:
                     type: string
-                    title: '"pending", "completed", "cancelled"'
-                  created_at:
+                    enum:
+                      - KEY_ROTATION_STATUS_UNSPECIFIED
+                      - KEY_ROTATION_STATUS_INITIATED
+                      - KEY_ROTATION_STATUS_IN_PROGRESS
+                      - KEY_ROTATION_STATUS_COMPLETED
+                      - KEY_ROTATION_STATUS_FAILED
+                      - KEY_ROTATION_STATUS_CANCELLED
+                    default: KEY_ROTATION_STATUS_UNSPECIFIED
+                    description: >-
+                      - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified
+                      status
+                       - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+                       - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+                       - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+                       - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+                       - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+                    title: >-
+                      KeyRotationStatus represents the status of a key rotation
+                      operation
+                  error:
                     type: string
-                    format: date-time
-                  completed_at:
-                    type: string
-                    format: date-time
                   signature:
                     type: string
-                title: KeyRotation represents a key rotation operation for a wallet
+                title: KeyRotation represents a key rotation record
             description: >-
               QueryKeyRotationResponse is response type for the
               Query/KeyRotation RPC method.
@@ -53076,6 +53146,55 @@ paths:
           format: uint64
       tags:
         - Query
+  /selfchain/keyless/key_rotation_status/{wallet_id}:
+    get:
+      summary: KeyRotationStatus queries the status of an ongoing key rotation
+      operationId: SelfchainKeylessKeyRotationStatus
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wallet_id:
+                type: string
+              status:
+                type: string
+              version:
+                type: string
+                format: uint64
+              new_pub_key:
+                type: string
+              error:
+                type: string
+            description: >-
+              QueryKeyRotationStatusResponse is response type for the
+              Query/KeyRotationStatus RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /selfchain/keyless/key_rotations/{wallet_id}:
     get:
       summary: KeyRotations queries all key rotations for a wallet
@@ -53091,25 +53210,41 @@ paths:
                 items:
                   type: object
                   properties:
-                    wallet_id:
+                    wallet_address:
+                      type: string
+                    old_pub_key:
+                      type: string
+                    new_pub_key:
                       type: string
                     version:
                       type: string
                       format: uint64
-                    new_pub_key:
-                      type: string
                     status:
                       type: string
-                      title: '"pending", "completed", "cancelled"'
-                    created_at:
+                      enum:
+                        - KEY_ROTATION_STATUS_UNSPECIFIED
+                        - KEY_ROTATION_STATUS_INITIATED
+                        - KEY_ROTATION_STATUS_IN_PROGRESS
+                        - KEY_ROTATION_STATUS_COMPLETED
+                        - KEY_ROTATION_STATUS_FAILED
+                        - KEY_ROTATION_STATUS_CANCELLED
+                      default: KEY_ROTATION_STATUS_UNSPECIFIED
+                      description: >-
+                        - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified
+                        status
+                         - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+                         - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+                         - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+                         - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+                         - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+                      title: >-
+                        KeyRotationStatus represents the status of a key
+                        rotation operation
+                    error:
                       type: string
-                      format: date-time
-                    completed_at:
-                      type: string
-                      format: date-time
                     signature:
                       type: string
-                  title: KeyRotation represents a key rotation operation for a wallet
+                  title: KeyRotation represents a key rotation record
               pagination:
                 type: object
                 properties:
@@ -53353,6 +53488,218 @@ paths:
           type: string
       tags:
         - Query
+  /selfchain/keyless/permission/{wallet_id}/{grantee}:
+    get:
+      summary: Permission queries a specific permission by wallet ID and grantee
+      operationId: SelfchainKeylessPermission
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              permission:
+                type: object
+                properties:
+                  wallet_address:
+                    type: string
+                  grantee:
+                    type: string
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                  granted_at:
+                    type: string
+                    format: date-time
+                  expires_at:
+                    type: string
+                    format: date-time
+                  revoked:
+                    type: boolean
+                  revoked_at:
+                    type: string
+                    format: date-time
+                title: Permission represents a wallet permission
+            description: >-
+              QueryPermissionResponse is response type for the Query/Permission
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+        - name: grantee
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /selfchain/keyless/permissions/{wallet_id}:
+    get:
+      summary: Permissions queries all permissions for a wallet
+      operationId: SelfchainKeylessPermissions
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              permissions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    wallet_address:
+                      type: string
+                    grantee:
+                      type: string
+                    permissions:
+                      type: array
+                      items:
+                        type: string
+                    granted_at:
+                      type: string
+                      format: date-time
+                    expires_at:
+                      type: string
+                      format: date-time
+                    revoked:
+                      type: boolean
+                    revoked_at:
+                      type: string
+                      format: date-time
+                  title: Permission represents a wallet permission
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            description: >-
+              QueryPermissionsResponse is response type for the
+              Query/Permissions RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: wallet_id
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   /selfchain/keyless/wallet/{address}:
     get:
       summary: Wallet queries a wallet by address
@@ -53368,40 +53715,46 @@ paths:
                 properties:
                   id:
                     type: string
-                  address:
+                  creator:
                     type: string
                   public_key:
                     type: string
+                  wallet_address:
+                    type: string
+                  chain_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - WALLET_STATUS_UNSPECIFIED
+                      - WALLET_STATUS_ACTIVE
+                      - WALLET_STATUS_INACTIVE
+                      - WALLET_STATUS_RECOVERING
+                      - WALLET_STATUS_ROTATING
+                    default: WALLET_STATUS_UNSPECIFIED
+                    description: >-
+                      - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED
+                      represents an unspecified wallet status
+                       - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+                       - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+                       - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+                       - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+                    title: WalletStatus represents the status of a wallet
                   key_version:
                     type: integer
                     format: int64
-                  permissions:
-                    type: array
-                    items:
-                      type: string
                   created_at:
                     type: string
                     format: date-time
                   updated_at:
                     type: string
                     format: date-time
-                  metadata:
-                    type: object
-                    additionalProperties:
-                      type: string
-                  security_level:
-                    type: integer
-                    format: int64
-                  threshold:
-                    type: integer
-                    format: int64
-                  parties:
-                    type: integer
-                    format: int64
-                  status:
+                  last_used:
                     type: string
-                  chain_id:
+                    format: date-time
+                  usage_count:
                     type: string
+                    format: uint64
                 title: Wallet represents a keyless wallet
             description: >-
               QueryWalletResponse is response type for the Query/Wallet RPC
@@ -53448,40 +53801,46 @@ paths:
                   properties:
                     id:
                       type: string
-                    address:
+                    creator:
                       type: string
                     public_key:
                       type: string
+                    wallet_address:
+                      type: string
+                    chain_id:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - WALLET_STATUS_UNSPECIFIED
+                        - WALLET_STATUS_ACTIVE
+                        - WALLET_STATUS_INACTIVE
+                        - WALLET_STATUS_RECOVERING
+                        - WALLET_STATUS_ROTATING
+                      default: WALLET_STATUS_UNSPECIFIED
+                      description: >-
+                        - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED
+                        represents an unspecified wallet status
+                         - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+                         - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+                         - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+                         - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+                      title: WalletStatus represents the status of a wallet
                     key_version:
                       type: integer
                       format: int64
-                    permissions:
-                      type: array
-                      items:
-                        type: string
                     created_at:
                       type: string
                       format: date-time
                     updated_at:
                       type: string
                       format: date-time
-                    metadata:
-                      type: object
-                      additionalProperties:
-                        type: string
-                    security_level:
-                      type: integer
-                      format: int64
-                    threshold:
-                      type: integer
-                      format: int64
-                    parties:
-                      type: integer
-                      format: int64
-                    status:
+                    last_used:
                       type: string
-                    chain_id:
+                      format: date-time
+                    usage_count:
                       type: string
+                      format: uint64
                   title: Wallet represents a keyless wallet
               pagination:
                 type: object
@@ -85417,59 +85776,173 @@ definitions:
       chain_id:
         type: string
     title: AuditEvent represents an auditable event in the keyless wallet system
-  selfchain.keyless.KeyRotation:
-    type: object
-    properties:
-      wallet_id:
-        type: string
-      version:
-        type: string
-        format: uint64
-      new_pub_key:
-        type: string
-      status:
-        type: string
-        title: '"pending", "completed", "cancelled"'
-      created_at:
-        type: string
-        format: date-time
-      completed_at:
-        type: string
-        format: date-time
-      signature:
-        type: string
-    title: KeyRotation represents a key rotation operation for a wallet
-  selfchain.keyless.MsgBatchSignResponse:
-    type: object
-    properties:
-      signed_txs:
-        type: array
-        items:
-          type: string
-    title: MsgBatchSignResponse defines the BatchSign response type
-  selfchain.keyless.MsgCancelKeyRotationResponse:
+  selfchain.keyless.BatchSignStatus:
+    type: string
+    enum:
+      - BATCH_SIGN_STATUS_UNSPECIFIED
+      - BATCH_SIGN_STATUS_IN_PROGRESS
+      - BATCH_SIGN_STATUS_COMPLETED
+      - BATCH_SIGN_STATUS_FAILED
+      - BATCH_SIGN_STATUS_CANCELLED
+    default: BATCH_SIGN_STATUS_UNSPECIFIED
+    description: |-
+      - BATCH_SIGN_STATUS_UNSPECIFIED: Default unspecified status
+       - BATCH_SIGN_STATUS_IN_PROGRESS: Batch signing is in progress
+       - BATCH_SIGN_STATUS_COMPLETED: Batch signing has completed successfully
+       - BATCH_SIGN_STATUS_FAILED: Batch signing has failed
+       - BATCH_SIGN_STATUS_CANCELLED: Batch signing has been cancelled
+    title: BatchSignStatus represents the status of a batch signing operation
+  selfchain.keyless.BatchSignStatusInfo:
     type: object
     properties:
       wallet_address:
         type: string
-    title: MsgCancelKeyRotationResponse defines the CancelKeyRotation response type
+      messages:
+        type: array
+        items:
+          type: string
+          format: byte
+      signatures:
+        type: array
+        items:
+          type: string
+      status:
+        type: string
+        enum:
+          - BATCH_SIGN_STATUS_UNSPECIFIED
+          - BATCH_SIGN_STATUS_IN_PROGRESS
+          - BATCH_SIGN_STATUS_COMPLETED
+          - BATCH_SIGN_STATUS_FAILED
+          - BATCH_SIGN_STATUS_CANCELLED
+        default: BATCH_SIGN_STATUS_UNSPECIFIED
+        description: |-
+          - BATCH_SIGN_STATUS_UNSPECIFIED: Default unspecified status
+           - BATCH_SIGN_STATUS_IN_PROGRESS: Batch signing is in progress
+           - BATCH_SIGN_STATUS_COMPLETED: Batch signing has completed successfully
+           - BATCH_SIGN_STATUS_FAILED: Batch signing has failed
+           - BATCH_SIGN_STATUS_CANCELLED: Batch signing has been cancelled
+        title: BatchSignStatus represents the status of a batch signing operation
+    title: >-
+      BatchSignStatusInfo represents the status information for a batch signing
+      operation
+  selfchain.keyless.KeyRotation:
+    type: object
+    properties:
+      wallet_address:
+        type: string
+      old_pub_key:
+        type: string
+      new_pub_key:
+        type: string
+      version:
+        type: string
+        format: uint64
+      status:
+        type: string
+        enum:
+          - KEY_ROTATION_STATUS_UNSPECIFIED
+          - KEY_ROTATION_STATUS_INITIATED
+          - KEY_ROTATION_STATUS_IN_PROGRESS
+          - KEY_ROTATION_STATUS_COMPLETED
+          - KEY_ROTATION_STATUS_FAILED
+          - KEY_ROTATION_STATUS_CANCELLED
+        default: KEY_ROTATION_STATUS_UNSPECIFIED
+        description: |-
+          - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified status
+           - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+           - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+           - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+           - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+           - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+        title: KeyRotationStatus represents the status of a key rotation operation
+      error:
+        type: string
+      signature:
+        type: string
+    title: KeyRotation represents a key rotation record
+  selfchain.keyless.KeyRotationStatus:
+    type: string
+    enum:
+      - KEY_ROTATION_STATUS_UNSPECIFIED
+      - KEY_ROTATION_STATUS_INITIATED
+      - KEY_ROTATION_STATUS_IN_PROGRESS
+      - KEY_ROTATION_STATUS_COMPLETED
+      - KEY_ROTATION_STATUS_FAILED
+      - KEY_ROTATION_STATUS_CANCELLED
+    default: KEY_ROTATION_STATUS_UNSPECIFIED
+    description: |-
+      - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified status
+       - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+       - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+       - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+       - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+       - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+    title: KeyRotationStatus represents the status of a key rotation operation
+  selfchain.keyless.MsgBatchSignResponse:
+    type: object
+    properties:
+      status:
+        type: object
+        properties:
+          wallet_address:
+            type: string
+          messages:
+            type: array
+            items:
+              type: string
+              format: byte
+          signatures:
+            type: array
+            items:
+              type: string
+          status:
+            type: string
+            enum:
+              - BATCH_SIGN_STATUS_UNSPECIFIED
+              - BATCH_SIGN_STATUS_IN_PROGRESS
+              - BATCH_SIGN_STATUS_COMPLETED
+              - BATCH_SIGN_STATUS_FAILED
+              - BATCH_SIGN_STATUS_CANCELLED
+            default: BATCH_SIGN_STATUS_UNSPECIFIED
+            description: |-
+              - BATCH_SIGN_STATUS_UNSPECIFIED: Default unspecified status
+               - BATCH_SIGN_STATUS_IN_PROGRESS: Batch signing is in progress
+               - BATCH_SIGN_STATUS_COMPLETED: Batch signing has completed successfully
+               - BATCH_SIGN_STATUS_FAILED: Batch signing has failed
+               - BATCH_SIGN_STATUS_CANCELLED: Batch signing has been cancelled
+            title: BatchSignStatus represents the status of a batch signing operation
+        title: >-
+          BatchSignStatusInfo represents the status information for a batch
+          signing operation
+    title: MsgBatchSignResponse represents the response to a batch sign request
   selfchain.keyless.MsgCompleteKeyRotationResponse:
     type: object
     properties:
       wallet_address:
         type: string
       version:
-        type: integer
-        format: int64
+        type: string
     title: >-
-      MsgCompleteKeyRotationResponse defines the CompleteKeyRotation response
-      type
+      MsgCompleteKeyRotationResponse is the response type for the
+      CompleteKeyRotation RPC method
   selfchain.keyless.MsgCreateWalletResponse:
     type: object
     properties:
       wallet_address:
         type: string
-    title: MsgCreateWalletResponse defines the CreateWallet response type
+    title: >-
+      MsgCreateWalletResponse is the response type for the CreateWallet RPC
+      method
+  selfchain.keyless.MsgGrantPermissionResponse:
+    type: object
+    properties:
+      wallet_address:
+        type: string
+      grantee:
+        type: string
+    title: >-
+      MsgGrantPermissionResponse is the response type for the GrantPermission
+      RPC method
   selfchain.keyless.MsgInitiateKeyRotationResponse:
     type: object
     properties:
@@ -85479,20 +85952,34 @@ definitions:
         type: integer
         format: int64
     title: >-
-      MsgInitiateKeyRotationResponse defines the InitiateKeyRotation response
-      type
+      MsgInitiateKeyRotationResponse is the response type for the
+      InitiateKeyRotation RPC method
   selfchain.keyless.MsgRecoverWalletResponse:
     type: object
     properties:
       wallet_address:
         type: string
-    title: MsgRecoverWalletResponse defines the RecoverWallet response type
+    title: >-
+      MsgRecoverWalletResponse is the response type for the RecoverWallet RPC
+      method
+  selfchain.keyless.MsgRevokePermissionResponse:
+    type: object
+    properties:
+      wallet_address:
+        type: string
+      grantee:
+        type: string
+    title: >-
+      MsgRevokePermissionResponse is the response type for the RevokePermission
+      RPC method
   selfchain.keyless.MsgSignTransactionResponse:
     type: object
     properties:
       signed_tx:
         type: string
-    title: MsgSignTransactionResponse defines the SignTransaction response type
+    title: >-
+      MsgSignTransactionResponse is the response type for the SignTransaction
+      RPC method
   selfchain.keyless.Params:
     type: object
     properties:
@@ -85551,34 +86038,107 @@ definitions:
       status:
         type: string
     title: PartyData represents TSS party data
+  selfchain.keyless.Permission:
+    type: object
+    properties:
+      wallet_address:
+        type: string
+      grantee:
+        type: string
+      permissions:
+        type: array
+        items:
+          type: string
+      granted_at:
+        type: string
+        format: date-time
+      expires_at:
+        type: string
+        format: date-time
+      revoked:
+        type: boolean
+      revoked_at:
+        type: string
+        format: date-time
+    title: Permission represents a wallet permission
+  selfchain.keyless.QueryBatchSignStatusResponse:
+    type: object
+    properties:
+      wallet_id:
+        type: string
+      batch_id:
+        type: string
+      status:
+        type: string
+      signatures:
+        type: array
+        items:
+          type: string
+      error:
+        type: string
+    description: >-
+      QueryBatchSignStatusResponse is response type for the
+      Query/BatchSignStatus RPC method.
   selfchain.keyless.QueryKeyRotationResponse:
     type: object
     properties:
       rotation:
         type: object
         properties:
-          wallet_id:
+          wallet_address:
+            type: string
+          old_pub_key:
+            type: string
+          new_pub_key:
             type: string
           version:
             type: string
             format: uint64
-          new_pub_key:
-            type: string
           status:
             type: string
-            title: '"pending", "completed", "cancelled"'
-          created_at:
+            enum:
+              - KEY_ROTATION_STATUS_UNSPECIFIED
+              - KEY_ROTATION_STATUS_INITIATED
+              - KEY_ROTATION_STATUS_IN_PROGRESS
+              - KEY_ROTATION_STATUS_COMPLETED
+              - KEY_ROTATION_STATUS_FAILED
+              - KEY_ROTATION_STATUS_CANCELLED
+            default: KEY_ROTATION_STATUS_UNSPECIFIED
+            description: |-
+              - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified status
+               - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+               - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+               - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+               - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+               - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+            title: >-
+              KeyRotationStatus represents the status of a key rotation
+              operation
+          error:
             type: string
-            format: date-time
-          completed_at:
-            type: string
-            format: date-time
           signature:
             type: string
-        title: KeyRotation represents a key rotation operation for a wallet
+        title: KeyRotation represents a key rotation record
     description: >-
       QueryKeyRotationResponse is response type for the Query/KeyRotation RPC
       method.
+  selfchain.keyless.QueryKeyRotationStatusResponse:
+    type: object
+    properties:
+      wallet_id:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+        format: uint64
+      new_pub_key:
+        type: string
+      error:
+        type: string
+    description: >-
+      QueryKeyRotationStatusResponse is response type for the
+      Query/KeyRotationStatus RPC method.
   selfchain.keyless.QueryKeyRotationsResponse:
     type: object
     properties:
@@ -85587,25 +86147,40 @@ definitions:
         items:
           type: object
           properties:
-            wallet_id:
+            wallet_address:
+              type: string
+            old_pub_key:
+              type: string
+            new_pub_key:
               type: string
             version:
               type: string
               format: uint64
-            new_pub_key:
-              type: string
             status:
               type: string
-              title: '"pending", "completed", "cancelled"'
-            created_at:
+              enum:
+                - KEY_ROTATION_STATUS_UNSPECIFIED
+                - KEY_ROTATION_STATUS_INITIATED
+                - KEY_ROTATION_STATUS_IN_PROGRESS
+                - KEY_ROTATION_STATUS_COMPLETED
+                - KEY_ROTATION_STATUS_FAILED
+                - KEY_ROTATION_STATUS_CANCELLED
+              default: KEY_ROTATION_STATUS_UNSPECIFIED
+              description: |-
+                - KEY_ROTATION_STATUS_UNSPECIFIED: Default unspecified status
+                 - KEY_ROTATION_STATUS_INITIATED: Key rotation has been initiated
+                 - KEY_ROTATION_STATUS_IN_PROGRESS: Key rotation is in progress
+                 - KEY_ROTATION_STATUS_COMPLETED: Key rotation has completed successfully
+                 - KEY_ROTATION_STATUS_FAILED: Key rotation has failed
+                 - KEY_ROTATION_STATUS_CANCELLED: Key rotation has been cancelled
+              title: >-
+                KeyRotationStatus represents the status of a key rotation
+                operation
+            error:
               type: string
-              format: date-time
-            completed_at:
-              type: string
-              format: date-time
             signature:
               type: string
-          title: KeyRotation represents a key rotation operation for a wallet
+          title: KeyRotation represents a key rotation record
       pagination:
         type: object
         properties:
@@ -85761,6 +86336,92 @@ definitions:
     description: >-
       QueryPartyDataResponse is response type for the Query/PartyData RPC
       method.
+  selfchain.keyless.QueryPermissionResponse:
+    type: object
+    properties:
+      permission:
+        type: object
+        properties:
+          wallet_address:
+            type: string
+          grantee:
+            type: string
+          permissions:
+            type: array
+            items:
+              type: string
+          granted_at:
+            type: string
+            format: date-time
+          expires_at:
+            type: string
+            format: date-time
+          revoked:
+            type: boolean
+          revoked_at:
+            type: string
+            format: date-time
+        title: Permission represents a wallet permission
+    description: >-
+      QueryPermissionResponse is response type for the Query/Permission RPC
+      method.
+  selfchain.keyless.QueryPermissionsResponse:
+    type: object
+    properties:
+      permissions:
+        type: array
+        items:
+          type: object
+          properties:
+            wallet_address:
+              type: string
+            grantee:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+            granted_at:
+              type: string
+              format: date-time
+            expires_at:
+              type: string
+              format: date-time
+            revoked:
+              type: boolean
+            revoked_at:
+              type: string
+              format: date-time
+          title: Permission represents a wallet permission
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    description: >-
+      QueryPermissionsResponse is response type for the Query/Permissions RPC
+      method.
   selfchain.keyless.QueryWalletResponse:
     type: object
     properties:
@@ -85769,40 +86430,46 @@ definitions:
         properties:
           id:
             type: string
-          address:
+          creator:
             type: string
           public_key:
             type: string
+          wallet_address:
+            type: string
+          chain_id:
+            type: string
+          status:
+            type: string
+            enum:
+              - WALLET_STATUS_UNSPECIFIED
+              - WALLET_STATUS_ACTIVE
+              - WALLET_STATUS_INACTIVE
+              - WALLET_STATUS_RECOVERING
+              - WALLET_STATUS_ROTATING
+            default: WALLET_STATUS_UNSPECIFIED
+            description: >-
+              - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED represents
+              an unspecified wallet status
+               - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+               - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+               - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+               - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+            title: WalletStatus represents the status of a wallet
           key_version:
             type: integer
             format: int64
-          permissions:
-            type: array
-            items:
-              type: string
           created_at:
             type: string
             format: date-time
           updated_at:
             type: string
             format: date-time
-          metadata:
-            type: object
-            additionalProperties:
-              type: string
-          security_level:
-            type: integer
-            format: int64
-          threshold:
-            type: integer
-            format: int64
-          parties:
-            type: integer
-            format: int64
-          status:
+          last_used:
             type: string
-          chain_id:
+            format: date-time
+          usage_count:
             type: string
+            format: uint64
         title: Wallet represents a keyless wallet
     description: QueryWalletResponse is response type for the Query/Wallet RPC method.
   selfchain.keyless.QueryWalletsResponse:
@@ -85815,40 +86482,46 @@ definitions:
           properties:
             id:
               type: string
-            address:
+            creator:
               type: string
             public_key:
               type: string
+            wallet_address:
+              type: string
+            chain_id:
+              type: string
+            status:
+              type: string
+              enum:
+                - WALLET_STATUS_UNSPECIFIED
+                - WALLET_STATUS_ACTIVE
+                - WALLET_STATUS_INACTIVE
+                - WALLET_STATUS_RECOVERING
+                - WALLET_STATUS_ROTATING
+              default: WALLET_STATUS_UNSPECIFIED
+              description: >-
+                - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED
+                represents an unspecified wallet status
+                 - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+                 - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+                 - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+                 - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+              title: WalletStatus represents the status of a wallet
             key_version:
               type: integer
               format: int64
-            permissions:
-              type: array
-              items:
-                type: string
             created_at:
               type: string
               format: date-time
             updated_at:
               type: string
               format: date-time
-            metadata:
-              type: object
-              additionalProperties:
-                type: string
-            security_level:
-              type: integer
-              format: int64
-            threshold:
-              type: integer
-              format: int64
-            parties:
-              type: integer
-              format: int64
-            status:
+            last_used:
               type: string
-            chain_id:
+              format: date-time
+            usage_count:
               type: string
+              format: uint64
           title: Wallet represents a keyless wallet
       pagination:
         type: object
@@ -85882,41 +86555,81 @@ definitions:
     properties:
       id:
         type: string
-      address:
+      creator:
         type: string
       public_key:
         type: string
+      wallet_address:
+        type: string
+      chain_id:
+        type: string
+      status:
+        type: string
+        enum:
+          - WALLET_STATUS_UNSPECIFIED
+          - WALLET_STATUS_ACTIVE
+          - WALLET_STATUS_INACTIVE
+          - WALLET_STATUS_RECOVERING
+          - WALLET_STATUS_ROTATING
+        default: WALLET_STATUS_UNSPECIFIED
+        description: >-
+          - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED represents an
+          unspecified wallet status
+           - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+           - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+           - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+           - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+        title: WalletStatus represents the status of a wallet
       key_version:
         type: integer
         format: int64
-      permissions:
-        type: array
-        items:
-          type: string
       created_at:
         type: string
         format: date-time
       updated_at:
         type: string
         format: date-time
-      metadata:
-        type: object
-        additionalProperties:
-          type: string
-      security_level:
-        type: integer
-        format: int64
-      threshold:
-        type: integer
-        format: int64
-      parties:
-        type: integer
-        format: int64
-      status:
+      last_used:
         type: string
-      chain_id:
+        format: date-time
+      usage_count:
         type: string
+        format: uint64
     title: Wallet represents a keyless wallet
+  selfchain.keyless.WalletPermission:
+    type: string
+    enum:
+      - WALLET_PERMISSION_UNSPECIFIED
+      - WALLET_PERMISSION_SIGN
+      - WALLET_PERMISSION_RECOVER
+      - WALLET_PERMISSION_ROTATE
+      - WALLET_PERMISSION_ADMIN
+    default: WALLET_PERMISSION_UNSPECIFIED
+    description: >-
+      - WALLET_PERMISSION_UNSPECIFIED: WALLET_PERMISSION_UNSPECIFIED represents
+      an unspecified permission
+       - WALLET_PERMISSION_SIGN: WALLET_PERMISSION_SIGN represents permission to sign transactions
+       - WALLET_PERMISSION_RECOVER: WALLET_PERMISSION_RECOVER represents permission to initiate recovery
+       - WALLET_PERMISSION_ROTATE: WALLET_PERMISSION_ROTATE represents permission to rotate keys
+       - WALLET_PERMISSION_ADMIN: WALLET_PERMISSION_ADMIN represents admin permissions
+    title: WalletPermission represents the type of permission
+  selfchain.keyless.WalletStatus:
+    type: string
+    enum:
+      - WALLET_STATUS_UNSPECIFIED
+      - WALLET_STATUS_ACTIVE
+      - WALLET_STATUS_INACTIVE
+      - WALLET_STATUS_RECOVERING
+      - WALLET_STATUS_ROTATING
+    default: WALLET_STATUS_UNSPECIFIED
+    description: >-
+      - WALLET_STATUS_UNSPECIFIED: WALLET_STATUS_UNSPECIFIED represents an
+      unspecified wallet status
+       - WALLET_STATUS_ACTIVE: WALLET_STATUS_ACTIVE represents an active wallet
+       - WALLET_STATUS_INACTIVE: WALLET_STATUS_INACTIVE represents an inactive wallet
+       - WALLET_STATUS_RECOVERING: WALLET_STATUS_RECOVERING represents a wallet in recovery process
+       - WALLET_STATUS_ROTATING: WALLET_STATUS_ROTATING represents a wallet in key rotation process
+    title: WalletStatus represents the status of a wallet
   selfchain.migration.Acl:
     type: object
     properties:

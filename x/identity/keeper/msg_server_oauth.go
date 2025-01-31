@@ -12,14 +12,20 @@ import (
 func (k msgServer) VerifyOAuthToken(goCtx context.Context, msg *types.MsgVerifyOAuthToken) (*types.MsgVerifyOAuthTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Verify the token
-	socialId, err := k.Keeper.VerifyOAuthToken(ctx, msg.Provider, msg.Token)
+	// Get user info from token
+	userInfo, err := k.Keeper.GetUserInfo(ctx, msg.Provider, msg.Token)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to verify OAuth token")
+		return nil, sdkerrors.Wrap(err, "failed to get user info from token")
+	}
+
+	// Get social identity by social ID
+	socialIdentity, found := k.Keeper.GetSocialIdentityBySocialID(ctx, msg.Provider, userInfo.Id)
+	if !found {
+		return nil, sdkerrors.Wrap(types.ErrSocialIdentityNotFound, "social identity not found")
 	}
 
 	return &types.MsgVerifyOAuthTokenResponse{
 		Success: true,
-		Id:      socialId,
+		Id:      socialIdentity.Id,
 	}, nil
 }

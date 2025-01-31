@@ -1,124 +1,157 @@
 package keeper
 
 import (
-	"crypto/rand"
-	"encoding/base32"
 	"fmt"
 	"time"
 
-	"selfchain/x/identity/types"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/google/uuid"
+
+	"selfchain/x/identity/types"
 )
 
 const (
-	RecoverySessionPrefix = "recovery_session/"
-	RecoveryExpiry        = 30 * time.Minute
+	RecoveryTokenLength = 32
+	RecoveryExpiry     = 30 * time.Minute
 )
 
-// InitiateRecovery starts a new wallet recovery session
-func (k Keeper) InitiateRecovery(ctx sdk.Context, socialProvider string, oauthToken string) (*types.RecoverySession, error) {
-	// Verify OAuth token and get social ID
-	socialID, err := k.VerifyOAuthToken(ctx, socialProvider, oauthToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify OAuth token: %v", err)
-	}
-
-	// Find social identity
-	identity, found := k.GetSocialIdentityBySocialID(ctx, socialProvider, socialID)
+// InitiateRecovery initiates a wallet recovery process
+func (k Keeper) InitiateRecovery(ctx sdk.Context, did string, socialProvider string, oauthToken string) (*types.RecoverySession, error) {
+	// Get DID document to verify it exists
+	_, found := k.GetDIDDocument(ctx, did)
 	if !found {
-		return nil, fmt.Errorf("no identity found for social ID: %s", socialID)
+		return nil, sdkerrors.Wrapf(types.ErrDIDNotFound, "did %s not found", did)
 	}
 
-	// Generate session ID
-	sessionID := make([]byte, 16)
-	if _, err := rand.Read(sessionID); err != nil {
-		return nil, fmt.Errorf("failed to generate session ID: %v", err)
+	// Verify OAuth token
+	if err := k.VerifyOAuth2Token(ctx, socialProvider, oauthToken); err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "failed to verify oauth token: %s", err.Error())
 	}
 
+	// Get social identity
+	socialIdentity, found := k.GetSocialIdentity(ctx, did, socialProvider)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrSocialIdentityNotFound, 
+			"social identity not found for did %s and provider %s", did, socialProvider)
+	}
+
+	// Create recovery session
 	session := &types.RecoverySession{
-		Id:               base32.StdEncoding.EncodeToString(sessionID),
-		Did:              identity.Did,
+		Id:               uuid.New().String(),
+		Did:              did,
 		SocialProvider:   socialProvider,
-		SocialId:         socialID,
+		SocialId:         socialIdentity.ProviderId,
 		MfaVerified:      false,
-		IdentityVerified: true,
-		RecoveryData:     nil, // Will be set by keyless module
-		ExpiresAt:        ctx.BlockTime().Add(RecoveryExpiry),
-		CreatedAt:        ctx.BlockTime(),
+		IdentityVerified: false,
+		ExpiresAt:        time.Now().Add(24 * time.Hour),
+		CreatedAt:        time.Now(),
 	}
 
-	// Store session
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoverySessionPrefix))
-	sessionBytes := k.cdc.MustMarshal(session)
-	store.Set([]byte(session.Id), sessionBytes)
+	// Save recovery session
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoverySessionPrefix))
+	key := []byte(session.Id)
+	bz := k.cdc.MustMarshal(session)
+	store.Set(key, bz)
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOAuthSuccess,
+			sdk.NewAttribute(types.AttributeKeyDID, did),
+			sdk.NewAttribute(types.AttributeKeyProvider, socialProvider),
+			sdk.NewAttribute(types.AttributeKeySocialID, socialIdentity.ProviderId),
+		),
+	)
 
 	return session, nil
 }
 
-// GetRecoverySession retrieves a recovery session
-func (k Keeper) GetRecoverySession(ctx sdk.Context, sessionID string) (types.RecoverySession, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoverySessionPrefix))
-	sessionBytes := store.Get([]byte(sessionID))
-	if sessionBytes == nil {
-		return types.RecoverySession{}, false
-	}
-
-	var session types.RecoverySession
-	k.cdc.MustUnmarshal(sessionBytes, &session)
-	return session, true
-}
-
-// CompleteRecovery completes a wallet recovery session
-func (k Keeper) CompleteRecovery(ctx sdk.Context, sessionID string, mfaCode string) error {
+// UpdateRecoverySession updates a recovery session
+func (k Keeper) UpdateRecoverySession(ctx sdk.Context, sessionID string) (*types.RecoverySession, error) {
+	// Get recovery session
 	session, found := k.GetRecoverySession(ctx, sessionID)
 	if !found {
-		return fmt.Errorf("recovery session not found: %s", sessionID)
+		return nil, sdkerrors.Wrapf(types.ErrRecoverySessionNotFound, "session %s not found", sessionID)
 	}
 
-	if ctx.BlockTime().After(session.ExpiresAt) {
-		return fmt.Errorf("recovery session expired")
+	// Update session
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoverySessionPrefix))
+	key := []byte(sessionID)
+	bz := k.cdc.MustMarshal(session)
+	store.Set(key, bz)
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOAuthSuccess,
+			sdk.NewAttribute(types.AttributeKeyDID, session.Did),
+			sdk.NewAttribute(types.AttributeKeyStatus, "updated"),
+		),
+	)
+
+	return session, nil
+}
+
+// CompleteRecovery completes a wallet recovery process
+func (k Keeper) CompleteRecovery(ctx sdk.Context, sessionID string, mfaCode string) error {
+	// Get recovery session
+	session, found := k.GetRecoverySession(ctx, sessionID)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrRecoverySessionNotFound, "session %s not found", sessionID)
 	}
 
-	// Check if MFA is required
-	mfaConfig, hasMFA := k.GetMFAConfig(ctx, session.Did)
-	if hasMFA && len(mfaConfig.Methods) > 0 {
-		// Create MFA challenge if not verified
-		if !session.MfaVerified {
-			_, err := k.CreateMFAChallenge(ctx, session.Did, "totp")
-			if err != nil {
-				return fmt.Errorf("failed to create MFA challenge: %v", err)
-			}
-
-			if err := k.VerifyMFAChallenge(ctx, session.Did, "totp", mfaCode); err != nil {
-				return fmt.Errorf("MFA verification failed: %v", err)
-			}
-
-			session.MfaVerified = true
-		}
+	// Verify MFA code
+	if !session.MfaVerified {
+		return sdkerrors.Wrap(types.ErrMFAVerificationFailed, "MFA not verified")
 	}
 
 	// Get DID document
-	didDoc, found := k.GetDIDDocument(ctx, session.Did)
+	doc, found := k.GetDIDDocument(ctx, session.Did)
 	if !found {
-		return fmt.Errorf("DID document not found: %s", session.Did)
+		return sdkerrors.Wrapf(types.ErrDIDNotFound, "did %s not found", session.Did)
 	}
 
-	// Call keyless module to reconstruct wallet
-	recoveryData, err := k.keyless.ReconstructWallet(ctx, didDoc)
-	if err != nil {
-		return fmt.Errorf("failed to reconstruct wallet: %v", err)
-	}
+	// Save updated DID document
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DIDDocumentPrefix))
+	key := []byte(session.Did)
+	bz := k.cdc.MustMarshal(&doc)
+	store.Set(key, bz)
 
-	session.RecoveryData = recoveryData
+	// Mark session as completed
+	session.IdentityVerified = true
+	sessionStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoverySessionPrefix))
+	sessionKey := []byte(sessionID)
+	sessionBz := k.cdc.MustMarshal(session)
+	sessionStore.Set(sessionKey, sessionBz)
 
-	// Update session
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoverySessionPrefix))
-	sessionBytes := k.cdc.MustMarshal(&session)
-	store.Set([]byte(session.Id), sessionBytes)
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOAuthSuccess,
+			sdk.NewAttribute(types.AttributeKeyDID, session.Did),
+			sdk.NewAttribute(types.AttributeKeyStatus, "completed"),
+		),
+	)
 
 	return nil
+}
+
+// GetRecoverySession gets a recovery session by ID
+func (k Keeper) GetRecoverySession(ctx sdk.Context, sessionID string) (*types.RecoverySession, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoverySessionPrefix))
+	key := []byte(sessionID)
+
+	if !store.Has(key) {
+		return nil, false
+	}
+
+	var session types.RecoverySession
+	bz := store.Get(key)
+	k.cdc.MustUnmarshal(bz, &session)
+
+	return &session, true
 }
 
 // GenerateRecoveryToken generates a recovery token for wallet recovery
@@ -127,7 +160,7 @@ func (k Keeper) GenerateRecoveryToken(ctx sdk.Context, walletID string) (string,
 	token := fmt.Sprintf("%s-%d", walletID, ctx.BlockHeight())
 
 	// Store the token with expiry
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoveryPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoveryPrefix))
 	expiresAt := ctx.BlockTime().Add(RecoveryExpiry)
 
 	// Create and store recovery data
@@ -148,7 +181,7 @@ func (k Keeper) GenerateRecoveryToken(ctx sdk.Context, walletID string) (string,
 
 // ValidateRecoveryToken validates a recovery token for a wallet
 func (k Keeper) ValidateRecoveryToken(ctx sdk.Context, walletID string, token string) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoveryPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoveryPrefix))
 
 	bz := store.Get([]byte(token))
 	if bz == nil {
@@ -178,7 +211,7 @@ func (k Keeper) ValidateRecoveryToken(ctx sdk.Context, walletID string, token st
 
 // CleanupExpiredSessions removes expired recovery sessions
 func (k Keeper) CleanupExpiredSessions(ctx sdk.Context) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(RecoverySessionPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecoverySessionPrefix))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
