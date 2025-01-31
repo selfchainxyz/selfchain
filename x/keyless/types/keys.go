@@ -50,6 +50,9 @@ const (
 	// KeyShareKey is the prefix for key shares
 	KeyShareKey = KeyPrefix + "key_share/"
 
+	// KeyPrefixRecoveryInfo is the prefix for recovery info
+	KeyPrefixRecoveryInfo = KeyPrefix + "recovery_info/"
+
 	// PartyDataKey is the prefix for party data
 	PartyDataKey = KeyPrefix + "party_data/"
 

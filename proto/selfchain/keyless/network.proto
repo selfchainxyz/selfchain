@@ -3,6 +3,20 @@ package selfchain.keyless;
 
 option go_package = "selfchain/x/keyless/types";
 
+// KeyType defines the type of cryptographic key
+enum KeyType {
+  // Unspecified key type
+  KEY_TYPE_UNSPECIFIED = 0;
+  // ECDSA key type
+  KEY_TYPE_ECDSA = 1;
+  // EdDSA key type
+  KEY_TYPE_EDDSA = 2;
+  // BLS key type
+  KEY_TYPE_BLS = 3;
+  // Schnorr key type
+  KEY_TYPE_SCHNORR = 4;
+}
+
 // NetworkParams defines the parameters for network-specific signing operations
 message NetworkParams {
   string network_type = 1;
@@ -15,6 +29,9 @@ message NetworkParams {
   string symbol_name = 8;
   string display_name = 9;
   SigningConfig signing_config = 10;
+  uint32 keygen_threshold = 11;
+  uint32 signing_threshold = 12;
+  KeyType key_type = 13;
 }
 
 // SigningConfig contains network-specific signing configuration

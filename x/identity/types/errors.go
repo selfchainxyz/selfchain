@@ -85,4 +85,9 @@ var (
 	ErrInvalidSocialIdentity  = sdkerrors.Register(ModuleName, 800, "invalid social identity")
 	ErrSocialIdentityExists   = sdkerrors.Register(ModuleName, 801, "social identity already exists")
 	ErrSocialIdentityNotFound = sdkerrors.Register(ModuleName, 802, "social identity not found")
+
+	// DID Document errors
+	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidDIDDocument = sdkerrors.Register(ModuleName, 1101, "invalid DID document")
+	ErrKeyShareNotFound   = sdkerrors.Register(ModuleName, 1102, "key share not found")
 )

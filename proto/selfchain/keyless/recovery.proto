@@ -53,3 +53,26 @@ message RecoveryInfo {
     (gogoproto.moretags) = "json:\"created_at\""
   ];
 }
+
+message ShareData {
+  string wallet_address = 1 [(gogoproto.moretags) = "json:\"wallet_address\""];
+  string creator = 2 [(gogoproto.moretags) = "json:\"creator\""];
+  bytes share_data = 3 [(gogoproto.moretags) = "json:\"share_data\""];
+  bytes signature = 4 [(gogoproto.moretags) = "json:\"signature\""];
+  google.protobuf.Timestamp created_at = 5 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"created_at\""
+  ];
+}
+
+message ShareDataPayload {
+  string wallet_address = 1 [(gogoproto.moretags) = "json:\"wallet_address\""];
+  bytes share_data = 2 [(gogoproto.moretags) = "json:\"share_data\""];
+  string creator = 3 [(gogoproto.moretags) = "json:\"creator\""];
+  google.protobuf.Timestamp created_at = 4 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "json:\"created_at\""
+  ];
+}

@@ -51,26 +51,31 @@ func TestRecoverWallet(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create recovery session
-	err = k.CreateRecoverySession(k.Ctx, grantee, walletAddr)
+	recoveryInfo, err := k.CreateRecoverySession(k.Ctx, walletAddr)
 	require.NoError(t, err)
+	require.NotNil(t, recoveryInfo)
+	require.Equal(t, walletAddr, recoveryInfo.Did)
+	require.Equal(t, types.RecoveryStatus_RECOVERY_STATUS_PENDING, recoveryInfo.Status)
 
-	// Test recovery before timelock - should fail
+	// Set recovery info with token
+	recoveryToken := "test_recovery_token"
+	recoveryInfo.RecoveryToken = recoveryToken
+	k.SetRecoveryInfo(k.Ctx, recoveryInfo)
+
+	// Test recovery with invalid token - should fail
 	recoveryMsg := &types.MsgRecoverWallet{
 		Creator:       grantee,
 		WalletAddress: walletAddr,
 		NewPubKey:    "newpubkey1",
-		RecoveryProof: "test_recovery_proof",
+		RecoveryProof: "invalid_token",
 	}
 
 	_, err = srv.RecoverWallet(wctx, recoveryMsg)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "recovery not allowed")
+	require.Contains(t, err.Error(), "invalid recovery token")
 
-	// Advance block time by 24 hours
-	k.Ctx = k.Ctx.WithBlockTime(k.Ctx.BlockTime().Add(25 * time.Hour))
-	wctx = sdk.WrapSDKContext(k.Ctx)
-
-	// Test recovery after timelock - should succeed
+	// Test recovery with valid token - should succeed
+	recoveryMsg.RecoveryProof = recoveryToken
 	_, err = srv.RecoverWallet(wctx, recoveryMsg)
 	require.NoError(t, err)
 
@@ -78,11 +83,13 @@ func TestRecoverWallet(t *testing.T) {
 	recoveryMsg.Creator = "cosmos1w3jhxapnta047h6lta047h6lta047h6l34t280"
 	_, err = srv.RecoverWallet(wctx, recoveryMsg)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "permission denied")
 
 	// Test recovery with invalid wallet address
 	recoveryMsg.WalletAddress = "invalid"
 	_, err = srv.RecoverWallet(wctx, recoveryMsg)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
 }
 
 func TestCreateRecoverySession(t *testing.T) {
@@ -111,18 +118,27 @@ func TestCreateRecoverySession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test creating recovery session
-	err = k.CreateRecoverySession(k.Ctx, creator, walletAddr)
+	recoveryInfo, err := k.CreateRecoverySession(k.Ctx, walletAddr)
 	require.NoError(t, err)
+	require.NotNil(t, recoveryInfo)
+	require.Equal(t, creator, recoveryInfo.Did)
+	require.Equal(t, types.RecoveryStatus_RECOVERY_STATUS_PENDING, recoveryInfo.Status)
 
 	// Test creating duplicate recovery session
-	err = k.CreateRecoverySession(k.Ctx, creator, walletAddr)
+	recoveryInfo, err = k.CreateRecoverySession(k.Ctx, walletAddr)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "recovery session already exists")
+	require.Nil(t, recoveryInfo)
 
 	// Test creating recovery session with invalid wallet address
-	err = k.CreateRecoverySession(k.Ctx, creator, "invalid")
+	recoveryInfo, err = k.CreateRecoverySession(k.Ctx, "invalid")
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
+	require.Nil(t, recoveryInfo)
 
-	// Test creating recovery session with invalid creator
-	err = k.CreateRecoverySession(k.Ctx, "invalid", walletAddr)
+	// Test creating recovery session with non-existent wallet
+	recoveryInfo, err = k.CreateRecoverySession(k.Ctx, "cosmos1w3jhxapnta047h6lta047h6lta047h6l34t280")
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "wallet not found")
+	require.Nil(t, recoveryInfo)
 }

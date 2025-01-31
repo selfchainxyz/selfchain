@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/keyless/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetBatchSignStatus retrieves the batch sign status for a wallet
@@ -46,8 +47,8 @@ func (k Keeper) DeleteBatchSignStatus(ctx sdk.Context, walletAddress string) {
 // BatchSign handles the batch signing request
 func (k Keeper) BatchSign(ctx sdk.Context, msg *types.MsgBatchSignRequest) error {
 	// Get wallet
-	_, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
+	_, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
 		return fmt.Errorf("wallet not found: %s", msg.WalletAddress)
 	}
 

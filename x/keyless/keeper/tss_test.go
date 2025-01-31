@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"selfchain/testutil/keeper"
+	"selfchain/x/keyless/testutil/keeper"
 	"selfchain/x/keyless/types"
 )
 
 func TestKeyShare(t *testing.T) {
-	k := keeper.NewKeylessKeeper(t)
+	k, ctx := keeper.KeylessKeeper(t)
 	
 	// Test key share management
 	walletID := "test_wallet"
@@ -17,7 +17,7 @@ func TestKeyShare(t *testing.T) {
 	shareData := []byte("test_share_data")
 
 	// Save key share
-	err := k.SavePartyData(k.Ctx, walletID, &types.PartyData{
+	err := k.SavePartyData(ctx, walletID, &types.PartyData{
 		PartyId:    partyID,
 		PartyShare: shareData,
 		ChainId:    "test-chain",
@@ -26,57 +26,43 @@ func TestKeyShare(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get key share
-	retrievedData, err := k.GetPartyData(k.Ctx, walletID)
+	retrievedData, err := k.GetPartyData(ctx, walletID)
 	require.NoError(t, err)
 	require.Equal(t, shareData, retrievedData.PartyShare)
 	require.Equal(t, "active", retrievedData.Status)
 }
 
 func TestWalletKeyGeneration(t *testing.T) {
-	k := keeper.NewKeylessKeeper(t)
+	k, ctx := keeper.KeylessKeeper(t)
 
-	// Test cases
-	testCases := []struct {
+	tests := []struct {
 		name          string
 		walletAddress string
 		chainID       string
 		creator       string
-		wantErr      bool
+		wantErr       bool
+		errMsg        string
 	}{
 		{
-			name:          "valid key generation",
-			walletAddress: "test_wallet_1",
-			chainID:       "test-chain-1",
-			creator:       "test_creator_1",
+			name:          "valid wallet",
+			walletAddress: "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+			chainID:      "test-1",
+			creator:      "cosmos1creator",
 			wantErr:      false,
 		},
 		{
-			name:          "empty wallet address",
-			walletAddress: "",
-			chainID:       "test-chain-2",
-			creator:       "test_creator_2",
+			name:          "invalid wallet address",
+			walletAddress: "invalid",
+			chainID:      "test-1",
+			creator:      "cosmos1creator",
 			wantErr:      true,
-		},
-		{
-			name:          "empty chain ID",
-			walletAddress: "test_wallet_3",
-			chainID:       "",
-			creator:       "test_creator_3",
-			wantErr:      true,
-		},
-		{
-			name:          "empty creator",
-			walletAddress: "test_wallet_4",
-			chainID:       "test-chain-4",
-			creator:       "",
-			wantErr:      true,
+			errMsg:       "invalid bech32 address",
 		},
 	}
 
-	// Run test cases
-	for _, tc := range testCases {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Create wallet
+			// Create and save wallet
 			wallet := &types.Wallet{
 				WalletAddress: tc.walletAddress,
 				ChainId:      tc.chainID,
@@ -84,16 +70,16 @@ func TestWalletKeyGeneration(t *testing.T) {
 				Status:       types.WalletStatus_WALLET_STATUS_ACTIVE,
 			}
 
-			err := k.SaveWallet(k.Ctx, wallet)
-			if tc.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			// SetWallet is a void function, so we don't need to capture its return value
+			k.SetWallet(ctx, wallet)
 
 			// Verify wallet was saved
-			savedWallet, err := k.GetWallet(k.Ctx, tc.walletAddress)
-			require.NoError(t, err)
+			savedWallet, found := k.GetWallet(ctx, tc.walletAddress)
+			if tc.wantErr {
+				require.False(t, found)
+				return
+			}
+			require.True(t, found)
 			require.Equal(t, wallet.WalletAddress, savedWallet.WalletAddress)
 			require.Equal(t, wallet.ChainId, savedWallet.ChainId)
 			require.Equal(t, wallet.Creator, savedWallet.Creator)

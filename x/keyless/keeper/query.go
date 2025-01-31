@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
+	"selfchain/x/keyless/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"selfchain/x/keyless/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -34,9 +35,9 @@ func (k Keeper) Wallet(goCtx context.Context, req *types.QueryWalletRequest) (*t
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	wallet, err := k.GetWallet(ctx, req.Address)
-	if err != nil {
-		return nil, err
+	wallet, found := k.GetWallet(ctx, req.Address)
+	if !found {
+		return nil, status.Error(codes.NotFound, "wallet not found")
 	}
 
 	return &types.QueryWalletResponse{Wallet: wallet}, nil
@@ -121,11 +122,11 @@ func (k Keeper) KeyRotationStatus(goCtx context.Context, req *types.QueryKeyRota
 	}
 
 	return &types.QueryKeyRotationStatusResponse{
-		WalletId:   req.WalletId,
-		Status:     status.GetStatus().String(),
-		Version:    status.GetVersion(),
-		NewPubKey:  status.GetNewPublicKey(),
-		Error:      "",
+		WalletId:  req.WalletId,
+		Status:    status.GetStatus().String(),
+		Version:   status.GetVersion(),
+		NewPubKey: status.GetNewPublicKey(),
+		Error:     "",
 	}, nil
 }
 
@@ -174,8 +175,9 @@ func (k Keeper) Permissions(goCtx context.Context, req *types.QueryPermissionsRe
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if wallet exists
-	if _, err := k.GetWallet(ctx, req.WalletId); err != nil {
-		return nil, err
+	_, found := k.GetWallet(ctx, req.WalletId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "wallet not found")
 	}
 
 	perms, err := k.GetPermissionsForWallet(ctx, req.WalletId)
@@ -185,7 +187,7 @@ func (k Keeper) Permissions(goCtx context.Context, req *types.QueryPermissionsRe
 
 	return &types.QueryPermissionsResponse{
 		Permissions: perms,
-		Pagination: nil,
+		Pagination:  nil,
 	}, nil
 }
 
@@ -198,16 +200,15 @@ func (k Keeper) Permission(goCtx context.Context, req *types.QueryPermissionRequ
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if wallet exists
-	if _, err := k.GetWallet(ctx, req.WalletId); err != nil {
-		return nil, err
+	_, found := k.GetWallet(ctx, req.WalletId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "wallet not found")
 	}
 
-	perm, err := k.GetPermission(ctx, req.WalletId, req.Grantee)
-	if err != nil {
-		return nil, err
+	perm, found := k.GetPermission(ctx, req.WalletId, req.Grantee)
+	if !found {
+		return nil, status.Error(codes.NotFound, "permission not found")
 	}
 
-	return &types.QueryPermissionResponse{
-		Permission: perm,
-	}, nil
+	return &types.QueryPermissionResponse{Permission: perm}, nil
 }

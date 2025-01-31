@@ -56,6 +56,8 @@ message KeyGenRequest {
   string wallet_address = 1;
   string chain_id = 2;
   SecurityLevel security_level = 3;
+  uint32 threshold = 4;
+  repeated bytes shares = 5;
 }
 
 // KeyGenResponse represents the response from key generation

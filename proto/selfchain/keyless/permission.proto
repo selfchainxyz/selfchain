@@ -23,12 +23,16 @@ enum WalletPermission {
   WALLET_PERMISSION_UNSPECIFIED = 0;
   // WALLET_PERMISSION_SIGN represents permission to sign transactions
   WALLET_PERMISSION_SIGN = 1;
+  // WALLET_PERMISSION_UPDATE represents permission to update wallet
+  WALLET_PERMISSION_UPDATE = 2;
+  // WALLET_PERMISSION_DELETE represents permission to delete wallet
+  WALLET_PERMISSION_DELETE = 3;
   // WALLET_PERMISSION_RECOVER represents permission to initiate recovery
-  WALLET_PERMISSION_RECOVER = 2;
+  WALLET_PERMISSION_RECOVER = 4;
   // WALLET_PERMISSION_ROTATE represents permission to rotate keys
-  WALLET_PERMISSION_ROTATE = 3;
+  WALLET_PERMISSION_ROTATE = 5;
   // WALLET_PERMISSION_ADMIN represents admin permissions
-  WALLET_PERMISSION_ADMIN = 4;
+  WALLET_PERMISSION_ADMIN = 6;
 }
 
 // PermissionGrant represents a permission grant request

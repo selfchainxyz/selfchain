@@ -2,71 +2,70 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strings"
-	"time"
+
+	"selfchain/x/keyless/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"selfchain/x/keyless/types"
 )
 
+// GrantPermission handles granting permissions to a wallet
 func (k msgServer) GrantPermission(goCtx context.Context, msg *types.MsgGrantPermission) (*types.MsgGrantPermissionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Validate the message
+	// Validate basic
 	if err := msg.ValidateBasic(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid message: %v", err)
 	}
 
-	// Check if the wallet exists
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
+	// Check if wallet exists
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", msg.WalletAddress)
+	}
+
+	// Check if sender is wallet owner
+	if wallet.Creator != msg.Creator {
+		return nil, fmt.Errorf("only wallet owner can grant permissions")
+	}
+
+	// Check if grantee exists
+	if _, err := sdk.AccAddressFromBech32(msg.Grantee); err != nil {
+		return nil, fmt.Errorf("invalid grantee address: %v", err)
+	}
+
+	// Check if permission already exists
+	hasPermission, err := k.HasPermission(ctx, msg.WalletAddress, msg.Grantee, string(msg.Permissions[0]))
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "wallet not found: %s", msg.WalletAddress)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if hasPermission {
+		return nil, status.Error(codes.AlreadyExists, "permission already exists")
 	}
 
-	// Check if the sender is the wallet owner
-	if msg.Creator != wallet.Creator {
-		return nil, status.Error(codes.PermissionDenied, "only wallet owner can grant permissions")
-	}
-
-	// Check if the permission already exists
-	existingPerm, err := k.GetPermission(ctx, msg.WalletAddress, msg.Grantee)
-	if err == nil && !existingPerm.IsExpired() && !existingPerm.IsRevoked() {
-		return nil, status.Error(codes.AlreadyExists, "permission already exists and is active")
-	}
-
-	// Check if expiry time is valid
-	if msg.ExpiresAt == nil {
-		return nil, status.Error(codes.InvalidArgument, "expiry time must be specified")
-	}
-	if msg.ExpiresAt.Before(time.Now()) {
-		return nil, status.Error(codes.InvalidArgument, "expiry time must be in the future")
-	}
-
-	// Convert permissions to strings
-	permStrings := make([]string, len(msg.Permissions))
-	for i, p := range msg.Permissions {
-		permStrings[i] = p.String()
-	}
-
-	// Create current time as pointer
-	now := time.Now()
-
-	// Create and store the permission
+	// Create new permission
+	now := ctx.BlockTime()
 	permission := &types.Permission{
 		WalletAddress: msg.WalletAddress,
 		Grantee:      msg.Grantee,
-		Permissions:  permStrings,
+		Permissions:  make([]string, len(msg.Permissions)),
 		GrantedAt:    &now,
 		ExpiresAt:    msg.ExpiresAt,
 		Revoked:      false,
+		RevokedAt:    nil,
 	}
 
-	err = k.Keeper.GrantPermission(ctx, permission)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to store permission: %v", err)
+	// Convert WalletPermission enum values to strings
+	for i, p := range msg.Permissions {
+		permission.Permissions[i] = p.String()
+	}
+
+	// Validate and store permission
+	if err := k.ValidateAndGrantPermission(ctx, permission); err != nil {
+		return nil, fmt.Errorf("failed to grant permission: %v", err)
 	}
 
 	// Emit event
@@ -75,7 +74,8 @@ func (k msgServer) GrantPermission(goCtx context.Context, msg *types.MsgGrantPer
 			types.EventTypeGrantPermission,
 			sdk.NewAttribute(types.AttributeKeyWalletAddress, msg.WalletAddress),
 			sdk.NewAttribute(types.AttributeKeyGrantee, msg.Grantee),
-			sdk.NewAttribute(types.AttributeKeyPermissions, strings.Join(permStrings, ",")),
+			sdk.NewAttribute(types.AttributeKeyPermissions, strings.Join(permission.Permissions, ",")),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, now.String()),
 		),
 	)
 

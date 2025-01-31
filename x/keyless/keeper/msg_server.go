@@ -56,9 +56,9 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Get wallet
-	wallet, err := k.Keeper.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
+	wallet, found := k.Keeper.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrWalletNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Verify creator has permission
@@ -101,7 +101,7 @@ func (k msgServer) SignTransaction(goCtx context.Context, msg *types.MsgSignTran
 
 	signResult, err := protocol.SignMessage(ctx, []byte(msg.UnsignedTx), personalShare, remoteShare)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to sign transaction: %v", err)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidSignature, "failed to sign transaction: %v", err)
 	}
 
 	// Return the signature
@@ -121,17 +121,14 @@ func (k msgServer) BatchSign(goCtx context.Context, msg *types.MsgBatchSignReque
 	}
 
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrWalletNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet status
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ROTATING
-	err = k.SaveWallet(ctx, wallet)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
-	}
+	k.SetWallet(ctx, wallet)
 
 	// Create batch sign status
 	status := &types.BatchSignStatusInfo{
@@ -156,18 +153,15 @@ func (k msgServer) CompleteKeyRotation(goCtx context.Context, msg *types.MsgComp
 	}
 
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrWalletNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet with new public key
 	wallet.PublicKey = msg.NewPubKey
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ACTIVE
-	err = k.SaveWallet(ctx, wallet)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
-	}
+	k.SetWallet(ctx, wallet)
 
 	return &types.MsgCompleteKeyRotationResponse{
 		WalletAddress: msg.WalletAddress,
@@ -186,18 +180,15 @@ func (k msgServer) InitiateKeyRotation(goCtx context.Context, msg *types.MsgInit
 	}
 
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "wallet %s not found", msg.WalletAddress)
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrWalletNotFound, "wallet %s not found", msg.WalletAddress)
 	}
 
 	// Update wallet status
 	wallet.Status = types.WalletStatus_WALLET_STATUS_ROTATING
 	wallet.KeyVersion++
-	err = k.SaveWallet(ctx, wallet)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to save wallet: %v", err)
-	}
+	k.SetWallet(ctx, wallet)
 
 	return &types.MsgInitiateKeyRotationResponse{
 		WalletAddress: msg.WalletAddress,

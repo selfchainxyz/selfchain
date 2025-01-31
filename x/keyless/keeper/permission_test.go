@@ -70,19 +70,23 @@ func TestPermissionManagement(t *testing.T) {
 	permission.Grantee = "invalid"
 	err = k.GrantPermission(k.Ctx, permission)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
 
 	// Test revoking permission with invalid grantee
 	err = k.RevokePermission(k.Ctx, walletAddr, "invalid")
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
 
 	// Test granting permission with invalid wallet address
 	permission.WalletAddress = "invalid"
 	err = k.GrantPermission(k.Ctx, permission)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
 
 	// Test revoking permission with invalid wallet address
 	err = k.RevokePermission(k.Ctx, "invalid", grantee)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid bech32 address")
 
 	// Test granting permission with empty permissions
 	permission.WalletAddress = walletAddr
@@ -90,4 +94,5 @@ func TestPermissionManagement(t *testing.T) {
 	permission.Permissions = []string{}
 	err = k.GrantPermission(k.Ctx, permission)
 	require.Error(t, err)
+	require.Contains(t, err.Error(), "permissions cannot be empty")
 }

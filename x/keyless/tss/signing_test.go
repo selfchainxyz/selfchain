@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignMessage(t *testing.T) {
@@ -32,50 +35,53 @@ func TestSignMessage(t *testing.T) {
 		return
 	}
 
-	// Test message signing
+	// Test cases
 	tests := []struct {
-		name            string
-		msg            []byte
-		personalSaveData *keygen.LocalPartySaveData
-		remoteSaveData   *keygen.LocalPartySaveData
-		timeout         time.Duration
-		wantErr         bool
+		name    string
+		msg     []byte
+		wantErr bool
 	}{
 		{
-			name:            "successful signing",
-			msg:            []byte("test message"),
-			personalSaveData: keygenResult.Party1Data,
-			remoteSaveData:   keygenResult.Party2Data,
-			timeout:         60 * time.Second,
-			wantErr:         false,
+			name:    "Valid message",
+			msg:     []byte("test message"),
+			wantErr: false,
 		},
 		{
-			name:            "timeout during signing",
-			msg:            []byte("test message"),
-			personalSaveData: keygenResult.Party1Data,
-			remoteSaveData:   keygenResult.Party2Data,
-			timeout:         1 * time.Millisecond,
-			wantErr:         true,
+			name:    "Empty message",
+			msg:     []byte{},
+			wantErr: true,
+		},
+		{
+			name:    "successful signing",
+			msg:     []byte("test message"),
+			wantErr: false,
+		},
+		{
+			name:    "timeout during signing",
+			msg:     []byte("test message"),
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			if tt.name == "timeout during signing" {
+				ctx, cancel = context.WithTimeout(context.Background(), 1*time.Millisecond)
+			}
 			defer cancel()
 
 			// Hash the message before signing
 			msgHash := sha256.Sum256(tt.msg)
 
-			result, err := SignMessage(ctx, msgHash[:], tt.personalSaveData, tt.remoteSaveData)
+			result, err := SignMessage(ctx, msgHash[:], keygenResult.Party1Data, keygenResult.Party2Data)
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
-			if !assert.NoError(t, err) {
-				return
-			}
+			require.NoError(t, err)
 			if !assert.NotNil(t, result) {
 				return
 			}
@@ -86,7 +92,31 @@ func TestSignMessage(t *testing.T) {
 			assert.True(t, result.R.BitLen() > 0)
 			assert.True(t, result.S.BitLen() > 0)
 
-			// TODO: Add ECDSA signature verification when we have proper key reconstruction
+			// Verify ECDSA signature
+			pubKey := keygenResult.PublicKey
+
+			// Convert big.Int to btcec types
+			rScalar := new(btcec.ModNScalar)
+			rScalar.SetByteSlice(result.R.Bytes())
+			sScalar := new(btcec.ModNScalar)
+			sScalar.SetByteSlice(result.S.Bytes())
+
+			// Create btcec signature
+			signature := ecdsa.NewSignature(rScalar, sScalar)
+
+			// Hash the message
+			msgHash = sha256.Sum256(tt.msg)
+
+			// Convert to btcec public key
+			x := new(btcec.FieldVal)
+			x.SetByteSlice(pubKey.X.Bytes())
+			y := new(btcec.FieldVal)
+			y.SetByteSlice(pubKey.Y.Bytes())
+			btcecPubKey := btcec.NewPublicKey(x, y)
+
+			// Verify the signature using btcec
+			valid := signature.Verify(msgHash[:], btcecPubKey)
+			assert.True(t, valid)
 		})
 	}
 }
@@ -167,5 +197,29 @@ func TestEndToEnd(t *testing.T) {
 	assert.True(t, signResult.R.BitLen() > 0)
 	assert.True(t, signResult.S.BitLen() > 0)
 
-	// TODO: Add ECDSA signature verification when we have proper key reconstruction
+	// Verify ECDSA signature
+	pubKey := keygenResult.PublicKey
+
+	// Convert big.Int to btcec types
+	rScalar := new(btcec.ModNScalar)
+	rScalar.SetByteSlice(signResult.R.Bytes())
+	sScalar := new(btcec.ModNScalar)
+	sScalar.SetByteSlice(signResult.S.Bytes())
+
+	// Create btcec signature
+	signature := ecdsa.NewSignature(rScalar, sScalar)
+
+	// Hash the message
+	msgHash = sha256.Sum256(msg)
+
+	// Convert to btcec public key
+	x := new(btcec.FieldVal)
+	x.SetByteSlice(pubKey.X.Bytes())
+	y := new(btcec.FieldVal)
+	y.SetByteSlice(pubKey.Y.Bytes())
+	btcecPubKey := btcec.NewPublicKey(x, y)
+
+	// Verify the signature using btcec
+	valid := signature.Verify(msgHash[:], btcecPubKey)
+	require.True(t, valid, "signature verification failed")
 }

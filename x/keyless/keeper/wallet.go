@@ -9,11 +9,8 @@ import (
 // IsWalletAuthorized checks if a grantee is authorized for a specific permission
 func (k Keeper) IsWalletAuthorized(ctx sdk.Context, address string, grantee string, requiredPerm types.WalletPermission) bool {
 	// For new wallets, creator is always authorized
-	wallet, err := k.GetWallet(ctx, address)
-	if err != nil {
-		return false
-	}
-	if wallet == nil {
+	wallet, found := k.GetWallet(ctx, address)
+	if !found {
 		return false
 	}
 	if wallet.Creator == grantee {
@@ -21,11 +18,8 @@ func (k Keeper) IsWalletAuthorized(ctx sdk.Context, address string, grantee stri
 	}
 
 	// Check if grantee has the required permission
-	perm, err := k.GetPermission(ctx, address, grantee)
-	if err != nil {
-		return false
-	}
-	if perm == nil {
+	perm, found := k.GetPermission(ctx, address, grantee)
+	if !found {
 		return false
 	}
 
@@ -37,8 +31,8 @@ func (k Keeper) IsWalletAuthorized(ctx sdk.Context, address string, grantee stri
 // ValidateWalletAccess validates access to a wallet for a specific operation
 func (k Keeper) ValidateWalletAccess(ctx sdk.Context, walletAddress string, creator string, operation string) error {
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, walletAddress)
-	if err != nil {
+	wallet, found := k.GetWallet(ctx, walletAddress)
+	if !found {
 		return fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 
@@ -50,21 +44,21 @@ func (k Keeper) ValidateWalletAccess(ctx sdk.Context, walletAddress string, crea
 	// Map operation to required permission
 	var requiredPerm types.WalletPermission
 	switch operation {
-	case "recovery":
-		requiredPerm = types.WalletPermission_WALLET_PERMISSION_RECOVER
 	case "sign":
 		requiredPerm = types.WalletPermission_WALLET_PERMISSION_SIGN
-	case "rotate":
-		requiredPerm = types.WalletPermission_WALLET_PERMISSION_ROTATE
-	case "admin":
-		requiredPerm = types.WalletPermission_WALLET_PERMISSION_ADMIN
+	case "update":
+		requiredPerm = types.WalletPermission_WALLET_PERMISSION_UPDATE
+	case "delete":
+		requiredPerm = types.WalletPermission_WALLET_PERMISSION_DELETE
+	case "recover":
+		requiredPerm = types.WalletPermission_WALLET_PERMISSION_RECOVER
 	default:
-		return fmt.Errorf("unknown operation: %s", operation)
+		return fmt.Errorf("invalid operation: %s", operation)
 	}
 
-	// Check if creator is authorized for the operation
+	// Check if creator has required permission
 	if !k.IsWalletAuthorized(ctx, walletAddress, creator, requiredPerm) {
-		return fmt.Errorf("not authorized for operation: %s", operation)
+		return fmt.Errorf("creator %s is not authorized for operation %s on wallet %s", creator, operation, walletAddress)
 	}
 
 	return nil

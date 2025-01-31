@@ -36,8 +36,8 @@ func (k Keeper) SaveWallet(ctx sdk.Context, wallet *types.Wallet) error {
 	}
 
 	// Check for duplicate wallet
-	existingWallet, err := k.GetWallet(ctx, wallet.WalletAddress)
-	if err == nil && existingWallet != nil {
+	_, found := k.GetWallet(ctx, wallet.WalletAddress)
+	if found {
 		return status.Error(codes.AlreadyExists, "wallet already exists")
 	}
 
@@ -57,27 +57,6 @@ func (k Keeper) SaveWallet(ctx sdk.Context, wallet *types.Wallet) error {
 	)
 
 	return nil
-}
-
-// GetWallet retrieves a wallet from the store
-func (k Keeper) GetWallet(ctx sdk.Context, walletAddress string) (*types.Wallet, error) {
-	if walletAddress == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
-	}
-
-	store := k.GetWalletStore(ctx)
-	key := k.GetWalletKey(walletAddress)
-	bz := store.Get(key)
-	if bz == nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", walletAddress))
-	}
-
-	var wallet types.Wallet
-	if err := k.cdc.Unmarshal(bz, &wallet); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to unmarshal wallet: %v", err))
-	}
-
-	return &wallet, nil
 }
 
 // DeleteWallet deletes a wallet from the store
@@ -185,18 +164,18 @@ func (k Keeper) GetAllWalletsFromStore(ctx sdk.Context) ([]types.Wallet, error) 
 
 // GetWalletStatus returns the current status of a wallet
 func (k Keeper) GetWalletStatus(ctx sdk.Context, walletAddress string) (types.WalletStatus, error) {
-	wallet, err := k.GetWallet(ctx, walletAddress)
-	if err != nil {
-		return types.WalletStatus_WALLET_STATUS_UNSPECIFIED, fmt.Errorf("wallet not found: %v", err)
+	wallet, found := k.GetWallet(ctx, walletAddress)
+	if !found {
+		return types.WalletStatus_WALLET_STATUS_UNSPECIFIED, fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 	return wallet.Status, nil
 }
 
 // SetWalletStatus updates the status of a wallet
 func (k Keeper) SetWalletStatus(ctx sdk.Context, walletAddress string, status types.WalletStatus) error {
-	wallet, err := k.GetWallet(ctx, walletAddress)
-	if err != nil {
-		return fmt.Errorf("wallet not found: %v", err)
+	wallet, found := k.GetWallet(ctx, walletAddress)
+	if !found {
+		return fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 
 	wallet.Status = status
@@ -274,4 +253,22 @@ func (k Keeper) GetSigningSession(ctx sdk.Context, sessionID string) (*types.Sig
 func (k Keeper) DeleteSigningSession(ctx sdk.Context, sessionID string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SigningSessionKey))
 	store.Delete([]byte(sessionID))
+}
+
+// GetWallet retrieves a wallet from the store
+func (k Keeper) GetWallet(ctx sdk.Context, walletAddress string) (*types.Wallet, bool) {
+	store := k.GetWalletStore(ctx)
+	key := k.GetWalletKey(walletAddress)
+	
+	value := store.Get(key)
+	if value == nil {
+		return nil, false
+	}
+
+	var wallet types.Wallet
+	if err := k.cdc.Unmarshal(value, &wallet); err != nil {
+		return nil, false
+	}
+
+	return &wallet, true
 }

@@ -42,6 +42,11 @@ const (
 	MFAChallengeExpiry       = 5 * time.Minute // MFA challenge expiry time
 )
 
+var (
+	// DIDDocumentKey is the key for storing DID documents
+	DIDDocumentKey = []byte("DIDDocument")
+)
+
 // KeyPrefix returns the prefix for a given key type
 func KeyPrefix(prefix string) []byte {
 	return []byte(prefix)

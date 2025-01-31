@@ -134,6 +134,7 @@ import (
 	keylessmodule "selfchain/x/keyless"
 	keylessmodulekeeper "selfchain/x/keyless/keeper"
 	keylessmoduletypes "selfchain/x/keyless/types"
+	"selfchain/x/keyless/tss"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "selfchain/app/params"
@@ -578,7 +579,7 @@ func New(
 		keys[keylessmoduletypes.MemStoreKey],
 		app.GetSubspace(keylessmoduletypes.ModuleName),
 		app.IdentityKeeper,
-		keylessmoduletypes.NewTSSProtocolImpl(),
+		tss.NewTSSProtocolImpl(),
 	)
 	keylessModule := keylessmodule.NewAppModule(
 		appCodec,

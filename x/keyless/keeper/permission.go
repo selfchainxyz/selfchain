@@ -44,17 +44,15 @@ func (k Keeper) RevokePermission(ctx sdk.Context, walletAddress string, grantee 
 	}
 
 	// Check if wallet exists
-	if _, err := k.GetWallet(ctx, walletAddress); err != nil {
-		return err
+	_, found := k.GetWallet(ctx, walletAddress)
+	if !found {
+		return status.Error(codes.NotFound, "wallet not found")
 	}
 
 	// Check if permission exists
-	existingPerm, err := k.GetPermission(ctx, walletAddress, grantee)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return status.Error(codes.NotFound, "permission does not exist")
-		}
-		return err
+	existingPerm, found := k.GetPermission(ctx, walletAddress, grantee)
+	if !found {
+		return status.Error(codes.NotFound, "permission does not exist")
 	}
 
 	// Check if already revoked
@@ -86,16 +84,14 @@ func (k Keeper) HasPermission(ctx sdk.Context, walletAddress string, grantee str
 	}
 
 	// Check if wallet exists
-	if _, err := k.GetWallet(ctx, walletAddress); err != nil {
+	_, found := k.GetWallet(ctx, walletAddress)
+	if !found {
 		return false, nil
 	}
 
-	perm, err := k.GetPermission(ctx, walletAddress, grantee)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return false, nil
-		}
-		return false, err
+	perm, found := k.GetPermission(ctx, walletAddress, grantee)
+	if !found {
+		return false, nil
 	}
 
 	// Check if revoked
@@ -113,13 +109,13 @@ func (k Keeper) HasPermission(ctx sdk.Context, walletAddress string, grantee str
 }
 
 // GetPermission gets a permission by wallet address and grantee
-func (k Keeper) GetPermission(ctx sdk.Context, walletAddress string, grantee string) (*types.Permission, error) {
+func (k Keeper) GetPermission(ctx sdk.Context, walletAddress string, grantee string) (*types.Permission, bool) {
 	if walletAddress == "" {
-		return nil, status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+		return nil, false
 	}
 
 	if grantee == "" {
-		return nil, status.Error(codes.InvalidArgument, "grantee cannot be empty")
+		return nil, false
 	}
 
 	store := ctx.KVStore(k.storeKey)
@@ -128,15 +124,15 @@ func (k Keeper) GetPermission(ctx sdk.Context, walletAddress string, grantee str
 
 	bz := permissionStore.Get(key)
 	if bz == nil {
-		return nil, status.Error(codes.NotFound, "permission not found")
+		return nil, false
 	}
 
 	var permission types.Permission
 	if err := k.cdc.Unmarshal(bz, &permission); err != nil {
-		return nil, err
+		return nil, false
 	}
 
-	return &permission, nil
+	return &permission, true
 }
 
 // GetPermissionKey returns the key for storing a permission
@@ -225,27 +221,23 @@ func (k Keeper) GetPermissionsForWallet(ctx sdk.Context, walletAddress string) (
 
 // ValidateAndGrantPermission validates and grants a permission
 func (k Keeper) ValidateAndGrantPermission(ctx sdk.Context, permission *types.Permission) error {
-	// Basic validation
-	if err := permission.Validate(); err != nil {
-		return err
+	if permission == nil {
+		return status.Error(codes.InvalidArgument, "permission cannot be nil")
 	}
 
-	// Check if wallet exists
-	if _, err := k.GetWallet(ctx, permission.WalletAddress); err != nil {
-		return err
+	// Validate wallet exists
+	_, found := k.GetWallet(ctx, permission.WalletAddress)
+	if !found {
+		return status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", permission.WalletAddress))
 	}
 
-	// Check if permission already exists
-	existingPerm, err := k.GetPermission(ctx, permission.WalletAddress, permission.Grantee)
-	if err != nil && status.Code(err) != codes.NotFound {
-		return err
+	// Validate basic fields
+	if permission.Grantee == "" {
+		return status.Error(codes.InvalidArgument, "grantee cannot be empty")
 	}
 
-	if existingPerm != nil {
-		// Check if existing permission is revoked or expired
-		if !existingPerm.IsRevoked() && !existingPerm.IsExpired() {
-			return status.Error(codes.AlreadyExists, "permission already exists and is still valid")
-		}
+	if len(permission.Permissions) == 0 {
+		return status.Error(codes.InvalidArgument, "permissions cannot be empty")
 	}
 
 	// Store the permission

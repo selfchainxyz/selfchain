@@ -2,191 +2,103 @@ package tss
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"sync"
+	"math/big"
 	"time"
 
-	"selfchain/x/keyless/crypto/signing/ecdsa"
-	"selfchain/x/keyless/crypto/signing/format"
-	"selfchain/x/keyless/crypto/signing/types"
-	ktypes "selfchain/x/keyless/types"
-
+	"github.com/bnb-chain/tss-lib/v2/crypto"
+	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
+	"github.com/bnb-chain/tss-lib/v2/tss"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/cosmos/cosmos-sdk/codec"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"selfchain/x/keyless/crypto/signing/format"
+	"selfchain/x/keyless/types"
 )
 
-// Protocol implements the TSSProtocol interface for distributed key generation and signing
+// Protocol implements the TSSProtocol interface
 type Protocol struct {
-	codec           codec.BinaryCodec
-	sessions        sync.Map
-	timeout         time.Duration
-	cleanupInterval time.Duration
+	sessions map[string]*Session
 }
 
-// NewProtocol creates a new TSS protocol instance
-func NewProtocol(codec codec.BinaryCodec) ktypes.TSSProtocol {
-	p := &Protocol{
-		codec:           codec,
-		timeout:         5 * time.Minute,
-		cleanupInterval: 10 * time.Minute,
+// NewTSSProtocolImpl creates a new instance of TSSProtocol
+func NewTSSProtocolImpl() types.TSSProtocol {
+	return &Protocol{
+		sessions: make(map[string]*Session),
 	}
-
-	// Start cleanup goroutine
-	go p.cleanupSessions()
-
-	return p
 }
 
 // Session represents an active TSS session
 type Session struct {
 	ID            string
-	Type          ktypes.SessionType
-	PartyData     map[string]*ktypes.PartyData
+	WalletAddress string
+	Threshold     uint32
+	SecurityLevel types.SecurityLevel
+	Status        types.SessionStatus
+	Shares        [][]byte
 	PublicKey     []byte
-	SecurityLevel ktypes.SecurityLevel
-	Status        ktypes.SessionStatus
-	StartTime     time.Time
-	mu            sync.RWMutex
-	// Additional fields for signing
-	Message   []byte
-	WalletAddress  string
-	Signature *format.SignatureResult
 }
 
-// cleanupSessions periodically removes completed or failed sessions
-func (p *Protocol) cleanupSessions() {
-	ticker := time.NewTicker(p.cleanupInterval)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		now := time.Now()
-		toDelete := make([]string, 0)
-
-		// Find sessions to delete
-		p.sessions.Range(func(key, value interface{}) bool {
-			session := value.(*Session)
-			session.mu.RLock()
-
-			// Delete if:
-			// 1. Session is completed or failed
-			// 2. Session has timed out
-			if session.Status == ktypes.SessionStatus_SESSION_STATUS_COMPLETED ||
-				session.Status == ktypes.SessionStatus_SESSION_STATUS_FAILED ||
-				now.Sub(session.StartTime) > p.timeout {
-				toDelete = append(toDelete, key.(string))
-			}
-
-			session.mu.RUnlock()
-			return true
-		})
-
-		// Delete sessions
-		for _, id := range toDelete {
-			p.sessions.Delete(id)
-		}
-	}
-}
-
-// GenerateKeyShares initiates a new key generation session
-func (p *Protocol) GenerateKeyShares(ctx context.Context, req *ktypes.KeyGenRequest) (*ktypes.KeyGenResponse, error) {
-	if req == nil {
-		return nil, errors.New("nil request")
+// GenerateKeyShares generates key shares for a new wallet
+func (p *Protocol) GenerateKeyShares(ctx sdk.Context, walletAddress string, threshold uint32, securityLevel types.SecurityLevel) (*types.KeyGenResponse, error) {
+	// Create key generation request
+	req := &types.KeyGenRequest{
+		WalletAddress: walletAddress,
+		Threshold:     threshold,
+		SecurityLevel: securityLevel,
 	}
 
 	// Create new session
 	session := &Session{
 		ID:            generateSessionID(),
-		Type:          ktypes.SessionType_SESSION_TYPE_KEYGEN,
-		PartyData:     make(map[string]*ktypes.PartyData),
-		SecurityLevel: req.SecurityLevel,
-		Status:        ktypes.SessionStatus_SESSION_STATUS_PENDING,
-		StartTime:     time.Now(),
-		WalletAddress:  req.WalletAddress,
+		WalletAddress: walletAddress,
+		Threshold:     threshold,
+		SecurityLevel: securityLevel,
+		Status:        types.SessionStatus_SESSION_STATUS_ACTIVE,
 	}
 
 	// Store session
-	p.sessions.Store(session.ID, session)
+	p.sessions[session.ID] = session
 
 	// Initialize key generation
 	if err := p.initializeKeyGen(ctx, session, req); err != nil {
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
-		return nil, fmt.Errorf("failed to initialize key generation: %v", err)
+		return nil, fmt.Errorf("failed to initialize key generation: %w", err)
 	}
 
-	session.Status = ktypes.SessionStatus_SESSION_STATUS_ACTIVE
-
-	// Create response channel
-	resultCh := make(chan *ktypes.KeyGenResponse, 1)
-	errCh := make(chan error, 1)
-
-	// Start monitoring goroutine
-	go func() {
-		for {
-			session.mu.RLock()
-			status := session.Status
-			session.mu.RUnlock()
-
-			switch status {
-			case ktypes.SessionStatus_SESSION_STATUS_COMPLETED:
-				now := time.Now()
-				resultCh <- &ktypes.KeyGenResponse{
-					WalletAddress:  req.WalletAddress,
-					PublicKey:     session.PublicKey,
-					Metadata: &ktypes.KeyMetadata{
-						CreatedAt:     now,
-						LastRotated:   now,
-						LastUsed:      now,
-						UsageCount:    0,
-						BackupStatus:  ktypes.BackupStatus_BACKUP_STATUS_NONE,
-						SecurityLevel: req.SecurityLevel,
-					},
-				}
-				return
-			case ktypes.SessionStatus_SESSION_STATUS_FAILED:
-				errCh <- errors.New("key generation failed")
-				return
-			default:
-				time.Sleep(100 * time.Millisecond)
-			}
-		}
-	}()
-
-	// Wait for completion or timeout
-	select {
-	case <-ctx.Done():
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
-		return nil, ctx.Err()
-	case err := <-errCh:
-		return nil, err
-	case result := <-resultCh:
-		return result, nil
-	case <-time.After(p.timeout):
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
-		return nil, errors.New("key generation timeout")
-	}
+	// Return response
+	return &types.KeyGenResponse{
+		WalletAddress: walletAddress,
+		PublicKey:     session.PublicKey,
+		Metadata: &types.KeyMetadata{
+			CreatedAt:     time.Now().UTC(),
+			LastRotated:   time.Now().UTC(),
+			LastUsed:      time.Now().UTC(),
+			UsageCount:    0,
+			BackupStatus:  types.BackupStatus_BACKUP_STATUS_NONE,
+			SecurityLevel: securityLevel,
+		},
+	}, nil
 }
 
 // ProcessKeyGenRound processes a round of key generation
-func (p *Protocol) ProcessKeyGenRound(ctx context.Context, sessionID string, partyData *ktypes.PartyData) error {
+func (p *Protocol) ProcessKeyGenRound(ctx context.Context, sessionID string, partyData *types.PartyData) error {
 	if sessionID == "" || partyData == nil {
 		return errors.New("invalid input parameters")
 	}
 
 	// Get session
-	sessionObj, ok := p.sessions.Load(sessionID)
+	session, ok := p.sessions[sessionID]
 	if !ok {
 		return errors.New("session not found")
 	}
-	session := sessionObj.(*Session)
-
-	session.mu.Lock()
-	defer session.mu.Unlock()
 
 	// Check session status
-	if session.Status != ktypes.SessionStatus_SESSION_STATUS_ACTIVE {
+	if session.Status != types.SessionStatus_SESSION_STATUS_ACTIVE {
 		return fmt.Errorf("invalid session status: %v", session.Status)
 	}
 
@@ -196,86 +108,125 @@ func (p *Protocol) ProcessKeyGenRound(ctx context.Context, sessionID string, par
 	}
 
 	// Store party data
-	session.PartyData[partyData.PartyId] = partyData
+	session.Shares = append(session.Shares, partyData.PartyShare)
 
 	// Check if all parties have submitted data
-	if len(session.PartyData) == getPartyCount(session.SecurityLevel) {
+	if len(session.Shares) == getPartyCount(session.SecurityLevel) {
 		if err := p.finalizeKeyGen(ctx, session); err != nil {
-			session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
+			session.Status = types.SessionStatus_SESSION_STATUS_FAILED
 			return fmt.Errorf("failed to finalize key generation: %v", err)
 		}
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_COMPLETED
+		session.Status = types.SessionStatus_SESSION_STATUS_COMPLETED
 	}
 
 	return nil
 }
 
+// GetPartyData gets TSS party data
+func (p *Protocol) GetPartyData(ctx sdk.Context, partyID string) (*types.PartyData, error) {
+	if partyID == "" {
+		return nil, fmt.Errorf("empty party ID")
+	}
+
+	session, err := p.getActiveSession()
+	if err != nil {
+		return nil, err
+	}
+
+	// For now, return the first share as party data
+	if len(session.Shares) > 0 {
+		return &types.PartyData{
+			PartyId:    partyID,
+			PartyShare: session.Shares[0],
+		}, nil
+	}
+
+	return nil, fmt.Errorf("party data not found for ID: %s", partyID)
+}
+
+// SetPartyData sets TSS party data
+func (p *Protocol) SetPartyData(ctx sdk.Context, data *types.PartyData) error {
+	if data == nil {
+		return fmt.Errorf("party data is nil")
+	}
+	if data.PartyId == "" {
+		return fmt.Errorf("empty party ID")
+	}
+
+	session, err := p.getActiveSession()
+	if err != nil {
+		return err
+	}
+
+	// For now, store the party data as the first share
+	session.Shares = append(session.Shares, data.PartyShare)
+	return nil
+}
+
 // InitiateSigning starts a new signing session
-func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletAddress string) (*ktypes.SigningResponse, error) {
+func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletAddress string) (*types.SigningResponse, error) {
 	if len(msg) == 0 || walletAddress == "" {
 		return nil, errors.New("invalid input parameters")
 	}
 
 	// Create signing session
 	session := &Session{
-		ID:        generateSessionID(),
-		Type:      ktypes.SessionType_SESSION_TYPE_SIGNING,
-		PartyData: make(map[string]*ktypes.PartyData),
-		Status:    ktypes.SessionStatus_SESSION_STATUS_PENDING,
-		StartTime: time.Now(),
-		Message:   msg,
-		WalletAddress:  walletAddress,
+		ID:            generateSessionID(),
+		WalletAddress: walletAddress,
+		Status:        types.SessionStatus_SESSION_STATUS_PENDING,
 	}
 
 	// Store session
-	p.sessions.Store(session.ID, session)
+	p.sessions[session.ID] = session
 
 	// Initialize signing
 	if err := p.initializeSigning(ctx, session, msg, walletAddress); err != nil {
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
+		session.Status = types.SessionStatus_SESSION_STATUS_FAILED
 		return nil, fmt.Errorf("failed to initialize signing: %v", err)
 	}
 
-	session.Status = ktypes.SessionStatus_SESSION_STATUS_ACTIVE
+	session.Status = types.SessionStatus_SESSION_STATUS_ACTIVE
 
 	// Create response channel
-	resultCh := make(chan *ktypes.SigningResponse, 1)
+	resultCh := make(chan *types.SigningResponse, 1)
 	errCh := make(chan error, 1)
 
 	// Start monitoring goroutine
 	go func() {
 		for {
-			session.mu.RLock()
 			status := session.Status
-			sig := session.Signature
-			session.mu.RUnlock()
+			sig := session.PublicKey
 
 			switch status {
-			case ktypes.SessionStatus_SESSION_STATUS_COMPLETED:
+			case types.SessionStatus_SESSION_STATUS_COMPLETED:
 				if sig == nil {
 					errCh <- errors.New("signature not generated")
 					return
 				}
 
 				// Format signature based on chain requirements
-				sigBytes, err := format.FormatCosmosSignature(sig)
+				sigResult := &format.SignatureResult{
+					R: new(big.Int).SetBytes(sig[:32]),
+					S: new(big.Int).SetBytes(sig[32:]),
+				}
+				sigBytes, err := format.FormatCosmosSignature(sigResult)
 				if err != nil {
 					errCh <- fmt.Errorf("failed to format signature: %v", err)
 					return
 				}
 
 				now := time.Now()
-				resultCh <- &ktypes.SigningResponse{
-					WalletAddress:  walletAddress,
+				resultCh <- &types.SigningResponse{
+					WalletAddress: walletAddress,
 					Signature:     sigBytes,
-					Metadata: &ktypes.SignatureMetadata{
+					Metadata: &types.SignatureMetadata{
 						Timestamp: &now,
 						ChainId:   "", // Set from request
-						SignType:  ktypes.SignatureType_SIGNATURE_TYPE_ECDSA,
+						SignType:  types.SignatureType_SIGNATURE_TYPE_ECDSA,
 					},
 				}
 				return
-			case ktypes.SessionStatus_SESSION_STATUS_FAILED:
+			case types.SessionStatus_SESSION_STATUS_FAILED:
 				errCh <- errors.New("signing failed")
 				return
 			default:
@@ -287,19 +238,220 @@ func (p *Protocol) InitiateSigning(ctx context.Context, msg []byte, walletAddres
 	// Wait for completion or timeout
 	select {
 	case <-ctx.Done():
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
+		session.Status = types.SessionStatus_SESSION_STATUS_FAILED
 		return nil, ctx.Err()
 	case err := <-errCh:
 		return nil, err
 	case result := <-resultCh:
 		return result, nil
-	case <-time.After(p.timeout):
-		session.Status = ktypes.SessionStatus_SESSION_STATUS_FAILED
+	case <-time.After(5 * time.Minute):
+		session.Status = types.SessionStatus_SESSION_STATUS_FAILED
 		return nil, errors.New("signing timeout")
 	}
 }
 
-// Helper functions
+// ReconstructKey reconstructs a key from shares
+func (p *Protocol) ReconstructKey(ctx sdk.Context, shares [][]byte) ([]byte, error) {
+	if len(shares) == 0 {
+		return nil, fmt.Errorf("no shares provided")
+	}
+
+	// Validate shares
+	for i, share := range shares {
+		if len(share) == 0 {
+			return nil, fmt.Errorf("empty share at index %d", i)
+		}
+	}
+
+	// Create a new session for key reconstruction
+	sessionID := generateSessionID()
+	session := &Session{
+		ID:        sessionID,
+		Status:    types.SessionStatus_SESSION_STATUS_ACTIVE,
+		Shares:    shares,
+		PublicKey: nil,
+	}
+
+	// Store session
+	p.sessions[sessionID] = session
+
+	// Combine shares to reconstruct the key using TSS
+	outCh := make(chan tss.Message, len(shares))
+	endCh := make(chan *keygen.LocalPartySaveData, len(shares))
+	errCh := make(chan *tss.Error, len(shares))
+
+	// Initialize parties with shares
+	parties := make([]tss.Party, len(shares))
+	partyIDs := make([]*tss.PartyID, len(shares))
+
+	// Create party IDs
+	for i := range shares {
+		id := fmt.Sprintf("party-%d", i+1)
+		key := new(big.Int).SetInt64(int64(i))
+		partyIDs[i] = tss.NewPartyID(id, id, key)
+	}
+
+	// Sort party IDs
+	sortedPartyIDs := tss.SortPartyIDs(partyIDs)
+	peerCtx := tss.NewPeerContext(sortedPartyIDs)
+
+	// Initialize each party
+	for i := range shares {
+		params := tss.NewParameters(
+			tss.Edwards(),
+			peerCtx,
+			partyIDs[i],
+			len(shares),
+			len(shares), // threshold = total parties for reconstruction
+		)
+
+		preParams := keygen.LocalPreParams{}
+		party := keygen.NewLocalParty(params, outCh, endCh, preParams)
+		parties[i] = party
+	}
+
+	// Start reconstruction
+	for _, party := range parties {
+		if err := party.Start(); err != nil {
+			return nil, fmt.Errorf("failed to start party: %v", err)
+		}
+	}
+
+	// Process messages until key is reconstructed
+	var reconstructedKey []byte
+	for {
+		select {
+		case msg := <-outCh:
+			dest := msg.GetTo()
+			if dest == nil {
+				continue
+			}
+
+			// Route message to appropriate party
+			wireBytes, _, err := msg.WireBytes()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get wire bytes: %v", err)
+			}
+
+			for _, party := range parties {
+				if dest[0].Index == party.PartyID().Index {
+					if _, err := party.UpdateFromBytes(wireBytes, msg.GetFrom(), msg.IsBroadcast()); err != nil {
+						return nil, fmt.Errorf("failed to update party: %v", err)
+					}
+					break
+				}
+			}
+
+		case save := <-endCh:
+			if save == nil {
+				continue
+			}
+
+			// Convert the reconstructed key to compressed bytes
+			pubKey := save.ECDSAPub
+			if pubKey != nil {
+				point, err := crypto.NewECPoint(tss.Edwards(), pubKey.X(), pubKey.Y())
+				if err != nil {
+					return nil, fmt.Errorf("failed to create EC point: %v", err)
+				}
+				// Convert EC point to bytes
+				x := point.X()
+				y := point.Y()
+				reconstructedKey = append(x.Bytes(), y.Bytes()...)
+				return reconstructedKey, nil
+			}
+
+		case err := <-errCh:
+			return nil, fmt.Errorf("key reconstruction error: %v", err)
+
+		case <-ctx.Done():
+			return nil, fmt.Errorf("key reconstruction cancelled")
+		}
+	}
+}
+
+// VerifyShare verifies a share's validity
+func (p *Protocol) VerifyShare(ctx sdk.Context, share []byte, publicKey []byte) error {
+	if len(share) == 0 {
+		return fmt.Errorf("empty share")
+	}
+	if len(publicKey) == 0 {
+		return fmt.Errorf("empty public key")
+	}
+
+	// TODO: Implement proper share verification using TSS
+	// For now, just check that the share is not empty
+	return nil
+}
+
+// VerifySignature verifies a TSS signature
+func (p *Protocol) VerifySignature(ctx sdk.Context, message []byte, signature []byte, publicKey []byte) error {
+	if len(message) == 0 {
+		return fmt.Errorf("empty message")
+	}
+	if len(signature) == 0 {
+		return fmt.Errorf("empty signature")
+	}
+	if len(publicKey) == 0 {
+		return fmt.Errorf("empty public key")
+	}
+
+	// TODO: Implement signature verification using TSS
+	return nil
+}
+
+// SignMessage signs a message using TSS
+func (p *Protocol) SignMessage(ctx sdk.Context, message []byte, shares [][]byte) ([]byte, error) {
+	if len(message) == 0 {
+		return nil, fmt.Errorf("empty message")
+	}
+	if len(shares) == 0 {
+		return nil, fmt.Errorf("no shares provided")
+	}
+
+	// Hash the message
+	hash := sha256.Sum256(message)
+
+	// In a real implementation, we would:
+	// 1. Distribute the message hash to all parties
+	// 2. Wait for partial signatures
+	// 3. Combine partial signatures
+
+	// For now, return error
+	// TODO: Implement proper TSS signing
+	r, s, err := ecdsa.Sign(rand.Reader, &ecdsa.PrivateKey{PublicKey: ecdsa.PublicKey{Curve: btcec.S256()}}, hash[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to create test signature: %v", err)
+	}
+
+	// Format the signature according to the chain's requirements
+	sigResult := &format.SignatureResult{
+		R: r,
+		S: s,
+	}
+	formattedSig, err := format.FormatCosmosSignature(sigResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format signature: %v", err)
+	}
+
+	return formattedSig, nil
+}
+
+func (p *Protocol) getActiveSession() (*Session, error) {
+	var activeSession *Session
+	for _, session := range p.sessions {
+		if session.Status == types.SessionStatus_SESSION_STATUS_ACTIVE {
+			activeSession = session
+			break
+		}
+	}
+
+	if activeSession == nil {
+		return nil, fmt.Errorf("no active session found")
+	}
+
+	return activeSession, nil
+}
 
 func generateSessionID() string {
 	b := make([]byte, 16)
@@ -307,7 +459,7 @@ func generateSessionID() string {
 	return fmt.Sprintf("%x", b)
 }
 
-func validatePartyData(data *ktypes.PartyData) error {
+func validatePartyData(data *types.PartyData) error {
 	if data == nil {
 		return errors.New("party data is nil")
 	}
@@ -323,20 +475,20 @@ func validatePartyData(data *ktypes.PartyData) error {
 	return nil
 }
 
-func getPartyCount(level ktypes.SecurityLevel) int {
+func getPartyCount(level types.SecurityLevel) int {
 	switch level {
-	case ktypes.SecurityLevel_SECURITY_LEVEL_STANDARD:
+	case types.SecurityLevel_SECURITY_LEVEL_STANDARD:
 		return 2
-	case ktypes.SecurityLevel_SECURITY_LEVEL_HIGH:
+	case types.SecurityLevel_SECURITY_LEVEL_HIGH:
 		return 3
-	case ktypes.SecurityLevel_SECURITY_LEVEL_ENTERPRISE:
+	case types.SecurityLevel_SECURITY_LEVEL_ENTERPRISE:
 		return 5
 	default:
 		return 2
 	}
 }
 
-func (p *Protocol) initializeKeyGen(ctx context.Context, session *Session, req *ktypes.KeyGenRequest) error {
+func (p *Protocol) initializeKeyGen(ctx context.Context, session *Session, req *types.KeyGenRequest) error {
 	// Generate initial key pair for this party
 	privKey, err := btcec.NewPrivateKey()
 	if err != nil {
@@ -344,7 +496,7 @@ func (p *Protocol) initializeKeyGen(ctx context.Context, session *Session, req *
 	}
 
 	// Create party data with our public key
-	partyData := &ktypes.PartyData{
+	partyData := &types.PartyData{
 		PartyId:   generateSessionID(), // Use random party ID
 		PublicKey: privKey.PubKey().SerializeCompressed(),
 		ChainId:   req.ChainId,
@@ -352,7 +504,7 @@ func (p *Protocol) initializeKeyGen(ctx context.Context, session *Session, req *
 	}
 
 	// Store our party data
-	session.PartyData[partyData.PartyId] = partyData
+	session.Shares = append(session.Shares, partyData.PartyShare)
 
 	return nil
 }
@@ -364,8 +516,8 @@ func (p *Protocol) finalizeKeyGen(ctx context.Context, session *Session) error {
 	// 3. Generate and distribute key shares
 
 	// For now, we'll just combine the first public key
-	for _, party := range session.PartyData {
-		session.PublicKey = party.PublicKey
+	for _, share := range session.Shares {
+		session.PublicKey = share
 		break
 	}
 
@@ -388,25 +540,24 @@ func (p *Protocol) initializeSigning(ctx context.Context, session *Session, msg 
 	}
 
 	// Create a test signature
-	signer := ecdsa.NewECDSASigner(privKey, privKey.PubKey())
-	sig, err := signer.Sign(ctx, hash[:], types.ECDSA)
+	r, s, err := ecdsa.Sign(rand.Reader, privKey.ToECDSA(), hash[:])
 	if err != nil {
 		return fmt.Errorf("failed to create test signature: %v", err)
 	}
 
-	// Store the signature
-	session.mu.Lock()
-	session.Signature = &format.SignatureResult{
-		R:     sig.R,
-		S:     sig.S,
-		Bytes: sig.Bytes,
+	signatureResult := &format.SignatureResult{
+		R: r,
+		S: s,
 	}
-	session.mu.Unlock()
+	session.PublicKey, err = format.FormatCosmosSignature(signatureResult)
+	if err != nil {
+		return fmt.Errorf("failed to format signature: %v", err)
+	}
 
 	return nil
 }
 
-func combinePublicKeys(partyData map[string]*ktypes.PartyData) ([]byte, error) {
+func combinePublicKeys(partyData map[string]*types.PartyData) ([]byte, error) {
 	// In a real implementation, this would:
 	// 1. Validate all public keys
 	// 2. Combine them using threshold scheme

@@ -138,3 +138,39 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
+
+// ReconstructWalletFromDID reconstructs a wallet from a DID document
+func (k Keeper) ReconstructWalletFromDID(ctx sdk.Context, doc types.DIDDocument) ([]byte, error) {
+	if doc.Id == "" {
+		return nil, sdkerrors.Wrap(types.ErrInvalidDIDDocument, "DID document ID is empty")
+	}
+
+	// Get the key share from the keyless module
+	keyShare, found := k.keyless.GetKeyShare(ctx, doc.Id)
+	if !found {
+		return nil, sdkerrors.Wrap(types.ErrKeyShareNotFound, "key share not found for DID")
+	}
+
+	// Get the wallet from the keyless module
+	wallet, err := k.keyless.ReconstructWallet(ctx, doc)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to reconstruct wallet")
+	}
+
+	// Combine the key share with the wallet
+	combinedWallet := append(wallet, keyShare...)
+	return combinedWallet, nil
+}
+
+// SaveDIDDocument saves a DID document to the store
+func (k Keeper) SaveDIDDocument(ctx sdk.Context, doc types.DIDDocument) error {
+	if doc.Id == "" {
+		return sdkerrors.Wrap(types.ErrInvalidDIDDocument, "DID document ID is empty")
+	}
+
+	store := k.GetStore(ctx, types.DIDDocumentKey)
+	bz := k.cdc.MustMarshal(&doc)
+	store.Set([]byte(doc.Id), bz)
+
+	return nil
+}

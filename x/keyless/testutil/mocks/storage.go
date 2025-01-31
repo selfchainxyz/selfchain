@@ -139,7 +139,7 @@ type MockStorageWrapper struct {
 func (m *MockStorageWrapper) GetWalletMetadata(ctx context.Context, walletAddress string) (*types.WalletMetadata, error) {
 	metadata, ok := m.metadata[walletAddress]
 	if !ok {
-		return nil, types.ErrWalletMetadataNotFound
+		return nil, fmt.Errorf("wallet metadata not found for address: %s", walletAddress)
 	}
 	return metadata, nil
 }

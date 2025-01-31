@@ -50,17 +50,17 @@ func TestPermissionQuery(t *testing.T) {
 	err = k.GrantPermission(k.Ctx, permission)
 	require.NoError(t, err)
 
-	// Test querying permission
-	queryResp, err := k.GetPermission(k.Ctx, walletAddr, grantee)
-	require.NoError(t, err)
-	require.NotNil(t, queryResp)
-	require.Equal(t, grantee, queryResp.Grantee)
-	require.Equal(t, []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()}, queryResp.Permissions)
+	// Test get permission
+	perm, found := k.GetPermission(k.Ctx, walletAddr, grantee)
+	require.True(t, found)
+	require.NotNil(t, perm)
+	require.Equal(t, grantee, perm.Grantee)
+	require.Equal(t, []string{types.WalletPermission_WALLET_PERMISSION_SIGN.String()}, perm.Permissions)
 
-	// Test querying non-existent permission
-	queryResp, err = k.GetPermission(k.Ctx, walletAddr, "cosmos1w3jhxapnta047h6lta047h6lta047h6l34t280")
-	require.Error(t, err)
-	require.Nil(t, queryResp)
+	// Test get permission for non-existent grantee
+	perm, found = k.GetPermission(k.Ctx, walletAddr, "cosmos1w3jhxapnta047h6lta047h6lta047h6l34t280")
+	require.False(t, found)
+	require.Nil(t, perm)
 
 	// Test querying all permissions for wallet
 	perms, err := k.GetPermissionsForWallet(k.Ctx, walletAddr)

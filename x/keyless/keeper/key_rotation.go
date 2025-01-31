@@ -72,14 +72,17 @@ func (k Keeper) SaveKeyRotation(ctx sdk.Context, rotation *types.KeyRotation) er
 // InitiateKeyRotation starts the key rotation process for a wallet
 func (k Keeper) InitiateKeyRotation(ctx sdk.Context, msg *types.MsgInitiateKeyRotation) error {
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
 		return fmt.Errorf("wallet not found: %s", msg.WalletAddress)
 	}
 
 	// Check if there's already an ongoing key rotation
 	status, err := k.GetKeyRotationStatus(ctx, msg.WalletAddress)
-	if err == nil && status.Status == types.KeyRotationStatus_KEY_ROTATION_STATUS_IN_PROGRESS {
+	if err != nil {
+		return err
+	}
+	if status.Status == types.KeyRotationStatus_KEY_ROTATION_STATUS_IN_PROGRESS {
 		return fmt.Errorf("key rotation already in progress for wallet: %s", msg.WalletAddress)
 	}
 
@@ -127,8 +130,8 @@ func (k Keeper) InitiateKeyRotation(ctx sdk.Context, msg *types.MsgInitiateKeyRo
 // CompleteKeyRotation completes the key rotation process
 func (k Keeper) CompleteKeyRotation(ctx sdk.Context, msg *types.MsgCompleteKeyRotation) error {
 	// Get wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
-	if err != nil {
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
 		return fmt.Errorf("wallet not found: %s", msg.WalletAddress)
 	}
 
@@ -147,9 +150,7 @@ func (k Keeper) CompleteKeyRotation(ctx sdk.Context, msg *types.MsgCompleteKeyRo
 	// Update wallet with new public key
 	wallet.PublicKey = rotation.NewPubKey
 	wallet.KeyVersion = uint32(rotation.Version)
-	if err := k.SaveWallet(ctx, wallet); err != nil {
-		return err
-	}
+	k.SetWallet(ctx, wallet)
 
 	// Update key rotation status
 	status := &types.KeyRotationStatusInfo{

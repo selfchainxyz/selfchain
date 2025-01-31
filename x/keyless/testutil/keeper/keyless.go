@@ -12,13 +12,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
 	"selfchain/x/keyless/keeper"
-	"selfchain/x/keyless/types"
 	"selfchain/x/keyless/testutil/mocks"
+	"selfchain/x/keyless/types"
 	identitytypes "selfchain/x/identity/types"
 )
 
@@ -35,52 +34,18 @@ func KeylessKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
-	paramsSubspace := typesparams.NewSubspace(cdc,
-		types.Amino,
-		storeKey,
-		memStoreKey,
-		"KeylessParams",
-	)
-
 	// Create mock keepers
-	mockIdentityKeeper := mocks.NewIdentityKeeper()
 	mockTSSProtocol := mocks.NewTSSProtocol()
+	mockIdentityKeeper := mocks.NewIdentityKeeper()
 
 	// Set up mock expectations
 	now := time.Now().UTC()
-	mockIdentityKeeper.On("GetDIDDocument", mock.Anything, mock.Anything).Return(&identitytypes.DIDDocument{
-		Id:         "did:self:test",
-		Controller: []string{"did:self:controller"},
-		VerificationMethod: []*identitytypes.VerificationMethod{
-			{
-				Id:              "test_key",
-				Type:            "Ed25519VerificationKey2020",
-				PublicKeyBase58: "test_pubkey",
-			},
-		},
-		Created:    &now,
-		Updated:    &now,
-		Status:     identitytypes.Status_STATUS_ACTIVE,
-	}, true)
-
-	mockIdentityKeeper.On("VerifyDIDOwnership", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("VerifyOAuth2Token", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("VerifyMFA", mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("VerifyRecoveryProof", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("ValidateIdentityStatus", mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("CheckRateLimit", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("LogAuditEvent", mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("GenerateRecoveryToken", mock.Anything, mock.Anything).Return("test_token", nil)
-	mockIdentityKeeper.On("ValidateRecoveryToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockIdentityKeeper.On("GetKeyShare", mock.Anything, mock.Anything).Return([]byte("test_key_share"), true)
-	mockIdentityKeeper.On("ReconstructWallet", mock.Anything, mock.Anything).Return(nil, nil)
-	mockIdentityKeeper.On("VerifyRecoveryToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	mockTSSProtocol.On("GenerateKey", mock.Anything, mock.Anything, mock.Anything).Return([]byte("test_pubkey"), nil)
-	mockTSSProtocol.On("Sign", mock.Anything, mock.Anything, mock.Anything).Return([]byte("test_signature"), nil)
-	mockTSSProtocol.On("VerifySignature", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockTSSProtocol.On("ValidateRecoveryProof", mock.Anything, mock.Anything).Return(nil)
-	mockTSSProtocol.On("GenerateKeyShares", mock.Anything, mock.Anything).Return(&types.KeyGenResponse{
+	mockTSSProtocol.On("GenerateKeyShares", 
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("string"), // walletAddress
+		mock.AnythingOfType("uint32"), // threshold
+		mock.AnythingOfType("types.SecurityLevel"), // securityLevel
+	).Return(&types.KeyGenResponse{
 		WalletAddress: "test-wallet",
 		PublicKey:     []byte("test-pubkey"),
 		Metadata: &types.KeyMetadata{
@@ -92,16 +57,59 @@ func KeylessKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 			SecurityLevel: types.SecurityLevel_SECURITY_LEVEL_HIGH,
 		},
 	}, nil)
-	mockTSSProtocol.On("InitiateSigning", mock.Anything, mock.Anything, mock.Anything).Return(&types.SigningResponse{
-		WalletAddress: "test_wallet",
-		Signature:     []byte("test_signature"),
-		Metadata: &types.SignatureMetadata{
-			Timestamp: &now,
-			ChainId:   "test-chain",
-			SignType:  types.SignatureType_SIGNATURE_TYPE_ECDSA,
-		},
+
+	mockTSSProtocol.On("ReconstructKey", 
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("[][]byte"), // shares
+	).Return([]byte("test-pubkey"), nil)
+
+	mockTSSProtocol.On("SignMessage", 
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("[]byte"), // message
+		mock.AnythingOfType("[][]byte"), // shares
+	).Return([]byte("test-signature"), nil)
+
+	mockTSSProtocol.On("VerifyShare", 
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("[]byte"), // share
+		mock.AnythingOfType("[]byte"), // publicKey
+	).Return(nil)
+
+	mockTSSProtocol.On("VerifySignature", 
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("[]byte"), // message
+		mock.AnythingOfType("[]byte"), // signature
+		mock.AnythingOfType("[]byte"), // publicKey
+	).Return(nil)
+
+	mockTSSProtocol.On("GetPartyData",
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("string"), // partyID
+	).Return(&types.PartyData{
+		PartyId:    "test-party",
+		PartyShare: []byte("test-share"),
+		Status:     "active",
 	}, nil)
-	mockTSSProtocol.On("ProcessKeyGenRound", mock.Anything, mock.Anything, mock.AnythingOfType("*types.PartyData")).Return(nil)
+
+	mockTSSProtocol.On("SetPartyData",
+		mock.Anything, // sdk.Context
+		mock.AnythingOfType("*types.PartyData"), // data
+	).Return(nil)
+
+	mockIdentityKeeper.On("GetDIDDocument", mock.Anything, mock.Anything).Return(identitytypes.DIDDocument{}, true)
+	mockIdentityKeeper.On("SaveDIDDocument", mock.Anything, mock.Anything).Return(nil)
+	mockIdentityKeeper.On("ReconstructWalletFromDID", mock.Anything, mock.Anything).Return([]byte("test-wallet"), nil)
+	mockIdentityKeeper.On("VerifyOAuth2Token", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockIdentityKeeper.On("VerifyMFA", mock.Anything, mock.Anything).Return(nil)
+	mockIdentityKeeper.On("CheckRateLimit", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockIdentityKeeper.On("LogAuditEvent", mock.Anything, mock.Anything).Return(nil)
+
+	paramsSubspace := paramtypes.NewSubspace(cdc,
+		types.Amino,
+		storeKey,
+		memStoreKey,
+		"KeylessParams",
+	)
 
 	k := keeper.NewKeeper(
 		cdc,

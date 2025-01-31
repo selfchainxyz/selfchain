@@ -64,8 +64,8 @@ func TestWalletManagement(t *testing.T) {
 				require.NoError(t, err)
 				
 				// Verify wallet was created correctly
-				wallet, err := k.GetWallet(k.Ctx, tc.wallet.WalletAddress)
-				require.NoError(t, err)
+				wallet, found := k.GetWallet(k.Ctx, tc.wallet.WalletAddress)
+				require.True(t, found, "wallet should be found")
 				require.Equal(t, tc.wallet.Creator, wallet.Creator)
 				require.Equal(t, tc.wallet.ChainId, wallet.ChainId)
 				require.Equal(t, tc.wallet.Status, wallet.Status)

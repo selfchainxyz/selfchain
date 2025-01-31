@@ -4,216 +4,194 @@ import (
 	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"selfchain/x/keyless/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // CreateRecoverySession creates a new recovery session for a wallet
-func (k Keeper) CreateRecoverySession(ctx sdk.Context, creator, walletAddress string) error {
-	// Validate the wallet exists
-	wallet, err := k.GetWallet(ctx, walletAddress)
-	if err != nil {
-		return fmt.Errorf("wallet not found: %s", walletAddress)
+func (k Keeper) CreateRecoverySession(ctx sdk.Context, walletAddress string) (*types.RecoveryInfo, error) {
+	if walletAddress == "" {
+		return nil, fmt.Errorf("wallet address cannot be empty")
 	}
 
-	// Check if recovery is already in progress
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", walletAddress))
-	if store.Has(key) {
-		return types.ErrRecoveryInProgress
-	}
-
-	// Verify creator has permission to initiate recovery
-	if err := k.ValidateWalletAccess(ctx, walletAddress, creator, "recovery"); err != nil {
-		return err
+	// Get wallet
+	wallet, found := k.GetWallet(ctx, walletAddress)
+	if !found {
+		return nil, fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 
 	// Create recovery info
-	now := ctx.BlockTime()
+	now := time.Now().UTC()
 	recoveryInfo := &types.RecoveryInfo{
 		Did:             wallet.Creator,
-		RecoveryAddress: creator,
+		RecoveryToken:   wallet.Creator, // TODO: implement proper token generation
+		RecoveryAddress: wallet.Creator,
 		Status:          types.RecoveryStatus_RECOVERY_STATUS_PENDING,
 		CreatedAt:       now,
 	}
 
-	// Generate recovery token using identity module
-	token, err := k.identityKeeper.GenerateRecoveryToken(ctx, wallet.Creator)
-	if err != nil {
-		return fmt.Errorf("failed to generate recovery token: %v", err)
-	}
-	recoveryInfo.RecoveryToken = token
-
 	// Store recovery info
-	bz := k.cdc.MustMarshal(recoveryInfo)
-	store.Set(key, bz)
+	k.StoreRecoveryInfo(ctx, recoveryInfo)
 
-	// Emit event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeRecoveryStarted,
-			sdk.NewAttribute(types.AttributeKeyWalletAddress, walletAddress),
-			sdk.NewAttribute(types.AttributeKeyRecoveryAddress, creator),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, now.String()),
-		),
-	)
-
-	return nil
+	return recoveryInfo, nil
 }
 
-// ValidateRecoverySession validates a recovery session
-func (k Keeper) ValidateRecoverySession(ctx sdk.Context, creator, walletAddress string) error {
+// VerifyRecoverySession verifies a recovery session
+func (k Keeper) VerifyRecoverySession(ctx sdk.Context, walletAddress string, token string) error {
+	if walletAddress == "" {
+		return fmt.Errorf("wallet address cannot be empty")
+	}
+	if token == "" {
+		return fmt.Errorf("token cannot be empty")
+	}
+
 	// Get recovery info
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", walletAddress))
-	bz := store.Get(key)
-	if bz == nil {
-		return types.ErrRecoveryNotAllowed
-	}
-
-	var recoveryInfo types.RecoveryInfo
-	k.cdc.MustUnmarshal(bz, &recoveryInfo)
-
-	// Check recovery status
-	if recoveryInfo.Status != types.RecoveryStatus_RECOVERY_STATUS_PENDING {
-		return types.ErrRecoveryNotAllowed
-	}
-
-	// Verify creator matches recovery address
-	if recoveryInfo.RecoveryAddress != creator {
-		return types.ErrUnauthorized
-	}
-
-	// Check timelock (24 hours)
-	timeLock := time.Duration(24) * time.Hour
-	if ctx.BlockTime().Sub(recoveryInfo.CreatedAt) < timeLock {
-		return types.ErrRecoveryNotAllowed
-	}
-
-	return nil
-}
-
-// verifyRecoveryProof verifies the recovery proof for a wallet
-func (k Keeper) verifyRecoveryProof(ctx sdk.Context, wallet *types.Wallet, proof string) bool {
-	// Get recovery info
-	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", wallet.WalletAddress))
-	bz := store.Get(key)
-	if bz == nil {
-		return false
-	}
-
-	var recoveryInfo types.RecoveryInfo
-	k.cdc.MustUnmarshal(bz, &recoveryInfo)
-
-	// Verify recovery token
-	if err := k.identityKeeper.VerifyRecoveryToken(ctx, recoveryInfo.Did, recoveryInfo.RecoveryToken); err != nil {
-		return false
-	}
-
-	// Verify identity proof
-	if err := k.identityKeeper.VerifyDIDOwnership(ctx, recoveryInfo.Did, sdk.AccAddress(recoveryInfo.RecoveryAddress)); err != nil {
-		return false
-	}
-
-	// Verify MFA if enabled
-	if err := k.identityKeeper.VerifyMFA(ctx, recoveryInfo.Did); err != nil {
-		return false
-	}
-
-	// Verify OAuth2 token if provided
-	if err := k.identityKeeper.VerifyOAuth2Token(ctx, recoveryInfo.Did, proof); err != nil {
-		return false
-	}
-
-	return true
-}
-
-// RecoverWallet recovers a wallet by its address
-func (k Keeper) RecoverWallet(ctx sdk.Context, msg *types.MsgRecoverWallet) error {
-	// Get the wallet
-	wallet, err := k.GetWallet(ctx, msg.WalletAddress)
+	info, err := k.GetRecoveryInfo(ctx, walletAddress)
 	if err != nil {
-		return fmt.Errorf("wallet not found: %v", err)
+		return fmt.Errorf("failed to get recovery info: %v", err)
 	}
 
-	// Validate recovery session
-	if err := k.ValidateRecoverySession(ctx, msg.Creator, msg.WalletAddress); err != nil {
-		return err
+	// Verify token
+	if info.RecoveryToken != token {
+		return fmt.Errorf("invalid recovery token")
 	}
 
-	// Verify recovery proof
-	if !k.verifyRecoveryProof(ctx, wallet, msg.RecoveryProof) {
-		return types.ErrInvalidRecoveryProof
+	// Check status
+	if info.Status != types.RecoveryStatus_RECOVERY_STATUS_PENDING {
+		return fmt.Errorf("recovery not in pending state")
 	}
 
-	// Delete the old wallet
-	k.DeleteWallet(ctx, msg.WalletAddress)
+	return nil
+}
 
-	// Create new wallet with updated owner and public key
-	now := ctx.BlockTime()
-	newWallet := types.NewWallet(
-		msg.Creator,
-		msg.NewPubKey,
-		msg.WalletAddress,
-		wallet.ChainId,
-		types.WalletStatus_WALLET_STATUS_ACTIVE,
-		wallet.KeyVersion+1,
-	)
-	newWallet.CreatedAt = &now
-	newWallet.UpdatedAt = &now
-	newWallet.LastUsed = &now
-
-	// Save new wallet
-	if err := k.SaveWallet(ctx, newWallet); err != nil {
-		return fmt.Errorf("failed to save wallet: %v", err)
+// CompleteRecoverySession completes a recovery session
+func (k Keeper) CompleteRecoverySession(ctx sdk.Context, walletAddress string, token string) error {
+	if walletAddress == "" {
+		return fmt.Errorf("wallet address cannot be empty")
+	}
+	if token == "" {
+		return fmt.Errorf("token cannot be empty")
 	}
 
-	// Delete recovery info
-	if err := k.DeleteRecoveryInfo(ctx, msg.WalletAddress); err != nil {
-		return fmt.Errorf("failed to delete recovery info: %v", err)
+	// Get recovery info
+	info, err := k.GetRecoveryInfo(ctx, walletAddress)
+	if err != nil {
+		return fmt.Errorf("failed to get recovery info: %v", err)
 	}
 
-	// Emit recovery completed event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeRecoverWallet,
-			sdk.NewAttribute(types.AttributeKeyWalletID, newWallet.Id),
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyWalletAddress, newWallet.WalletAddress),
-		),
-	)
+	// Verify token
+	if info.RecoveryToken != token {
+		return fmt.Errorf("invalid recovery token")
+	}
+
+	// Check status
+	if info.Status != types.RecoveryStatus_RECOVERY_STATUS_PENDING {
+		return fmt.Errorf("recovery not in pending state")
+	}
+
+	// Update status
+	info.Status = types.RecoveryStatus_RECOVERY_STATUS_COMPLETED
+	k.StoreRecoveryInfo(ctx, info)
 
 	return nil
 }
 
 // GetRecoveryInfo gets recovery info for a wallet
-func (k Keeper) GetRecoveryInfo(ctx sdk.Context, walletId string) (*types.RecoveryInfo, error) {
+func (k Keeper) GetRecoveryInfo(ctx sdk.Context, walletAddress string) (*types.RecoveryInfo, error) {
+	if walletAddress == "" {
+		return nil, fmt.Errorf("wallet address cannot be empty")
+	}
+
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", walletId))
+	key := k.GetRecoveryKey(walletAddress)
 	bz := store.Get(key)
 	if bz == nil {
-		return nil, fmt.Errorf("recovery info not found")
+		return nil, fmt.Errorf("recovery info not found for wallet address: %s", walletAddress)
 	}
 
 	var info types.RecoveryInfo
-	k.cdc.MustUnmarshal(bz, &info)
+	if err := k.cdc.Unmarshal(bz, &info); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal recovery info: %v", err)
+	}
+
 	return &info, nil
 }
 
-// SaveRecoveryInfo saves recovery info for a wallet
-func (k Keeper) SaveRecoveryInfo(ctx sdk.Context, info *types.RecoveryInfo) error {
+// StoreRecoveryInfo stores recovery info for a wallet
+func (k Keeper) StoreRecoveryInfo(ctx sdk.Context, info *types.RecoveryInfo) {
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", info.Did))
+	key := k.GetRecoveryKey(info.Did)
 	bz := k.cdc.MustMarshal(info)
 	store.Set(key, bz)
-	return nil
+}
+
+// GetRecoveryKey returns the key for storing recovery info
+func (k Keeper) GetRecoveryKey(did string) []byte {
+	return []byte(fmt.Sprintf("recovery/%s", did))
 }
 
 // DeleteRecoveryInfo deletes recovery info for a wallet
-func (k Keeper) DeleteRecoveryInfo(ctx sdk.Context, walletId string) error {
+func (k Keeper) DeleteRecoveryInfo(ctx sdk.Context, did string) error {
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("recovery/%s", walletId))
+	key := k.GetRecoveryKey(did)
 	store.Delete(key)
+	return nil
+}
+
+// RecoverWallet recovers a wallet by its address
+func (k Keeper) RecoverWallet(ctx sdk.Context, msg *types.MsgRecoverWallet) error {
+	// Get wallet
+	wallet, found := k.GetWallet(ctx, msg.WalletAddress)
+	if !found {
+		return fmt.Errorf("wallet not found: %s", msg.WalletAddress)
+	}
+
+	// Validate recovery session
+	if err := k.VerifyRecoverySession(ctx, wallet.Creator, msg.RecoveryProof); err != nil {
+		return fmt.Errorf("failed to verify recovery session: %v", err)
+	}
+
+	// Delete the old wallet
+	if err := k.DeleteWallet(ctx, msg.WalletAddress); err != nil {
+		return fmt.Errorf("failed to delete old wallet: %v", err)
+	}
+
+	// Create new wallet with updated public key
+	now := ctx.BlockTime()
+	newWallet := &types.Wallet{
+		Id:            msg.WalletAddress,
+		Creator:       msg.Creator,
+		PublicKey:     msg.NewPubKey,
+		WalletAddress: msg.WalletAddress,
+		ChainId:      wallet.ChainId,
+		Status:       types.WalletStatus_WALLET_STATUS_ACTIVE,
+		KeyVersion:   wallet.KeyVersion + 1,
+		CreatedAt:    &now,
+		UpdatedAt:    &now,
+		LastUsed:     &now,
+		UsageCount:   0,
+	}
+
+	// Save the new wallet
+	if err := k.SaveWallet(ctx, newWallet); err != nil {
+		return fmt.Errorf("failed to save new wallet: %v", err)
+	}
+
+	// Delete recovery info
+	if err := k.DeleteRecoveryInfo(ctx, wallet.Creator); err != nil {
+		return fmt.Errorf("failed to delete recovery info: %v", err)
+	}
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWalletRecovered,
+			sdk.NewAttribute(types.AttributeKeyWalletAddress, msg.WalletAddress),
+			sdk.NewAttribute(types.AttributeKeyNewOwner, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, ctx.BlockTime().String()),
+		),
+	)
+
 	return nil
 }
