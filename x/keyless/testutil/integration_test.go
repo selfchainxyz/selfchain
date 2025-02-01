@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	db "github.com/cometbft/cometbft-db"
@@ -138,7 +137,11 @@ func (s *IntegrationTestSuite) SetupTest() {
 
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
-	require.NoError(s.T(), stateStore.LoadLatestVersion())
+
+	// Handle both *testing.T and *testing.B cases
+	if err := stateStore.LoadLatestVersion(); err != nil {
+		panic(err) // Both T and B can handle panics
+	}
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
@@ -205,6 +208,23 @@ func (s *IntegrationTestSuite) SetupTest() {
 	)
 
 	s.ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
+}
+
+// Getter methods for test suite
+func (s *IntegrationTestSuite) Ctx() sdk.Context {
+	return s.ctx
+}
+
+func (s *IntegrationTestSuite) Keeper() *keeper.Keeper {
+	return s.keeper
+}
+
+func (s *IntegrationTestSuite) MsgServer() types.MsgServer {
+	return keeper.NewMsgServerImpl(s.keeper)
+}
+
+func (s *IntegrationTestSuite) SetCtx(ctx sdk.Context) {
+	s.ctx = ctx
 }
 
 func (s *IntegrationTestSuite) TestWalletCreation() {
