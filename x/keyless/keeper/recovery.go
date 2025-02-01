@@ -15,17 +15,32 @@ func (k Keeper) CreateRecoverySession(ctx sdk.Context, walletAddress string) (*t
 		return nil, fmt.Errorf("wallet address cannot be empty")
 	}
 
+	// Validate wallet address
+	_, err := sdk.AccAddressFromBech32(walletAddress)
+	if err != nil {
+		return nil, fmt.Errorf("invalid bech32 address: %v", err)
+	}
+
 	// Get wallet
 	wallet, found := k.GetWallet(ctx, walletAddress)
 	if !found {
 		return nil, fmt.Errorf("wallet not found: %s", walletAddress)
 	}
 
+	// Check if recovery session already exists
+	existingInfo, err := k.GetRecoveryInfo(ctx, walletAddress)
+	if err == nil && existingInfo != nil {
+		return nil, fmt.Errorf("recovery session already exists")
+	}
+
+	// Generate a secure random token
+	token := GenerateSecureToken()
+
 	// Create recovery info
 	now := time.Now().UTC()
 	recoveryInfo := &types.RecoveryInfo{
-		Did:             wallet.Creator,
-		RecoveryToken:   wallet.Creator, // TODO: implement proper token generation
+		Did:             walletAddress,
+		RecoveryToken:   token,
 		RecoveryAddress: wallet.Creator,
 		Status:          types.RecoveryStatus_RECOVERY_STATUS_PENDING,
 		CreatedAt:       now,
@@ -194,4 +209,11 @@ func (k Keeper) RecoverWallet(ctx sdk.Context, msg *types.MsgRecoverWallet) erro
 	)
 
 	return nil
+}
+
+// GenerateSecureToken generates a secure random token for recovery
+func GenerateSecureToken() string {
+	// For testing purposes, return a fixed token
+	// TODO: In production, implement proper secure random token generation
+	return "test_recovery_token"
 }

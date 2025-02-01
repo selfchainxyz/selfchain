@@ -27,6 +27,7 @@ var (
 	ErrPermissionNotFound   = sdkerrors.Register(ModuleName, 21, "permission not found")
 	ErrPermissionExpired    = sdkerrors.Register(ModuleName, 22, "permission expired")
 	ErrPermissionRevoked    = sdkerrors.Register(ModuleName, 23, "permission revoked")
+	ErrEmptyPermissions     = sdkerrors.Register(ModuleName, 24, "permissions cannot be empty")
 
 	// Key management errors
 	ErrKeyGenFailed         = sdkerrors.Register(ModuleName, 30, "key generation failed")

@@ -14,7 +14,12 @@ import (
 
 // GrantPermission grants a permission to a grantee for a specific wallet
 func (k Keeper) GrantPermission(ctx sdk.Context, grant *types.Permission) error {
-	// Validate the permission first
+	// Basic validation
+	if grant == nil {
+		return status.Error(codes.InvalidArgument, "permission cannot be nil")
+	}
+
+	// Validate and grant permission
 	if err := k.ValidateAndGrantPermission(ctx, grant); err != nil {
 		return err
 	}
@@ -41,6 +46,18 @@ func (k Keeper) RevokePermission(ctx sdk.Context, walletAddress string, grantee 
 
 	if grantee == "" {
 		return status.Error(codes.InvalidArgument, "grantee cannot be empty")
+	}
+
+	// Validate wallet address
+	_, err := sdk.AccAddressFromBech32(walletAddress)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "invalid bech32 address")
+	}
+
+	// Validate grantee address
+	_, err = sdk.AccAddressFromBech32(grantee)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "invalid bech32 address")
 	}
 
 	// Check if wallet exists
@@ -225,19 +242,38 @@ func (k Keeper) ValidateAndGrantPermission(ctx sdk.Context, permission *types.Pe
 		return status.Error(codes.InvalidArgument, "permission cannot be nil")
 	}
 
-	// Validate wallet exists
-	_, found := k.GetWallet(ctx, permission.WalletAddress)
-	if !found {
-		return status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", permission.WalletAddress))
+	if len(permission.Permissions) == 0 {
+		return types.ErrEmptyPermissions
 	}
 
-	// Validate basic fields
+	if permission.WalletAddress == "" {
+		return status.Error(codes.InvalidArgument, "wallet address cannot be empty")
+	}
+
 	if permission.Grantee == "" {
 		return status.Error(codes.InvalidArgument, "grantee cannot be empty")
 	}
 
-	if len(permission.Permissions) == 0 {
-		return status.Error(codes.InvalidArgument, "permissions cannot be empty")
+	// Validate grantee address first
+	_, err := sdk.AccAddressFromBech32(permission.Grantee)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "invalid bech32 address")
+	}
+
+	// Validate wallet address
+	_, err = sdk.AccAddressFromBech32(permission.WalletAddress)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "invalid bech32 address")
+	}
+
+	// Validate wallet exists
+	wallet, found := k.GetWallet(ctx, permission.WalletAddress)
+	if !found {
+		return status.Error(codes.NotFound, fmt.Sprintf("wallet not found: %s", permission.WalletAddress))
+	}
+
+	if wallet.Status != types.WalletStatus_WALLET_STATUS_ACTIVE {
+		return status.Error(codes.FailedPrecondition, "wallet is not active")
 	}
 
 	// Store the permission
