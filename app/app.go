@@ -869,6 +869,26 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 			if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 			}
+
+			// Define the old subspace for baseapp's params (from x/params)
+
+			legacySS := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+			sctx := sdk.UnwrapSDKContext(ctx)
+
+			if err := baseapp.MigrateParams(sctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore);
+			err != nil {
+				logger.Error("failed to migrate consensus params", err)
+			}
+			// Run module migrations using the module manager.
+			mv, _ := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+			app.mm.RunMigrations(ctx, app.Configurator(), mv)
+
+			//app.UpgradeKeeper.SetUpgradeHandler("v0.50-upgrade", func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+			//	// Migrate Tendermint consensus params to x/consensus module.
+			//	// Note: use the ParamsStore from the consensus keeper.
+			//
+			//})
+
 		} else {
 			app.UpgradeKeeper.SetUpgradeHandler(
 				v2.UpgradeName,
