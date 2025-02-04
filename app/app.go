@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	v2 "selfchain/upgrades/v2"
 	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -286,7 +287,7 @@ type App struct {
 }
 
 // New returns a reference to an initialized blockchain app
-func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, appOpts servertypes.AppOptions, wasmOpts []wasmkeeper.Option, baseAppOptions ...func(*baseapp.BaseApp), ) *App {
+func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, appOpts servertypes.AppOptions, wasmOpts []wasmkeeper.Option, baseAppOptions ...func(*baseapp.BaseApp)) *App {
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -340,7 +341,10 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	// set the BaseApp's parameter store
 	service := runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, service, authtypes.NewModuleAddress(govtypes.ModuleName).String(), runtime.EventService{},)
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec,
+		service,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
 
 	// add capability keeper and ScopeToModule for ibc module
@@ -857,13 +861,67 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	}
 
 	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			logger.Info("app.LoadLatestVersion() failed")
-			tmos.Exit(err.Error())
-		}
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+		if isDevelopmentEnv() {
+			if err := app.LoadLatestVersion(); err != nil {
+				tmos.Exit(err.Error())
+			}
+			ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+			if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+			}
+		} else {
+			app.UpgradeKeeper.SetUpgradeHandler(
+				v2.UpgradeName,
+				v2.CreateUpgradeHandler(
+					app.mm,
+					app.configurator,
+					app.AccountKeeper,
+					app.BankKeeper,
+				),
+			)
+
+			if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+				if upgradeInfo.Name == "v2" {
+					storeUpgrades := storetypes.StoreUpgrades{
+						Added: []string{
+							wasmtypes.ModuleName,
+							ibcfeetypes.ModuleName,
+						},
+					}
+
+					app.SetStoreLoader(
+						upgradetypes.UpgradeStoreLoader(
+							upgradeInfo.Height,
+							&storeUpgrades,
+						),
+					)
+				}
+			}
+
+			// Load the latest version of the app state
+			if err := app.LoadLatestVersion(); err != nil {
+				tmos.Exit(err.Error())
+			}
+
+			// After loading, run module migrations for new modules
+			ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+
+			// Get the module version map
+			mv, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+
+			// Initialize pinned codes in wasmvm as they are not persisted there
+			if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+			}
+
+			// Check if the Wasm module version is 0 (uninitialized)
+			if mv[wasmtypes.ModuleName] == 0 {
+				// Run migrations to initialize the Wasm module
+				mv, err = app.mm.RunMigrations(ctx, app.configurator, mv)
+				if err != nil {
+					panic(fmt.Sprintf("Failed to run migrations. Error: %v, Module Versions: %v", err, mv))
+				}
+			}
 		}
 	}
 
@@ -1081,7 +1139,6 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.Wa
 	}
 	app.SetAnteHandler(anteHandler)
 }
-
 
 func (app *App) AutoCliOpts() autocli.AppOptions {
 	modules := make(map[string]appmodule.AppModule, 0)
