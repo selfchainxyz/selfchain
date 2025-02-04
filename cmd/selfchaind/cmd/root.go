@@ -99,7 +99,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	}
 
 
-	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseAppOptions...)
+	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseAppOptions...)
 
 	autoCliOptss := enrichAutoCliOpts(dummyApp.AutoCliOpts(), initClientCtx)
 

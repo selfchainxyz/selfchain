@@ -131,6 +131,8 @@ import (
 	selfvestingmoduletypes "selfchain/x/selfvesting/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	appparams "selfchain/app/params"
 	"selfchain/docs"
 )
@@ -467,11 +469,14 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	// ... other modules keepers
 
-	// Create IBC Keeper
+	clientSubspace := app.ParamsKeeper.
+		Subspace(ibcclienttypes.SubModuleName).
+		WithKeyTable(ibcclienttypes.ParamKeyTable())
+
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		keys[ibcexported.StoreKey],
-		app.GetSubspace(ibcexported.ModuleName),
+		clientSubspace,
 		app.StakingKeeper,
 		app.UpgradeKeeper,
 		scopedIBCKeeper,
@@ -872,16 +877,38 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 			// Define the old subspace for baseapp's params (from x/params)
 
-			legacySS := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-			sctx := sdk.UnwrapSDKContext(ctx)
+			if !strings.EqualFold(homePath, "dummy") {
+				// Get existing subspace instead of creating new one
+				ibcClientSubspace, _ := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
 
-			if err := baseapp.MigrateParams(sctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore);
-			err != nil {
-				logger.Error("failed to migrate consensus params", err)
+				// Only set key table if it hasn't been set
+				if !ibcClientSubspace.HasKeyTable() {
+					ibcClientSubspace = ibcClientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
+				}
+
+				// Set default params
+				clientParams := ibcclienttypes.DefaultParams()
+				app.IBCKeeper.ClientKeeper.SetParams(ctx, clientParams)
+
+				// Update allowed clients
+				params := app.IBCKeeper.ClientKeeper.GetParams(ctx)
+				params.AllowedClients = append(params.AllowedClients, exported.Localhost)
+				app.IBCKeeper.ClientKeeper.SetParams(ctx, params)
+
+				// Handle consensus params similarly
+				legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
+				if !exist {
+					legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
+				}
+				if !legacySS.HasKeyTable() {
+					legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+				}
+
+				if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
+					logger.Error("failed to migrate consensus params", err)
+				}
 			}
-			// Run module migrations using the module manager.
-			mv, _ := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-			app.mm.RunMigrations(ctx, app.Configurator(), mv)
+
 
 			//app.UpgradeKeeper.SetUpgradeHandler("v0.50-upgrade", func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 			//	// Migrate Tendermint consensus params to x/consensus module.
@@ -954,6 +981,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	return app
 }
+
 
 func isDevelopmentEnv() bool {
 	return os.Getenv("CHAIN_ENV") == "development"
@@ -1107,6 +1135,9 @@ func (app *App) RegisterNodeService(clientCtx client.Context, cfg config.Config)
 // initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+
+	keyTable := ibcclienttypes.ParamKeyTable()
+	keyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
