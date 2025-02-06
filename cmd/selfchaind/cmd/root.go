@@ -2,37 +2,33 @@ package cmd
 
 import (
 	"cosmossdk.io/client/v2/autocli"
-	storetypes "cosmossdk.io/store/types"
-	"errors"
-	"fmt"
-	cosmosdb "github.com/cosmos/cosmos-db"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/client/debug"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/snapshots"
 	snapshottypes "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
+	"errors"
+	"fmt"
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	cosmosdb "github.com/cosmos/cosmos-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/config"
+	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -42,6 +38,10 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"io"
+	"os"
+	"path/filepath"
 
 	// this line is used by starport scaffolding # root/moduleImport
 
@@ -87,21 +87,18 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 
 	initRootCmd(rootCmd, encodingConfig)
 
-	overwriteFlagDefaults(rootCmd, map[string]string{
-		flags.FlagChainID:        strings.ReplaceAll(app.Name, "-", ""),
-		flags.FlagKeyringBackend: "test",
-	})
 
-	baseAppOptions := []func(*baseapp.BaseApp){
-		baseapp.SetChainID("dummy-chain"),
-		baseapp.SetInterBlockCache(nil),
-		baseapp.SetSnapshot(nil, snapshottypes.NewSnapshotOptions(0, 0)),
-	}
+	initAppOptions := viper.New()
+	tempDir := tempDir()
+	initAppOptions.Set(flags.FlagHome, tempDir)
 
 
-	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseAppOptions...)
+	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseapp.SetChainID("osmosis-1"))
 
-	autoCliOptss := enrichAutoCliOpts(dummyApp.AutoCliOpts(), initClientCtx)
+	autoCliOpts := dummyApp.AutoCliOpts()
+	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
+
+	autoCliOptss := enrichAutoCliOpts(autoCliOpts, initClientCtx)
 
 	if err := autoCliOptss.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
@@ -111,6 +108,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 }
 
 func enrichAutoCliOpts(autoCliOpts autocli.AppOptions, clientCtx client.Context) autocli.AppOptions {
+
 	autoCliOpts.AddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())
 	autoCliOpts.ValidatorAddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
 	autoCliOpts.ConsensusAddressCodec = addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix())
@@ -133,6 +131,17 @@ func initTendermintConfig() *tmcfg.Config {
 	cfg := tmcfg.DefaultConfig()
 	return cfg
 }
+
+var tempDir = func() string {
+	dir, err := os.MkdirTemp("", ".selfchain")
+	if err != nil {
+		panic(fmt.Sprintf("failed creating temp directory: %s", err.Error()))
+	}
+	defer os.RemoveAll(dir)
+
+	return dir
+}
+
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig) {
 	// Set config

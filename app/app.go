@@ -1165,3 +1165,29 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 		ConsensusAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	}
 }
+
+
+//func (app *App) Query(ctx context.Context, req *abci.RequestQuery) (*abci.ResponseQuery, error) {
+//	app.Logger().Info("Received query request",
+//		"path", req.Path,
+//		"height", req.Height,
+//		"prove", req.Prove)
+//
+//	// Try to load state at requested height
+//	if req.Height != 0 {
+//		err := app.LoadHeight(req.Height)
+//		if err != nil {
+//			app.Logger().Error("Failed to load state at height",
+//				"height", req.Height,
+//				"error", err)
+//			return &abci.ResponseQuery{
+//				Code: 1,
+//				Log:  fmt.Sprintf("failed to load state at height %d: %v", req.Height, err),
+//			}, err
+//		}
+//		app.Logger().Info("Successfully loaded state at height",
+//			"height", req.Height)
+//	}
+//
+//	return app.BaseApp.Query(ctx, req)
+//}
