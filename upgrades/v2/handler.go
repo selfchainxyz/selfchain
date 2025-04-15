@@ -21,10 +21,13 @@ const (
 
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
 var addressReplacements = map[string]string{
-	//"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9": "self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah", //bell full stake
-	//"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w": "self1t50hj98rmnusr2yywvp7aaq4jwr98tfnercplu", //test 1  stake entire unvested and more
-	//"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl": "self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8", //test 2 small stake
-	//"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz": "self102fgcqwkhcrwf6yv8jgen7v2gd0k4e0szpfh3d", //test 3 no stake
+	//"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9": "self1pw76gr9ag9gv8a6jfg0d5c3ag5mm8pghq5sen2", //bell full stake
+	//"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w": "self13yl6nrfs34hu2ayyt2k4l7z36wf5eh2zw4d537", //test 1  stake entire unvested and more
+	//"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl": "self144lz8lxa44w4h6x4g7w2qjz5d6n6qqzw8puzgl", //test 2 small stake
+	//"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz": "self184tq49l234842jpjjqp4wuugck7u7ruv28jmzr", //test 3 no stake
+	//"self18fam8qwdxk70lz2jxvz5wfj6c3pa6dy9pwlj40": "self12aqj8s0jkaetndt844z27r2wf2jxtwx7vl4fae", //test 3 no stake
+	//"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs": "self10gkrql5vj9897k67hyp3nlxqkyzpaxvg3f722k", //full 16xx delegated
+	//"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy": "self1dmxphe3syl57e5qpwvr735mu5gppatvrwqz5np", //6xx out of 16xx delegated .
 	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
 	// Add more address mappings as needed
 }
@@ -332,21 +335,38 @@ func getPeriodicVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, addr
 // -----------------------------------------------------------------------------
 const maxRetrieve = uint16(1<<16 - 1) // 65535
 
-// -----------------------------------------------------------------------------
-// replaceAccountAddress – fully re‑keys balance *and* staking state
-// -----------------------------------------------------------------------------
-// replaceAccountAddress2 handles migration of an account from oldAddress to newAddress,
-// properly handling delegated tokens and vesting accounts. This function is specifically
-// designed to work even in cases where all unvested coins are already delegated.
-// replaceAccountAddress2 handles migration of an account from oldAddress to newAddress,
-// properly handling delegated tokens and vesting accounts. This function is specifically
-// designed to work even in cases where all unvested coins are already delegated.
-// Import statements to include:
-// distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-// distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-// Import statements to include:
-// distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-// distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+// First, we need a more flexible account retrieval function
+func getVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string) (authtypes.AccountI, string, error) {
+	addr, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		ctx.Logger().Error("Invalid address format", "address", address, "error", err)
+		return nil, "", fmt.Errorf("invalid address %s: %w", address, err)
+	}
+
+	acc := k.GetAccount(ctx, addr)
+	if acc == nil {
+		ctx.Logger().Error("Account not found", "address", address)
+		return nil, "", fmt.Errorf("account not found: %s", address)
+	}
+
+	// Check for PeriodicVestingAccount
+	if periodicAcc, ok := acc.(*vestingtypes.PeriodicVestingAccount); ok {
+		return periodicAcc, "periodic", nil
+	}
+
+	// Check for PermanentLockedAccount
+	if permanentAcc, ok := acc.(*vestingtypes.PermanentLockedAccount); ok {
+		return permanentAcc, "permanent", nil
+	}
+
+	// Neither periodic nor permanent
+	ctx.Logger().Error("Account is not a supported vesting account type",
+		"address", address,
+		"actual_type", fmt.Sprintf("%T", acc))
+	return nil, "", fmt.Errorf("account %s is not a supported vesting account type", address)
+}
+
+// Updated replaceAccountAddress2 function to handle both account types
 func replaceAccountAddress2(
 	ctx sdk.Context,
 	k authkeeper.AccountKeeper,
@@ -370,7 +390,7 @@ func replaceAccountAddress2(
 		return fmt.Errorf("invalid old address %s: %w", oldAddress, err)
 	}
 
-	oldAcc, err := getPeriodicVestingAccount(ctx, k, oldAddress)
+	oldAcc, accType, err := getVestingAccount(ctx, k, oldAddress)
 	if err != nil {
 		return err
 	}
@@ -379,62 +399,115 @@ func replaceAccountAddress2(
 	now := ctx.BlockTime().Unix()
 
 	// ---------- unlock the old account up-front ------------------------------
-	// Convert vesting → base BEFORE we touch balances so locked coins
-	// can actually be moved. This is critical to allow transfer of unvested tokens.
-	convertVestingToBaseAccount(ctx, k, oldAcc)
+	// Convert the account to a BaseAccount temporarily to allow transfers
+	var oldBaseAcc *authtypes.BaseAccount
+	var originalVesting sdk.Coins
+	var delegatedFree, delegatedVesting sdk.Coins
+	var vestingSchedule interface{} // Will hold either vesting periods or lock
 
-	// ---------- figure out un-vested slice -----------------------------------
-	var (
-		unvestedPeriods []vestingtypes.Period
-		vestedPeriods   []vestingtypes.Period
-		unvestedCoins   sdk.Coins
-		elapsedFirst    int64
-	)
+	switch accType {
+	case "periodic":
+		periodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
+		oldBaseAcc = periodicAcc.BaseVestingAccount.BaseAccount
+		originalVesting = periodicAcc.OriginalVesting
+		delegatedFree = periodicAcc.DelegatedFree
+		delegatedVesting = periodicAcc.DelegatedVesting
+		_ = periodicAcc.EndTime
+		vestingSchedule = periodicAcc.VestingPeriods
+		// Convert to base account
+		baseAcc := authtypes.NewBaseAccount(
+			oldBaseAcc.GetAddress(),
+			oldBaseAcc.GetPubKey(),
+			oldBaseAcc.GetAccountNumber(),
+			oldBaseAcc.GetSequence(),
+		)
+		k.SetAccount(ctx, baseAcc)
 
-	cumTime := oldAcc.StartTime
-	for i, p := range oldAcc.VestingPeriods {
-		if cumTime+p.Length > now {
-			unvestedPeriods = append(unvestedPeriods, oldAcc.VestingPeriods[i:]...)
-			for _, up := range unvestedPeriods {
-				unvestedCoins = unvestedCoins.Add(up.Amount...)
-			}
-			elapsedFirst = now - cumTime
-			break
-		}
-		vestedPeriods = append(vestedPeriods, p)
-		cumTime += p.Length
-	}
-	if elapsedFirst > 0 && len(unvestedPeriods) > 0 {
-		if elapsedFirst > unvestedPeriods[0].Length {
-			elapsedFirst = unvestedPeriods[0].Length
-		}
-		unvestedPeriods[0].Length -= elapsedFirst
+	case "permanent":
+		permanentAcc := oldAcc.(*vestingtypes.PermanentLockedAccount)
+		oldBaseAcc = permanentAcc.BaseVestingAccount.BaseAccount
+		originalVesting = permanentAcc.OriginalVesting
+		delegatedFree = permanentAcc.DelegatedFree
+		delegatedVesting = permanentAcc.DelegatedVesting
+		_ = permanentAcc.EndTime
+		vestingSchedule = "permanent" // Special marker for permanent locked account
+		// Convert to base account
+		baseAcc := authtypes.NewBaseAccount(
+			oldBaseAcc.GetAddress(),
+			oldBaseAcc.GetPubKey(),
+			oldBaseAcc.GetAccountNumber(),
+			oldBaseAcc.GetSequence(),
+		)
+		k.SetAccount(ctx, baseAcc)
+
+	default:
+		return fmt.Errorf("unsupported account type: %s", accType)
 	}
 
 	// Get critical account state values
 	totalBalance := bankKeeper.GetBalance(ctx, oldAddr, bondDenom).Amount
-	originalVesting := oldAcc.OriginalVesting.AmountOf(bondDenom)
-	unvestedAmount := unvestedCoins.AmountOf(bondDenom)
-	vestedAmount := originalVesting.Sub(unvestedAmount)
+	originalVestingAmount := originalVesting.AmountOf(bondDenom)
 
-	// Log what we're starting with - this is crucial for debugging
+	// For permanent accounts, all coins are unvested
+	// For periodic accounts, we need to calculate unvested amount
+	var unvestedCoins sdk.Coins
+	var unvestedAmount sdk.Int
+	var movedDelVesting sdk.Coins
+
+	if accType == "permanent" {
+		// For permanent locked accounts, everything is unvested
+		unvestedCoins = originalVesting
+		unvestedAmount = originalVestingAmount
+		movedDelVesting = delegatedVesting
+	} else {
+		// For periodic vesting, calculate unvested coins
+		periodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
+		var unvestedPeriods []vestingtypes.Period
+		var vestedPeriods []vestingtypes.Period
+		var elapsedFirst int64
+
+		cumTime := periodicAcc.StartTime
+		for i, p := range periodicAcc.VestingPeriods {
+			if cumTime+p.Length > now {
+				unvestedPeriods = append(unvestedPeriods, periodicAcc.VestingPeriods[i:]...)
+				for _, up := range unvestedPeriods {
+					unvestedCoins = unvestedCoins.Add(up.Amount...)
+				}
+				elapsedFirst = now - cumTime
+				break
+			}
+			vestedPeriods = append(vestedPeriods, p)
+			cumTime += p.Length
+		}
+		if elapsedFirst > 0 && len(unvestedPeriods) > 0 {
+			if elapsedFirst > unvestedPeriods[0].Length {
+				elapsedFirst = unvestedPeriods[0].Length
+			}
+			unvestedPeriods[0].Length -= elapsedFirst
+		}
+
+		// Store updated vesting schedule
+		vestingSchedule = unvestedPeriods
+		unvestedAmount = unvestedCoins.AmountOf(bondDenom)
+
+		// Move ALL delegated_vesting (these are all unvested tokens)
+		movedDelVesting = delegatedVesting
+	}
+
+	vestedAmount := originalVestingAmount.Sub(unvestedAmount)
+
+	// Log what we're starting with
 	ctx.Logger().Info("account state pre-migration",
 		"address", oldAddress,
+		"account_type", accType,
 		"total_balance", totalBalance,
-		"original_vesting", originalVesting,
+		"original_vesting", originalVestingAmount,
 		"unvested_amount", unvestedAmount,
 		"vested_amount", vestedAmount,
-		"delegated_vesting", oldAcc.DelegatedVesting,
-		"delegated_free", oldAcc.DelegatedFree)
+		"delegated_vesting", delegatedVesting,
+		"delegated_free", delegatedFree)
 
 	// ---------- Handle delegated tokens --------------------------------------
-	// CORRECTED APPROACH: ONLY move delegated_vesting, never touch delegated_free
-	// 1. Move ALL delegated_vesting to the new account (these are unvested by definition)
-	// 2. Do NOT move any delegated_free (these are by definition vested tokens)
-
-	// Move ALL delegated_vesting (these are all unvested tokens)
-	movedDelVesting := oldAcc.DelegatedVesting
-
 	// Do NOT move any delegated_free
 	delegatedFreeToMove := sdk.NewCoins()
 
@@ -649,34 +722,85 @@ func replaceAccountAddress2(
 	ctx.Logger().Info("final migration amounts",
 		"old_address", oldAddress,
 		"new_address", newAddress,
+		"account_type", accType,
 		"unvested_coins", unvestedCoins.String(),
 		"moved_del_vesting", movedDelVesting.String(),
 		"moved_del_free", delegatedFreeToMove.String(),
 		"liquid_transferred", transferredLiquid.String())
 
-	// Create the new account with only unvested tokens
-	newAcc := &vestingtypes.PeriodicVestingAccount{
-		BaseVestingAccount: &vestingtypes.BaseVestingAccount{
-			BaseAccount:      baseAcc,
-			OriginalVesting:  unvestedCoins,
-			DelegatedFree:    delegatedFreeToMove, // This will be empty now
-			DelegatedVesting: movedDelVesting,
-			EndTime:          oldAcc.EndTime,
-		},
-		StartTime:      now,
-		VestingPeriods: unvestedPeriods,
+	// Create the appropriate new account based on the original type
+	var newVestingAcc authtypes.AccountI
+
+	if accType == "permanent" {
+		// Create a new permanent locked account
+		permanentAcc := vestingtypes.NewPermanentLockedAccount(
+			baseAcc,
+			unvestedCoins,
+		)
+
+		// Manually set delegated balances since the constructor doesn't accept them
+		permanentAcc.DelegatedFree = delegatedFreeToMove
+		permanentAcc.DelegatedVesting = movedDelVesting
+
+		newVestingAcc = permanentAcc
+	} else {
+		// Create a new periodic vesting account
+		periodicVestingSchedule := vestingSchedule.([]vestingtypes.Period)
+		newVestingAcc = vestingtypes.NewPeriodicVestingAccount(
+			baseAcc,
+			unvestedCoins,
+			now,
+			periodicVestingSchedule,
+		)
+
+		// Manually set delegated balances since the constructor doesn't accept them
+		if periodicAcc, ok := newVestingAcc.(*vestingtypes.PeriodicVestingAccount); ok {
+			periodicAcc.DelegatedFree = delegatedFreeToMove
+			periodicAcc.DelegatedVesting = movedDelVesting
+		}
 	}
 
-	// Update old account to only have vested tokens
-	oldAcc.VestingPeriods = vestedPeriods
-	oldAcc.OriginalVesting = oldAcc.OriginalVesting.Sub(unvestedCoins...)
-	oldAcc.DelegatedVesting = oldAcc.DelegatedVesting.Sub(movedDelVesting...)
-	// Do NOT change delegated_free for old account
-	oldAcc.EndTime = now
+	// Update old account
+	if accType == "permanent" {
+		// For permanent locked accounts, just convert to a base account
+		// since all tokens are either transferred or in delegations
+		oldBaseAccUpdated := authtypes.NewBaseAccount(
+			oldAddr,
+			oldBaseAcc.GetPubKey(),
+			oldBaseAcc.GetAccountNumber(),
+			oldBaseAcc.GetSequence(),
+		)
+		k.SetAccount(ctx, oldBaseAccUpdated)
+	} else {
+		// For periodic vesting accounts, update with remaining vested periods
+		periodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
+		vestedPeriods := []vestingtypes.Period{}
 
-	// Save both accounts
-	k.SetAccount(ctx, oldAcc)
-	k.SetAccount(ctx, newAcc)
+		// Extract vested periods from the original account
+		cumTime := periodicAcc.StartTime
+		for _, p := range periodicAcc.VestingPeriods {
+			if cumTime+p.Length <= now {
+				vestedPeriods = append(vestedPeriods, p)
+			}
+			cumTime += p.Length
+		}
+
+		// Create updated old account
+		updatedOldAcc := vestingtypes.NewPeriodicVestingAccount(
+			oldBaseAcc,
+			originalVesting.Sub(unvestedCoins...),
+			periodicAcc.StartTime,
+			vestedPeriods,
+		)
+
+		// Manually set delegated balances
+		updatedOldAcc.DelegatedFree = delegatedFree
+		updatedOldAcc.DelegatedVesting = delegatedVesting.Sub(movedDelVesting...)
+		k.SetAccount(ctx, updatedOldAcc)
+	}
+
+	// Save the new account
+	k.SetAccount(ctx, newVestingAcc)
 
 	// ---------- persist new delegations last ---------------------------------
 	for _, nd := range newDelegations {
@@ -717,6 +841,7 @@ func replaceAccountAddress2(
 	ctx.Logger().Info("account migration complete",
 		"old", oldAddress,
 		"new", newAddress,
+		"account_type", accType,
 		"liquid_moved", transferredLiquid,
 		"unvested_moved", unvestedCoins.String(),
 		"del_vesting_moved", movedDelVesting.String(),
