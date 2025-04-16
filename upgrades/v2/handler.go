@@ -21,13 +21,13 @@ const (
 
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
 var addressReplacements = map[string]string{
-	//"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9": "self1pw76gr9ag9gv8a6jfg0d5c3ag5mm8pghq5sen2", //bell full stake
-	//"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w": "self13yl6nrfs34hu2ayyt2k4l7z36wf5eh2zw4d537", //test 1  stake entire unvested and more
-	//"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl": "self144lz8lxa44w4h6x4g7w2qjz5d6n6qqzw8puzgl", //test 2 small stake
-	//"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz": "self184tq49l234842jpjjqp4wuugck7u7ruv28jmzr", //test 3 no stake
-	//"self18fam8qwdxk70lz2jxvz5wfj6c3pa6dy9pwlj40": "self12aqj8s0jkaetndt844z27r2wf2jxtwx7vl4fae", //test 3 no stake
-	//"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs": "self10gkrql5vj9897k67hyp3nlxqkyzpaxvg3f722k", //full 16xx delegated
-	//"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy": "self1dmxphe3syl57e5qpwvr735mu5gppatvrwqz5np", //6xx out of 16xx delegated .
+	//"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9": "self1pw76gr9ag9gv8a6jfg0d5c3ag5mm8pghq5sen2", //periodic vestion - full stake
+	//"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w": "self13yl6nrfs34hu2ayyt2k4l7z36wf5eh2zw4d537", //periodic vestion -   stake entire unvested and more
+	//"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl": "self144lz8lxa44w4h6x4g7w2qjz5d6n6qqzw8puzgl", //periodic vestion -  small stake
+	//"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz": "self184tq49l234842jpjjqp4wuugck7u7ruv28jmzr", //periodic vestion -  no stake
+	//"self18fam8qwdxk70lz2jxvz5wfj6c3pa6dy9pwlj40": "self12aqj8s0jkaetndt844z27r2wf2jxtwx7vl4fae", //permanent locked - test 3 no stake
+	//"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs": "self10gkrql5vj9897k67hyp3nlxqkyzpaxvg3f722k", //permanent locked - full 16xx delegated
+	//"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy": "self1dmxphe3syl57e5qpwvr735mu5gppatvrwqz5np", //permanent locked - 6xx out of 16xx delegated .
 	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
 	// Add more address mappings as needed
 }
