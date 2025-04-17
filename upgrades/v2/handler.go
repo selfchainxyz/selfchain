@@ -809,6 +809,9 @@ func replaceAccountAddress2(
 	k.SetAccount(ctx, newVestingAcc)
 
 	// ---------- persist new delegations last ---------------------------------
+	// In replaceAccountAddress2 function, update the delegations section:
+
+	// ---------- persist new delegations last ---------------------------------
 	for _, nd := range newDelegations {
 		stakingKeeper.SetDelegation(ctx, nd)
 
@@ -826,14 +829,29 @@ func replaceAccountAddress2(
 
 		// Get the current period from validator rewards
 		period := distrKeeper.GetValidatorCurrentRewards(ctx, valAddr).Period
+		height := uint64(ctx.BlockHeight())
 
-		// Create new starting info with correct values
-		startInfo := distrtypes.NewDelegatorStartingInfo(period, stakeDec, uint64(ctx.BlockHeight()))
+		// Create new starting info with correct values for new delegator
+		startInfo := distrtypes.NewDelegatorStartingInfo(period, stakeDec, height)
 
 		// Set the correct starting info for the new delegator
 		distrKeeper.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
 
-		// DO NOT remove old starting info - it's still needed for remaining shares
+		// UPDATE: Find the remaining delegation for the old address
+		oldDel, found := stakingKeeper.GetDelegation(ctx, oldAddr, valAddr)
+		if found && !oldDel.Shares.IsZero() {
+			// Calculate the reduced stake for the old delegator
+			oldStakeDec := val.TokensFromSharesTruncated(oldDel.Shares)
+
+			// Update the old delegator's starting info to match reduced shares
+			updatedOldInfo := distrtypes.NewDelegatorStartingInfo(period, oldStakeDec, height)
+			distrKeeper.SetDelegatorStartingInfo(ctx, valAddr, oldAddr, updatedOldInfo)
+
+			ctx.Logger().Info("Updated old delegator starting info",
+				"old_address", oldAddr.String(),
+				"validator", valAddr.String(),
+				"updated_stake", oldStakeDec.String())
+		}
 	}
 
 	// Verify final balances
