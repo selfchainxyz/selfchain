@@ -21,14 +21,18 @@ const (
 
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
 var addressReplacements = map[string]string{
-	"self1jezc4atme56v75x5njqe4zuaccc4secug25wd3": "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x", //periodic vestion - full stake
-	"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf": "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja", //periodic vestion -   stake entire unvested and more
-	"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax", //periodic vestion -  small stake
-	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp": "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le", //periodic vestion -  no stake
-	"self1e20929j3gng6cy72qapar630977vffqqzwxj75": "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y", //permanent locked - test 3 no stake
-	//"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs": "self10gkrql5vj9897k67hyp3nlxqkyzpaxvg3f722k", //permanent locked - full 16xx delegated
-	//"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy": "self1dmxphe3syl57e5qpwvr735mu5gppatvrwqz5np", //permanent locked - 6xx out of 16xx delegated .
-	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
+	"self1jezc4atme56v75x5njqe4zuaccc4secug25wd3": "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x",
+	"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf": "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja",
+	"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax",
+	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp": "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le",
+	"self1e20929j3gng6cy72qapar630977vffqqzwxj75": "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y",
+	"self12xes3fhuhfdech9gkyjhl526l6gdh3n3kwe3ml": "self17qf0ssjuvemeknrf9tspd0uatrpqhfhwvus7ml",
+	"self1p9zmq9f5ftxwke6urd3vr98rypjhettfrsnna3": "self1xh72xjsy3c79s0u9mrhzehwm065c632ljrgtjc",
+	"self1c0h75n6pfnl9pk80dktqnjwvqgz0tu2trfwg40": "self1havmjneetz96xdftg89nv5537g9tddnsn382fj",
+	"self14ga5vmrskscuj3yktvjksm93sdt2f8r9k35pm0": "self1mwesu486zeu27xtrdl74nka8vhusk0tn34tslw",
+	"self1sah0w5e2a2nxrru4t6e6n3v47xulklwvru7hmh": "self1rle4cakzj849xhg7zj86rscwrmm83cpganlf4z",
+	"self1ychdx0fl0gt9c74afeeqr6ykv5j5rcqawxx2me": "self17xz6v4vtxcwfv793hj0cx2myav4f2lnycqyv2s",
+	"self1vwvjfg8ezhuspk5lamkakahc32yudf4wkgrsh6": "self1vgl693sr0m8w76ycd9k8knhxydh4y9h5eg5sdy",
 	// Add more address mappings as needed
 }
 
