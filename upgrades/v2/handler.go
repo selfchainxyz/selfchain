@@ -16,16 +16,16 @@ import (
 )
 
 const (
-	UpgradeName = "v2"
+	UpgradeName = "v3"
 )
 
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
 var addressReplacements = map[string]string{
-	//"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9": "self1pw76gr9ag9gv8a6jfg0d5c3ag5mm8pghq5sen2", //periodic vestion - full stake
-	//"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w": "self13yl6nrfs34hu2ayyt2k4l7z36wf5eh2zw4d537", //periodic vestion -   stake entire unvested and more
-	//"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl": "self144lz8lxa44w4h6x4g7w2qjz5d6n6qqzw8puzgl", //periodic vestion -  small stake
-	//"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz": "self184tq49l234842jpjjqp4wuugck7u7ruv28jmzr", //periodic vestion -  no stake
-	//"self18fam8qwdxk70lz2jxvz5wfj6c3pa6dy9pwlj40": "self12aqj8s0jkaetndt844z27r2wf2jxtwx7vl4fae", //permanent locked - test 3 no stake
+	"self1jezc4atme56v75x5njqe4zuaccc4secug25wd3": "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x", //periodic vestion - full stake
+	"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf": "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja", //periodic vestion -   stake entire unvested and more
+	"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax", //periodic vestion -  small stake
+	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp": "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le", //periodic vestion -  no stake
+	"self1e20929j3gng6cy72qapar630977vffqqzwxj75": "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y", //permanent locked - test 3 no stake
 	//"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs": "self10gkrql5vj9897k67hyp3nlxqkyzpaxvg3f722k", //permanent locked - full 16xx delegated
 	//"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy": "self1dmxphe3syl57e5qpwvr735mu5gppatvrwqz5np", //permanent locked - 6xx out of 16xx delegated .
 	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
@@ -505,7 +505,9 @@ func replaceAccountAddress2(
 		"unvested_amount", unvestedAmount,
 		"vested_amount", vestedAmount,
 		"delegated_vesting", delegatedVesting,
-		"delegated_free", delegatedFree)
+		"delegated_free", delegatedFree,
+		"now", now,
+		" ctx.BlockTime()", ctx.BlockHeight())
 
 	// ---------- Handle delegated tokens --------------------------------------
 	// Do NOT move any delegated_free
