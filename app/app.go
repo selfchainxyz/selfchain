@@ -871,6 +871,8 @@ func New(
 					app.configurator,
 					app.AccountKeeper,
 					app.BankKeeper,
+					app.StakingKeeper,
+					app.DistrKeeper,
 				),
 			)
 
