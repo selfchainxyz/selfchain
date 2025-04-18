@@ -105,7 +105,7 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkee
 	// Then handle address replacements separately
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
 	for oldAddr, newAddr := range addressReplacements {
-		if err := replaceAccountAddress2(ctx, k, oldAddr, newAddr, bankkeeper, stakingkeeper, distrkeeper); err != nil {
+		if err := ReplaceAccountAddress3(ctx, k, oldAddr, newAddr, bankkeeper, stakingkeeper, distrkeeper); err != nil {
 			if err.Error() == fmt.Sprintf("account not found: %s", oldAddr) {
 				ctx.Logger().Info("Skipping non-existent account for address replacement",
 					"old_address", oldAddr,
@@ -834,7 +834,7 @@ func replaceAccountAddress2(
 	// Make sure to preserve the public key from the old account
 	baseAcc = authtypes.NewBaseAccount(
 		newAddr,
-		oldBaseAcc.GetPubKey(), // Preserve the public key
+		nil, // Preserve the public key
 		k.NextAccountNumber(ctx),
 		0, // Start with sequence 0
 	)
@@ -1102,4 +1102,343 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+func ReplaceAccountAddress3(
+	ctx sdk.Context,
+	ak authkeeper.AccountKeeper,
+	oldAddrStr, newAddrStr string,
+	bk bankkeeper.Keeper,
+	sk stakingkeeper.Keeper,
+	dk distrkeeper.Keeper,
+) error {
+	// ---------- Validate addresses -----------------------------------------
+	newAddr, err := sdk.AccAddressFromBech32(newAddrStr)
+	if err != nil {
+		return fmt.Errorf("invalid new address %s: %w", newAddrStr, err)
+	}
+	if ak.GetAccount(ctx, newAddr) != nil {
+		return fmt.Errorf("new address %s already exists", newAddrStr)
+	}
+
+	oldAddr, err := sdk.AccAddressFromBech32(oldAddrStr)
+	if err != nil {
+		return fmt.Errorf("invalid old address %s: %w", oldAddrStr, err)
+	}
+
+	// Get the old account
+	oldAcc := ak.GetAccount(ctx, oldAddr)
+	if oldAcc == nil {
+		return fmt.Errorf("account not found: %s", oldAddrStr)
+	}
+
+	// Log start of migration
+	ctx.Logger().Info("Starting account migration",
+		"old_address", oldAddrStr,
+		"new_address", newAddrStr)
+
+	// ---------- Extract account properties ---------------------------------
+	var oldBaseAcc *authtypes.BaseAccount
+	var accType string
+	var accountHasVesting bool = false
+
+	// Handle each vesting account type
+	switch acc := oldAcc.(type) {
+	case *vestingtypes.PeriodicVestingAccount:
+		accType = "periodic"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	case *vestingtypes.PermanentLockedAccount:
+		accType = "permanent"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	case *vestingtypes.ContinuousVestingAccount:
+		accType = "continuous"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	case *vestingtypes.DelayedVestingAccount:
+		accType = "delayed"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	default:
+		// For base accounts or any other type
+		accType = "base"
+		if baseAcc, ok := oldAcc.(*authtypes.BaseAccount); ok {
+			oldBaseAcc = baseAcc
+		} else {
+			return fmt.Errorf("unsupported account type: %T", oldAcc)
+		}
+	}
+
+	// Get spendable balance info for logging
+	spendableCoins := bk.SpendableCoins(ctx, oldAddr)
+	totalBalance := bk.GetAllBalances(ctx, oldAddr)
+
+	ctx.Logger().Info("Account properties",
+		"type", accType,
+		"total_balance", totalBalance,
+		"spendable_balance", spendableCoins)
+
+	// ---------- Handle delegations first ------------------------------------
+	const maxRetrieve = uint16(1<<16 - 1) // 65535
+	delegations := sk.GetDelegatorDelegations(ctx, oldAddr, maxRetrieve)
+
+	type DelInfo struct {
+		delegation stakingtypes.Delegation
+		validator  stakingtypes.Validator
+		tokens     sdk.Dec
+	}
+
+	var delsToMove []DelInfo
+
+	for _, del := range delegations {
+		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
+		val, found := sk.GetValidator(ctx, valAddr)
+		if !found {
+			ctx.Logger().Info("Skipping delegation - validator not found",
+				"validator", del.ValidatorAddress)
+			continue
+		}
+
+		tokens := val.TokensFromSharesTruncated(del.Shares)
+		delsToMove = append(delsToMove, DelInfo{
+			delegation: del,
+			validator:  val,
+			tokens:     tokens,
+		})
+	}
+
+	// ---------- Handle unbonding delegations -------------------------------
+	unbondingDels := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
+
+	// ---------- Handle redelegations --------------------------------------
+	redelegations := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
+
+	// ---------- Create new base account ----------------------------------
+	newBaseAcc := authtypes.NewBaseAccount(
+		newAddr,
+		nil, // This will be set later if needed
+		ak.NextAccountNumber(ctx),
+		0, // Start with sequence 0
+	)
+
+	// ---------- Create new vesting account (if applicable) ---------------
+	var newAcc authtypes.AccountI
+
+	if accountHasVesting {
+		// Create the exact same type of vesting account with same parameters
+		switch accType {
+		case "periodic":
+			oldPeriodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
+
+			// Create new periodic vesting account with SAME start time
+			newPeriodicAcc := vestingtypes.NewPeriodicVestingAccount(
+				newBaseAcc,
+				oldPeriodicAcc.OriginalVesting,
+				oldPeriodicAcc.StartTime,
+				oldPeriodicAcc.VestingPeriods,
+			)
+
+			// Keep the same end time
+			newPeriodicAcc.EndTime = oldPeriodicAcc.EndTime
+
+			// Set delegation amounts
+			newPeriodicAcc.DelegatedFree = oldPeriodicAcc.DelegatedFree
+			newPeriodicAcc.DelegatedVesting = oldPeriodicAcc.DelegatedVesting
+
+			newAcc = newPeriodicAcc
+
+		case "continuous":
+			oldContAcc := oldAcc.(*vestingtypes.ContinuousVestingAccount)
+
+			// Create continuous vesting with SAME start and end times
+			newContAcc := vestingtypes.NewContinuousVestingAccount(
+				newBaseAcc,
+				oldContAcc.OriginalVesting,
+				oldContAcc.StartTime,
+				oldContAcc.EndTime,
+			)
+
+			// Set delegation amounts
+			newContAcc.DelegatedFree = oldContAcc.DelegatedFree
+			newContAcc.DelegatedVesting = oldContAcc.DelegatedVesting
+
+			newAcc = newContAcc
+
+		case "permanent":
+			oldPermAcc := oldAcc.(*vestingtypes.PermanentLockedAccount)
+
+			// Create new permanent locked account
+			newPermAcc := vestingtypes.NewPermanentLockedAccount(
+				newBaseAcc,
+				oldPermAcc.OriginalVesting,
+			)
+
+			// Set delegation amounts
+			newPermAcc.DelegatedFree = oldPermAcc.DelegatedFree
+			newPermAcc.DelegatedVesting = oldPermAcc.DelegatedVesting
+
+			newAcc = newPermAcc
+
+		case "delayed":
+			oldDelayedAcc := oldAcc.(*vestingtypes.DelayedVestingAccount)
+
+			// Create new delayed vesting account with same end time
+			newDelayedAcc := vestingtypes.NewDelayedVestingAccount(
+				newBaseAcc,
+				oldDelayedAcc.OriginalVesting,
+				oldDelayedAcc.EndTime,
+			)
+
+			// Set delegation amounts
+			newDelayedAcc.DelegatedFree = oldDelayedAcc.DelegatedFree
+			newDelayedAcc.DelegatedVesting = oldDelayedAcc.DelegatedVesting
+
+			newAcc = newDelayedAcc
+		}
+	} else {
+		// For non-vesting accounts, just use a base account
+		newAcc = newBaseAcc
+	}
+
+	// ---------- Convert old account to base for transfers -----------------
+	baseAcc := authtypes.NewBaseAccount(
+		oldAddr,
+		oldBaseAcc.GetPubKey(),
+		oldBaseAcc.GetAccountNumber(),
+		oldBaseAcc.GetSequence(),
+	)
+	ak.SetAccount(ctx, baseAcc)
+
+	// ---------- Save the new account --------------------------------------
+	ak.SetAccount(ctx, newAcc)
+
+	// ---------- Transfer all balances ------------------------------------
+	// Transfer the full balance
+	allCoins := bk.GetAllBalances(ctx, oldAddr)
+	if !allCoins.IsZero() {
+		if err := bk.SendCoins(ctx, oldAddr, newAddr, allCoins); err != nil {
+			return fmt.Errorf("failed to transfer balances: %w", err)
+		}
+		ctx.Logger().Info("Transferred balance",
+			"amount", allCoins.String(),
+			"from", oldAddrStr,
+			"to", newAddrStr)
+	}
+
+	// ---------- Move delegations -----------------------------------------
+	for _, delInfo := range delsToMove {
+		del := delInfo.delegation
+
+		// Remove old delegation
+		sk.RemoveDelegation(ctx, del)
+
+		// Create new delegation
+		newDel := stakingtypes.NewDelegation(
+			newAddr,
+			del.GetValidatorAddr(),
+			del.Shares,
+		)
+		sk.SetDelegation(ctx, newDel)
+
+		// Handle rewards by setting up new delegation reward state
+		period := dk.GetValidatorCurrentRewards(ctx, del.GetValidatorAddr()).Period
+		height := uint64(ctx.BlockHeight())
+
+		// Create and set starting info for new delegation
+		startInfo := distrtypes.NewDelegatorStartingInfo(
+			period,
+			delInfo.tokens,
+			height,
+		)
+		dk.SetDelegatorStartingInfo(ctx, del.GetValidatorAddr(), newAddr, startInfo)
+
+		ctx.Logger().Info("Moved delegation",
+			"validator", del.ValidatorAddress,
+			"shares", del.Shares.String(),
+			"tokens", delInfo.tokens.String())
+	}
+
+	// ---------- Move unbonding delegations ------------------------------
+	for _, ubd := range unbondingDels {
+		// Remove old unbonding delegation
+		sk.RemoveUnbondingDelegation(ctx, ubd)
+
+		// Create new unbonding delegation
+		valAddr, _ := sdk.ValAddressFromBech32(ubd.ValidatorAddress)
+		newUBD := stakingtypes.UnbondingDelegation{
+			DelegatorAddress: newAddr.String(),
+			ValidatorAddress: valAddr.String(),
+			Entries:          ubd.Entries,
+		}
+		sk.SetUnbondingDelegation(ctx, newUBD)
+
+		ctx.Logger().Info("Moved unbonding delegation",
+			"validator", ubd.ValidatorAddress,
+			"entries", len(ubd.Entries))
+	}
+
+	// ---------- Move redelegations -------------------------------------
+	for _, red := range redelegations {
+		// Remove old redelegation
+		sk.RemoveRedelegation(ctx, red)
+
+		// Create new redelegation
+		srcVal, _ := sdk.ValAddressFromBech32(red.ValidatorSrcAddress)
+		dstVal, _ := sdk.ValAddressFromBech32(red.ValidatorDstAddress)
+		newRed := stakingtypes.Redelegation{
+			DelegatorAddress:    newAddr.String(),
+			ValidatorSrcAddress: srcVal.String(),
+			ValidatorDstAddress: dstVal.String(),
+			Entries:             red.Entries,
+		}
+		sk.SetRedelegation(ctx, newRed)
+
+		ctx.Logger().Info("Moved redelegation",
+			"src_validator", red.ValidatorSrcAddress,
+			"dst_validator", red.ValidatorDstAddress,
+			"entries", len(red.Entries))
+	}
+
+	// ---------- Handle withdraw address -------------------------------
+	// Check if there's a custom withdraw address
+	withdrawAddr := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
+	if !withdrawAddr.Equals(oldAddr) {
+		// Set the same custom withdraw address for the new account
+		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
+		ctx.Logger().Info("Set withdraw address",
+			"delegator", newAddrStr,
+			"withdraw_addr", withdrawAddr.String())
+	}
+
+	// ---------- Withdraw all rewards ---------------------------------
+	// Try to withdraw rewards from all validators the old address is delegated to
+	for _, delInfo := range delsToMove {
+		valAddr := delInfo.delegation.GetValidatorAddr()
+
+		// Try to withdraw rewards directly
+		_, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
+		if err != nil {
+			ctx.Logger().Info("Failed to withdraw rewards or no rewards to withdraw",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"error", err)
+		} else {
+			ctx.Logger().Info("Withdrawn rewards",
+				"validator", delInfo.delegation.ValidatorAddress)
+		}
+	}
+
+	// Log completion
+	ctx.Logger().Info("Account migration complete",
+		"old_address", oldAddrStr,
+		"new_address", newAddrStr,
+		"account_type", accType,
+		"delegations", len(delsToMove),
+		"unbonding_delegations", len(unbondingDels),
+		"redelegations", len(redelegations))
+
+	return nil
 }
