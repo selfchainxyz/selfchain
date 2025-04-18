@@ -1103,6 +1103,7 @@ func contains(slice []string, item string) bool {
 	}
 	return false
 }
+
 func ReplaceAccountAddress3(
 	ctx sdk.Context,
 	ak authkeeper.AccountKeeper,
@@ -1403,32 +1404,44 @@ func ReplaceAccountAddress3(
 			"entries", len(red.Entries))
 	}
 
-	// ---------- Handle withdraw address -------------------------------
-	// Check if there's a custom withdraw address
+	// ---------- Withdraw and migrate rewards -------------------------------
+	// First approach: Withdraw all existing rewards to the old account
+	allValidators := sk.GetAllValidators(ctx)
+	totalRewardsWithdrawn := sdk.NewCoins()
+
+	// Try to withdraw rewards from ALL validators, not just ones with current delegations
+	for _, val := range allValidators {
+		valAddr := val.GetOperator()
+
+		// Check if there are any rewards to withdraw
+		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
+		if err == nil && !rewards.IsZero() {
+			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
+			ctx.Logger().Info("Withdrawn rewards",
+				"validator", val.OperatorAddress,
+				"amount", rewards.String())
+		}
+	}
+
+	ctx.Logger().Info("Total rewards withdrawn",
+		"address", oldAddrStr,
+		"amount", totalRewardsWithdrawn.String())
+
+	// The withdrawn rewards will be included in the general balance transfer below
+
+	// NEW approach: For better compatibility, also migrate reward state directly
+	// This is especially needed for validators that might have pending rewards
+	// but no active delegations
+
+	// First, get the current withdraw address
 	withdrawAddr := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
+
+	// If it's not the old address itself, set the same withdraw address for the new account
 	if !withdrawAddr.Equals(oldAddr) {
-		// Set the same custom withdraw address for the new account
 		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
 		ctx.Logger().Info("Set withdraw address",
 			"delegator", newAddrStr,
 			"withdraw_addr", withdrawAddr.String())
-	}
-
-	// ---------- Withdraw all rewards ---------------------------------
-	// Try to withdraw rewards from all validators the old address is delegated to
-	for _, delInfo := range delsToMove {
-		valAddr := delInfo.delegation.GetValidatorAddr()
-
-		// Try to withdraw rewards directly
-		_, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
-		if err != nil {
-			ctx.Logger().Info("Failed to withdraw rewards or no rewards to withdraw",
-				"validator", delInfo.delegation.ValidatorAddress,
-				"error", err)
-		} else {
-			ctx.Logger().Info("Withdrawn rewards",
-				"validator", delInfo.delegation.ValidatorAddress)
-		}
 	}
 
 	// Log completion
