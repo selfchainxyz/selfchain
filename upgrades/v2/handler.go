@@ -1404,45 +1404,70 @@ func ReplaceAccountAddress3(
 			"entries", len(red.Entries))
 	}
 
-	// ---------- Withdraw and migrate rewards -------------------------------
-	// First approach: Withdraw all existing rewards to the old account
+	// ---------- Migrate rewards directly -----------------------------------
+	// The critical issue is that rewards in Cosmos SDK are stored separately in the
+	// distribution module state, not as part of account balances
+
+	// We need to use the withdrawal approach to capture rewards
 	allValidators := sk.GetAllValidators(ctx)
-	totalRewardsWithdrawn := sdk.NewCoins()
 
-	// Try to withdraw rewards from ALL validators, not just ones with current delegations
-	for _, val := range allValidators {
-		valAddr := val.GetOperator()
+	ctx.Logger().Info("Starting reward migration",
+		"old_address", oldAddrStr,
+		"new_address", newAddrStr,
+		"validator_count", len(allValidators))
 
-		// Check if there are any rewards to withdraw
-		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
-		if err == nil && !rewards.IsZero() {
-			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
-			ctx.Logger().Info("Withdrawn rewards",
-				"validator", val.OperatorAddress,
-				"amount", rewards.String())
-		}
-	}
-
-	ctx.Logger().Info("Total rewards withdrawn",
-		"address", oldAddrStr,
-		"amount", totalRewardsWithdrawn.String())
-
-	// The withdrawn rewards will be included in the general balance transfer below
-
-	// NEW approach: For better compatibility, also migrate reward state directly
-	// This is especially needed for validators that might have pending rewards
-	// but no active delegations
-
-	// First, get the current withdraw address
+	// 1. Migrate delegator withdraw address if custom
 	withdrawAddr := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
-
-	// If it's not the old address itself, set the same withdraw address for the new account
 	if !withdrawAddr.Equals(oldAddr) {
 		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
-		ctx.Logger().Info("Set withdraw address",
+		ctx.Logger().Info("Migrated withdraw address",
 			"delegator", newAddrStr,
 			"withdraw_addr", withdrawAddr.String())
 	}
+
+	// 2. Check the balances before withdrawing
+	balanceBefore := bk.GetAllBalances(ctx, oldAddr)
+
+	// 3. Try withdrawing rewards from all validators
+	for _, val := range allValidators {
+		valAddr := val.GetOperator()
+
+		// Try withdrawing the rewards - if the delegator has no rewards
+		// with this validator, this will be a no-op
+		_, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
+		if err == nil {
+			ctx.Logger().Info("Attempted to withdraw rewards",
+				"validator", val.OperatorAddress)
+		}
+	}
+
+	// 4. Get balance after withdrawals and calculate difference
+	balanceAfter := bk.GetAllBalances(ctx, oldAddr)
+	rewardsWithdrawn := sdk.Coins{}
+
+	// Calculate difference - need to handle each denomination separately
+	for _, afterCoin := range balanceAfter {
+		foundBefore := false
+		for _, beforeCoin := range balanceBefore {
+			if afterCoin.Denom == beforeCoin.Denom {
+				foundBefore = true
+				// Only add if there's an increase
+				if afterCoin.Amount.GT(beforeCoin.Amount) {
+					diff := afterCoin.Amount.Sub(beforeCoin.Amount)
+					rewardsWithdrawn = rewardsWithdrawn.Add(sdk.NewCoin(afterCoin.Denom, diff))
+				}
+				break
+			}
+		}
+		// If denom wasn't in the before balance, the entire amount is new
+		if !foundBefore {
+			rewardsWithdrawn = rewardsWithdrawn.Add(afterCoin)
+		}
+	}
+
+	ctx.Logger().Info("Total rewards withdrawn for transfer",
+		"address", oldAddrStr,
+		"rewards_amount", rewardsWithdrawn)
 
 	// Log completion
 	ctx.Logger().Info("Account migration complete",
