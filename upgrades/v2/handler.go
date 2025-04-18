@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"sort"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -19,20 +20,26 @@ const (
 	UpgradeName = "v2"
 )
 
+// AddressReplacement defines a struct for address replacement to ensure deterministic processing
+type AddressReplacement struct {
+	OldAddress string
+	NewAddress string
+}
+
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
-var addressReplacements = map[string]string{
-	"self1jezc4atme56v75x5njqe4zuaccc4secug25wd3": "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x",
-	"self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf": "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja",
-	"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax",
-	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp": "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le",
-	"self1e20929j3gng6cy72qapar630977vffqqzwxj75": "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y",
-	"self12xes3fhuhfdech9gkyjhl526l6gdh3n3kwe3ml": "self17qf0ssjuvemeknrf9tspd0uatrpqhfhwvus7ml",
-	"self1p9zmq9f5ftxwke6urd3vr98rypjhettfrsnna3": "self1xh72xjsy3c79s0u9mrhzehwm065c632ljrgtjc",
-	"self1c0h75n6pfnl9pk80dktqnjwvqgz0tu2trfwg40": "self1havmjneetz96xdftg89nv5537g9tddnsn382fj",
-	"self14ga5vmrskscuj3yktvjksm93sdt2f8r9k35pm0": "self1mwesu486zeu27xtrdl74nka8vhusk0tn34tslw",
-	"self1sah0w5e2a2nxrru4t6e6n3v47xulklwvru7hmh": "self1rle4cakzj849xhg7zj86rscwrmm83cpganlf4z",
-	"self1ychdx0fl0gt9c74afeeqr6ykv5j5rcqawxx2me": "self17xz6v4vtxcwfv793hj0cx2myav4f2lnycqyv2s",
-	"self1vwvjfg8ezhuspk5lamkakahc32yudf4wkgrsh6": "self1vgl693sr0m8w76ycd9k8knhxydh4y9h5eg5sdy",
+var addressReplacements = []AddressReplacement{
+	{OldAddress: "self1jezc4atme56v75x5njqe4zuaccc4secug25wd3", NewAddress: "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x"},
+	{OldAddress: "self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf", NewAddress: "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja"},
+	{OldAddress: "self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah", NewAddress: "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax"},
+	{OldAddress: "self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp", NewAddress: "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le"},
+	{OldAddress: "self1e20929j3gng6cy72qapar630977vffqqzwxj75", NewAddress: "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y"},
+	{OldAddress: "self12xes3fhuhfdech9gkyjhl526l6gdh3n3kwe3ml", NewAddress: "self17qf0ssjuvemeknrf9tspd0uatrpqhfhwvus7ml"},
+	{OldAddress: "self1p9zmq9f5ftxwke6urd3vr98rypjhettfrsnna3", NewAddress: "self1xh72xjsy3c79s0u9mrhzehwm065c632ljrgtjc"},
+	{OldAddress: "self1c0h75n6pfnl9pk80dktqnjwvqgz0tu2trfwg40", NewAddress: "self1havmjneetz96xdftg89nv5537g9tddnsn382fj"},
+	{OldAddress: "self14ga5vmrskscuj3yktvjksm93sdt2f8r9k35pm0", NewAddress: "self1mwesu486zeu27xtrdl74nka8vhusk0tn34tslw"},
+	{OldAddress: "self1sah0w5e2a2nxrru4t6e6n3v47xulklwvru7hmh", NewAddress: "self1rle4cakzj849xhg7zj86rscwrmm83cpganlf4z"},
+	{OldAddress: "self1ychdx0fl0gt9c74afeeqr6ykv5j5rcqawxx2me", NewAddress: "self17xz6v4vtxcwfv793hj0cx2myav4f2lnycqyv2s"},
+	{OldAddress: "self1vwvjfg8ezhuspk5lamkakahc32yudf4wkgrsh6", NewAddress: "self1vgl693sr0m8w76ycd9k8knhxydh4y9h5eg5sdy"},
 }
 
 // Enter the list of address for which the vesting schedule needs to be postponed by 3 months.
@@ -103,15 +110,15 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkee
 
 	// Then handle address replacements separately
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
-	for oldAddr, newAddr := range addressReplacements {
-		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr, bankkeeper, stakingkeeper, distrkeeper); err != nil {
-			if err.Error() == fmt.Sprintf("account not found: %s", oldAddr) {
+	for _, replacement := range addressReplacements {
+		if err := replaceAccountAddress(ctx, k, replacement.OldAddress, replacement.NewAddress, bankkeeper, stakingkeeper, distrkeeper); err != nil {
+			if err.Error() == fmt.Sprintf("account not found: %s", replacement.OldAddress) {
 				ctx.Logger().Info("Skipping non-existent account for address replacement",
-					"old_address", oldAddr,
-					"new_address", newAddr)
+					"old_address", replacement.OldAddress,
+					"new_address", replacement.NewAddress)
 				continue
 			}
-			return fmt.Errorf("failed to replace address for %s: %w", oldAddr, err)
+			return fmt.Errorf("failed to replace address for %s: %w", replacement.OldAddress, err)
 		}
 	}
 
@@ -282,10 +289,11 @@ func replaceAccountAddress(
 		delegation stakingtypes.Delegation
 		validator  stakingtypes.Validator
 		tokens     sdk.Dec
+		valAddr    sdk.ValAddress
 	}
 
 	var delsToMove []DelInfo
-	validatorAddressMap := make(map[string]bool)
+	var validatorAddressList []string
 
 	// First pass - collect all delegations and validators
 	for _, del := range delegations {
@@ -302,9 +310,24 @@ func replaceAccountAddress(
 			delegation: del,
 			validator:  val,
 			tokens:     tokens,
+			valAddr:    valAddr,
 		})
-		validatorAddressMap[valAddr.String()] = true
+		
+		// Keep track of validator addresses in a deterministic way
+		found := false
+		for _, existingAddr := range validatorAddressList {
+			if existingAddr == del.ValidatorAddress {
+				found = true
+				break
+			}
+		}
+		if !found {
+			validatorAddressList = append(validatorAddressList, del.ValidatorAddress)
+		}
 	}
+
+	// Sort validator addresses for deterministic processing
+	sort.Strings(validatorAddressList)
 
 	// ---------- Create new base account ----------------------------------
 	newBaseAcc := authtypes.NewBaseAccount(
@@ -387,18 +410,27 @@ func replaceAccountAddress(
 
 	// ---------- Store validator reward information before any changes -----
 	// Store current validator periods and historicals for proper migration
-	validatorCurrentPeriods := make(map[string]uint64)
+	type ValidatorPeriodInfo struct {
+		validatorAddr string
+		period        uint64
+	}
+	
+	var validatorPeriods []ValidatorPeriodInfo
 
 	// Collect all validator periods first before making any changes
-	for _, delInfo := range delsToMove {
-		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
+	// Use the sorted validator address list for deterministic processing
+	for _, valAddrStr := range validatorAddressList {
+		valAddr, _ := sdk.ValAddressFromBech32(valAddrStr)
 
 		// Store current period for each validator
 		valCurrentRewards := dk.GetValidatorCurrentRewards(ctx, valAddr)
-		validatorCurrentPeriods[delInfo.delegation.ValidatorAddress] = valCurrentRewards.Period
+		validatorPeriods = append(validatorPeriods, ValidatorPeriodInfo{
+			validatorAddr: valAddrStr,
+			period:        valCurrentRewards.Period,
+		})
 
 		ctx.Logger().Info("Captured validator reward state",
-			"validator", delInfo.delegation.ValidatorAddress,
+			"validator", valAddrStr,
 			"current_period", valCurrentRewards.Period)
 	}
 
@@ -501,7 +533,14 @@ func replaceAccountAddress(
 		
 		// CRITICAL FIX: Set up proper reward state for new delegation
 		// We need the current period from before the migration
-		currentPeriod := validatorCurrentPeriods[del.ValidatorAddress]
+		// Find the period in our deterministic list
+		var currentPeriod uint64
+		for _, vp := range validatorPeriods {
+			if vp.validatorAddr == del.ValidatorAddress {
+				currentPeriod = vp.period
+				break
+			}
+		}
 
 		// Create starting info with current validator period
 		// This is critical to ensure rewards accrue correctly
