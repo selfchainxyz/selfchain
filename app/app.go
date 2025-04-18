@@ -449,6 +449,11 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler("v2", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		// Simple handler that just returns the existing version map
+		return fromVM, nil
+	})
+
 	// ... other modules keepers
 
 	// Create IBC Keeper
