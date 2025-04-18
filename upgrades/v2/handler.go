@@ -1103,7 +1103,6 @@ func contains(slice []string, item string) bool {
 	}
 	return false
 }
-
 func ReplaceAccountAddress3(
 	ctx sdk.Context,
 	ak authkeeper.AccountKeeper,
@@ -1137,7 +1136,6 @@ func ReplaceAccountAddress3(
 		"old_address", oldAddrStr,
 		"new_address", newAddrStr)
 
-	// ---------- Extract account properties ---------------------------------
 	var oldBaseAcc *authtypes.BaseAccount
 	var accType string
 	var accountHasVesting bool = false
@@ -1151,16 +1149,6 @@ func ReplaceAccountAddress3(
 
 	case *vestingtypes.PermanentLockedAccount:
 		accType = "permanent"
-		accountHasVesting = true
-		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
-
-	case *vestingtypes.ContinuousVestingAccount:
-		accType = "continuous"
-		accountHasVesting = true
-		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
-
-	case *vestingtypes.DelayedVestingAccount:
-		accType = "delayed"
 		accountHasVesting = true
 		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
 
@@ -1245,23 +1233,6 @@ func ReplaceAccountAddress3(
 
 			newAcc = newPeriodicAcc
 
-		case "continuous":
-			oldContAcc := oldAcc.(*vestingtypes.ContinuousVestingAccount)
-
-			// Create continuous vesting with SAME start and end times
-			newContAcc := vestingtypes.NewContinuousVestingAccount(
-				newBaseAcc,
-				oldContAcc.OriginalVesting,
-				oldContAcc.StartTime,
-				oldContAcc.EndTime,
-			)
-
-			// Set delegation amounts
-			newContAcc.DelegatedFree = oldContAcc.DelegatedFree
-			newContAcc.DelegatedVesting = oldContAcc.DelegatedVesting
-
-			newAcc = newContAcc
-
 		case "permanent":
 			oldPermAcc := oldAcc.(*vestingtypes.PermanentLockedAccount)
 
@@ -1276,22 +1247,6 @@ func ReplaceAccountAddress3(
 			newPermAcc.DelegatedVesting = oldPermAcc.DelegatedVesting
 
 			newAcc = newPermAcc
-
-		case "delayed":
-			oldDelayedAcc := oldAcc.(*vestingtypes.DelayedVestingAccount)
-
-			// Create new delayed vesting account with same end time
-			newDelayedAcc := vestingtypes.NewDelayedVestingAccount(
-				newBaseAcc,
-				oldDelayedAcc.OriginalVesting,
-				oldDelayedAcc.EndTime,
-			)
-
-			// Set delegation amounts
-			newDelayedAcc.DelegatedFree = oldDelayedAcc.DelegatedFree
-			newDelayedAcc.DelegatedVesting = oldDelayedAcc.DelegatedVesting
-
-			newAcc = newDelayedAcc
 		}
 	} else {
 		// For non-vesting accounts, just use a base account
