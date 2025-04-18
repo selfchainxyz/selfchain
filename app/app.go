@@ -901,7 +901,7 @@ func New(
 
 			// After loading, run module migrations for new modules
 			ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{
-				Height: 4790083,
+				Height: 4804679,
 				Time:   time.Now(),
 			})
 
@@ -914,7 +914,7 @@ func New(
 			//     calling directly, but many migrations look at plan.Name.
 			plan := upgradetypes.Plan{
 				Name:   v2.UpgradeName,
-				Height: 4790083, // ignored here
+				Height: 4804679, // ignored here
 				Info:   "",      // optional
 			}
 

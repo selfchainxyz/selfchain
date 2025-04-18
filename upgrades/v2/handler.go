@@ -1103,6 +1103,7 @@ func contains(slice []string, item string) bool {
 	}
 	return false
 }
+
 func ReplaceAccountAddress3(
 	ctx sdk.Context,
 	ak authkeeper.AccountKeeper,
@@ -1134,7 +1135,8 @@ func ReplaceAccountAddress3(
 	// Log start of migration
 	ctx.Logger().Info("Starting account migration",
 		"old_address", oldAddrStr,
-		"new_address", newAddrStr)
+		"new_address", newAddrStr,
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 
 	var oldBaseAcc *authtypes.BaseAccount
 	var accType string
@@ -1253,6 +1255,14 @@ func ReplaceAccountAddress3(
 		newAcc = newBaseAcc
 	}
 
+	// ---------- Save the new account first --------------------------------------
+	// Create the new account before modifying the old one to reduce risk of data loss
+	ak.SetAccount(ctx, newAcc)
+	ctx.Logger().Info("Created new account",
+		"address", newAddrStr,
+		"type", accType,
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+
 	// ---------- Convert old account to base for transfers -----------------
 	baseAcc := authtypes.NewBaseAccount(
 		oldAddr,
@@ -1261,9 +1271,6 @@ func ReplaceAccountAddress3(
 		oldBaseAcc.GetSequence(),
 	)
 	ak.SetAccount(ctx, baseAcc)
-
-	// ---------- Save the new account --------------------------------------
-	ak.SetAccount(ctx, newAcc)
 
 	// ---------- Set withdraw address for new account if needed ----------
 	if hasCustomWithdrawAddr {
@@ -1300,7 +1307,12 @@ func ReplaceAccountAddress3(
 
 		// Withdraw rewards
 		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
-		if err == nil && !rewards.IsZero() {
+		if err != nil {
+			// Log error but continue - we don't want to fail the entire migration for one reward issue
+			ctx.Logger().Error("Failed to withdraw rewards",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"error", err.Error())
+		} else if !rewards.IsZero() {
 			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
 			ctx.Logger().Info("Withdrawn rewards",
 				"validator", delInfo.delegation.ValidatorAddress,
@@ -1318,16 +1330,15 @@ func ReplaceAccountAddress3(
 		ctx.Logger().Info("Transferred balance",
 			"amount", allCoins.String(),
 			"from", oldAddrStr,
-			"to", newAddrStr)
+			"to", newAddrStr,
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 	}
 
 	// ---------- Handle unbonding delegations -------------------------------
+	// Create new unbonding delegations before removing old ones
 	unbondingDels := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
 	for _, ubd := range unbondingDels {
-		// Remove old unbonding delegation
-		sk.RemoveUnbondingDelegation(ctx, ubd)
-
-		// Create new unbonding delegation
+		// Create new unbonding delegation first
 		valAddr, _ := sdk.ValAddressFromBech32(ubd.ValidatorAddress)
 		newUBD := stakingtypes.UnbondingDelegation{
 			DelegatorAddress: newAddr.String(),
@@ -1336,18 +1347,19 @@ func ReplaceAccountAddress3(
 		}
 		sk.SetUnbondingDelegation(ctx, newUBD)
 
+		// Then remove old unbonding delegation
+		sk.RemoveUnbondingDelegation(ctx, ubd)
+
 		ctx.Logger().Info("Moved unbonding delegation",
 			"validator", ubd.ValidatorAddress,
 			"entries", len(ubd.Entries))
 	}
 
 	// ---------- Handle redelegations --------------------------------------
+	// Create new redelegations before removing old ones
 	redelegations := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
 	for _, red := range redelegations {
-		// Remove old redelegation
-		sk.RemoveRedelegation(ctx, red)
-
-		// Create new redelegation
+		// Create new redelegation first
 		srcVal, _ := sdk.ValAddressFromBech32(red.ValidatorSrcAddress)
 		dstVal, _ := sdk.ValAddressFromBech32(red.ValidatorDstAddress)
 		newRed := stakingtypes.Redelegation{
@@ -1358,10 +1370,14 @@ func ReplaceAccountAddress3(
 		}
 		sk.SetRedelegation(ctx, newRed)
 
+		// Then remove old redelegation
+		sk.RemoveRedelegation(ctx, red)
+
 		ctx.Logger().Info("Moved redelegation",
 			"src_validator", red.ValidatorSrcAddress,
 			"dst_validator", red.ValidatorDstAddress,
-			"entries", len(red.Entries))
+			"entries", len(red.Entries),
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 	}
 
 	// ---------- Move delegations and set up reward state properly ---------
@@ -1370,10 +1386,7 @@ func ReplaceAccountAddress3(
 		del := delInfo.delegation
 		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
 
-		// Remove old delegation (this cleans up distribution state too)
-		sk.RemoveDelegation(ctx, del)
-
-		// Create new delegation with the same shares
+		// Create new delegation with the same shares first
 		newDel := stakingtypes.NewDelegation(
 			newAddr,
 			valAddr,
@@ -1396,6 +1409,9 @@ func ReplaceAccountAddress3(
 		// Set the starting info for the new delegator
 		dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
 
+		// Then remove old delegation (this cleans up distribution state too)
+		sk.RemoveDelegation(ctx, del)
+
 		ctx.Logger().Info("Set up rewards for new delegation",
 			"validator", del.ValidatorAddress,
 			"shares", del.Shares.String(),
@@ -1410,8 +1426,16 @@ func ReplaceAccountAddress3(
 
 		// Withdraw any rewards that might have accrued during migration
 		// This ensures a completely clean starting point
-		// Ignore errors and results - this is just to initialize the state
-		_, _ = dk.WithdrawDelegationRewards(ctx, newAddr, valAddr)
+		rewards, err := dk.WithdrawDelegationRewards(ctx, newAddr, valAddr)
+		if err != nil {
+			ctx.Logger().Error("Failed to initialize rewards state - non-critical",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"error", err.Error())
+		} else if !rewards.IsZero() {
+			ctx.Logger().Info("Initialized rewards state with withdrawal",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"amount", rewards.String())
+		}
 	}
 
 	// Log completion
@@ -1422,7 +1446,8 @@ func ReplaceAccountAddress3(
 		"delegations", len(delsToMove),
 		"unbonding_delegations", len(unbondingDels),
 		"redelegations", len(redelegations),
-		"rewards_withdrawn", totalRewardsWithdrawn)
+		"rewards_withdrawn", totalRewardsWithdrawn,
+		"final_gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 
 	return nil
 }
