@@ -2,7 +2,6 @@ package v2
 
 import (
 	"fmt"
-	"sort"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -14,6 +13,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"sort"
 )
 
 const (
@@ -248,7 +248,7 @@ func replaceAccountAddress(
 	ctx.Logger().Info("Starting account migration",
 		"old_address", oldAddrStr,
 		"new_address", newAddrStr,
-		"gas_remaining", ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed())
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 
 	var oldBaseAcc *authtypes.BaseAccount
 	var accType string
@@ -312,9 +312,9 @@ func replaceAccountAddress(
 			tokens:     tokens,
 			valAddr:    valAddr,
 		})
-		
+
 		// Keep track of validator addresses in a deterministic way
-		found := false
+		found = false
 		for _, existingAddr := range validatorAddressList {
 			if existingAddr == del.ValidatorAddress {
 				found = true
@@ -386,10 +386,10 @@ func replaceAccountAddress(
 	// ---------- Save the new account first --------------------------------------
 	// Create the new account before modifying the old one to reduce risk of data loss
 	ak.SetAccount(ctx, newAcc)
-	ctx.Logger().Info("Created new account", 
-		"address", newAddrStr, 
+	ctx.Logger().Info("Created new account",
+		"address", newAddrStr,
 		"type", accType,
-		"gas_remaining", ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed())
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 
 	// ---------- Convert old account to base for transfers -----------------
 	baseAcc := authtypes.NewBaseAccount(
@@ -414,7 +414,7 @@ func replaceAccountAddress(
 		validatorAddr string
 		period        uint64
 	}
-	
+
 	var validatorPeriods []ValidatorPeriodInfo
 
 	// Collect all validator periods first before making any changes
@@ -468,7 +468,7 @@ func replaceAccountAddress(
 			"amount", allCoins.String(),
 			"from", oldAddrStr,
 			"to", newAddrStr,
-			"gas_remaining", ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed())
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 	}
 
 	// ---------- Handle unbonding delegations -------------------------------
@@ -483,7 +483,7 @@ func replaceAccountAddress(
 			Entries:          ubd.Entries,
 		}
 		sk.SetUnbondingDelegation(ctx, newUBD)
-		
+
 		// Then remove old unbonding delegation
 		sk.RemoveUnbondingDelegation(ctx, ubd)
 
@@ -506,7 +506,7 @@ func replaceAccountAddress(
 			Entries:             red.Entries,
 		}
 		sk.SetRedelegation(ctx, newRed)
-		
+
 		// Then remove old redelegation
 		sk.RemoveRedelegation(ctx, red)
 
@@ -514,7 +514,7 @@ func replaceAccountAddress(
 			"src_validator", red.ValidatorSrcAddress,
 			"dst_validator", red.ValidatorDstAddress,
 			"entries", len(red.Entries),
-			"gas_remaining", ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed())
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 	}
 
 	// ---------- Move delegations and set up reward state properly ---------
@@ -530,7 +530,7 @@ func replaceAccountAddress(
 			del.Shares,
 		)
 		sk.SetDelegation(ctx, newDel)
-		
+
 		// CRITICAL FIX: Set up proper reward state for new delegation
 		// We need the current period from before the migration
 		// Find the period in our deterministic list
@@ -552,7 +552,7 @@ func replaceAccountAddress(
 
 		// Set the starting info for the new delegator
 		dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
-		
+
 		// Then remove old delegation (this cleans up distribution state too)
 		sk.RemoveDelegation(ctx, del)
 
@@ -591,7 +591,7 @@ func replaceAccountAddress(
 		"unbonding_delegations", len(unbondingDels),
 		"redelegations", len(redelegations),
 		"rewards_withdrawn", totalRewardsWithdrawn,
-		"final_gas_remaining", ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed())
+		"final_gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
 
 	return nil
 }
