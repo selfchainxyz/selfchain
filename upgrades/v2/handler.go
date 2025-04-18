@@ -1174,19 +1174,15 @@ func ReplaceAccountAddress3(
 		}
 	}
 
-	// Get spendable balance info for logging
-	spendableCoins := bk.SpendableCoins(ctx, oldAddr)
-	totalBalance := bk.GetAllBalances(ctx, oldAddr)
-
-	ctx.Logger().Info("Account properties",
-		"type", accType,
-		"total_balance", totalBalance,
-		"spendable_balance", spendableCoins)
+	// ---------- Get withdraw address before any changes --------------------
+	withdrawAddr := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
+	hasCustomWithdrawAddr := !withdrawAddr.Equals(oldAddr)
 
 	// ---------- Handle delegations first ------------------------------------
 	const maxRetrieve = uint16(1<<16 - 1) // 65535
 	delegations := sk.GetDelegatorDelegations(ctx, oldAddr, maxRetrieve)
 
+	// Store delegation info for later use
 	type DelInfo struct {
 		delegation stakingtypes.Delegation
 		validator  stakingtypes.Validator
@@ -1194,7 +1190,9 @@ func ReplaceAccountAddress3(
 	}
 
 	var delsToMove []DelInfo
+	validatorAddressMap := make(map[string]bool)
 
+	// First pass - collect all delegations and validators
 	for _, del := range delegations {
 		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
 		val, found := sk.GetValidator(ctx, valAddr)
@@ -1210,13 +1208,8 @@ func ReplaceAccountAddress3(
 			validator:  val,
 			tokens:     tokens,
 		})
+		validatorAddressMap[valAddr.String()] = true
 	}
-
-	// ---------- Handle unbonding delegations -------------------------------
-	unbondingDels := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
-
-	// ---------- Handle redelegations --------------------------------------
-	redelegations := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
 
 	// ---------- Create new base account ----------------------------------
 	newBaseAcc := authtypes.NewBaseAccount(
@@ -1317,8 +1310,51 @@ func ReplaceAccountAddress3(
 	// ---------- Save the new account --------------------------------------
 	ak.SetAccount(ctx, newAcc)
 
+	// ---------- Set withdraw address for new account if needed ----------
+	if hasCustomWithdrawAddr {
+		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
+		ctx.Logger().Info("Set withdraw address",
+			"delegator", newAddrStr,
+			"withdraw_addr", withdrawAddr.String())
+	}
+
+	// ---------- Store validator reward information before any changes -----
+	// Store current validator periods and historicals for proper migration
+	validatorCurrentPeriods := make(map[string]uint64)
+
+	// Collect all validator periods first before making any changes
+	for _, delInfo := range delsToMove {
+		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
+
+		// Store current period for each validator
+		valCurrentRewards := dk.GetValidatorCurrentRewards(ctx, valAddr)
+		validatorCurrentPeriods[delInfo.delegation.ValidatorAddress] = valCurrentRewards.Period
+
+		ctx.Logger().Info("Captured validator reward state",
+			"validator", delInfo.delegation.ValidatorAddress,
+			"current_period", valCurrentRewards.Period)
+	}
+
+	// ---------- First, handle existing rewards ---------------------------
+	totalRewardsWithdrawn := sdk.NewCoins()
+
+	// Force withdrawal of any existing rewards - this is important to "reset"
+	// the reward state and prevent double-counting
+	for _, delInfo := range delsToMove {
+		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
+
+		// Withdraw rewards
+		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
+		if err == nil && !rewards.IsZero() {
+			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
+			ctx.Logger().Info("Withdrawn rewards",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"amount", rewards.String())
+		}
+	}
+
 	// ---------- Transfer all balances ------------------------------------
-	// Transfer the full balance
+	// Transfer the full balance, including any withdrawn rewards
 	allCoins := bk.GetAllBalances(ctx, oldAddr)
 	if !allCoins.IsZero() {
 		if err := bk.SendCoins(ctx, oldAddr, newAddr, allCoins); err != nil {
@@ -1330,40 +1366,8 @@ func ReplaceAccountAddress3(
 			"to", newAddrStr)
 	}
 
-	// ---------- Move delegations -----------------------------------------
-	for _, delInfo := range delsToMove {
-		del := delInfo.delegation
-
-		// Remove old delegation
-		sk.RemoveDelegation(ctx, del)
-
-		// Create new delegation
-		newDel := stakingtypes.NewDelegation(
-			newAddr,
-			del.GetValidatorAddr(),
-			del.Shares,
-		)
-		sk.SetDelegation(ctx, newDel)
-
-		// Handle rewards by setting up new delegation reward state
-		period := dk.GetValidatorCurrentRewards(ctx, del.GetValidatorAddr()).Period
-		height := uint64(ctx.BlockHeight())
-
-		// Create and set starting info for new delegation
-		startInfo := distrtypes.NewDelegatorStartingInfo(
-			period,
-			delInfo.tokens,
-			height,
-		)
-		dk.SetDelegatorStartingInfo(ctx, del.GetValidatorAddr(), newAddr, startInfo)
-
-		ctx.Logger().Info("Moved delegation",
-			"validator", del.ValidatorAddress,
-			"shares", del.Shares.String(),
-			"tokens", delInfo.tokens.String())
-	}
-
-	// ---------- Move unbonding delegations ------------------------------
+	// ---------- Handle unbonding delegations -------------------------------
+	unbondingDels := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
 	for _, ubd := range unbondingDels {
 		// Remove old unbonding delegation
 		sk.RemoveUnbondingDelegation(ctx, ubd)
@@ -1382,7 +1386,8 @@ func ReplaceAccountAddress3(
 			"entries", len(ubd.Entries))
 	}
 
-	// ---------- Move redelegations -------------------------------------
+	// ---------- Handle redelegations --------------------------------------
+	redelegations := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
 	for _, red := range redelegations {
 		// Remove old redelegation
 		sk.RemoveRedelegation(ctx, red)
@@ -1404,70 +1409,55 @@ func ReplaceAccountAddress3(
 			"entries", len(red.Entries))
 	}
 
-	// ---------- Migrate rewards directly -----------------------------------
-	// The critical issue is that rewards in Cosmos SDK are stored separately in the
-	// distribution module state, not as part of account balances
+	// ---------- Move delegations and set up reward state properly ---------
+	// Need to update validator for each delegation
+	for _, delInfo := range delsToMove {
+		del := delInfo.delegation
+		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
 
-	// We need to use the withdrawal approach to capture rewards
-	allValidators := sk.GetAllValidators(ctx)
+		// Remove old delegation (this cleans up distribution state too)
+		sk.RemoveDelegation(ctx, del)
 
-	ctx.Logger().Info("Starting reward migration",
-		"old_address", oldAddrStr,
-		"new_address", newAddrStr,
-		"validator_count", len(allValidators))
+		// Create new delegation with the same shares
+		newDel := stakingtypes.NewDelegation(
+			newAddr,
+			valAddr,
+			del.Shares,
+		)
+		sk.SetDelegation(ctx, newDel)
 
-	// 1. Migrate delegator withdraw address if custom
-	withdrawAddr := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
-	if !withdrawAddr.Equals(oldAddr) {
-		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
-		ctx.Logger().Info("Migrated withdraw address",
-			"delegator", newAddrStr,
-			"withdraw_addr", withdrawAddr.String())
+		// CRITICAL FIX: Set up proper reward state for new delegation
+		// We need the current period from before the migration
+		currentPeriod := validatorCurrentPeriods[del.ValidatorAddress]
+
+		// Create starting info with current validator period
+		// This is critical to ensure rewards accrue correctly
+		startInfo := distrtypes.NewDelegatorStartingInfo(
+			currentPeriod,             // Use current period for proper tracking
+			delInfo.tokens,            // Current token value of shares
+			uint64(ctx.BlockHeight()), // Current block height
+		)
+
+		// Set the starting info for the new delegator
+		dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
+
+		ctx.Logger().Info("Set up rewards for new delegation",
+			"validator", del.ValidatorAddress,
+			"shares", del.Shares.String(),
+			"tokens", delInfo.tokens.String(),
+			"current_period", currentPeriod)
 	}
 
-	// 2. Check the balances before withdrawing
-	balanceBefore := bk.GetAllBalances(ctx, oldAddr)
+	// ---------- Final step: Force a rewards claim to initialize properly -----
+	// This ensures the delegator starts with a clean slate for future rewards
+	for _, delInfo := range delsToMove {
+		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
 
-	// 3. Try withdrawing rewards from all validators
-	for _, val := range allValidators {
-		valAddr := val.GetOperator()
-
-		// Try withdrawing the rewards - if the delegator has no rewards
-		// with this validator, this will be a no-op
-		_, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
-		if err == nil {
-			ctx.Logger().Info("Attempted to withdraw rewards",
-				"validator", val.OperatorAddress)
-		}
+		// Withdraw any rewards that might have accrued during migration
+		// This ensures a completely clean starting point
+		// Ignore errors and results - this is just to initialize the state
+		_, _ = dk.WithdrawDelegationRewards(ctx, newAddr, valAddr)
 	}
-
-	// 4. Get balance after withdrawals and calculate difference
-	balanceAfter := bk.GetAllBalances(ctx, oldAddr)
-	rewardsWithdrawn := sdk.Coins{}
-
-	// Calculate difference - need to handle each denomination separately
-	for _, afterCoin := range balanceAfter {
-		foundBefore := false
-		for _, beforeCoin := range balanceBefore {
-			if afterCoin.Denom == beforeCoin.Denom {
-				foundBefore = true
-				// Only add if there's an increase
-				if afterCoin.Amount.GT(beforeCoin.Amount) {
-					diff := afterCoin.Amount.Sub(beforeCoin.Amount)
-					rewardsWithdrawn = rewardsWithdrawn.Add(sdk.NewCoin(afterCoin.Denom, diff))
-				}
-				break
-			}
-		}
-		// If denom wasn't in the before balance, the entire amount is new
-		if !foundBefore {
-			rewardsWithdrawn = rewardsWithdrawn.Add(afterCoin)
-		}
-	}
-
-	ctx.Logger().Info("Total rewards withdrawn for transfer",
-		"address", oldAddrStr,
-		"rewards_amount", rewardsWithdrawn)
 
 	// Log completion
 	ctx.Logger().Info("Account migration complete",
@@ -1476,7 +1466,8 @@ func ReplaceAccountAddress3(
 		"account_type", accType,
 		"delegations", len(delsToMove),
 		"unbonding_delegations", len(unbondingDels),
-		"redelegations", len(redelegations))
+		"redelegations", len(redelegations),
+		"rewards_withdrawn", totalRewardsWithdrawn)
 
 	return nil
 }
