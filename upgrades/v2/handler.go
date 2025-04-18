@@ -604,15 +604,7 @@ func replaceAccountAddress2(
 
 	// Force all delegated vesting to move for specific address replacements
 	// This is a critical fix for the issue described
-	if contains([]string{
-		"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9",
-		"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w",
-		"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl",
-		"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz",
-		"self18fam8qwdxk70lz2jxvz5wfj6c3pa6dy9pwlj40",
-		"self15y0sxd8zrzynuhsv76v6888u2ekef7a7xsj7gs",
-		"self1maxcxghzl09glkqych3hhfcuvza56es7c4t4uy",
-	}, oldAddress) {
+	if _, exists := addressReplacements[oldAddress]; exists {
 		// For these specific addresses, if they have delegated vesting,
 		// ensure ALL of it moves with the unvested amount
 		if !delegatedVesting.IsZero() && !unvestedAmount.IsZero() {
@@ -913,12 +905,7 @@ func replaceAccountAddress2(
 		fixedPeriods := []vestingtypes.Period{}
 
 		// For the special addresses, ensure periods have consistent values
-		if contains([]string{
-			"self1yqtry709yamnqsaj0heav7pxz72958a6ll0qc9",
-			"self1pf5ffkmvda7d93jyfvxcvep32t2863gcstsu3w",
-			"self1hnlvp7z7s24m86utfenwzkwce8nv56hk434fyl",
-			"self15qpk886wcrmvzwxxkpz0zw2avmm2yc76uay2jz",
-		}, oldAddress) {
+		if _, exists := addressReplacements[oldAddress]; exists && accType == "periodic" {
 			// This is a periodic vesting account that needs special handling
 			periodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
 
