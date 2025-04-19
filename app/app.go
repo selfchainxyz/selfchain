@@ -872,7 +872,15 @@ func New(
 			}
 		} else {
 			app.UpgradeKeeper.SetUpgradeHandler(
-				v2.UpgradeName,
+				"v2",
+				func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+					// Simple handler that just returns the existing version map
+					return fromVM, nil
+				},
+			)
+
+			app.UpgradeKeeper.SetUpgradeHandler(
+				"v3",
 				v2.CreateUpgradeHandler(
 					app.mm,
 					app.configurator,
@@ -884,7 +892,7 @@ func New(
 			)
 
 			if upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-				if upgradeInfo.Name == "v2" {
+				if upgradeInfo.Name == "v3" {
 					storeUpgrades := storetypes.StoreUpgrades{
 						Added: []string{
 							wasmtypes.ModuleName,
