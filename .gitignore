@@ -12,3 +12,10 @@ write-file-atomic-*
 localnet/**/cosmovisor
 localnet/val-bob/data/priv_validator_state.json
 docs/static/openapi.yml
+proto/buf.gen.gogo.yaml
+proto/buf.gen.sta.yaml
+proto/buf.gen.swagger.yaml
+proto/buf.gen.ts.yaml
+proto/buf.lock
+proto/buf.yaml
+setup-staging.sh
