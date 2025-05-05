@@ -859,13 +859,6 @@ func New(
 		}
 	}
 
-	app.UpgradeKeeper.SetUpgradeHandler(
-		"v2",
-		func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			// Simple handler that just returns the existing version map
-			return fromVM, nil
-		})
-
 	if loadLatest {
 		if isDevelopmentEnv() {
 			if err := app.LoadLatestVersion(); err != nil {
@@ -876,14 +869,6 @@ func New(
 				tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 			}
 		} else {
-			app.UpgradeKeeper.SetUpgradeHandler(
-				"v2",
-				func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-					// Simple handler that just returns the existing version map
-					return fromVM, nil
-				},
-			)
-
 			app.UpgradeKeeper.SetUpgradeHandler(
 				"v3",
 				v2.CreateUpgradeHandler(
