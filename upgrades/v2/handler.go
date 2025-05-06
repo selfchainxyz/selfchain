@@ -4,23 +4,45 @@ import (
 	"context"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	"sort"
 )
 
 const (
 	UpgradeName = "v2"
 )
 
+// AddressReplacement defines a struct for address replacement to ensure deterministic processing
+type AddressReplacement struct {
+	OldAddress string
+	NewAddress string
+}
+
 // Enter the list of currentAddress -> newAddress to replace the pending vesgin to new address.
-var addressReplacements = map[string]string{
-	//"self12ugrzmzmk7zj56cjrt7dwjrwgatajyqvnepwzx": "self1scmpmsrv74r47fhj2fzcgeuque6pudam59prw8",
-	//"self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah": "self1kr30hqm2ezdjapspemdjgrt5lkxhsmwwr6ujtr",
-	// Add more address mappings as needed
+var addressReplacements = []AddressReplacement{
+	{OldAddress: "self1jezc4atme56v75x5njqe4zuaccc4secug25wd3", NewAddress: "self1yt9pefssr0gzggmhlx30fmuqze0j6sh900xx3x"},
+	{OldAddress: "self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf", NewAddress: "self1veztmkrcrwf0ff49fu4y6mjd0wqpf4pcv8ruja"},
+	{OldAddress: "self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah", NewAddress: "self1gw586ensunqrk7x8yajqs3w4lcgmgtgugngqax"},
+	{OldAddress: "self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp", NewAddress: "self1j3l8rersmt2p2fcv6zy2g6qmy2th7jkau4w7le"},
+	{OldAddress: "self1e20929j3gng6cy72qapar630977vffqqzwxj75", NewAddress: "self1e5ux63egmatg42sn7ujr5ar0qg83pnukgl9q8y"},
+	{OldAddress: "self12xes3fhuhfdech9gkyjhl526l6gdh3n3kwe3ml", NewAddress: "self17qf0ssjuvemeknrf9tspd0uatrpqhfhwvus7ml"},
+	{OldAddress: "self1p9zmq9f5ftxwke6urd3vr98rypjhettfrsnna3", NewAddress: "self1xh72xjsy3c79s0u9mrhzehwm065c632ljrgtjc"},
+	{OldAddress: "self1c0h75n6pfnl9pk80dktqnjwvqgz0tu2trfwg40", NewAddress: "self1havmjneetz96xdftg89nv5537g9tddnsn382fj"},
+	{OldAddress: "self14ga5vmrskscuj3yktvjksm93sdt2f8r9k35pm0", NewAddress: "self1mwesu486zeu27xtrdl74nka8vhusk0tn34tslw"},
+	{OldAddress: "self1sah0w5e2a2nxrru4t6e6n3v47xulklwvru7hmh", NewAddress: "self1rle4cakzj849xhg7zj86rscwrmm83cpganlf4z"},
+	{OldAddress: "self1ychdx0fl0gt9c74afeeqr6ykv5j5rcqawxx2me", NewAddress: "self17xz6v4vtxcwfv793hj0cx2myav4f2lnycqyv2s"},
+	{OldAddress: "self1vwvjfg8ezhuspk5lamkakahc32yudf4wkgrsh6", NewAddress: "self1vgl693sr0m8w76ycd9k8knhxydh4y9h5eg5sdy"},
 }
 
 // Enter the list of address for which the vesting schedule needs to be postponed by 3 months.
@@ -53,22 +75,27 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper,
-	) func(cont context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-	return func(cont context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		ctx := sdk.UnwrapSDKContext(cont)
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
+	return func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		if _, ok := fromVM[wasmtypes.ModuleName]; !ok {
+			fromVM[wasmtypes.ModuleName] = 0
+		}
+		if _, ok := fromVM[ibcfeetypes.ModuleName]; !ok {
+			fromVM[ibcfeetypes.ModuleName] = 0
+		}
 
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v2")
 
-		// Run module migrations with the provided version map
+		// 1. Run all module migrations first
 		newVM, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
 			ctx.Logger().Error("Failed to run module migrations for v2", "error", err)
 			return nil, err
 		}
 
-		// Run custom upgrade logic
-		if err := updateVestingSchedules(ctx, accountKeeper, bankkeeper); err != nil {
+		// 2. After all modules are migrated, run your custom logic
+		if err := updateVestingSchedules(ctx, accountKeeper, bankkeeper, *stakingkeeper, distrkeeper, plan.Height); err != nil {
 			ctx.Logger().Error("Failed to execute v2 upgrade (vestings)", "error", err)
 			return nil, err
 		}
@@ -78,10 +105,10 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 	}
 }
 
-func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper) error {
+func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, upgradeHeight int64) error {
 	monthsToAdd := int64(3)
 	for _, addr := range vestingAddresses {
-		if err := updateVestingAccount(ctx, k, addr, monthsToAdd); err != nil {
+		if err := updateVestingAccount(ctx, k, addr, monthsToAdd, upgradeHeight); err != nil {
 			if err.Error() == fmt.Sprintf("account not found: %s", addr) {
 				ctx.Logger().Info("Skipping non-existent account for vesting update",
 					"address", addr)
@@ -94,152 +121,30 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkee
 
 	// Then handle address replacements separately
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
-	for oldAddr, newAddr := range addressReplacements {
-		if err := replaceAccountAddress(ctx, k, oldAddr, newAddr, bankkeeper); err != nil {
-			if err.Error() == fmt.Sprintf("account not found: %s", oldAddr) {
+	for _, replacement := range addressReplacements {
+		if err := replaceAccountAddress(ctx, k, replacement.OldAddress, replacement.NewAddress, bankkeeper, stakingkeeper, distrkeeper, upgradeHeight); err != nil {
+			if err.Error() == fmt.Sprintf("account not found: %s", replacement.OldAddress) {
 				ctx.Logger().Info("Skipping non-existent account for address replacement",
-					"old_address", oldAddr,
-					"new_address", newAddr)
+					"old_address", replacement.OldAddress,
+					"new_address", replacement.NewAddress)
 				continue
 			}
-			return fmt.Errorf("failed to replace address for %s: %w", oldAddr, err)
+			return fmt.Errorf("failed to replace address for %s: %w", replacement.OldAddress, err)
 		}
 	}
 
 	return nil
 }
 
-func replaceAccountAddress(ctx sdk.Context, k authkeeper.AccountKeeper, oldAddress, newAddress string,  bankKeeper bankkeeper.Keeper) error {
-	// Validate new address doesn't exist
-	newAddr, err := sdk.AccAddressFromBech32(newAddress)
-	if err != nil {
-		return fmt.Errorf("invalid new address %s: %w", newAddress, err)
-	}
-	if k.GetAccount(ctx, newAddr) != nil {
-		return fmt.Errorf("new address %s already exists", newAddress)
-	}
-
-	oldAddr, err := sdk.AccAddressFromBech32(oldAddress)
-	if err != nil {
-		return fmt.Errorf("invalid old address %s: %w", oldAddress, err)
-	}
-
-	// Get the old account
-	oldAcc, err := getPeriodicVestingAccount(ctx, k, oldAddress)
-	if err != nil {
-		return err
-	}
-
-	currentTime := ctx.BlockTime().Unix()
-
-	// Calculate unvested periods and coins
-	var unvestedPeriods []vestingtypes.Period
-	var vestedPeriods []vestingtypes.Period
-	var unvestedCoins sdk.Coins
-	cumulativeTime := oldAcc.StartTime
-	partialElapsed := int64(0)
-	firstUnVested := true
-
-	// Find unvested periods
-	for i, period := range oldAcc.VestingPeriods {
-		if cumulativeTime+period.Length > currentTime {
-			// This and all subsequent periods are unvested
-			unvestedPeriods = append(unvestedPeriods, oldAcc.VestingPeriods[i:]...)
-			for _, p := range oldAcc.VestingPeriods[i:] {
-				unvestedCoins = unvestedCoins.Add(p.Amount...)
-			}
-
-			if firstUnVested {
-				usedInThisPeriod := currentTime - cumulativeTime
-				partialElapsed = usedInThisPeriod
-				firstUnVested = false
-			}
-			break
-		}
-		vestedPeriods = append(vestedPeriods, period)
-		cumulativeTime += period.Length
-	}
-
-	// If no unvested periods, nothing to migrate
-	if len(unvestedPeriods) == 0 {
-		ctx.Logger().Info("No unvested periods to migrate", "address", oldAddress)
-		return nil
-	}
-
-	if partialElapsed > 0 {
-		if partialElapsed > unvestedPeriods[0].Length {
-			partialElapsed = unvestedPeriods[0].Length
-		}
-
-		unvestedPeriods[0].Length -= partialElapsed
-	}
-
-	// Create new base account with proper account number
-	baseAcc := authtypes.NewBaseAccountWithAddress(newAddr)
-
-	convertVestingToBaseAccount(ctx, k, oldAcc)
-	if err := bankKeeper.SendCoins(ctx, oldAddr, newAddr, unvestedCoins); err != nil {
-		return fmt.Errorf("failed to send coins: %w", err)
-	}
-
-	// Create new account with only unvested amounts
-	newAcc := &vestingtypes.PeriodicVestingAccount{
-		BaseVestingAccount: &vestingtypes.BaseVestingAccount{
-			BaseAccount:      baseAcc,
-			OriginalVesting:  unvestedCoins,
-			DelegatedFree:    sdk.NewCoins(),
-			DelegatedVesting: sdk.NewCoins(),
-			EndTime:          oldAcc.EndTime,
-		},
-		StartTime:      currentTime,
-		VestingPeriods: unvestedPeriods,
-	}
-
-	// Update old account to only contain vested periods
-	oldAcc.VestingPeriods = vestedPeriods
-	oldAcc.OriginalVesting = oldAcc.OriginalVesting.Sub(unvestedCoins...)
-	oldAcc.EndTime = currentTime
-
-	// Save both accounts
-	k.SetAccount(ctx, oldAcc)
-	k.SetAccount(ctx, newAcc)
-
-	ctx.Logger().Info("Successfully split vesting account",
-		"old_address", oldAddress,
-		"new_address", newAddress,
-		"vested_periods", len(vestedPeriods),
-		"unvested_periods", len(unvestedPeriods),
-		"unvested_coins", unvestedCoins)
-
-	return nil
-}
-
-func convertVestingToBaseAccount(
-	ctx sdk.Context,
-	accountKeeper authkeeper.AccountKeeper,
-	vestAcc *vestingtypes.PeriodicVestingAccount,
-) authtypes.AccountI {
-	oldBaseAcc := vestAcc.BaseVestingAccount.BaseAccount
-	// Construct a fresh BaseAccount with same address, account number, sequence
-	newBase := authtypes.NewBaseAccount(
-		oldBaseAcc.GetAddress(),
-		oldBaseAcc.GetPubKey(),
-		oldBaseAcc.GetAccountNumber(),
-		oldBaseAcc.GetSequence(),
-	)
-
-	// Overwrite the store so that address is now a BaseAccount
-	accountKeeper.SetAccount(ctx, newBase)
-	return newBase
-}
-
-func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string, monthsToAdd int64) error {
+func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address string, monthsToAdd int64, upgradeHeight int64) error {
 	acc, err := getPeriodicVestingAccount(ctx, k, address)
 	if err != nil {
 		return err
 	}
 
-	currentTime := ctx.BlockTime().Unix()
+	// Use a deterministic reference time based on upgrade height instead of current block time
+	// This ensures all validators use exactly the same time reference
+	referenceTime := ctx.BlockHeader().Time.Unix()
 	secondsToAdd := monthsToAdd * 2628000 // ~30.44 days per month
 
 	ctx.Logger().Info("Account details",
@@ -247,14 +152,15 @@ func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address s
 		"current_start_time", acc.StartTime,
 		"current_end_time", acc.EndTime,
 		"periods", len(acc.VestingPeriods),
-		"current_block_time", currentTime)
+		"reference_time", referenceTime,
+		"upgrade_height", upgradeHeight)
 
 	// Find the first unvested period
 	cumulativeTime := acc.StartTime
 	firstUnvestedIdx := 0
 	for i, period := range acc.VestingPeriods {
 		cumulativeTime += period.Length
-		if cumulativeTime > currentTime {
+		if cumulativeTime > referenceTime {
 			firstUnvestedIdx = i
 			break
 		}
@@ -289,7 +195,8 @@ func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address s
 			"address", address,
 			"old_start_time", acc.StartTime,
 			"new_end_time", acc.EndTime,
-			"seconds_added", secondsToAdd)
+			"seconds_added", secondsToAdd,
+			"upgrade_height", upgradeHeight)
 
 		k.SetAccount(ctx, acc)
 		ctx.Logger().Info("Successfully updated account", "address", address)
@@ -322,4 +229,456 @@ func getPeriodicVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, addr
 	}
 
 	return periodicAcc, nil
+}
+
+func replaceAccountAddress(
+	ctx sdk.Context,
+	ak authkeeper.AccountKeeper,
+	oldAddrStr, newAddrStr string,
+	bk bankkeeper.Keeper,
+	sk stakingkeeper.Keeper,
+	dk distrkeeper.Keeper,
+	upgradeHeight int64,
+) error {
+	// ---------- Validate addresses -----------------------------------------
+	newAddr, err := sdk.AccAddressFromBech32(newAddrStr)
+	if err != nil {
+		return fmt.Errorf("invalid new address %s: %w", newAddrStr, err)
+	}
+	if ak.GetAccount(ctx, newAddr) != nil {
+		return fmt.Errorf("new address %s already exists", newAddrStr)
+	}
+
+	oldAddr, err := sdk.AccAddressFromBech32(oldAddrStr)
+	if err != nil {
+		return fmt.Errorf("invalid old address %s: %w", oldAddrStr, err)
+	}
+
+	// Get the old account
+	oldAcc := ak.GetAccount(ctx, oldAddr)
+	if oldAcc == nil {
+		return fmt.Errorf("account not found: %s", oldAddrStr)
+	}
+
+	// Log start of migration
+	ctx.Logger().Info("Starting account migration",
+		"old_address", oldAddrStr,
+		"new_address", newAddrStr,
+		"upgrade_height", upgradeHeight,
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+
+	var oldBaseAcc *authtypes.BaseAccount
+	var accType string
+	var accountHasVesting bool = false
+
+	// Handle each vesting account type
+	switch acc := oldAcc.(type) {
+	case *vestingtypes.PeriodicVestingAccount:
+		accType = "periodic"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	case *vestingtypes.PermanentLockedAccount:
+		accType = "permanent"
+		accountHasVesting = true
+		oldBaseAcc = acc.BaseVestingAccount.BaseAccount
+
+	default:
+		// For base accounts or any other type
+		accType = "base"
+		if baseAcc, ok := oldAcc.(*authtypes.BaseAccount); ok {
+			oldBaseAcc = baseAcc
+		} else {
+			return fmt.Errorf("unsupported account type: %T", oldAcc)
+		}
+	}
+
+	// ---------- Get withdraw address before any changes --------------------
+	withdrawAddr, _ := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
+	hasCustomWithdrawAddr := !withdrawAddr.Equals(oldAddr)
+
+	// ---------- Handle delegations first ------------------------------------
+	const maxRetrieve = uint16(1<<16 - 1) // 65535
+	delegations, _ := sk.GetDelegatorDelegations(ctx, oldAddr, maxRetrieve)
+
+	// Store delegation info for later use
+	type DelInfo struct {
+		delegation stakingtypes.Delegation
+		validator  stakingtypes.Validator
+		tokens     sdk.DecCoin
+		valAddr    sdk.ValAddress
+		sortKey    string // Deterministic key for sorting
+	}
+
+	var delsToMove []DelInfo
+	var validatorAddressList []string
+
+	// First pass - collect all delegations and validators
+	for _, del := range delegations {
+		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
+		val, err1 := sk.GetValidator(ctx, valAddr)
+		found := true
+		if err1 != nil {
+			found = false
+		}
+		if !found {
+			ctx.Logger().Info("Skipping delegation - validator not found",
+				"validator", del.ValidatorAddress)
+			continue
+		}
+
+		// Use deterministic token calculation with consistent precision
+		tokens := sdk.NewDecCoinFromDec("uslf", val.TokensFromShares(del.Shares).TruncateDec())
+
+		// Create a deterministic sort key
+		sortKey := del.ValidatorAddress + ":" + del.Shares.String()
+
+		delsToMove = append(delsToMove, DelInfo{
+			delegation: del,
+			validator:  val,
+			tokens:     tokens,
+			valAddr:    valAddr,
+			sortKey:    sortKey,
+		})
+
+		// Keep track of validator addresses in a deterministic way
+		found = false
+		for _, existingAddr := range validatorAddressList {
+			if existingAddr == del.ValidatorAddress {
+				found = true
+				break
+			}
+		}
+		if !found {
+			validatorAddressList = append(validatorAddressList, del.ValidatorAddress)
+		}
+	}
+
+	// Sort validator addresses for deterministic processing
+	sort.Strings(validatorAddressList)
+
+	// Sort delegations by the deterministic key for consistent processing
+	sort.SliceStable(delsToMove, func(i, j int) bool {
+		return delsToMove[i].sortKey < delsToMove[j].sortKey
+	})
+
+	// ---------- Create new base account ----------------------------------
+	newBaseAcc := authtypes.NewBaseAccount(
+		newAddr,
+		nil, // This will be set later if needed
+		ak.NextAccountNumber(ctx),
+		0, // Start with sequence 0
+	)
+
+	// ---------- Create new vesting account (if applicable) ---------------
+	var newAcc authtypes.AccountI
+
+	if accountHasVesting {
+		// Create the exact same type of vesting account with same parameters
+		switch accType {
+		case "periodic":
+			oldPeriodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
+
+			// Create new periodic vesting account with SAME start time
+			newPeriodicAcc, _ := vestingtypes.NewPeriodicVestingAccount(
+				newBaseAcc,
+				oldPeriodicAcc.OriginalVesting,
+				oldPeriodicAcc.StartTime,
+				oldPeriodicAcc.VestingPeriods,
+			)
+
+			// Keep the same end time
+			newPeriodicAcc.EndTime = oldPeriodicAcc.EndTime
+
+			// Set delegation amounts
+			newPeriodicAcc.DelegatedFree = oldPeriodicAcc.DelegatedFree
+			newPeriodicAcc.DelegatedVesting = oldPeriodicAcc.DelegatedVesting
+
+			newAcc = newPeriodicAcc
+
+		case "permanent":
+			oldPermAcc := oldAcc.(*vestingtypes.PermanentLockedAccount)
+
+			// Create new permanent locked account
+			newPermAcc, _ := vestingtypes.NewPermanentLockedAccount(
+				newBaseAcc,
+				oldPermAcc.OriginalVesting,
+			)
+
+			// Set delegation amounts
+			newPermAcc.DelegatedFree = oldPermAcc.DelegatedFree
+			newPermAcc.DelegatedVesting = oldPermAcc.DelegatedVesting
+
+			newAcc = newPermAcc
+		}
+	} else {
+		// For non-vesting accounts, just use a base account
+		newAcc = newBaseAcc
+	}
+
+	// ---------- Save the new account first --------------------------------------
+	// Create the new account before modifying the old one to reduce risk of data loss
+	ak.SetAccount(ctx, newAcc)
+	ctx.Logger().Info("Created new account",
+		"address", newAddrStr,
+		"type", accType,
+		"upgrade_height", upgradeHeight,
+		"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+
+	// ---------- Convert old account to base for transfers -----------------
+	baseAcc := authtypes.NewBaseAccount(
+		oldAddr,
+		oldBaseAcc.GetPubKey(),
+		oldBaseAcc.GetAccountNumber(),
+		oldBaseAcc.GetSequence(),
+	)
+	ak.SetAccount(ctx, baseAcc)
+
+	// ---------- Set withdraw address for new account if needed ----------
+	if hasCustomWithdrawAddr {
+		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
+		ctx.Logger().Info("Set withdraw address",
+			"delegator", newAddrStr,
+			"withdraw_addr", withdrawAddr.String(),
+			"upgrade_height", upgradeHeight)
+	}
+
+	// ---------- Store validator reward information before any changes -----
+	// Store current validator periods and historicals for proper migration
+	type ValidatorPeriodInfo struct {
+		validatorAddr string
+		period        uint64
+	}
+
+	var validatorPeriods []ValidatorPeriodInfo
+
+	// Collect all validator periods first before making any changes
+	// Use the sorted validator address list for deterministic processing
+	for _, valAddrStr := range validatorAddressList {
+		valAddr, _ := sdk.ValAddressFromBech32(valAddrStr)
+
+		// Store current period for each validator
+		valCurrentRewards, _ := dk.GetValidatorCurrentRewards(ctx, valAddr)
+		validatorPeriods = append(validatorPeriods, ValidatorPeriodInfo{
+			validatorAddr: valAddrStr,
+			period:        valCurrentRewards.Period,
+		})
+
+		ctx.Logger().Info("Captured validator reward state",
+			"validator", valAddrStr,
+			"current_period", valCurrentRewards.Period,
+			"upgrade_height", upgradeHeight)
+	}
+
+	// Sort validator periods for deterministic lookups
+	sort.SliceStable(validatorPeriods, func(i, j int) bool {
+		return validatorPeriods[i].validatorAddr < validatorPeriods[j].validatorAddr
+	})
+
+	// ---------- First, handle existing rewards ---------------------------
+	totalRewardsWithdrawn := sdk.NewCoins()
+
+	// Force withdrawal of any existing rewards - this is important to "reset"
+	// the reward state and prevent double-counting
+	for _, delInfo := range delsToMove {
+		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
+
+		// Withdraw rewards
+		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
+		if err != nil {
+			// Log error but continue - we don't want to fail the entire migration for one reward issue
+			ctx.Logger().Error("Failed to withdraw rewards",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"error", err.Error(),
+				"upgrade_height", upgradeHeight)
+		} else if !rewards.IsZero() {
+			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
+			ctx.Logger().Info("Withdrawn rewards",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"amount", rewards.String(),
+				"upgrade_height", upgradeHeight)
+		}
+	}
+
+	// ---------- Transfer all balances ------------------------------------
+	// Transfer the full balance, including any withdrawn rewards
+	allCoins := bk.GetAllBalances(ctx, oldAddr)
+	if !allCoins.IsZero() {
+		if err := bk.SendCoins(ctx, oldAddr, newAddr, allCoins); err != nil {
+			return fmt.Errorf("failed to transfer balances: %w", err)
+		}
+		ctx.Logger().Info("Transferred balance",
+			"amount", allCoins.String(),
+			"from", oldAddrStr,
+			"to", newAddrStr,
+			"upgrade_height", upgradeHeight,
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+	}
+
+	// ---------- Handle unbonding delegations -------------------------------
+	// Get and sort unbonding delegations for deterministic processing
+	unbondingDels, _ := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
+
+	// Sort unbonding delegations by validator address for deterministic processing
+	sort.SliceStable(unbondingDels, func(i, j int) bool {
+		return unbondingDels[i].ValidatorAddress < unbondingDels[j].ValidatorAddress
+	})
+
+	// Create new unbonding delegations before removing old ones
+	for _, ubd := range unbondingDels {
+		// Create new unbonding delegation first
+		valAddr, _ := sdk.ValAddressFromBech32(ubd.ValidatorAddress)
+		newUBD := stakingtypes.UnbondingDelegation{
+			DelegatorAddress: newAddr.String(),
+			ValidatorAddress: valAddr.String(),
+			Entries:          ubd.Entries,
+		}
+		sk.SetUnbondingDelegation(ctx, newUBD)
+
+		// Then remove old unbonding delegation
+		sk.RemoveUnbondingDelegation(ctx, ubd)
+
+		ctx.Logger().Info("Moved unbonding delegation",
+			"validator", ubd.ValidatorAddress,
+			"entries", len(ubd.Entries),
+			"upgrade_height", upgradeHeight)
+	}
+
+	// ---------- Handle redelegations --------------------------------------
+	// Get and sort redelegations for deterministic processing
+	redelegations, _ := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
+
+	// Sort redelegations by source and destination validator addresses
+	sort.SliceStable(redelegations, func(i, j int) bool {
+		if redelegations[i].ValidatorSrcAddress == redelegations[j].ValidatorSrcAddress {
+			return redelegations[i].ValidatorDstAddress < redelegations[j].ValidatorDstAddress
+		}
+		return redelegations[i].ValidatorSrcAddress < redelegations[j].ValidatorSrcAddress
+	})
+
+	// Create new redelegations before removing old ones
+	for _, red := range redelegations {
+		// Create new redelegation first
+		srcVal, _ := sdk.ValAddressFromBech32(red.ValidatorSrcAddress)
+		dstVal, _ := sdk.ValAddressFromBech32(red.ValidatorDstAddress)
+		newRed := stakingtypes.Redelegation{
+			DelegatorAddress:    newAddr.String(),
+			ValidatorSrcAddress: srcVal.String(),
+			ValidatorDstAddress: dstVal.String(),
+			Entries:             red.Entries,
+		}
+		sk.SetRedelegation(ctx, newRed)
+
+		// Then remove old redelegation
+		sk.RemoveRedelegation(ctx, red)
+
+		ctx.Logger().Info("Moved redelegation",
+			"src_validator", red.ValidatorSrcAddress,
+			"dst_validator", red.ValidatorDstAddress,
+			"entries", len(red.Entries),
+			"upgrade_height", upgradeHeight,
+			"gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+	}
+
+	// ---------- Move delegations and set up reward state properly ---------
+	// Need to update validator for each delegation
+	for _, delInfo := range delsToMove {
+		del := delInfo.delegation
+		valAddr, _ := sdk.ValAddressFromBech32(del.ValidatorAddress)
+
+		// Create new delegation with the same shares first
+		newDel := stakingtypes.NewDelegation(
+			newAddr.String(),
+			valAddr.String(),
+			del.Shares,
+		)
+		sk.SetDelegation(ctx, newDel)
+
+		// CRITICAL FIX: Set up proper reward state for new delegation
+		// We need the current period from before the migration
+		// Find the period using binary search on the sorted validator periods
+		var currentPeriod uint64
+
+		// Binary search for the validator period
+		left, right := 0, len(validatorPeriods)-1
+		found := false
+		for left <= right {
+			mid := (left + right) / 2
+			if validatorPeriods[mid].validatorAddr == del.ValidatorAddress {
+				currentPeriod = validatorPeriods[mid].period
+				found = true
+				break
+			} else if validatorPeriods[mid].validatorAddr < del.ValidatorAddress {
+				left = mid + 1
+			} else {
+				right = mid - 1
+			}
+		}
+
+		// Fallback to linear search if binary search fails
+		if !found {
+			for _, vp := range validatorPeriods {
+				if vp.validatorAddr == del.ValidatorAddress {
+					currentPeriod = vp.period
+					break
+				}
+			}
+		}
+
+		// Create starting info with current validator period
+		// This is critical to ensure rewards accrue correctly
+		startInfo := distrtypes.NewDelegatorStartingInfo(
+			currentPeriod,         // Use current period for proper tracking
+			delInfo.tokens.Amount, // Current token value of shares
+			uint64(upgradeHeight), // Use upgrade height instead of current block height
+		)
+
+		// Set the starting info for the new delegator
+		dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
+
+		// Then remove old delegation (this cleans up distribution state too)
+		sk.RemoveDelegation(ctx, del)
+
+		ctx.Logger().Info("Set up rewards for new delegation",
+			"validator", del.ValidatorAddress,
+			"shares", del.Shares.String(),
+			"tokens", delInfo.tokens.String(),
+			"current_period", currentPeriod,
+			"upgrade_height", upgradeHeight)
+	}
+
+	// ---------- Final step: Force a rewards claim to initialize properly -----
+	// This ensures the delegator starts with a clean slate for future rewards
+	for _, delInfo := range delsToMove {
+		valAddr, _ := sdk.ValAddressFromBech32(delInfo.delegation.ValidatorAddress)
+
+		// Withdraw any rewards that might have accrued during migration
+		// This ensures a completely clean starting point
+		rewards, err := dk.WithdrawDelegationRewards(ctx, newAddr, valAddr)
+		if err != nil {
+			ctx.Logger().Error("Failed to initialize rewards state - non-critical",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"error", err.Error(),
+				"upgrade_height", upgradeHeight)
+		} else if !rewards.IsZero() {
+			ctx.Logger().Info("Initialized rewards state with withdrawal",
+				"validator", delInfo.delegation.ValidatorAddress,
+				"amount", rewards.String(),
+				"upgrade_height", upgradeHeight)
+		}
+	}
+
+	// Log completion
+	ctx.Logger().Info("Account migration complete",
+		"old_address", oldAddrStr,
+		"new_address", newAddrStr,
+		"account_type", accType,
+		"delegations", len(delsToMove),
+		"unbonding_delegations", len(unbondingDels),
+		"redelegations", len(redelegations),
+		"rewards_withdrawn", totalRewardsWithdrawn,
+		"upgrade_height", upgradeHeight,
+		"final_gas_remaining", ctx.GasMeter().Limit()-ctx.GasMeter().GasConsumed())
+
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	v2 "selfchain/upgrades/v2"
 	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -561,7 +562,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -864,6 +865,30 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		}
 	}
 
+	if !strings.EqualFold(homePath, "dummy") {
+		app.UpgradeKeeper.SetUpgradeHandler("v4",
+			v2.CreateUpgradeHandler(
+				app.mm, app.configurator,
+				app.AccountKeeper, app.BankKeeper,
+				app.StakingKeeper, app.DistrKeeper,
+			))
+
+		if ui, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil &&
+			ui.Name == "v4" && !app.UpgradeKeeper.IsSkipHeight(ui.Height) {
+
+			app.SetStoreLoader(
+				upgradetypes.UpgradeStoreLoader(
+					ui.Height,
+					&storetypes.StoreUpgrades{
+						Added: []string{
+							wasmtypes.ModuleName,
+							ibcfeetypes.ModuleName,
+						},
+					}),
+			)
+		}
+	}
+
 	if loadLatest {
 		//if isDevelopmentEnv() {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -875,7 +900,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		}
 
 		// Define the old subspace for baseapp's params (from x/params)
-
 		if !strings.EqualFold(homePath, "dummy") {
 			// Get existing subspace instead of creating new one
 			ibcClientSubspace, _ := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
