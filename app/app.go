@@ -20,6 +20,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -75,7 +77,6 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
@@ -110,7 +111,6 @@ import (
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v8/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v8/modules/core/02-client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
@@ -469,14 +469,44 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	// ... other modules keepers
 
-	clientSubspace := app.ParamsKeeper.
-		Subspace(ibcclienttypes.SubModuleName).
-		WithKeyTable(ibcclienttypes.ParamKeyTable())
+	clientSubspace, found := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+	if !found {
+		// should never happen, but keep it safe
+		clientSubspace = app.ParamsKeeper.Subspace(ibcclienttypes.SubModuleName)
+	}
+	if !clientSubspace.HasKeyTable() {
+		clientSubspace = clientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
+	}
+
+	mergedKeyTable := ibcclienttypes.ParamKeyTable()
+	mergedKeyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
+
+	ibcSubspace := app.ParamsKeeper.Subspace(ibcexported.ModuleName)
+	if !ibcSubspace.HasKeyTable() {
+		ibcSubspace = ibcSubspace.WithKeyTable(mergedKeyTable)
+	}
+
+	hostSS, found := app.ParamsKeeper.GetSubspace(icahosttypes.SubModuleName)
+	if !found { // only if it does NOT exist
+		hostSS = app.ParamsKeeper.Subspace(icahosttypes.SubModuleName)
+	}
+	if !hostSS.HasKeyTable() {
+		hostSS = hostSS.WithKeyTable(icahosttypes.ParamKeyTable())
+	}
+
+	// ICA-controller --------------------------------------------------------
+	controllerSS, found := app.ParamsKeeper.GetSubspace(icacontrollertypes.SubModuleName)
+	if !found {
+		controllerSS = app.ParamsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	}
+	if !controllerSS.HasKeyTable() {
+		controllerSS = controllerSS.WithKeyTable(icacontrollertypes.ParamKeyTable())
+	}
 
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		keys[ibcexported.StoreKey],
-		clientSubspace,
+		ibcSubspace,
 		app.StakingKeeper,
 		app.UpgradeKeeper,
 		scopedIBCKeeper,
@@ -562,7 +592,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -723,6 +753,10 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
+	app.mm.SetOrderPreBlockers(
+		upgradetypes.ModuleName,
+	)
+
 	app.mm.SetOrderBeginBlockers(
 		// upgrades should be run first
 		upgradetypes.ModuleName,
@@ -754,6 +788,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	)
 
 	app.mm.SetOrderEndBlockers(
+		upgradetypes.ModuleName,
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -774,7 +809,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		feegrant.ModuleName,
 		group.ModuleName,
 		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		migrationmoduletypes.ModuleName,
@@ -850,6 +884,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.setAnteHandler(encodingConfig.TxConfig, wasmConfig, runtime.NewKVStoreService(keys[wasmtypes.StoreKey]))
 	app.SetInitChainer(app.InitChainer)
+	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
@@ -868,7 +903,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	if !strings.EqualFold(homePath, "dummy") {
 		app.UpgradeKeeper.SetUpgradeHandler("v4",
 			v2.CreateUpgradeHandler(
-				app.mm, app.configurator,
+				app.mm, app.configurator, app.ParamsKeeper,
 				app.AccountKeeper, app.BankKeeper,
 				app.StakingKeeper, app.DistrKeeper,
 			))
@@ -927,6 +962,30 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 				legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 			}
 
+			clientSS, found := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+			if !found {
+				clientSS = app.ParamsKeeper.Subspace(ibcclienttypes.SubModuleName)
+			}
+			if !clientSS.HasKeyTable() {
+				clientSS = clientSS.WithKeyTable(ibcclienttypes.ParamKeyTable())
+			}
+
+			connSS, found := app.ParamsKeeper.GetSubspace(ibcconnectiontypes.SubModuleName)
+			if !found {
+				connSS = app.ParamsKeeper.Subspace(ibcconnectiontypes.SubModuleName)
+			}
+			if !connSS.HasKeyTable() {
+				connSS = connSS.WithKeyTable(ibcconnectiontypes.ParamKeyTable())
+			}
+
+			//chanSS, found := app.ParamsKeeper.GetSubspace(ibcchanneltypes.SubModuleName)
+			//if !found {
+			//	chanSS = app.ParamsKeeper.Subspace(ibcchanneltypes.SubModuleName)
+			//}
+			//if !chanSS.HasKeyTable() {
+			//	chanSS = chanSS.WithKeyTable(ibcchanneltypes.ParamKeyTable())
+			//}
+
 			feePool, err := app.DistrKeeper.FeePool.Get(ctx)
 			if err != nil {
 				fmt.Printf("app.DistrKeeper.FeePool.Get(ctx)", err)
@@ -970,6 +1029,10 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	return app.mm.BeginBlock(ctx)
+}
+
+func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	return app.mm.PreBlock(ctx)
 }
 
 // EndBlocker application updates every end block
@@ -1110,30 +1173,37 @@ func (app *App) RegisterNodeService(clientCtx client.Context, cfg config.Config)
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	keyTable := ibcclienttypes.ParamKeyTable()
-	keyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
+// ...
 
-	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
-	paramsKeeper.Subspace(stakingtypes.ModuleName)
-	paramsKeeper.Subspace(minttypes.ModuleName)
-	paramsKeeper.Subspace(distrtypes.ModuleName)
-	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable()) //nolint:staticcheck
-	paramsKeeper.Subspace(crisistypes.ModuleName)
-	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(ibcexported.ModuleName)
-	paramsKeeper.Subspace(icahosttypes.SubModuleName)
-	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
-	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(migrationmoduletypes.StoreKey)
-	paramsKeeper.Subspace(selfvestingmoduletypes.StoreKey)
-	// this line is used by starport scaffolding # stargate/app/paramSubspace
+func initParamsKeeper(
+	cdc codec.BinaryCodec,
+	legacyAmino *codec.LegacyAmino,
+	key, tkey storetypes.StoreKey,
+) paramskeeper.Keeper {
 
-	return paramsKeeper
+	pk := paramskeeper.NewKeeper(cdc, legacyAmino, key, tkey)
+
+	// IBC client & connection we already did
+	pk.Subspace(ibcclienttypes.SubModuleName).
+		WithKeyTable(ibcclienttypes.ParamKeyTable())
+	pk.Subspace(ibcconnectiontypes.SubModuleName).
+		WithKeyTable(ibcconnectiontypes.ParamKeyTable())
+
+	// NEW: transfer sub-module
+	pk.Subspace(ibctransfertypes.ModuleName).
+		WithKeyTable(ibctransfertypes.ParamKeyTable())
+
+	// ICA host / controller sub-spaces you already added ↓
+	pk.Subspace(icahosttypes.SubModuleName)
+	pk.Subspace(icacontrollertypes.SubModuleName)
+
+	// wasm / custom
+	pk.Subspace(wasmtypes.ModuleName)
+	pk.Subspace(migrationmoduletypes.ModuleName)
+	pk.Subspace(selfvestingmoduletypes.ModuleName)
+
+	return pk
 }
 
 // SimulationManager implements the SimulationApp interface

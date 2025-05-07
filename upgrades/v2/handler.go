@@ -4,7 +4,6 @@ import (
 	"context"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -13,9 +12,11 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	"sort"
 )
 
@@ -75,19 +76,38 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
 	return func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		if _, ok := fromVM[wasmtypes.ModuleName]; !ok {
-			fromVM[wasmtypes.ModuleName] = 0
-		}
-		if _, ok := fromVM[ibcfeetypes.ModuleName]; !ok {
-			fromVM[ibcfeetypes.ModuleName] = 0
-		}
-
 		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v2")
 
-		// 1. Run all module migrations first
+		// 02-client ---------------------------------------------------------------
+		clientSS, found := paramsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+		if !found {
+			clientSS = paramsKeeper.Subspace(ibcclienttypes.SubModuleName) // only if not present
+		}
+		if !clientSS.HasKeyTable() {
+			clientSS = clientSS.WithKeyTable(ibcclienttypes.ParamKeyTable())
+		}
+		if !clientSS.Has(ctx, ibcclienttypes.KeyAllowedClients) {
+			def := ibcclienttypes.DefaultParams()
+			clientSS.SetParamSet(ctx, &def)
+		}
+
+		// 03-connection -----------------------------------------------------------
+		connSS, found := paramsKeeper.GetSubspace(ibcconnectiontypes.SubModuleName)
+		if !found {
+			connSS = paramsKeeper.Subspace(ibcconnectiontypes.SubModuleName)
+		}
+		if !connSS.HasKeyTable() {
+			connSS = connSS.WithKeyTable(ibcconnectiontypes.ParamKeyTable())
+		}
+		if !connSS.Has(ctx, ibcconnectiontypes.KeyMaxExpectedTimePerBlock) {
+			def := ibcconnectiontypes.DefaultParams()
+			connSS.SetParamSet(ctx, &def)
+		}
+
+		//1. Run all module migrations first
 		newVM, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
 			ctx.Logger().Error("Failed to run module migrations for v2", "error", err)
