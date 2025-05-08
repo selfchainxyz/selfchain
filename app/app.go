@@ -307,6 +307,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	logger.Info("version.Version", version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
+	const TxCounterStoreKeyName = "tx_counter"
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey,
@@ -317,6 +318,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		migrationmoduletypes.StoreKey,
 		selfvestingmoduletypes.StoreKey,
 		wasmtypes.StoreKey,
+		TxCounterStoreKeyName,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -592,7 +594,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -882,7 +884,8 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	app.setAnteHandler(encodingConfig.TxConfig, wasmConfig, runtime.NewKVStoreService(keys[wasmtypes.StoreKey]))
+	txCounterKey := keys[TxCounterStoreKeyName]
+	app.setAnteHandler(encodingConfig.TxConfig, &wasmConfig, runtime.NewKVStoreService(txCounterKey))
 	app.SetInitChainer(app.InitChainer)
 	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -918,6 +921,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 						Added: []string{
 							wasmtypes.ModuleName,
 							ibcfeetypes.ModuleName,
+							TxCounterStoreKeyName,
 						},
 					}),
 			)
@@ -1216,7 +1220,18 @@ func (app *App) ModuleManager() *module.Manager {
 	return app.mm
 }
 
-func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.WasmConfig, txCounterStoreKey corestoretypes.KVStoreService) {
+func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig *wasmtypes.WasmConfig, txCounterStoreKey corestoretypes.KVStoreService) {
+	fmt.Println("TX-counter key address:", txCounterStoreKey)
+	if wasmConfig == nil {
+		cfg := wasmtypes.DefaultWasmConfig()
+		simGasLimit := uint64(10000000)
+		cfg.SimulationGasLimit = &simGasLimit
+		wasmConfig = &cfg
+	} else if wasmConfig.SimulationGasLimit == nil {
+		simGasLimit := uint64(10000000)
+		wasmConfig.SimulationGasLimit = &simGasLimit
+	}
+
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
 			HandlerOptions: ante.HandlerOptions{
@@ -1227,13 +1242,13 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.Wa
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
 			IBCKeeper:         app.IBCKeeper,
-			WasmConfig:        &wasmConfig,
+			WasmConfig:        wasmConfig, // <-- never nil
 			TXCounterStoreKey: txCounterStoreKey,
 			WasmKeeper:        &app.WasmKeeper,
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to create AnteHandler: %s", err))
+		panic(err)
 	}
 	app.SetAnteHandler(anteHandler)
 }
