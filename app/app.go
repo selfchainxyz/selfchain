@@ -594,7 +594,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -1224,11 +1224,11 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig *wasmtypes.W
 	fmt.Println("TX-counter key address:", txCounterStoreKey)
 	if wasmConfig == nil {
 		cfg := wasmtypes.DefaultWasmConfig()
-		simGasLimit := uint64(10000000)
+		simGasLimit := uint64(100000000)
 		cfg.SimulationGasLimit = &simGasLimit
 		wasmConfig = &cfg
 	} else if wasmConfig.SimulationGasLimit == nil {
-		simGasLimit := uint64(10000000)
+		simGasLimit := uint64(100000000)
 		wasmConfig.SimulationGasLimit = &simGasLimit
 	}
 
