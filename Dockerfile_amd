@@ -1,4 +1,4 @@
-ARG GO_VERSION="1.22"
+ARG GO_VERSION="1.23"
 ARG RUNNER_IMAGE="gcr.io/distroless/static-debian11"
 ARG BUILD_TAGS="netgo,ledger,muslc"
 ARG GIT_VERSION="mainnet-v2.0.0"
@@ -35,7 +35,7 @@ COPY .. .
 
 # Cosmwasm - Download correct libwasmvm version
 RUN ARCH=$(uname -m) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.$ARCH.a \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.1/libwasmvm_muslc.$ARCH.a \
     -O /lib/libwasmvm_muslc.$ARCH.a && \
     cp /lib/libwasmvm_muslc.$ARCH.a /lib/libwasmvm_muslc.a
 
@@ -75,7 +75,7 @@ CMD ["sh", "-c", "echo 'selfchaind version:' && selfchaind version && exec selfc
 #docker cp temp-selfchain-container-amd64:/usr/local/bin/selfchaind ./build/selfchaind-linux-amd64
 #docker rm temp-selfchain-container-amd64
 
-#docker buildx build --platform linux/arm64 --tag selfchain-builder-arm64:latest -f Dockerfile_arm .
+#docker buildx build --platform linux/arm64 --tag selfchain-builder-arm64:latest -f Dockerfile .
 #docker create --name temp-selfchain-container-arm64 selfchain-builder-arm64
 #docker cp temp-selfchain-container-arm64:/usr/local/bin/selfchaind ./build/selfchaind-linux-arm64
 #docker rm temp-selfchain-container-arm64

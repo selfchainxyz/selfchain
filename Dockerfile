@@ -1,4 +1,4 @@
-ARG GO_VERSION="1.22"
+ARG GO_VERSION="1.23"
 ARG RUNNER_IMAGE="gcr.io/distroless/static-debian11"
 ARG BUILD_TAGS="netgo,ledger,muslc"
 ARG GIT_VERSION="mainnet-v2.0.0"
@@ -29,8 +29,10 @@ RUN go mod download
 COPY .. .
 
 # Cosmwasm - Download ARM64 libwasmvm
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.aarch64.a \
-    -O /lib/libwasmvm_muslc.a
+
+# Download the library with the correct name and put it in the correct location
+RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.1/libwasmvm_muslc.aarch64.a \
+    -O /go/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.2.1/internal/api/libwasmvm_muslc.aarch64.a
 
 # Build selfchain binary for ARM64
 RUN GOOS=linux GOARCH=arm64 CGO_ENABLED=1 \
