@@ -1,23 +1,16 @@
 ARG GO_VERSION="1.22"
 ARG RUNNER_IMAGE="gcr.io/distroless/static-debian11"
 ARG BUILD_TAGS="netgo,ledger,muslc"
-
-ARG COSMOVISOR_VERSION="v1.5.0"
-ARG github_token
-ARG version
+ARG GIT_VERSION="mainnet-v2.0.0"
+ARG GIT_COMMIT=""
 
 # --------------------------------------------------------
 # Builder
 # --------------------------------------------------------
 
-FROM golang:${GO_VERSION}-alpine3.20 as builder
+FROM golang:${GO_VERSION}-alpine as builder
 
-ARG GIT_VERSION
-ARG GIT_COMMIT
 ARG BUILD_TAGS
-ARG COSMOVISOR_VERSION
-ARG github_token
-ARG version
 
 RUN apk add --no-cache \
     ca-certificates \
@@ -26,52 +19,38 @@ RUN apk add --no-cache \
     binutils-gold \
     git
 
-# Clone repo
-RUN git clone https://$github_token:x-oauth-basic@github.com/selfchainxyz/selfchain.git /selfchain
+WORKDIR /app
 
-# Download go dependencies
-WORKDIR /selfchain
-RUN git checkout $version
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/root/go/pkg/mod \
-    go mod download
+# Copy go.mod and go.sum
+COPY ../go.mod go.sum* ./
+RUN go mod download
 
-# Cosmwasm - Download correct libwasmvm version
-RUN ARCH=$(uname -m) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.$ARCH.a \
-    -O /lib/libwasmvm_muslc.$ARCH.a && \
-    cp /lib/libwasmvm_muslc.$ARCH.a /lib/libwasmvm_muslc.a
+# Copy source code
+COPY ../.. .
 
-# Build selfchain binary
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/root/go/pkg/mod \
-    GOWORK=off go build \
+# Cosmwasm - Download ARM64 libwasmvm
+RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.aarch64.a \
+    -O /lib/libwasmvm_muslc.a
+
+# Build selfchain binary for ARM64
+RUN GOOS=linux GOARCH=arm64 CGO_ENABLED=1 \
+    go build \
     -mod=readonly \
-    -tags "netgo,ledger,muslc" \
+    -tags "${BUILD_TAGS}" \
     -ldflags \
     "-X github.com/cosmos/cosmos-sdk/version.Name="selfchain" \
     -X github.com/cosmos/cosmos-sdk/version.AppName="selfchaind" \
+    -w -s -linkmode=external -extldflags '-Wl,-z,muldefs -static' \
     -X github.com/cosmos/cosmos-sdk/version.Version=${GIT_VERSION} \
-    -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT} \
-    -X github.com/cosmos/cosmos-sdk/version.BuildTags=${BUILD_TAGS} \
-    -w -s -linkmode=external -extldflags '-Wl,-z,muldefs -static'" \
+         -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT}" \
     -trimpath \
-    -o ./build/selfchaind \
+    -o /app/build/selfchaind-linux-arm64 \
     ./cmd/selfchaind/main.go
 
 # --------------------------------------------------------
-# Cosmovisor runner
+# Runner
 # --------------------------------------------------------
 
-FROM ${RUNNER_IMAGE}
-
-COPY --from=builder /selfchain/build/selfchaind /bin/selfchaind
-
-ENV HOME=/selfchain
-WORKDIR $HOME
-
-EXPOSE 26656
-EXPOSE 26657
-EXPOSE 1317
-
-ENTRYPOINT ["selfchaind"]
+FROM alpine:latest
+COPY --from=builder /app/build/selfchaind-linux-arm64 /usr/local/bin/selfchaind
+# Add any additional configuration for the runner stage
