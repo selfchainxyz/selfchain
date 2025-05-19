@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	corestoretypes "cosmossdk.io/core/store"
@@ -600,7 +601,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -911,11 +912,73 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	if !strings.EqualFold(homePath, "dummy") {
 		app.UpgradeKeeper.SetUpgradeHandler("v4",
-			v2.CreateUpgradeHandler(
-				app.mm, app.configurator, app.ParamsKeeper,
-				app.AccountKeeper, app.BankKeeper,
-				app.StakingKeeper, app.DistrKeeper,
-			))
+			func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+				vm, err := v2.CreateUpgradeHandler(
+					app.mm, app.configurator, app.ParamsKeeper,
+					app.AccountKeeper, app.BankKeeper,
+					app.StakingKeeper, app.DistrKeeper,
+				)(context, plan, fromVM)
+				if err != nil {
+					return nil, err
+				}
+
+				ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+				if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+					tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+				}
+
+				ibcClientSubspace, _ := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+
+				if !ibcClientSubspace.HasKeyTable() {
+					ibcClientSubspace = ibcClientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
+				}
+
+				clientParams := ibcclienttypes.DefaultParams()
+				app.IBCKeeper.ClientKeeper.SetParams(ctx, clientParams)
+
+				params := app.IBCKeeper.ClientKeeper.GetParams(ctx)
+				params.AllowedClients = append(params.AllowedClients, exported.Localhost)
+				app.IBCKeeper.ClientKeeper.SetParams(ctx, params)
+
+				legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
+				if !exist {
+					legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
+				}
+				if !legacySS.HasKeyTable() {
+					legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+				}
+
+				clientSS, found := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+				if !found {
+					clientSS = app.ParamsKeeper.Subspace(ibcclienttypes.SubModuleName)
+				}
+				if !clientSS.HasKeyTable() {
+					clientSS = clientSS.WithKeyTable(ibcclienttypes.ParamKeyTable())
+				}
+
+				connSS, found := app.ParamsKeeper.GetSubspace(ibcconnectiontypes.SubModuleName)
+				if !found {
+					connSS = app.ParamsKeeper.Subspace(ibcconnectiontypes.SubModuleName)
+				}
+				if !connSS.HasKeyTable() {
+					connSS = connSS.WithKeyTable(ibcconnectiontypes.ParamKeyTable())
+				}
+
+				feePool, err := app.DistrKeeper.FeePool.Get(ctx)
+				if err != nil {
+					logger.Error("app.DistrKeeper.FeePool.Get(ctx)", err)
+					panic(err)
+				}
+
+				app.DistrKeeper.FeePool.Set(ctx, feePool)
+
+				if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
+					logger.Error("failed to migrate consensus params", err)
+				}
+				
+				return vm, nil
+			},
+		)
 
 		if ui, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil &&
 			ui.Name == "v4" && !app.UpgradeKeeper.IsSkipHeight(ui.Height) {
@@ -939,84 +1002,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
-		}
 
-		// Define the old subspace for baseapp's params (from x/params)
-		if !strings.EqualFold(homePath, "dummy") {
-			// Get existing subspace instead of creating new one
-			ibcClientSubspace, _ := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
-
-			// Only set key table if it hasn't been set
-			if !ibcClientSubspace.HasKeyTable() {
-				ibcClientSubspace = ibcClientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
-			}
-
-			// Set default params
-			clientParams := ibcclienttypes.DefaultParams()
-			app.IBCKeeper.ClientKeeper.SetParams(ctx, clientParams)
-
-			// Update allowed clients
-			params := app.IBCKeeper.ClientKeeper.GetParams(ctx)
-			params.AllowedClients = append(params.AllowedClients, exported.Localhost)
-			app.IBCKeeper.ClientKeeper.SetParams(ctx, params)
-
-			// Handle consensus params similarly
-			legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
-			if !exist {
-				legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
-			}
-			if !legacySS.HasKeyTable() {
-				legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-			}
-
-			clientSS, found := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
-			if !found {
-				clientSS = app.ParamsKeeper.Subspace(ibcclienttypes.SubModuleName)
-			}
-			if !clientSS.HasKeyTable() {
-				clientSS = clientSS.WithKeyTable(ibcclienttypes.ParamKeyTable())
-			}
-
-			connSS, found := app.ParamsKeeper.GetSubspace(ibcconnectiontypes.SubModuleName)
-			if !found {
-				connSS = app.ParamsKeeper.Subspace(ibcconnectiontypes.SubModuleName)
-			}
-			if !connSS.HasKeyTable() {
-				connSS = connSS.WithKeyTable(ibcconnectiontypes.ParamKeyTable())
-			}
-
-			//chanSS, found := app.ParamsKeeper.GetSubspace(ibcchanneltypes.SubModuleName)
-			//if !found {
-			//	chanSS = app.ParamsKeeper.Subspace(ibcchanneltypes.SubModuleName)
-			//}
-			//if !chanSS.HasKeyTable() {
-			//	chanSS = chanSS.WithKeyTable(ibcchanneltypes.ParamKeyTable())
-			//}
-
-			feePool, err := app.DistrKeeper.FeePool.Get(ctx)
-			if err != nil {
-				logger.Error("app.DistrKeeper.FeePool.Get(ctx)", err)
-				panic(err)
-			}
-
-			app.DistrKeeper.FeePool.Set(ctx, feePool)
-
-			if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
-				logger.Error("failed to migrate consensus params", err)
-			}
-
-			//}
-
-			//app.UpgradeKeeper.SetUpgradeHandler("v0.50-upgrade", func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-			//	// Migrate Tendermint consensus params to x/consensus module.
-			//	// Note: use the ParamsStore from the consensus keeper.
-			//
-			//})
-
-		}
 	}
 
 	app.ScopedIBCKeeper = scopedIBCKeeper
@@ -1276,28 +1262,3 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 		ConsensusAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	}
 }
-
-//func (app *App) Query(ctx context.Context, req *abci.RequestQuery) (*abci.ResponseQuery, error) {
-//	app.Logger().Info("Received query request",
-//		"path", req.Path,
-//		"height", req.Height,
-//		"prove", req.Prove)
-//
-//	// Try to load state at requested height
-//	if req.Height != 0 {
-//		err := app.LoadHeight(req.Height)
-//		if err != nil {
-//			app.Logger().Error("Failed to load state at height",
-//				"height", req.Height,
-//				"error", err)
-//			return &abci.ResponseQuery{
-//				Code: 1,
-//				Log:  fmt.Sprintf("failed to load state at height %d: %v", req.Height, err),
-//			}, err
-//		}
-//		app.Logger().Info("Successfully loaded state at height",
-//			"height", req.Height)
-//	}
-//
-//	return app.BaseApp.Query(ctx, req)
-//}

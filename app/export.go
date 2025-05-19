@@ -31,7 +31,12 @@ func (app *App) ExportAppStateAndValidators(
 		app.prepForZeroHeightGenesis(ctx, jailAllowedAddrs)
 	}
 
-	genState, _ := app.mm.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
+	genState, err := app.mm.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
+	if err != nil {
+		log.Println(err)
+		return servertypes.ExportedApp{}, err
+	}
+
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return servertypes.ExportedApp{}, err
@@ -84,7 +89,11 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 	})
 
 	// withdraw all delegator rewards
-	dels, _ := app.StakingKeeper.GetAllDelegations(ctx)
+	dels, err := app.StakingKeeper.GetAllDelegations(ctx)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	for _, delegation := range dels {
 		valAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
 		if err != nil {
@@ -109,10 +118,22 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 	// reinitialize all validators
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		addr, _ := sdk.ValAddressFromBech32(val.GetOperator())
-		scraps, _ := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, addr)
+		addr, err := sdk.ValAddressFromBech32(val.GetOperator())
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		scraps, err := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, addr)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
-		feePool, _ := app.DistrKeeper.FeePool.Get(ctx)
+		feePool, err := app.DistrKeeper.FeePool.Get(ctx)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.DistrKeeper.FeePool.Set(ctx, feePool)
 
@@ -191,7 +212,7 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 		return
 	}
 
-	_, err := app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	_, err = app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
