@@ -127,28 +127,28 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 
 func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, upgradeHeight int64) error {
 	monthsToAdd := int64(3)
+	sort.Strings(vestingAddresses)
 	for _, addr := range vestingAddresses {
 		if err := updateVestingAccount(ctx, k, addr, monthsToAdd, upgradeHeight); err != nil {
-			if err.Error() == fmt.Sprintf("account not found: %s", addr) {
-				ctx.Logger().Info("Skipping non-existent account for vesting update",
-					"address", addr)
-				continue
-			}
-
 			return fmt.Errorf("failed to update vesting for %s: %w", addr, err)
 		}
 	}
 
-	// Then handle address replacements separately
+	sort.SliceStable(addressReplacements, func(i, j int) bool {
+		return addressReplacements[i].OldAddress < addressReplacements[j].OldAddress
+	})
 	ctx.Logger().Info("Processing address replacements", "count", len(addressReplacements))
 	for _, replacement := range addressReplacements {
+		newAddr, err := sdk.AccAddressFromBech32(replacement.NewAddress)
+		if err != nil {
+			// This indicates a problem with the hardcoded new address string itself.
+			return fmt.Errorf("critical configuration error: invalid new address format %s: %w", replacement.NewAddress, err)
+		}
+		if k.GetAccount(ctx, newAddr) != nil {
+			return fmt.Errorf("pre-check failed: new address %s (meant for old %s) already exists. Halting upgrade to prevent conflicts.", replacement.NewAddress, replacement.OldAddress)
+		}
+
 		if err := replaceAccountAddress(ctx, k, replacement.OldAddress, replacement.NewAddress, bankkeeper, stakingkeeper, distrkeeper, upgradeHeight); err != nil {
-			if err.Error() == fmt.Sprintf("account not found: %s", replacement.OldAddress) {
-				ctx.Logger().Info("Skipping non-existent account for address replacement",
-					"old_address", replacement.OldAddress,
-					"new_address", replacement.NewAddress)
-				continue
-			}
 			return fmt.Errorf("failed to replace address for %s: %w", replacement.OldAddress, err)
 		}
 	}
@@ -317,9 +317,22 @@ func replaceAccountAddress(
 	withdrawAddr, _ := dk.GetDelegatorWithdrawAddr(ctx, oldAddr)
 	hasCustomWithdrawAddr := !withdrawAddr.Equals(oldAddr)
 
-	// ---------- Handle delegations first ------------------------------------
+	/*
+		There is no way to breach maxretrieve(65535) in our production,
+		also the migration address are know and tracked which dont even have 100 delegations
+		so no pagination retrival is needed here
+	*/
 	const maxRetrieve = uint16(1<<16 - 1) // 65535
-	delegations, _ := sk.GetDelegatorDelegations(ctx, oldAddr, maxRetrieve)
+	delegations, err := sk.GetDelegatorDelegations(ctx, oldAddr, maxRetrieve)
+	if err != nil {
+		return err
+	}
+	if len(delegations) == int(maxRetrieve) {
+		return fmt.Errorf(
+			"upgrade v2: delegations for %s may be truncated (got %d entries, limit %d)",
+			oldAddrStr, len(delegations), maxRetrieve,
+		)
+	}
 
 	// Store delegation info for later use
 	type DelInfo struct {
@@ -327,7 +340,6 @@ func replaceAccountAddress(
 		validator  stakingtypes.Validator
 		tokens     sdk.DecCoin
 		valAddr    sdk.ValAddress
-		sortKey    string // Deterministic key for sorting
 	}
 
 	var delsToMove []DelInfo
@@ -351,14 +363,12 @@ func replaceAccountAddress(
 		tokens := sdk.NewDecCoinFromDec("uslf", val.TokensFromShares(del.Shares).TruncateDec())
 
 		// Create a deterministic sort key
-		sortKey := del.ValidatorAddress + ":" + del.Shares.String()
 
 		delsToMove = append(delsToMove, DelInfo{
 			delegation: del,
 			validator:  val,
 			tokens:     tokens,
 			valAddr:    valAddr,
-			sortKey:    sortKey,
 		})
 
 		// Keep track of validator addresses in a deterministic way
@@ -379,7 +389,10 @@ func replaceAccountAddress(
 
 	// Sort delegations by the deterministic key for consistent processing
 	sort.SliceStable(delsToMove, func(i, j int) bool {
-		return delsToMove[i].sortKey < delsToMove[j].sortKey
+		if delsToMove[i].delegation.ValidatorAddress != delsToMove[j].delegation.ValidatorAddress {
+			return delsToMove[i].delegation.ValidatorAddress < delsToMove[j].delegation.ValidatorAddress
+		}
+		return delsToMove[i].delegation.Shares.LT(delsToMove[j].delegation.Shares)
 	})
 
 	// ---------- Create new base account ----------------------------------
@@ -537,7 +550,10 @@ func replaceAccountAddress(
 
 	// ---------- Handle unbonding delegations -------------------------------
 	// Get and sort unbonding delegations for deterministic processing
-	unbondingDels, _ := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
+	unbondingDels, err := sk.GetUnbondingDelegations(ctx, oldAddr, maxRetrieve)
+	if err != nil {
+		return err
+	}
 
 	// Sort unbonding delegations by validator address for deterministic processing
 	sort.SliceStable(unbondingDels, func(i, j int) bool {
@@ -566,7 +582,10 @@ func replaceAccountAddress(
 
 	// ---------- Handle redelegations --------------------------------------
 	// Get and sort redelegations for deterministic processing
-	redelegations, _ := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
+	redelegations, err := sk.GetRedelegations(ctx, oldAddr, maxRetrieve)
+	if err != nil {
+		return err
+	}
 
 	// Sort redelegations by source and destination validator addresses
 	sort.SliceStable(redelegations, func(i, j int) bool {
