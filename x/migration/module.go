@@ -98,14 +98,9 @@ type AppModule struct {
 	bankKeeper    types.BankKeeper
 }
 
-func (am AppModule) IsOnePerModuleType() {
-	//TODO implement me
-	panic("implement me")
-}
+func (AppModule) IsOnePerModuleType() {}
 
-func (am AppModule) IsAppModule() {
-	//TODO implement me
-	panic("implement me")
+func (AppModule) IsAppModule() {
 }
 
 func NewAppModule(

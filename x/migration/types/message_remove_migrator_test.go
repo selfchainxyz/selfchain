@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 
 	"selfchain/testutil/sample"
@@ -20,7 +20,7 @@ func TestMsgRemoveMigrator_ValidateBasic(t *testing.T) {
 			msg: MsgRemoveMigrator{
 				Creator: "invalid_address",
 			},
-			err: types.ErrInvalidAccountAddress,
+			err: errors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgRemoveMigrator{

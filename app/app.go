@@ -6,6 +6,8 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"encoding/json"
 	"fmt"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"path/filepath"
@@ -30,6 +32,7 @@ import (
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	"cosmossdk.io/x/upgrade"
+	upgradeclient "cosmossdk.io/x/upgrade/client/cli"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -146,11 +149,15 @@ const (
 
 func getGovProposalHandlers() []govclient.ProposalHandler {
 	var govProposalHandlers []govclient.ProposalHandler
-	// this line is used by starport scaffolding # stargate/app/govProposalHandlers
 
 	govProposalHandlers = append(govProposalHandlers,
 		paramsclient.ProposalHandler,
-		// this line is used by starport scaffolding # stargate/app/govProposalHandler
+		govclient.NewProposalHandler(func() *cobra.Command {
+			return upgradeclient.NewCmdSubmitUpgradeProposal(addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
+		}),
+		govclient.NewProposalHandler(func() *cobra.Command {
+			return upgradeclient.NewCmdSubmitCancelUpgradeProposal(addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
+		}),
 	)
 
 	return govProposalHandlers
@@ -344,9 +351,9 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	)
 
 	// set the BaseApp's parameter store
-	service := runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
+	upgradeStoreSvc := runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec,
-		service,
+		upgradeStoreSvc,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
@@ -588,13 +595,12 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
-		//AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 	govKeeper.SetLegacyRouter(govRouter)
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -992,7 +998,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 			feePool, err := app.DistrKeeper.FeePool.Get(ctx)
 			if err != nil {
-				fmt.Printf("app.DistrKeeper.FeePool.Get(ctx)", err)
+				logger.Error("app.DistrKeeper.FeePool.Get(ctx)", err)
 				panic(err)
 			}
 
@@ -1221,7 +1227,6 @@ func (app *App) ModuleManager() *module.Manager {
 }
 
 func (app *App) setAnteHandler(txConfig client.TxConfig, wasmConfig *wasmtypes.WasmConfig, txCounterStoreKey corestoretypes.KVStoreService) {
-	fmt.Println("TX-counter key address:", txCounterStoreKey)
 	if wasmConfig == nil {
 		cfg := wasmtypes.DefaultWasmConfig()
 		simGasLimit := uint64(100000000)

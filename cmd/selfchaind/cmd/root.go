@@ -12,7 +12,6 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	cosmosdb "github.com/cosmos/cosmos-db"
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -87,13 +86,11 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 
 	initRootCmd(rootCmd, encodingConfig)
 
-
 	initAppOptions := viper.New()
 	tempDir := tempDir()
 	initAppOptions.Set(flags.FlagHome, tempDir)
 
-
-	dummyApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseapp.SetChainID("osmosis-1"))
+	dummyApp := app.New(log.NewNopLogger(), cosmosdb.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseapp.SetChainID("osmosis-1"))
 
 	autoCliOpts := dummyApp.AutoCliOpts()
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
@@ -141,7 +138,6 @@ var tempDir = func() string {
 
 	return dir
 }
-
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig) {
 	// Set config
@@ -242,8 +238,6 @@ func queryCommand() *cobra.Command {
 	cmd.AddCommand(
 		rpc.ValidatorCommand(),
 		server.QueryBlockCmd(),
-		authcmd.QueryTxsByEventsCmd(),
-		authcmd.QueryTxCmd(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 	)

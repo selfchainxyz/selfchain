@@ -75,7 +75,10 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 
 	// withdraw all validator commission
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		addr,_ := sdk.ValAddressFromBech32(val.GetOperator())
+		addr, err := sdk.ValAddressFromBech32(val.GetOperator())
+		if err != nil {
+			return
+		}
 		_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, addr)
 		return false
 	})
@@ -106,7 +109,7 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 	// reinitialize all validators
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		addr,_ := sdk.ValAddressFromBech32(val.GetOperator())
+		addr, _ := sdk.ValAddressFromBech32(val.GetOperator())
 		scraps, _ := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, addr)
 
 		feePool, _ := app.DistrKeeper.FeePool.Get(ctx)
