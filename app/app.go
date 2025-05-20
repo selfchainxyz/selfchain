@@ -917,6 +917,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 					app.mm, app.configurator, app.ParamsKeeper,
 					app.AccountKeeper, app.BankKeeper,
 					app.StakingKeeper, app.DistrKeeper,
+					app.ConsensusParamsKeeper,
 				)(context, plan, fromVM)
 				if err != nil {
 					return nil, err

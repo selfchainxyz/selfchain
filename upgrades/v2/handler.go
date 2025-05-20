@@ -4,12 +4,14 @@ import (
 	"context"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -22,6 +24,12 @@ import (
 
 const (
 	UpgradeName = "v2"
+
+	// BlockMaxBytes is the max bytes for a block, 3mb
+	BlockMaxBytes = int64(3000000)
+
+	// BlockMaxGas is the max gas allowed in a block
+	BlockMaxGas = int64(300000000)
 )
 
 // AddressReplacement defines a struct for address replacement to ensure deterministic processing
@@ -76,7 +84,7 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, consensuskeeper consensusparamkeeper.Keeper) upgradetypes.UpgradeHandler {
 	return func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v2")
@@ -117,6 +125,15 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		// 2. After all modules are migrated, run your custom logic
 		if err := updateVestingSchedules(ctx, accountKeeper, bankkeeper, *stakingkeeper, distrkeeper, plan.Height); err != nil {
 			ctx.Logger().Error("Failed to execute v2 upgrade (vestings)", "error", err)
+			return nil, err
+		}
+
+		// Set the next block limits
+		defaultConsensusParams := cmttypes.DefaultConsensusParams().ToProto()
+		defaultConsensusParams.Block.MaxBytes = BlockMaxBytes
+		defaultConsensusParams.Block.MaxGas = BlockMaxGas
+		err = consensuskeeper.ParamsStore.Set(ctx, defaultConsensusParams)
+		if err != nil {
 			return nil, err
 		}
 
