@@ -912,13 +912,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	}
 
 	if !strings.EqualFold(homePath, "dummy") {
-		legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
-		if !exist {
-			legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
-		}
-		if !legacySS.HasKeyTable() {
-			legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		}
 		app.UpgradeKeeper.SetUpgradeHandler("v4",
 			func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 				vm, err := v2.CreateUpgradeHandler(
@@ -928,7 +921,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 					app.ConsensusParamsKeeper,
 					*app.IBCKeeper,
 					app.DistrKeeper,
-					legacySS,
 				)(context, plan, fromVM)
 				if err != nil {
 					return nil, err
@@ -988,11 +980,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 				} else {
 					ctx.Logger().Error("Failed to get consensus params from old store", "error", err)
 				}
-
-				if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
-					logger.Error("failed to migrate consensus params", err)
-				}
-
 				return vm, nil
 			},
 		)
