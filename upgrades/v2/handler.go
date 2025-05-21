@@ -5,6 +5,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
 	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -15,10 +16,13 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	"github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	"sort"
 )
 
@@ -26,10 +30,10 @@ const (
 	UpgradeName = "v2"
 
 	// BlockMaxBytes is the max bytes for a block, 3mb
-	BlockMaxBytes = int64(3000000)
+	BlockMaxBytes = int64(22020096)
 
 	// BlockMaxGas is the max gas allowed in a block
-	BlockMaxGas = int64(300000000)
+	BlockMaxGas = int64(-1)
 )
 
 // AddressReplacement defines a struct for address replacement to ensure deterministic processing
@@ -84,7 +88,7 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, consensuskeeper consensusparamkeeper.Keeper) upgradetypes.UpgradeHandler {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, consensuskeeper consensusparamkeeper.Keeper, ibckeeper ibckeeper.Keeper, distkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
 	return func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v2")
@@ -133,6 +137,43 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		defaultConsensusParams.Block.MaxBytes = BlockMaxBytes
 		defaultConsensusParams.Block.MaxGas = BlockMaxGas
 		err = consensuskeeper.ParamsStore.Set(ctx, defaultConsensusParams)
+		if err != nil {
+			return nil, err
+		}
+
+		//ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		//if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+		//	tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+		//}
+
+		ibcClientSubspace, _ := paramsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
+
+		if !ibcClientSubspace.HasKeyTable() {
+			ibcClientSubspace = ibcClientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
+		}
+
+		clientParams := ibcclienttypes.DefaultParams()
+		ibckeeper.ClientKeeper.SetParams(ctx, clientParams)
+
+		getParams := ibckeeper.ClientKeeper.GetParams(ctx)
+		getParams.AllowedClients = append(getParams.AllowedClients, exported.Localhost)
+		ibckeeper.ClientKeeper.SetParams(ctx, getParams)
+
+		legacySS, exist := paramsKeeper.GetSubspace(baseapp.Paramspace)
+		if !exist {
+			legacySS = paramsKeeper.Subspace(baseapp.Paramspace)
+		}
+		if !legacySS.HasKeyTable() {
+			legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+		}
+
+		feePool, err := distkeeper.FeePool.Get(ctx)
+		if err != nil {
+			ctx.Logger().Info("app.DistrKeeper.FeePool.Get(ctx)", err)
+			panic(err)
+		}
+
+		err = distkeeper.FeePool.Set(ctx, feePool)
 		if err != nil {
 			return nil, err
 		}

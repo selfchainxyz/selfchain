@@ -20,7 +20,6 @@ import (
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -136,7 +135,6 @@ import (
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	appparams "selfchain/app/params"
 	"selfchain/docs"
 )
@@ -352,9 +350,8 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	)
 
 	// set the BaseApp's parameter store
-	upgradeStoreSvc := runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec,
-		upgradeStoreSvc,
+		runtime.NewKVStoreService(app.keys[upgradetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
@@ -869,7 +866,10 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(app.configurator)
+	err = app.mm.RegisterServices(app.configurator)
+	if err != nil {
+		return nil
+	}
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -918,65 +918,12 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 					app.AccountKeeper, app.BankKeeper,
 					app.StakingKeeper, app.DistrKeeper,
 					app.ConsensusParamsKeeper,
+					*app.IBCKeeper,
+					app.DistrKeeper,
 				)(context, plan, fromVM)
 				if err != nil {
 					return nil, err
 				}
-
-				ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-				if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-					tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
-				}
-
-				ibcClientSubspace, _ := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
-
-				if !ibcClientSubspace.HasKeyTable() {
-					ibcClientSubspace = ibcClientSubspace.WithKeyTable(ibcclienttypes.ParamKeyTable())
-				}
-
-				clientParams := ibcclienttypes.DefaultParams()
-				app.IBCKeeper.ClientKeeper.SetParams(ctx, clientParams)
-
-				params := app.IBCKeeper.ClientKeeper.GetParams(ctx)
-				params.AllowedClients = append(params.AllowedClients, exported.Localhost)
-				app.IBCKeeper.ClientKeeper.SetParams(ctx, params)
-
-				legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
-				if !exist {
-					legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
-				}
-				if !legacySS.HasKeyTable() {
-					legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-				}
-
-				clientSS, found := app.ParamsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
-				if !found {
-					clientSS = app.ParamsKeeper.Subspace(ibcclienttypes.SubModuleName)
-				}
-				if !clientSS.HasKeyTable() {
-					clientSS = clientSS.WithKeyTable(ibcclienttypes.ParamKeyTable())
-				}
-
-				connSS, found := app.ParamsKeeper.GetSubspace(ibcconnectiontypes.SubModuleName)
-				if !found {
-					connSS = app.ParamsKeeper.Subspace(ibcconnectiontypes.SubModuleName)
-				}
-				if !connSS.HasKeyTable() {
-					connSS = connSS.WithKeyTable(ibcconnectiontypes.ParamKeyTable())
-				}
-
-				feePool, err := app.DistrKeeper.FeePool.Get(ctx)
-				if err != nil {
-					logger.Error("app.DistrKeeper.FeePool.Get(ctx)", err)
-					panic(err)
-				}
-
-				app.DistrKeeper.FeePool.Set(ctx, feePool)
-
-				if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
-					logger.Error("failed to migrate consensus params", err)
-				}
-				
 				return vm, nil
 			},
 		)
@@ -1044,7 +991,10 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	if err != nil {
+		return nil, err
+	}
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
