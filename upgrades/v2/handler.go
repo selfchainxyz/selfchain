@@ -5,7 +5,6 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
 	cmttypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -88,7 +87,7 @@ var vestingAddresses = []string{
 	"self1qxjrq22m0gkcz7h73q4jvhmysmgja54s70amcp",
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, consensuskeeper consensusparamkeeper.Keeper, ibckeeper ibckeeper.Keeper, distkeeper distrkeeper.Keeper) upgradetypes.UpgradeHandler {
+func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, paramsKeeper paramskeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankkeeper bankkeeper.Keeper, stakingkeeper *stakingkeeper.Keeper, distrkeeper distrkeeper.Keeper, consensuskeeper consensusparamkeeper.Keeper, ibckeeper ibckeeper.Keeper, distkeeper distrkeeper.Keeper, legacySS paramstypes.Subspace) upgradetypes.UpgradeHandler {
 	return func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v2")
@@ -141,11 +140,6 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		//ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-		//if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-		//	tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
-		//}
-
 		ibcClientSubspace, _ := paramsKeeper.GetSubspace(ibcclienttypes.SubModuleName)
 
 		if !ibcClientSubspace.HasKeyTable() {
@@ -158,14 +152,6 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		getParams := ibckeeper.ClientKeeper.GetParams(ctx)
 		getParams.AllowedClients = append(getParams.AllowedClients, exported.Localhost)
 		ibckeeper.ClientKeeper.SetParams(ctx, getParams)
-
-		legacySS, exist := paramsKeeper.GetSubspace(baseapp.Paramspace)
-		if !exist {
-			legacySS = paramsKeeper.Subspace(baseapp.Paramspace)
-		}
-		if !legacySS.HasKeyTable() {
-			legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		}
 
 		feePool, err := distkeeper.FeePool.Get(ctx)
 		if err != nil {

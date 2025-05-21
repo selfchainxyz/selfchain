@@ -7,6 +7,7 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"encoding/json"
 	"fmt"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/spf13/cobra"
 	"io"
@@ -351,7 +352,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec,
-		runtime.NewKVStoreService(app.keys[upgradetypes.StoreKey]),
+		runtime.NewKVStoreService(app.keys[consensusparamtypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
@@ -911,6 +912,13 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	}
 
 	if !strings.EqualFold(homePath, "dummy") {
+		legacySS, exist := app.ParamsKeeper.GetSubspace(baseapp.Paramspace)
+		if !exist {
+			legacySS = app.ParamsKeeper.Subspace(baseapp.Paramspace)
+		}
+		if !legacySS.HasKeyTable() {
+			legacySS = legacySS.WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+		}
 		app.UpgradeKeeper.SetUpgradeHandler("v4",
 			func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 				vm, err := v2.CreateUpgradeHandler(
@@ -920,10 +928,71 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 					app.ConsensusParamsKeeper,
 					*app.IBCKeeper,
 					app.DistrKeeper,
+					legacySS,
 				)(context, plan, fromVM)
 				if err != nil {
 					return nil, err
 				}
+
+				// We're using two different approaches to migrate consensus parameters:
+				//
+				// 1. Direct store iteration and copying: This approach directly examines all values in the
+				//    upgrade store for consensus params and copies them to the new store location. This method
+				//    preserves the exact key/value format from the old store.
+				//
+				// 2. Keeper-based migration: This approach uses the keeper API methods to properly handle
+				//    the new Collections API key formatting. This ensures the data is properly stored in the
+				//    format expected by the new keeper implementation.
+				//
+				// We keep both methods for maximum reliability during this critical migration:
+				// - The first method acts as a lower-level backup approach that preserves raw data
+				// - The second method ensures proper integration with the new Collections API
+				//
+				// This redundancy provides an extra layer of safety during a consensus-critical parameter
+				// migration, where failures could lead to chain halts.
+
+				ctx := sdk.UnwrapSDKContext(context)
+				oldStore := ctx.KVStore(app.keys[upgradetypes.StoreKey])
+				newStore := ctx.KVStore(app.keys[consensusparamtypes.StoreKey])
+
+				// Iterate over the entire old store
+				oldIter := oldStore.Iterator(nil, nil)
+				defer oldIter.Close()
+
+				for ; oldIter.Valid(); oldIter.Next() {
+					key := oldIter.Key()
+					value := oldIter.Value()
+
+					// Unmarshal ConsensusParams to identify relevant entries
+					var params tmproto.ConsensusParams
+					if err = appCodec.Unmarshal(value, &params); err == nil {
+						newStore.Set(key, value)
+						ctx.Logger().Info("Migrated consensus params from upgrade store to consensus store",
+							"key", fmt.Sprintf("%X", key))
+					}
+				}
+
+				// Create a temporary consensus params keeper with the old store
+				oldParamsKeeper := consensusparamkeeper.NewKeeper(
+					appCodec,
+					runtime.NewKVStoreService(app.keys[upgradetypes.StoreKey]),
+					authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+					runtime.EventService{})
+
+				// Get the consensus params from the old keeper
+				p, err := oldParamsKeeper.ParamsStore.Get(ctx)
+				if err == nil {
+					// Set the params in the new keeper
+					app.ConsensusParamsKeeper.ParamsStore.Set(ctx, p)
+					ctx.Logger().Info("Migrated consensus params to new format")
+				} else {
+					ctx.Logger().Error("Failed to get consensus params from old store", "error", err)
+				}
+
+				if err := baseapp.MigrateParams(ctx, legacySS, &app.ConsensusParamsKeeper.ParamsStore); err != nil {
+					logger.Error("failed to migrate consensus params", err)
+				}
+
 				return vm, nil
 			},
 		)
