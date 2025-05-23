@@ -90,7 +90,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	tempDir := tempDir()
 	initAppOptions.Set(flags.FlagHome, tempDir)
 
-	dummyApp := app.New(log.NewNopLogger(), cosmosdb.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseapp.SetChainID("osmosis-1"))
+	dummyApp := app.New(log.NewNopLogger(), cosmosdb.NewMemDB(), io.Discard, true, map[int64]bool{}, "dummy", 0, encodingConfig, app.EmptyAppOptions{}, []wasmkeeper.Option{}, baseapp.SetChainID("self-1"))
 
 	autoCliOpts := dummyApp.AutoCliOpts()
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
