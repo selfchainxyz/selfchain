@@ -599,7 +599,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -924,6 +924,13 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 					return nil, err
 				}
 
+				ctx := sdk.UnwrapSDKContext(context)
+				baseAppLegacySS := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+				err = baseapp.MigrateParams(ctx, baseAppLegacySS, app.ConsensusParamsKeeper.ParamsStore)
+				if err != nil {
+					return nil, nil
+				}
+
 				// We're using two different approaches to migrate consensus parameters:
 				//
 				// 1. Direct store iteration and copying: This approach directly examines all values in the
@@ -941,7 +948,6 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 				// This redundancy provides an extra layer of safety during a consensus-critical parameter
 				// migration, where failures could lead to chain halts.
 
-				ctx := sdk.UnwrapSDKContext(context)
 				oldStore := ctx.KVStore(app.keys[upgradetypes.StoreKey])
 				newStore := ctx.KVStore(app.keys[consensusparamtypes.StoreKey])
 
