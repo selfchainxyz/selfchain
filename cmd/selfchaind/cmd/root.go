@@ -161,6 +161,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig
 		tmcli.NewCompletionCmd(rootCmd, true),
 		genutilcli.GenesisCoreCommand(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome),
 		debug.Cmd(),
+		VersionCmd(),
 	)
 
 	a := appCreator{

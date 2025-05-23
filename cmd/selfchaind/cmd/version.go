@@ -12,6 +12,7 @@ import (
 	"selfchain/app"
 )
 
+// TODO: update the app version to latest version before upgrade.
 const (
 	AppVersion = "v1.0.1" // App version
 	ChainID    = "self-1" // Chain ID
@@ -47,7 +48,7 @@ Use --json flag for JSON output.`,
 				GitCommit:         version.Commit,
 				GoVersion:         fmt.Sprintf("go version %s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
 				BuildTags:         version.BuildTags,
-				CosmosSdkVersion:  "v0.47.10", // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
+				CosmosSdkVersion:  "v0.50.11", // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
 				TendermintVersion: "v0.37.4",  // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
 			}
 

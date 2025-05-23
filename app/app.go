@@ -599,7 +599,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -632,9 +632,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
-	availableCapabilities := strings.Join(AllCapabilities(), ",")
 	wasmCapabilities := wasmkeeper.BuiltInCapabilities()
-	wasmCapabilities = append(wasmCapabilities, availableCapabilities)
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
