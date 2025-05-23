@@ -155,7 +155,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		feePool, err := distkeeper.FeePool.Get(ctx)
 		if err != nil {
 			ctx.Logger().Info("app.DistrKeeper.FeePool.Get(ctx)", err)
-			panic(err)
+			return nil, fmt.Errorf("failed to get fee pool: %w", err)
 		}
 
 		err = distkeeper.FeePool.Set(ctx, feePool)
@@ -563,10 +563,7 @@ func replaceAccountAddress(
 		rewards, err := dk.WithdrawDelegationRewards(ctx, oldAddr, valAddr)
 		if err != nil {
 			// Log error but continue - we don't want to fail the entire migration for one reward issue
-			ctx.Logger().Error("Failed to withdraw rewards",
-				"validator", delInfo.delegation.ValidatorAddress,
-				"error", err.Error(),
-				"upgrade_height", upgradeHeight)
+			return fmt.Errorf("failed to withdraw rewards from validator %s: %w", delInfo.delegation.ValidatorAddress, err)
 		} else if !rewards.IsZero() {
 			totalRewardsWithdrawn = totalRewardsWithdrawn.Add(rewards...)
 			ctx.Logger().Info("Withdrawn rewards",
@@ -676,9 +673,6 @@ func replaceAccountAddress(
 		)
 		sk.SetDelegation(ctx, newDel)
 
-		// CRITICAL FIX: Set up proper reward state for new delegation
-		// We need the current period from before the migration
-		// Find the period using binary search on the sorted validator periods
 		var currentPeriod uint64
 
 		// Binary search for the validator period
@@ -742,6 +736,7 @@ func replaceAccountAddress(
 				"validator", delInfo.delegation.ValidatorAddress,
 				"error", err.Error(),
 				"upgrade_height", upgradeHeight)
+			return fmt.Errorf("failed to initialize rewards for validator %s: %w", delInfo.delegation.ValidatorAddress, err)
 		} else if !rewards.IsZero() {
 			ctx.Logger().Info("Initialized rewards state with withdrawal",
 				"validator", delInfo.delegation.ValidatorAddress,
