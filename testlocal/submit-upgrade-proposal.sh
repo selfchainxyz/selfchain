@@ -88,7 +88,7 @@ print_status "Setting upgrade height to: $UPGRADE_HEIGHT"
 print_header "Creating governance proposal..."
 
 # Create the proposal JSON
-docker exec -i $VALIDATOR1_ID bash -c "mkdir -p /home/heighliner/proposals && cat > /home/heighliner/proposals/upgrade.json" << EOF
+docker exec -i $VALIDATOR1_ID bash -c "mkdir -p /root/proposals && cat > /root/proposals/upgrade.json" << EOF
 {
   "messages": [
     {
@@ -115,7 +115,7 @@ print_status "Proposal file created successfully"
 # Submit the proposal
 print_status "Submitting governance proposal..."
 printf "$PASSPHRASE" \
-| docker exec -i $VALIDATOR1_ID selfchaind tx gov submit-proposal /home/heighliner/proposals/upgrade.json \
+| docker exec -i $VALIDATOR1_ID selfchaind tx gov submit-proposal /root/proposals/upgrade.json \
     --from wallet1 \
     --fees=500uslf \
     --node tcp://localhost:26657 \

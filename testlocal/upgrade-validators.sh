@@ -81,8 +81,8 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Set the new Docker image
-OLD_IMAGE="selfchainprod-image:mainnet-cur"
-NEW_IMAGE="selfchainprod-v4:mainnet-v4"
+OLD_IMAGE="selfchain:mainnet"
+NEW_IMAGE="selfchain:develop"
 
 # =============================================================================
 # PREPARATION
@@ -125,7 +125,7 @@ docker rm validator1 2>/dev/null || true
 # Start validator 1
 print_status "Starting Validator 1..."
 if ! docker run -d --name validator1 \
-  -v $(pwd)/validator1:/home/heighliner/.selfchain \
+  -v $(pwd)/validator1:/root/.selfchain \
   -p 36656:26656 \
   -p 36657:26657 \
   -p 36658:1234 \
@@ -153,7 +153,7 @@ docker rm validator2 2>/dev/null || true
 # Start validator 2
 print_status "Starting Validator 2..."
 if ! docker run -d --name validator2 \
-  -v $(pwd)/validator2:/home/heighliner/.selfchain \
+  -v $(pwd)/validator2:/root/.selfchain \
   -p 37656:26656 \
   -p 37657:26657 \
   -p 37658:1234 \
@@ -183,7 +183,7 @@ docker rm validator3 2>/dev/null || true
 # Start validator 3
 print_status "Starting Validator 3..."
 if ! docker run -d --name validator3 \
-  -v $(pwd)/validator3:/home/heighliner/.selfchain \
+  -v $(pwd)/validator3:/root/.selfchain \
   -p 38656:26656 \
   -p 38657:26657 \
   -p 38658:1234 \
@@ -213,7 +213,7 @@ docker rm validator4 2>/dev/null || true
 # Start validator 4
 print_status "Starting Validator 4..."
 if ! docker run -d --name validator4 \
-  -v $(pwd)/validator4:/home/heighliner/.selfchain \
+  -v $(pwd)/validator4:/root/.selfchain \
   -p 39656:26656 \
   -p 39657:26657 \
   -p 39658:1234 \
@@ -243,7 +243,7 @@ docker rm validator5 2>/dev/null || true
 # Start validator 5
 print_status "Starting Validator 5..."
 if ! docker run -d --name validator5 \
-  -v $(pwd)/validator5:/home/heighliner/.selfchain \
+  -v $(pwd)/validator5:/root/.selfchain \
   -p 40656:26656 \
   -p 40657:26657 \
   -p 40658:1234 \

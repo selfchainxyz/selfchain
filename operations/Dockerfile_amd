@@ -69,13 +69,13 @@ COPY --from=builder /app/build/selfchaind-linux-amd64 /usr/local/bin/selfchaind
 CMD ["sh", "-c", "echo 'selfchaind version:' && selfchaind version && exec selfchaind $@"]
 
 
-
-#docker buildx build --platform linux/amd64 --tag selfchain-builder-amd64:latest -f Dockerfile_amd .
+#Run from project root dir
+#docker buildx build --platform linux/amd64 --tag selfchain-builder-amd64:latest -f operations/Dockerfile_amd .
 #docker create --name temp-selfchain-container-amd64 selfchain-builder-amd64
 #docker cp temp-selfchain-container-amd64:/usr/local/bin/selfchaind ./build/selfchaind-linux-amd64
 #docker rm temp-selfchain-container-amd64
 
-#docker buildx build --platform linux/arm64 --tag selfchain-builder-arm64:latest -f Dockerfile .
+#docker buildx build --platform linux/arm64 --tag selfchain-builder-arm64:latest -f operations/Dockerfile .
 #docker create --name temp-selfchain-container-arm64 selfchain-builder-arm64
 #docker cp temp-selfchain-container-arm64:/usr/local/bin/selfchaind ./build/selfchaind-linux-arm64
 #docker rm temp-selfchain-container-arm64

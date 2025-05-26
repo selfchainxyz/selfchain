@@ -268,7 +268,7 @@ echo -e "\n✅ Network Status: Healthy 3-validator consensus"
 VALIDATOR1_ID=$(docker ps | grep "36657" | awk '{print $1}')
 echo "Using Validator 1 container: $VALIDATOR1_ID"
 
-docker cp ./daily.json $VALIDATOR1_ID:/home/heighliner/daily.json
+docker cp testnet/daily.json $VALIDATOR1_ID:/home/heighliner/daily.json
 
 self1jezc4atme56v75x5njqe4zuaccc4secug25wd3
 self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf // unvested delegated
