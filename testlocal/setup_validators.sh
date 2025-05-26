@@ -8,6 +8,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+DOCKER_IMAGE="selfchain:mainnet"
+
 # Define timezones for each validator
 declare -A VALIDATOR_TIMEZONES=(
     ["validator1"]="America/New_York"      # UTC-5 (EST)
@@ -165,7 +167,7 @@ start_validator_with_timezone() {
         -p $pprof_port:1234 \
         -p $api_port:1317 \
         -p $grpc_port:9090 \
-        selfchainprod-image:mainnet-cur selfchaind start; then
+        $DOCKER_IMAGE selfchaind start; then
         print_error "Failed to start $validator_name container"
         exit 1
     fi
@@ -280,7 +282,7 @@ print_status "Setting up Validator 1 in ${VALIDATOR_TIMEZONES[validator1]}..."
 mkdir -p validator1
 
 # Initialize the node
-docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind init mynode --chain-id selfchain-1
+docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain $DOCKER_IMAGE selfchaind init mynode --chain-id selfchain-1
 
 # Replace stake with uslf in genesis file
 sed -i.bak 's/stake/uslf/g' validator1/config/genesis.json
@@ -311,23 +313,23 @@ sed -i.bak 's/moniker = "mynode"/moniker = "validator1"/g' validator1/config/con
 printf "%s\n%s\n%s\n" "${VALIDATOR_MNEMONICS[validator1]}" "$PASSPHRASE" "$PASSPHRASE" \
   | docker run --rm -i \
       -v "$(pwd)/validator1:/home/heighliner/.selfchain" \
-      selfchainprod-image:mainnet-cur \
+      $DOCKER_IMAGE \
       selfchaind keys add wallet1 --recover
 
 # Add genesis accounts
 for account in "${GENESIS_ACCOUNTS[@]}"; do
-    docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind add-genesis-account "$account" 10000000000000uslf
+    docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain $DOCKER_IMAGE selfchaind add-genesis-account "$account" 10000000000000uslf
 done
 
 # Generate validator transaction
 printf "$PASSPHRASE" \
-| docker run --rm -i -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind gentx wallet1 5000000000uslf --chain-id=selfchain-1
+| docker run --rm -i -v $(pwd)/validator1:/home/heighliner/.selfchain $DOCKER_IMAGE selfchaind gentx wallet1 5000000000uslf --chain-id=selfchain-1
 
 # Collect genesis transactions
-docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind collect-gentxs
+docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain $DOCKER_IMAGE selfchaind collect-gentxs
 
 # Validate genesis
-docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind validate-genesis
+docker run --rm -v $(pwd)/validator1:/home/heighliner/.selfchain $DOCKER_IMAGE selfchaind validate-genesis
 
 # Start validator 1 with timezone
 start_validator_with_timezone "validator1" "${VALIDATOR_PORTS[validator1]}"
@@ -350,7 +352,7 @@ for i in {2..5}; do
     mkdir -p "$validator"
 
     # Initialize validator node
-    docker run --rm -v "$(pwd)/$validator:/home/heighliner/.selfchain" selfchainprod-image:mainnet-cur selfchaind init "$validator" --chain-id selfchain-1
+    docker run --rm -v "$(pwd)/$validator:/home/heighliner/.selfchain" $DOCKER_IMAGE selfchaind init "$validator" --chain-id selfchain-1
 
     # Copy configuration files from validator 1
     cp validator1/config/genesis.json "$validator/config/genesis.json"
@@ -371,7 +373,7 @@ for i in {2..5}; do
     printf "%s\n%s\n%s\n" "${VALIDATOR_MNEMONICS[$validator]}" "$PASSPHRASE" "$PASSPHRASE" \
       | docker run --rm -i \
           -v "$(pwd)/$validator:/home/heighliner/.selfchain" \
-          selfchainprod-image:mainnet-cur \
+          $DOCKER_IMAGE \
           selfchaind keys add "$wallet" --recover
 
     # Start validator with timezone
