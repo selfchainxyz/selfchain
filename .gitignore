@@ -11,7 +11,6 @@ addrbook.json
 write-file-atomic-*
 localnet/**/cosmovisor
 localnet/val-bob/data/priv_validator_state.json
-docs/static/openapi.yml
 proto/buf.gen.gogo.yaml
 proto/buf.gen.sta.yaml
 proto/buf.gen.swagger.yaml
