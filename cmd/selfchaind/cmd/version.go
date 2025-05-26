@@ -48,7 +48,7 @@ Use --json flag for JSON output.`,
 				GitCommit:         version.Commit,
 				GoVersion:         fmt.Sprintf("go version %s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
 				BuildTags:         version.BuildTags,
-				CosmosSdkVersion:  "v0.50.11", // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
+				CosmosSdkVersion:  "v0.50.13", // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
 				TendermintVersion: "v0.37.4",  // From cosmos-sdk-upgrade-changelog-doc-for-50.x.txt
 			}
 

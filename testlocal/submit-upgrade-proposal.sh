@@ -79,7 +79,7 @@ print_header "Calculating upgrade height..."
 CURRENT_HEIGHT=$(curl -s http://localhost:${VALIDATOR1_PORT}/status | jq -r '.result.sync_info.latest_block_height')
 print_status "Current height: $CURRENT_HEIGHT"
 
-UPGRADE_HEIGHT=$((CURRENT_HEIGHT + 20))
+UPGRADE_HEIGHT=$((CURRENT_HEIGHT + 15))
 print_status "Setting upgrade height to: $UPGRADE_HEIGHT"
 
 # =============================================================================
@@ -254,6 +254,30 @@ while true; do
 
     sleep 5
 done
+
+print_header "Waiting for upgrade height to be reached..."
+
+while true; do
+    CURRENT_HEIGHT=$(docker exec -i $VALIDATOR1_ID selfchaind status 2>/dev/null | jq -r '.SyncInfo.latest_block_height')
+
+    if [ -z "$CURRENT_HEIGHT" ]; then
+        print_warning "Could not get current height, retrying..."
+        sleep 5
+        continue
+    fi
+
+    print_status "Current height: $CURRENT_HEIGHT | Upgrade height: $UPGRADE_HEIGHT"
+
+    if [ "$CURRENT_HEIGHT" -ge "$UPGRADE_HEIGHT" ]; then
+        print_status "✅ Upgrade height $UPGRADE_HEIGHT has been reached!"
+        break
+    fi
+
+    BLOCKS_REMAINING=$((UPGRADE_HEIGHT - CURRENT_HEIGHT))
+    print_status "⏳ Waiting... $BLOCKS_REMAINING blocks remaining"
+    sleep 3
+done
+
 
 # =============================================================================
 # SUMMARY
