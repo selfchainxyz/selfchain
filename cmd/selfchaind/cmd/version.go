@@ -14,8 +14,8 @@ import (
 
 // TODO: update the app version to latest version before upgrade.
 const (
-	AppVersion = "v1.0.1" // App version
-	ChainID    = "self-1" // Chain ID
+	AppVersion = "v2.0.0-rc1" // App version
+	ChainID    = "self-1"     // Chain ID
 )
 
 type VersionInfo struct {

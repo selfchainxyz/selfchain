@@ -2,19 +2,20 @@ package app
 
 import (
 	"context"
-	"cosmossdk.io/client/v2/autocli"
-	"cosmossdk.io/core/appmodule"
-	corestoretypes "cosmossdk.io/core/store"
 	"encoding/json"
 	"fmt"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"path/filepath"
 	v2 "selfchain/upgrades/v2"
 	"strings"
+
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/core/appmodule"
+	corestoretypes "cosmossdk.io/core/store"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/spf13/cobra"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -125,19 +126,22 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	migrationmodule "selfchain/x/migration"
 	migrationmodulekeeper "selfchain/x/migration/keeper"
 	migrationmoduletypes "selfchain/x/migration/types"
 	selfvestingmodule "selfchain/x/selfvesting"
 	selfvestingmodulekeeper "selfchain/x/selfvesting/keeper"
 	selfvestingmoduletypes "selfchain/x/selfvesting/types"
+
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	appparams "selfchain/app/params"
 	"selfchain/docs"
+
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 )
 
 const (
@@ -910,7 +914,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 	}
 
 	if !strings.EqualFold(homePath, "dummy") {
-		app.UpgradeKeeper.SetUpgradeHandler("v4",
+		app.UpgradeKeeper.SetUpgradeHandler(v2.UpgradeName,
 			func(context context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 				vm, err := v2.CreateUpgradeHandler(
 					app.mm, app.configurator, app.ParamsKeeper,
@@ -989,7 +993,7 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 		)
 
 		if ui, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk(); err == nil &&
-			ui.Name == "v4" && !app.UpgradeKeeper.IsSkipHeight(ui.Height) {
+			ui.Name == v2.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(ui.Height) {
 
 			app.SetStoreLoader(
 				upgradetypes.UpgradeStoreLoader(

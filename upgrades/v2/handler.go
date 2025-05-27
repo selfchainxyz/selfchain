@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	UpgradeName = "v2"
+	UpgradeName = "v2.0.0-rc1"
 
 	// BlockMaxBytes is the max bytes for a block, 3mb
 	BlockMaxBytes = int64(22020096)
