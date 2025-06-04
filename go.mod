@@ -17,7 +17,7 @@ require (
 
 	// Wasmd
 	github.com/CosmWasm/wasmd v0.53.2
-	github.com/CosmWasm/wasmvm/v2 v2.2.1 // indirect
+	github.com/CosmWasm/wasmvm/v2 v2.2.2 // indirect
 
 	// CometBFT
 	github.com/cometbft/cometbft v0.38.15
