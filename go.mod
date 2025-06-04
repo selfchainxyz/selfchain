@@ -27,7 +27,7 @@ require (
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 
 	// IBC-Go v8
-	github.com/cosmos/ibc-go/v8 v8.5.1
+	github.com/cosmos/ibc-go/v8 v8.7.0
 
 	// Other deps
 	github.com/golang/mock v1.6.0
