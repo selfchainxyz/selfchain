@@ -29,10 +29,10 @@ RUN go mod download
 COPY ../.. .
 
 # Cosmwasm - Download ARM64 libwasmvm
-
-# Download the library with the correct name and put it in the correct location
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.1/libwasmvm_muslc.aarch64.a \
-    -O /go/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.2.1/internal/api/libwasmvm_muslc.aarch64.a
+RUN ARCH=$(uname -m) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.2/libwasmvm_muslc.$ARCH.a \
+    -O /lib/libwasmvm_muslc.$ARCH.a && \
+    cp /lib/libwasmvm_muslc.$ARCH.a /lib/libwasmvm_muslc.a
 
 # Build selfchain binary for ARM64
 RUN GOOS=linux GOARCH=arm64 CGO_ENABLED=1 \

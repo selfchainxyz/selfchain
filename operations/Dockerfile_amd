@@ -35,7 +35,7 @@ COPY .. .
 
 # Cosmwasm - Download correct libwasmvm version
 RUN ARCH=$(uname -m) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.1/libwasmvm_muslc.$ARCH.a \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.2/libwasmvm_muslc.$ARCH.a \
     -O /lib/libwasmvm_muslc.$ARCH.a && \
     cp /lib/libwasmvm_muslc.$ARCH.a /lib/libwasmvm_muslc.a
 
