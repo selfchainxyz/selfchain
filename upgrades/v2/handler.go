@@ -209,7 +209,7 @@ func updateVestingAccount(ctx sdk.Context, k authkeeper.AccountKeeper, address s
 
 	// Find the first unvested period
 	cumulativeTime := acc.StartTime
-	firstUnvestedIdx := 0
+	firstUnvestedIdx := len(acc.VestingPeriods)
 	for i, period := range acc.VestingPeriods {
 		cumulativeTime += period.Length
 		if cumulativeTime > referenceTime {
