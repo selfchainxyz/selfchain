@@ -140,9 +140,6 @@ var tempDir = func() string {
 }
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig) {
-	// Set config
-	//initSDKConfig()
-
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	valOperAddressCodec := addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
 
