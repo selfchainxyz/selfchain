@@ -983,7 +983,10 @@ func New(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, sk
 				p, err := oldParamsKeeper.ParamsStore.Get(ctx)
 				if err == nil {
 					// Set the params in the new keeper
-					app.ConsensusParamsKeeper.ParamsStore.Set(ctx, p)
+					err = app.ConsensusParamsKeeper.ParamsStore.Set(ctx, p)
+					if err != nil {
+						return nil, err
+					}
 					ctx.Logger().Info("Migrated consensus params to new format")
 				} else {
 					ctx.Logger().Error("Failed to get consensus params from old store", "error", err)

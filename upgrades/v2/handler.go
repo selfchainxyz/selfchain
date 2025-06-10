@@ -456,12 +456,15 @@ func replaceAccountAddress(
 			oldPeriodicAcc := oldAcc.(*vestingtypes.PeriodicVestingAccount)
 
 			// Create new periodic vesting account with SAME start time
-			newPeriodicAcc, _ := vestingtypes.NewPeriodicVestingAccount(
+			newPeriodicAcc, err := vestingtypes.NewPeriodicVestingAccount(
 				newBaseAcc,
 				oldPeriodicAcc.OriginalVesting,
 				oldPeriodicAcc.StartTime,
 				oldPeriodicAcc.VestingPeriods,
 			)
+			if err != nil {
+				return err
+			}
 
 			// Keep the same end time
 			newPeriodicAcc.EndTime = oldPeriodicAcc.EndTime
@@ -512,7 +515,10 @@ func replaceAccountAddress(
 
 	// ---------- Set withdraw address for new account if needed ----------
 	if hasCustomWithdrawAddr {
-		dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
+		err = dk.SetDelegatorWithdrawAddr(ctx, newAddr, withdrawAddr)
+		if err != nil {
+			return err
+		}
 		ctx.Logger().Info("Set withdraw address",
 			"delegator", newAddrStr,
 			"withdraw_addr", withdrawAddr.String(),
@@ -609,10 +615,16 @@ func replaceAccountAddress(
 			ValidatorAddress: valAddr.String(),
 			Entries:          ubd.Entries,
 		}
-		sk.SetUnbondingDelegation(ctx, newUBD)
+		err = sk.SetUnbondingDelegation(ctx, newUBD)
+		if err != nil {
+			return err
+		}
 
 		// Then remove old unbonding delegation
-		sk.RemoveUnbondingDelegation(ctx, ubd)
+		err = sk.RemoveUnbondingDelegation(ctx, ubd)
+		if err != nil {
+			return err
+		}
 
 		ctx.Logger().Info("Moved unbonding delegation",
 			"validator", ubd.ValidatorAddress,
@@ -646,10 +658,16 @@ func replaceAccountAddress(
 			ValidatorDstAddress: dstVal.String(),
 			Entries:             red.Entries,
 		}
-		sk.SetRedelegation(ctx, newRed)
+		err = sk.SetRedelegation(ctx, newRed)
+		if err != nil {
+			return err
+		}
 
 		// Then remove old redelegation
-		sk.RemoveRedelegation(ctx, red)
+		err = sk.RemoveRedelegation(ctx, red)
+		if err != nil {
+			return err
+		}
 
 		ctx.Logger().Info("Moved redelegation",
 			"src_validator", red.ValidatorSrcAddress,
@@ -671,7 +689,10 @@ func replaceAccountAddress(
 			valAddr.String(),
 			del.Shares,
 		)
-		sk.SetDelegation(ctx, newDel)
+		err = sk.SetDelegation(ctx, newDel)
+		if err != nil {
+			return err
+		}
 
 		var currentPeriod uint64
 
@@ -710,10 +731,16 @@ func replaceAccountAddress(
 		)
 
 		// Set the starting info for the new delegator
-		dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
+		err = dk.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startInfo)
+		if err != nil {
+			return err
+		}
 
 		// Then remove old delegation (this cleans up distribution state too)
-		sk.RemoveDelegation(ctx, del)
+		err = sk.RemoveDelegation(ctx, del)
+		if err != nil {
+			return err
+		}
 
 		ctx.Logger().Info("Set up rewards for new delegation",
 			"validator", del.ValidatorAddress,
