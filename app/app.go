@@ -133,6 +133,8 @@ import (
 	selfvestingmodulekeeper "selfchain/x/selfvesting/keeper"
 	selfvestingmoduletypes "selfchain/x/selfvesting/types"
 
+	// Custom selfvesting module provides:
+	// 1. Chain-specific vesting functionality and rules
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
@@ -196,7 +198,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		vesting.AppModuleBasic{},
+		vesting.AppModuleBasic{}, // Required for base vesting functionality and cross-chain compatibility
 		consensus.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		wasm.AppModuleBasic{},
