@@ -177,7 +177,12 @@ func updateVestingSchedules(ctx sdk.Context, k authkeeper.AccountKeeper, bankkee
 			return fmt.Errorf("critical configuration error: invalid new address format %s: %w", replacement.NewAddress, err)
 		}
 		if k.GetAccount(ctx, newAddr) != nil {
-			return fmt.Errorf("pre-check failed: new address %s (meant for old %s) already exists. Halting upgrade to prevent conflicts.", replacement.NewAddress, replacement.OldAddress)
+			ctx.Logger().Error("Migration target exists - SKIPPING MIGRATION",
+				"old_address", replacement.OldAddress,
+				"new_address", replacement.NewAddress,
+				"upgrade_height", upgradeHeight,
+				"action", "MANUAL_INTERVENTION_REQUIRED")
+			continue
 		}
 
 		if err := replaceAccountAddress(ctx, k, replacement.OldAddress, replacement.NewAddress, bankkeeper, stakingkeeper, distrkeeper, upgradeHeight); err != nil {
