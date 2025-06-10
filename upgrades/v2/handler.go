@@ -152,17 +152,6 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		getParams.AllowedClients = append(getParams.AllowedClients, exported.Localhost)
 		ibckeeper.ClientKeeper.SetParams(ctx, getParams)
 
-		feePool, err := distkeeper.FeePool.Get(ctx)
-		if err != nil {
-			ctx.Logger().Info("app.DistrKeeper.FeePool.Get(ctx)", err)
-			return nil, fmt.Errorf("failed to get fee pool: %w", err)
-		}
-
-		err = distkeeper.FeePool.Set(ctx, feePool)
-		if err != nil {
-			return nil, err
-		}
-
 		ctx.Logger().Info("Completed upgrade v2 successfully")
 		return newVM, nil
 	}
