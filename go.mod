@@ -16,7 +16,7 @@ require (
 	cosmossdk.io/x/upgrade v0.1.4
 
 	// Wasmd
-	github.com/CosmWasm/wasmd v0.53.2
+	github.com/CosmWasm/wasmd v0.53.3
 	github.com/CosmWasm/wasmvm/v2 v2.2.1 // indirect
 
 	// CometBFT
