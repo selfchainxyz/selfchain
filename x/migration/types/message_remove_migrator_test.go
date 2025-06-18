@@ -1,11 +1,11 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 
 	"selfchain/testutil/sample"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +20,7 @@ func TestMsgRemoveMigrator_ValidateBasic(t *testing.T) {
 			msg: MsgRemoveMigrator{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: errors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgRemoveMigrator{

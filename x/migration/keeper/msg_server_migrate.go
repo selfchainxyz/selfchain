@@ -4,19 +4,21 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"math"
 	"selfchain/x/migration/types"
 	selfvestingTypes "selfchain/x/selfvesting/types"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	config, configExists := k.GetConfig(ctx); if !configExists {
+	config, configExists := k.GetConfig(ctx)
+	if !configExists {
 		panic("Config does not exist")
 	}
 
@@ -71,11 +73,11 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		types.DENOM,
 		sdkmath.NewIntFromBigInt(migrationAmount.BigInt()),
 	))
-	
+
 	// Mint new coins to the selfvesting module
 	mintError := k.bankKeeper.MintCoins(ctx, selfvestingTypes.ModuleName, migrationCoins)
 	if mintError != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
+		return nil, sdkerrors.Wrapf(errors.ErrInvalidCoins, "could not mint new coins (%s)", mintError)
 	}
 
 	// We don't need to check the validatity of the address since it's been done in the Msg::ValidateBasic method
@@ -95,22 +97,31 @@ func (k msgServer) Migrate(goCtx context.Context, msg *types.MsgMigrate) (*types
 		))
 
 		// send the full migration amount to the user
-		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Transfer a fixed amount to the beneficiary so it can pay gas when releasing tokens from the vesting position
 		instantlyReleasedCoins := sdk.NewCoins(sdk.NewCoin(
 			types.DENOM,
 			sdkmath.NewIntFromBigInt(instantlyReleased.BigInt()),
 		))
-		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, selfvestingTypes.ModuleName, destAddr, instantlyReleasedCoins)
+		if err != nil {
+			return nil, err
+		}
 
 		// Add a new beneficiary
-		k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
+		_, err = k.selfvestingKeeper.AddBeneficiary(ctx, selfvestingTypes.AddBeneficiaryRequest{
 			Beneficiary: msg.DestAddress,
 			Cliff:       config.VestingCliff,
 			Duration:    config.VestingDuration,
 			Amount:      migrationAmount.Sub(instantlyReleased).String(),
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Store the token migration so it can't be processed again

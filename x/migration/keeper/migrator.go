@@ -3,8 +3,9 @@ package keeper
 import (
 	"selfchain/x/migration/types"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	costypes "cosmossdk.io/store/types"
 )
 
 // SetMigrator set a specific migrator in the store from its index
@@ -50,7 +51,7 @@ func (k Keeper) RemoveMigrator(
 // GetAllMigrator returns all migrator
 func (k Keeper) GetAllMigrator(ctx sdk.Context) (list []types.Migrator) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.MigratorKeyPrefix))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := costypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 

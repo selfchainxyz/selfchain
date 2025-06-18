@@ -1,12 +1,12 @@
 package test
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"selfchain/testutil/sample"
 	test "selfchain/x/migration/tests"
 	"selfchain/x/migration/types"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +30,7 @@ func TestMsgMigrate_ValidateBasic(t *testing.T) {
 				Token:       uint64(types.Front),
 				TxHash:      "2683f98e2bc2fb5a36c4064d561121fb5087451e70df03b8593dc427ef228c86",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: errors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: types.MsgMigrate{
@@ -67,7 +67,7 @@ func TestValidateBasicDestAddress(t *testing.T) {
 	}
 
 	err := msg.ValidateBasic()
-	require.ErrorIs(t, err, sdkerrors.ErrInvalidAddress)
+	require.ErrorIs(t, err, errors.ErrInvalidAddress)
 
 	// correct prefix but invalid address
 	msg2 := types.MsgMigrate{
@@ -80,7 +80,7 @@ func TestValidateBasicDestAddress(t *testing.T) {
 	}
 
 	err2 := msg2.ValidateBasic()
-	require.ErrorIs(t, err2, sdkerrors.ErrInvalidAddress)
+	require.ErrorIs(t, err2, errors.ErrInvalidAddress)
 
 	// correct prefix but invalid address
 	msg3 := types.MsgMigrate{

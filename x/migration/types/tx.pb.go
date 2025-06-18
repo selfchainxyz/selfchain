@@ -644,6 +644,7 @@ func _Msg_UpdateConfig_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "selfchain.migration.Msg",
 	HandlerType: (*MsgServer)(nil),

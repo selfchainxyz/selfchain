@@ -100,7 +100,10 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			baseAccount := authtypes.NewBaseAccount(addr, nil, 0, 0)
 
 			if !vestingAmt.IsZero() {
-				baseVestingAccount := authvesting.NewBaseVestingAccount(baseAccount, vestingAmt.Sort(), vestingEnd)
+				baseVestingAccount, err := authvesting.NewBaseVestingAccount(baseAccount, vestingAmt.Sort(), vestingEnd)
+				if err != nil {
+					return err
+				}
 
 				if (balances.Coins.IsZero() && !baseVestingAccount.OriginalVesting.IsZero()) ||
 					baseVestingAccount.OriginalVesting.IsAnyGT(balances.Coins) {
@@ -109,9 +112,18 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 
 				switch {
 				case vestingStart != 0 && vestingEnd != 0:
+					if vestingEnd <= vestingStart {
+						return errors.New("vesting end time must be greater than start time")
+					}
+					if vestingStart < 0 || vestingEnd < 0 {
+						return errors.New("vesting times cannot be negative")
+					}
 					genAccount = authvesting.NewContinuousVestingAccountRaw(baseVestingAccount, vestingStart)
 
 				case vestingEnd != 0:
+					if vestingEnd < 0 {
+						return errors.New("vesting end time cannot be negative")
+					}
 					genAccount = authvesting.NewDelayedVestingAccountRaw(baseVestingAccount)
 
 				default:

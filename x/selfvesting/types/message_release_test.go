@@ -3,7 +3,6 @@ package types
 import (
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"selfchain/testutil/sample"
 )
@@ -19,7 +18,7 @@ func TestMsgRelease_ValidateBasic(t *testing.T) {
 			msg: MsgRelease{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: ErrInvalidRequest,
 		}, {
 			name: "valid address",
 			msg: MsgRelease{
