@@ -32,10 +32,10 @@ heighliner build -c selfchainprod-image --local -t mainnet-cur
 mkdir -p validator1
 
 # Initialize the node
-docker run -it -v $(pwd)/validator1:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind init mynode --chain-id selfchain-1
-cp ~/self/heighliner/exported_genesis.json ./validator1/config/genesis.json
-cp ~/self/heighliner/node_key.json ./validator1/config
-cp ~/self/heighliner/priv_validator_key.json ./validator1/config
+docker run -it -v $(pwd)/validator1:/root/.selfchain selfchain:mainnet selfchaind init mynode --chain-id selfchain-1
+cp ./exported_genesis.json ./validator1/config/genesis.json
+cp ./node_key.json ./validator1/config
+cp ./priv_validator_key.json ./validator1/config
 
 sed -i '' 's/minimum-gas-prices = ""/minimum-gas-prices = "0.0025uslf"/g' validator1/config/app.toml
 sed -i '' 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' validator1/config/config.toml
@@ -54,20 +54,20 @@ PASSPHRASE="qwaszxqw"
 # then:
 printf "%s\n%s\n%s\n" "$MNEMONIC" "$PASSPHRASE" "$PASSPHRASE" \
   | docker run -i \
-      -v "$(pwd)/validator1:/home/heighliner/.selfchain" \
-      selfchainprod-image:mainnet-cur \
+      -v "$(pwd)/validator1:/root/.selfchain" \
+      selfchain:mainnet \
       selfchaind keys add wallet1 --recover
 
 # Start the chain with ports exposed
 docker run -it \
-  -v $(pwd)/validator1:/home/heighliner/.selfchain \
+  -v $(pwd)/validator1:/root/.selfchain \
   -e TZ=America/New_York \
   -p 36656:26656 \
   -p 36657:26657 \
   -p 36658:1234 \
   -p 36659:1317 \
   -p 36660:9090 \
-  selfchainprod-image:mainnet-cur selfchaind start
+  selfchain:mainnet selfchaind start
 
 docker exec -it $VALIDATOR1_ID selfchaind tx bank send self10hyl92j27zuwvu7rrvr6aa5ems2xjfd9q9zgun self15hcvdar3eszwfjypz65levutqvj0plat8aj4n9 5000000000000000uslf --from wallet1 --chain-id self-1 --gas auto --fees 500uslf
 docker exec -it $VALIDATOR1_ID selfchaind tx bank send self10hyl92j27zuwvu7rrvr6aa5ems2xjfd9q9zgun self1adf59zdkuyppn3j8pc5gqmvx0lucradjcfgc96 5000000000000000uslf --chain-id self-1 --gas auto --fees 500uslf
@@ -81,7 +81,7 @@ docker exec -it $VALIDATOR1_ID selfchaind tx bank send self10hyl92j27zuwvu7rrvr6
 mkdir -p validator2
 
 # Initialize validator 2 node
-docker run -it -v $(pwd)/validator2:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind init validator2 --chain-id selfchain-1
+docker run -it -v $(pwd)/validator2:/root/.selfchain selfchain:mainnet selfchaind init validator2 --chain-id selfchain-1
 
 # Copy the genesis file from the first node
 cp validator1/config/genesis.json validator2/config/genesis.json
@@ -99,21 +99,21 @@ MNEMONIC="gather corn brother distance just winner phrase mechanic garlic progra
 PASSPHRASE="qwaszxqw"
 printf "%s\n%s\n%s\n" "$MNEMONIC" "$PASSPHRASE" "$PASSPHRASE" \
   | docker run -i \
-      -v "$(pwd)/validator2:/home/heighliner/.selfchain" \
-      selfchainprod-image:mainnet-cur \
+      -v "$(pwd)/validator2:/root/.selfchain" \
+      selfchain:mainnet \
       selfchaind keys add wallet2 --recover
 
 
 # Start validator 2 with different ports
 docker run -it \
-  -v $(pwd)/validator2:/home/heighliner/.selfchain \
+  -v $(pwd)/validator2:/root/.selfchain \
   -e TZ=Europe/London \
   -p 37656:26656 \
   -p 37657:26657 \
   -p 37658:1234 \
   -p 37659:1317 \
   -p 37660:9090 \
-  selfchainprod-image:mainnet-cur selfchaind start
+  selfchain:mainnet selfchaind start
 
 
 VALIDATOR2_ID=$(docker ps | grep "37656" | awk '{print $1}')
@@ -142,7 +142,7 @@ print "$PASSPHRASE" \
 mkdir -p validator3
 
 # Initialize validator 3 node
-docker run -it -v $(pwd)/validator3:/home/heighliner/.selfchain selfchainprod-image:mainnet-cur selfchaind init validator3 --chain-id selfchain-1
+docker run -it -v $(pwd)/validator3:/root/.selfchain selfchain:mainnet selfchaind init validator3 --chain-id selfchain-1
 
 # Copy all config files from validator 1
 cp validator1/config/genesis.json validator3/config/genesis.json
@@ -166,20 +166,20 @@ MNEMONIC="poet number abandon donate fitness cancel boss champion confirm bike d
 PASSPHRASE="qwaszxqw"
 printf "%s\n%s\n%s\n" "$MNEMONIC" "$PASSPHRASE" "$PASSPHRASE" \
   | docker run -i \
-      -v "$(pwd)/validator3:/home/heighliner/.selfchain" \
-      selfchainprod-image:mainnet-cur \
+      -v "$(pwd)/validator3:/root/.selfchain" \
+      selfchain:mainnet \
       selfchaind keys add wallet3 --recover
 
 # Start validator 3 with different ports
 docker run -it \
-  -v $(pwd)/validator3:/home/heighliner/.selfchain \
+  -v $(pwd)/validator3:/root/.selfchain \
   -e TZ=Asia/Tokyo \
   -p 38656:26656 \
   -p 38657:26657 \
   -p 38658:1234 \
   -p 38659:1317 \
   -p 38660:9090 \
-  selfchainprod-image:mainnet-cur selfchaind start
+  selfchain:mainnet selfchaind start
 
 
   # Get validator 3 container ID
@@ -238,7 +238,7 @@ echo -e "\n✅ Network Status: Healthy 3-validator consensus"
 VALIDATOR1_ID=$(docker ps | grep "36657" | awk '{print $1}')
 echo "Using Validator 1 container: $VALIDATOR1_ID"
 
-docker cp ./daily.json $VALIDATOR1_ID:/home/heighliner/daily.json
+docker cp ./daily.json $VALIDATOR1_ID:/root/daily.json
 
 self1jezc4atme56v75x5njqe4zuaccc4secug25wd3
 self1fun8q0xuncfef6nkwh9njvvp4xqf4276x5sxgf // unvested delegated
@@ -248,7 +248,7 @@ self1fcahhgtw2llk06am4rala6khxjtj24zhhxn449
 print "$PASSPHRASE" \
 | docker exec -i $VALIDATOR1_ID selfchaind tx vesting create-periodic-vesting-account \
     self1krxfd67wmrjksq20xww53rm0wqmyxcew22whah \
-    /home/heighliner/daily.json \
+    /root/daily.json \
     --node tcp://localhost:26657 \
     --chain-id selfchain-1 \
     --broadcast-mode sync \
@@ -267,7 +267,7 @@ echo "Current height: $CURRENT_HEIGHT"
 UPGRADE_HEIGHT=$((CURRENT_HEIGHT + 20))
 echo "Setting upgrade height to: $UPGRADE_HEIGHT"
 
-docker exec -i $VALIDATOR1_ID bash -c "mkdir -p /home/heighliner/proposals && cat > /home/heighliner/proposals/proposal2.json" << EOF
+docker exec -i $VALIDATOR1_ID bash -c "mkdir -p /root/proposals && cat > /root/proposals/proposal2.json" << EOF
 {
  "messages": [
   {
@@ -290,7 +290,7 @@ docker exec -i $VALIDATOR1_ID bash -c "mkdir -p /home/heighliner/proposals && ca
 EOF
 
 print "$PASSPHRASE" \
-| docker exec -i $VALIDATOR1_ID selfchaind tx gov submit-proposal /home/heighliner/proposals/proposal2.json \
+| docker exec -i $VALIDATOR1_ID selfchaind tx gov submit-proposal /root/proposals/proposal2.json \
     --from wallet1 \
     --fees=500uslf \
     --node tcp://localhost:26657 \
@@ -337,7 +337,7 @@ docker exec -it $VALIDATOR1_ID selfchaind query gov proposal $PROPOSAL_NUMBER --
 
 
 docker run -it \
-  -v $(pwd)/validator1:/home/heighliner/.selfchain \
+  -v $(pwd)/validator1:/root/.selfchain \
   -e TZ=America/New_York \
   -p 36656:26656 \
   -p 36657:26657 \
@@ -349,7 +349,7 @@ docker run -it \
 
 
 docker run -it \
-  -v $(pwd)/validator2:/home/heighliner/.selfchain \
+  -v $(pwd)/validator2:/root/.selfchain \
   -e TZ=Europe/London \
   -p 37656:26656 \
   -p 37657:26657 \
@@ -361,7 +361,7 @@ docker run -it \
 
 
 docker run -it \
-  -v $(pwd)/validator3:/home/heighliner/.selfchain \
+  -v $(pwd)/validator3:/root/.selfchain \
   -e TZ=Asia/Tokyo \
   -p 38656:26656 \
   -p 38657:26657 \
