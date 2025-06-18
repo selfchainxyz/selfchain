@@ -90,7 +90,10 @@ func (k msgServer) Release(goCtx context.Context, msg *types.MsgRelease) (*types
 			sdkmath.NewIntFromBigInt(amountToVest.BigInt()),
 		))
 
-		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, beneficiary, vestedCoins)
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, beneficiary, vestedCoins)
+		if err != nil {
+			return nil, err
+		}
 
 		return &types.MsgReleaseResponse{
 			PeriodToVest: periodToVest,
