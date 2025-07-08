@@ -23,7 +23,7 @@ require (
 	github.com/cometbft/cometbft v0.38.15
 	github.com/cometbft/cometbft-db v0.14.1
 	// Cosmos SDK core
-	github.com/cosmos/cosmos-sdk v0.50.13
+	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 
 	// IBC-Go v8
